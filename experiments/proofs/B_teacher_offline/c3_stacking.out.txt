@@ -1,4 +1,4 @@
-FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
 == constant outcomes ==
   constant mask: [False, True, False]
   [ok] outcome 1 (all -0.75) is constant, outcomes 0 and 2 are not

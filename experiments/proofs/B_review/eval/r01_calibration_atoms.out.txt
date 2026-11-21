@@ -1,0 +1,21 @@
+REVIEW REPRODUCTION - fixture, not evidence
+
+(A) continuous Gaussian, exact quantiles (control)
+  cov80 0.805 nominal 0.8
+  chi2 p 0.1231 | rand-PIT KS p 0.4006
+
+(B) clipped-at-0 outcome, exact quantiles of the clipped truth
+  share of y exactly 0: 0.4988
+  cov80 0.9014 nominal 0.8
+  bin counts [2494, 31, 429, 809, 744, 493] expected [500, 750, 1250, 1250, 750, 500]
+  chi2 p 0.0 | rand-PIT KS p 0.0
+
+(C) binary outcome, exact Bernoulli quantiles
+  cov80 0.9944 nominal 0.8
+  cov50 0.9394 nominal 0.5
+  bin counts [2702, 698, 928, 521, 138, 13]
+  chi2 p 0.0 | rand-PIT KS p 0.0
+
+(D) binary outcome, quantiles = clip(p + residual quantiles, 0, 1)
+  bin counts [2455, 0, 0, 620, 1247, 678] (y=0 rows can only land in bin 0, y=1 rows mostly in bin 5)
+  rows with y=0 in bin 0: 2455 of 2455

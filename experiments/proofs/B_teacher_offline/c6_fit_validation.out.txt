@@ -1,4 +1,4 @@
-FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
   [ok] TabPFNTeacher satisfies the ResidualModel protocol
 == fit() validation ==
   [ok] features with 4 columns (layout has 5) raises ValueError: features must have shape (n, 5) in layout order ('sit_x', 'sit_side', 'act_t', 'physics_r0', 'physics_r1'); got (6, 4)
@@ -36,5 +36,8 @@ FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, 
 == construction rules ==
   [ok] provider settings differing in a keyed field raises ValueError: provider and teacher settings differ in keyed fields ['n_estimators']
   [ok] a feature named like the reserved stacked outcome column raises ValueError: feature name 'stacked_outcome_index' is reserved for the stacked outcome column
+  [ok] a call log that locks another file than <cache_dir>/.lock raises ValueError: the call log must lock C:\Users\vidhu\AppData\Local\Temp\tmp_d1bsjd5\cache\.lock, the cache's lock file; it locks C:\Users\vidhu\AppData\Local\Temp\tmp_d1bsjd5\elsewhere.lock
+  [ok] a cache directory other than settings.cache_dir raises ValueError: cache directory C:\Users\vidhu\AppData\Local\Temp\tmp_d1bsjd5\other_cache and call log C:\Users\vidhu\AppData\Local\Temp\tmp_d1bsjd5\calls.jsonl must be the configured C:\Users\vidhu\AppData\Local\Temp\tmp_d1bsjd5\cache and C:\Users\vidhu\AppData\Local\Temp\tmp_d1bsjd5\calls.jsonl
+  [ok] from_settings builds the configured cache, call log and lock
 
 RESULT: 0 failed check(s)

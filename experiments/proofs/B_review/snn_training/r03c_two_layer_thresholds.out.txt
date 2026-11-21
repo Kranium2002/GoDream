@@ -1,0 +1,5 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+threshold 1.0: STUDENT RETURNED; best_step=300 val KL 0.5384 -> 0.0143; initial firing [0.1977, 0.0511] final [0.2435, 0.1989]; silent_layers=[]; distinct decisions on 500 situations = 23; agreement 0.310 zero-regret 0.760
+threshold 2.0: STUDENT RETURNED; best_step=300 val KL 0.5550 -> 0.0285; initial firing [0.081, 0.0008] final [0.1582, 0.1562]; silent_layers=[]; distinct decisions on 500 situations = 21; agreement 0.470 zero-regret 0.700
+threshold 3.0: STUDENT RETURNED; best_step=300 val KL 0.5552 -> 0.0404; initial firing [0.0422, 0.0] final [0.1225, 0.1333]; silent_layers=[]; distinct decisions on 500 situations = 17; agreement 0.360 zero-regret 0.660
+threshold 5.0: STUDENT RETURNED; best_step=300 val KL 0.5552 -> 0.0638; initial firing [0.0137, 0.0] final [0.0891, 0.096]; silent_layers=[]; distinct decisions on 500 situations = 18; agreement 0.270 zero-regret 0.660

@@ -1,0 +1,13 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+== (a) restored = best ==
+  restored loss evaluated with 16 threads: 0.02520190324560851; with the training's 1 thread(s): 0.025201903245608514
+  steps_run 150 best_step 140 stopped_early True
+  curve [(0, 0.8567), (10, 0.2377), (20, 0.1891), (30, 0.1377), (40, 0.0978), (50, 0.068), (60, 0.0508), (70, 0.0419), (80, 0.0394), (90, 0.0348), (100, 0.0328), (110, 0.0308), (120, 0.0271), (130, 0.0268), (140, 0.0252), (150, 0.028)]
+  restored validation loss 0.025201903245608514 == best_validation_loss 0.025201903245608514: True
+  report firing rate (0.047171875,) vs numpy [0.047171875]
+== (b) very few dreams / extreme validation fractions ==
+  2 rows: TrainingError: the trained network's validation loss 0.45581154120616457 is not below its loss at initialisation 0.45581154120616457 (steps run: 60; silent hidden layers: [])
+  3 rows: student; train 2 validation 1; parity checked on 1 rows; best_step 20; agreement 0.0
+  5 rows: student; train 4 validation 1; parity checked on 1 rows; best_step 20; agreement 0.0
+  600 rows, fraction 0.999: student; train 1 validation 599; parity checked on 599 rows; best_step 40; agreement 0.09015025041736227
+  600 rows, fraction 1e-6: student; train 599 validation 1; parity checked on 1 rows; best_step 60; agreement 1.0

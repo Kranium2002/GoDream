@@ -1,6 +1,8 @@
 """Check 1: request_key is process-independent and sensitive to exactly the keyed inputs.
 
-FIXTURE arrays only; exercises the pure function learned_judgment.teacher.request_key. No network.
+FIXTURE arrays and a fixture base URL only; exercises the pure function
+learned_judgment.teacher.request_key (key schema v2: base URL keyed, column names not keyed --
+review T8). No network.
 Run from D:\\BerlinPrior:
     .venv\\Scripts\\python.exe experiments\\proofs\\B_teacher_offline\\c1_request_key.py
 """
@@ -11,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-print("FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
@@ -47,12 +49,12 @@ Y_TRAIN = rng.normal(size=6)
 X_QUERY = rng.normal(size=(5, 4))
 X_QUERY[:, 1] = [1.0, 0.0, 1.0, 0.0, 1.0]
 CATS = (1,)
-NAMES = ("sit_a", "sit_side", "act_t", "physics_o")
+URL = "https://api.priorlabs.ai:443"  # fixture string; the teacher passes TabPFNProvider.base_url()
 
 
-def key(settings=SETTINGS, x_train=X_TRAIN, y_train=Y_TRAIN, x_query=X_QUERY, cats=CATS, names=NAMES) -> str:
+def key(settings=SETTINGS, x_train=X_TRAIN, y_train=Y_TRAIN, x_query=X_QUERY, cats=CATS, url=URL) -> str:
     return request_key(
-        settings=settings, x_train=x_train, y_train=y_train, x_query=x_query, categorical_indices=cats, column_names=names
+        settings=settings, x_train=x_train, y_train=y_train, x_query=x_query, categorical_indices=cats, base_url=url
     )
 
 
@@ -98,13 +100,12 @@ changes = {
     "quantile list (0.25/0.75 dropped)": key(settings=dataclasses.replace(SETTINGS, quantile_levels=(0.1, 0.5, 0.9))),
     "categorical indices (1,) -> ()": key(cats=()),
     "categorical indices (1,) -> (1, 2)": key(cats=(1, 2)),
-    "column order swapped (arrays + names)": key(
+    "column order swapped (arrays)": key(
         x_train=np.ascontiguousarray(X_TRAIN[:, swap]),
         x_query=np.ascontiguousarray(X_QUERY[:, swap]),
-        names=tuple(NAMES[i] for i in swap),
         cats=(1,),
     ),
-    "column names only swapped": key(names=("act_t", "sit_side", "sit_a", "physics_o")),
+    "base URL of another deployment": key(url="https://other-deployment.invalid:443"),
     "one query row dropped": key(x_query=X_QUERY[:4].copy()),
 }
 for label, value in changes.items():
@@ -125,6 +126,12 @@ same = {
     "-0.0 instead of +0.0 in x_train[0, 0]": key(x_train=np.where(np.arange(24).reshape(6, 4) == 0, -0.0, X_TRAIN)),
     "Fortran-order x_train copy": key(x_train=np.asfortranarray(X_TRAIN)),
     "big-endian x_query copy": key(x_query=X_QUERY.astype(">f8")),
+    "verified request limits / lock / row cap": key(
+        settings=dataclasses.replace(
+            SETTINGS, verified_request_limit_per_minute=60, verified_request_limit_per_hour=600,
+            lock_timeout_s=5.0, lock_poll_s=0.5, max_query_rows_per_request=100,
+        )
+    ),
 }
 for label, value in same.items():
     check(f"{label:42s} {value[:16]}", value == BASE)
@@ -134,7 +141,7 @@ for label, kwargs in {
     "float32 x_train": {"x_train": X_TRAIN.astype(np.float32)},
     "unsorted categorical indices": {"cats": (2, 1)},
     "categorical index out of range": {"cats": (4,)},
-    "duplicate column names": {"names": ("a", "a", "b", "c")},
+    "empty base URL": {"url": ""},
     "y_train length mismatch": {"y_train": Y_TRAIN[:5].copy()},
 }.items():
     try:

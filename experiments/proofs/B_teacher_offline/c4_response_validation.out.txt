@@ -1,4 +1,4 @@
-FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
   [ok] importing learned_judgment.teacher did not import tabpfn_client
 == accepted: documented (Q, n) layout ==
   [ok] quantiles transposed to (n, Q)

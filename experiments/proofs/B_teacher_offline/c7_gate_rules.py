@@ -10,7 +10,7 @@ import copy
 import sys
 from pathlib import Path
 
-print("FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
@@ -78,8 +78,9 @@ print("\n== TeacherSettings.from_config ==")
 config = load_config()
 settings = TeacherSettings.from_config(config)
 print("  ", settings)
-check("project_token_budget is null in config.yaml -> None", settings.project_token_budget is None)
+# No check here relies on the value config.yaml holds for the budget (it is 35000000 since 2026-11-21).
 check("relative paths resolve against the repository root", settings.cache_dir == ROOT / ".cache" / "tabpfn")
+check("lock_poll_s is persistence.replace_pause_s", settings.lock_poll_s == float(config["persistence"]["replace_pause_s"]))
 
 
 def edited(path: str, value):
@@ -104,9 +105,17 @@ for label, path, value in [
     ("decreasing quantile levels", "engine.quantile_levels", [0.5, 0.25]),
     ("unknown multi_outcome_mode", "engine.multi_outcome_mode", "joint"),
     ("non-integer project budget", "tabpfn.project_token_budget", 1.5),
+    ("missing tabpfn.max_query_rows_per_request", "tabpfn.max_query_rows_per_request", KeyError),
+    ("row cap 5 (not above the 5 quantile levels)", "tabpfn.max_query_rows_per_request", 5),
+    ("null tabpfn.lock_timeout_s", "tabpfn.lock_timeout_s", None),
+    ("zero tabpfn.lock_timeout_s", "tabpfn.lock_timeout_s", 0),
+    ("missing persistence.replace_pause_s", "persistence.replace_pause_s", KeyError),
 ]:
     raises(label, ConfigError, lambda p=path, v=value: TeacherSettings.from_config(edited(p, v)))
 check("an integer project budget is read", TeacherSettings.from_config(edited("tabpfn.project_token_budget", 30000)).project_token_budget == 30000)
+check("a null project budget reads as None (refuses every uncached request)",
+      TeacherSettings.from_config(edited("tabpfn.project_token_budget", None)).project_token_budget is None)
+check("a missing project budget reads as None", TeacherSettings.from_config(edited("tabpfn.project_token_budget", KeyError)).project_token_budget is None)
 
 print(f"\nRESULT: {len(FAILURES)} failed check(s)" + (f": {FAILURES}" if FAILURES else ""))
 sys.exit(1 if FAILURES else 0)

@@ -1,0 +1,11 @@
+﻿.venv\Scripts\python.exe : D:\BerlinPrior\learned_judgment\students\targets.py:85: RuntimeWarning: divide by zero 
+encountered in divide
+At line:1 char:450
++ ... umerics") { .venv\Scripts\python.exe "$d\$s.py" 1> "$d\$s.out.txt" 2> ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\BerlinPrior\...tered in divide:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  logits = (array - array.max(axis=1, keepdims=True)) / scale
+D:\BerlinPrior\learned_judgment\students\targets.py:85: RuntimeWarning: invalid value encountered in divide
+  logits = (array - array.max(axis=1, keepdims=True)) / scale

@@ -1,0 +1,22 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+== (a) learned parameters pushed out of range ==
+  hidden (32,) betas (1.7,) thr (-0.5,): exported betas (1.0,) thr (-0.5,); mismatches [0] decisions differing 0 max|dlogit| 2.7e-15
+  hidden (32,) betas (-0.4,) thr (0.0,): exported betas (0.0,) thr (0.0,); mismatches [0] decisions differing 0 max|dlogit| 2.7e-15
+  hidden (32,) betas (0.95,) thr (2.5,): exported betas (0.95,) thr (2.5,); mismatches [0] decisions differing 0 max|dlogit| 4.4e-16
+  hidden (32, 24) betas (1.7, -0.4) thr (-0.5, 2.5): exported betas (1.0, 0.0) thr (-0.5, 2.5); mismatches [0, 0] decisions differing 0 max|dlogit| 0.0e+00
+  hidden (32, 24) betas (-0.4, 1.7) thr (0.0, -0.5): exported betas (0.0, 1.0) thr (0.0, -0.5); mismatches [0, 0] decisions differing 0 max|dlogit| 0.0e+00
+  hidden (32, 24) betas (0.95, 0.5) thr (2.5, 0.0): exported betas (0.95, 0.5) thr (2.5, 0.0); mismatches [0, 0] decisions differing 0 max|dlogit| 0.0e+00
+== (b) torch model vs hand float64 reference of Leaky ==
+  spikes equal per layer: [True, True]; max|logit - ref| = 0.0e+00
+== (c) surrogate wrapper vs raw snnTorch surrogate: gradients ==
+  atan: forward dtype torch.float64 values equal raw True; grad wrapper == raw snnTorch: True; max rel diff to analytic float64 = 5.8e-08
+  fast_sigmoid: forward dtype torch.float64 values equal raw True; grad wrapper == raw snnTorch: True; max rel diff to analytic float64 = 5.9e-08
+== (d) spike-rate penalty gradient reaches the trunk ==
+  trunk_linears.0.weight: |grad| sum = 1.675e+00
+  trunk_linears.0.bias: |grad| sum = 7.925e-01
+  trunk_linears.1.weight: |grad| sum = 2.811e+00
+  trunk_linears.1.bias: |grad| sum = 3.501e-01
+  head_linears.h.weight: grad None
+  head_linears.h.bias: grad None
+== (e) readout neuron: threshold has no effect ==
+  logits identical after changing the readout threshold to -5: True

@@ -1,0 +1,24 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE provider in use: usage, quote and the estimator are stand-ins (no network); outputs are not evidence
+== a. persistence.replace_attempts is null ==
+  [ok] a request raises BudgetError: request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2dbeb643d4e9d04 refused before any billable call: the cache directory or its unvalidated folder cannot 
+  [ok] the reason names persistence.replace_attempts
+  [ok] a: no billable call, no usage read, no quote
+  [ok] one refused record, no dispatch record
+
+== b. the unvalidated folder cannot be created ==
+  [ok] a request raises BudgetError: request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2dbeb643d4e9d04 refused before any billable call: the cache directory or its unvalidated folder cannot 
+  [ok] the reason names the cache directory or its unvalidated folder
+  [ok] b: no billable call, no usage read, no quote
+  [ok] one refused record
+
+== c. the call-log directory cannot be created ==
+  [ok] a request raises BudgetError: request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2dbeb643d4e9d04 refused before any billable call: the call-log directory cannot be written with the con
+  [ok] the message names the call-log directory and says the refusal could not be logged
+  [ok] c: no billable call, no usage read, no quote
+
+== d. healthy settings and directories ==
+  [ok] the request completes
+  [ok] no probe file is left behind
+
+RESULT: 0 failed check(s)

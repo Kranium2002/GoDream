@@ -26,3 +26,13 @@
 - Decisions recorded in DECISIONS.md: the SNN is trained inside the PFN dream and is not a copy of the PFN; project token budget 35,000,000.
 - Note for Person A: mujoco is installed in the venv but not declared in pyproject.toml, so a plain `uv sync` would uninstall it. Declare it or use `uv sync --inexact`.
 - NOT RUN: any Go2 episode, any TabPFN prediction request, any dream from a provider-backed teacher, any SNN training on real dreams.
+
+## 2026-11-21 — Person B: SNN student built; independent review
+
+- Research before code: E15 (PyTorch CPU and snnTorch installed and exercised in throwaway environments, exact neuron dynamics, numpy parity, determinism, latency, operation counts), E15-literature (sources for the energy estimate), E7-terms (Prior Labs published terms). Entries in experiments/EXPERIMENTS_LOG.md.
+- Built by implementation agents, re-run by the lead: learned_judgment/students/targets.py, snn_train.py, snn.py (per-skill student), shared_snn.py (one trunk, one head per skill, dream rehearsal, retention matrix), measure.py (latency, spikes, synaptic operations, energy estimate, agreement and dream regret), and engine/train_in_dream.py.
+- Found during the build: snnTorch ran its reset step in float32 inside a float64 model; the surrogate is now wrapped so the trained model and the deployed numpy network agree on every spike and decision. Readout logits differ by about 2e-15 between the two libraries; training stops with an error if a spike count or decision differs.
+- Checks: experiments/proofs/B_snn_offline, B_snn_shared_offline, B_snn_measure_offline; all exit code 0 on the lead's re-run. They run fixture skills through the real dream and train-in-dream code and test mechanics only.
+- Added by hand: a lean single-decision path in snn_core.py and encoding.py (same arithmetic as the batched path) and per-neuron spike recording.
+- Independent review of the teacher, engine, and evaluation code (three reviewers, every finding reproduced by execution): 1 blocking, 9 important, 22 minor. Reproductions are under experiments/proofs/B_review/. Fixes are applied in two rounds and each gets a regression check.
+- NOT RUN: any Go2 episode, any TabPFN prediction request, any SNN training on a real dream, any measurement on the robot.

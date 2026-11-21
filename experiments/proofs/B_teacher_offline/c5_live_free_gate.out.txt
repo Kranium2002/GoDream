@@ -1,30 +1,53 @@
-FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
-== tripwires on billable / job-creating entry points ==
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+== tripwires on billable / job-creating / upload entry points ==
   tripwire on TabPFNRegressor.fit
+  tripwire on TabPFNRegressor._fit
   tripwire on TabPFNRegressor.predict
   tripwire on TabPFNRegressor.submit_fit
   tripwire on TabPFNRegressor.submit_predict
+  tripwire on TabPFNRegressor.wait_for_predict
+  tripwire on TabPFNRegressor.cross_val_predict
+  tripwire on TabPFNRegressor.submit_cross_val_predict
+  tripwire on TabPFNRegressor.cross_val_predict_splits
   tripwire on InferenceClient.fit
   tripwire on InferenceClient.fit_with_result
   tripwire on InferenceClient.predict
   tripwire on InferenceClient.predict_chunks
   tripwire on InferenceClient.submit_predict
+  tripwire on ServiceClient.fit
+  tripwire on ServiceClient.fit_with_result
+  tripwire on ServiceClient._fit
+  tripwire on ServiceClient._submit_fit_job
+  tripwire on ServiceClient._upload_train_set
+  tripwire on ServiceClient._upload_fold_ids
+  tripwire on ServiceClient.predict
+  tripwire on ServiceClient.predict_chunks
+  tripwire on ServiceClient.submit_predict
+  tripwire on ServiceClient._predict
+  tripwire on ServiceClient._start_predict
+  tripwire on ServiceClient._sync_predict
+  tripwire on ServiceClient._async_predict
+  tripwire on ServiceClient._submit_predict_job
+  tripwire on ServiceClient._upload_test_set
+  tripwire on ServiceClient._upload_to_gcs
+  tripwire on ServiceClient._upload_single_chunk
+  tripwire on ServiceClient._submit_cross_validate_job
 
-== settings from config.yaml ==
-  client_version 0.10.1 | model_path v3.5_default | n_estimators 8 | mode stacked | max_tokens_per_request 10000 | project_token_budget None
-  [ok] tabpfn.project_token_budget is null in config.yaml
+== settings ==
+  from config.yaml: client_version 0.10.1 | model_path v3.5_default | n_estimators 8 | mode stacked | max_tokens_per_request 10000 | project_token_budget (config, NOT used here) 35000000
+  used by this check: project_token_budget None (forced, refuses every uncached request)
 
 == live free calls ==
   connected; installed tabpfn_client 0.10.1
   usage before: {'current_usage': 40000, 'usage_limit': 35000000, 'daily_tokens_used': 40000, 'daily_token_limit': 35000000, 'monthly_tokens_used': 40000, 'monthly_token_limit': 35000000}
-  BudgetError: request ece4a1624dbf6b16da12a1a10ed4bbe4bd471ff7a62008df9907665d583d6745 refused before any billable call: tabpfn.project_token_budget is not set; the lead must set it before the first billable request
+  BudgetError: request 85cd7aa3a757246e789ed26b8b47181a1286c5654bc6b280715971fed0abd505 refused before any billable call: tabpfn.project_token_budget is not set; the lead must set it before the first billable request
   usage after:  {'current_usage': 40000, 'usage_limit': 35000000, 'daily_tokens_used': 40000, 'daily_token_limit': 35000000, 'monthly_tokens_used': 40000, 'monthly_token_limit': 35000000}
 
 == refusal evidence ==
   [ok] predict_residual_distribution raised BudgetError
-  [ok] no prediction call was started by the provider
+  [ok] the provider's prediction counter stayed 0
   [ok] no tripwire was hit
-  call-log record: {'billable_dispatch': False, 'cache_hit': False, 'event': 'refused', 'key': 'ece4a1624dbf6b16da12a1a10ed4bbe4bd471ff7a62008df9907665d583d6745', 'mode': 'stacked', 'n_features': 6, 'n_query': 8, 'n_train': 12, 'outcomes': ['r0', 'r1'], 'quote': {'estimated_cost': 10000, 'inputs': {'model_version': 'v3.5', 'n_estimators': 8, 'operation': 'predict', 'raw_columns': 6, 'test_rows': 8, 'train_rows': 12}, 'pricing_version': 'quota_v3'}, 'quote_tokens': 10000, 'reasons': ['tabpfn.project_token_budget is not set; the lead must set it before the first billable request'], 'skill': 'fixture_gate_check', 'tokens_quoted_before': 0}
+  call-log record: {'billable_dispatch': False, 'cache_hit': False, 'chunk': {'count': 1, 'first_row': 0, 'index': 0, 'stop_row': 8, 'total_rows': 8}, 'event': 'refused', 'key': '85cd7aa3a757246e789ed26b8b47181a1286c5654bc6b280715971fed0abd505', 'mode': 'stacked', 'n_features': 6, 'n_query': 8, 'n_train': 12, 'outcomes': ['r0', 'r1'], 'padded_rows': 0, 'quote': {'estimated_cost': 10000, 'inputs': {'model_version': 'v3.5', 'n_estimators': 8, 'operation': 'predict', 'raw_columns': 6, 'test_rows': 8, 'train_rows': 12}, 'pricing_version': 'quota_v3'}, 'quote_tokens': 10000, 'rate_limit_configured': False, 'reasons': ['tabpfn.project_token_budget is not set; the lead must set it before the first billable request'], 'skill': 'fixture_gate_check', 'tokens_quoted_before': 0}
   [ok] exactly one call-log record
   [ok] it is a refusal, not a dispatch
   [ok] the refusal carries the integer quote
@@ -32,7 +55,8 @@ FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, 
   [ok] the stacked request was quoted as 12 train rows x 8 query rows x 6 columns
   [ok] a reason names the unset project budget
   [ok] the refused request counts zero tokens toward the project budget
-  [ok] nothing was cached
+  [ok] nothing was cached (no entry, no unvalidated response)
+  [ok] the cache lock was released
   [ok] no request hash recorded on the teacher
   [ok] account token counters unchanged
 

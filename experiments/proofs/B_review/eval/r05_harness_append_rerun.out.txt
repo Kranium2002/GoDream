@@ -1,0 +1,7 @@
+REVIEW REPRODUCTION - fixture, not evidence
+run 1 raised: simulated crash in the middle of an evaluation (throwaway)
+rows on disk after the crash: 6
+returned losses shape: (4, 3) (12 episodes)
+rows on disk after the rerun: 18 -> the saved artifact now holds 6 extra rows
+distinct (seed, situation) pairs on disk: 12
+after a 'shift' evaluation with the same run_id: 30 rows in dev_run__physics_only.jsonl | fields that name the split or repeat in a row: []

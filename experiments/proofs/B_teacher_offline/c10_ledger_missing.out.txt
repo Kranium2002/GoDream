@@ -1,0 +1,23 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE provider in use: usage, quote and the estimator are stand-ins (no network); outputs are not evidence
+== first use: empty cache and no call log is allowed ==
+  [ok] no call log and no cache before the first request
+  [ok] the first request is sent and logged
+
+== budget spent, then the call log is deleted ==
+  [ok] 3 requests billed, 30,000 tokens quoted
+  [ok] the 4th request (budget spent) raises BudgetError: request 5a82395ddf03d8bdfda30b35815dba56452cd49627c0b0b790f702bca113f598 refused before any billable call: tokens already quoted for dispatched requests (30000)
+  [ok] the 4th request after the log was deleted raises LedgerMissingError: the call log <tmp>\tmpbbmw2ybk\calls.jsonl does not exist, but the cache <tmp>\tmpbbmw2ybk\cache holds e
+  [ok] the message names the missing log and the cache, and warns against an empty log
+  [ok] no billable call: still 3
+  [ok] a cached request after the log was deleted raises LedgerMissingError: the call log <tmp>\tmpbbmw2ybk\calls.jsonl does not exist, but the cache <tmp>\tmpbbmw2ybk\cache holds e
+  [ok] the call log was not re-created (the budget did not restart at zero)
+
+== an unvalidated response alone also counts as a cache entry ==
+  [ok] a request whose response is rejected raises ProviderResponseError: 'main' output 'mean' has 1 non-finite values. The billed response is kept unvalidated at <tmp>\tmpndgv_4dy\cache\unvalidated\17de01e
+  [ok] only unvalidated/<key>.npz exists
+  [ok] another request after the log was deleted raises LedgerMissingError: the call log <tmp>\tmpndgv_4dy\calls.jsonl does not exist, but the cache <tmp>\tmpndgv_4dy\cache holds e
+  [ok] an operator decision after the log was deleted raises LedgerMissingError: the call log <tmp>\tmpndgv_4dy\calls.jsonl does not exist, but the cache <tmp>\tmpndgv_4dy\cache holds e
+  [ok] still 1 billable call and no log
+
+RESULT: 0 failed check(s)

@@ -80,6 +80,33 @@ class InputEncoder:
                 columns.append((values - midpoint) / scale)
         return np.column_stack(columns)
 
+    def encode_one(self, situation: np.ndarray) -> np.ndarray:
+        """Encode one situation (S,) into float64 (D,): the per-decision path.
+
+        Uses the same expressions as :meth:`encode`, so the result is bitwise equal to the
+        corresponding row of ``encode(situation[None, :])``.
+        """
+        if len(situation) != len(self.variables):
+            raise ValueError(f"situation must have {len(self.variables)} values; got {len(situation)}")
+        encoded = np.zeros(len(self.names))
+        column = 0
+        for index, variable in enumerate(self.variables):
+            value = float(situation[index])
+            if variable.kind == "categorical":
+                n_levels = len(variable.levels)
+                if not value.is_integer() or not 0 <= int(value) < n_levels:
+                    raise ValueError(f"{variable.name}: {value} is not a valid level index")
+                encoded[column + int(value)] = 1.0
+                column += n_levels
+            else:
+                if not math.isfinite(value):
+                    raise ValueError(f"{variable.name}: value is not finite")
+                midpoint = 0.5 * (variable.low + variable.high)
+                scale = (variable.high - variable.low) / _UNIFORM_STD_DIVISOR
+                encoded[column] = (value - midpoint) / scale
+                column += 1
+        return encoded
+
     def describe(self) -> dict[str, Any]:
         """JSON-serializable description stored with every trained network."""
         return {

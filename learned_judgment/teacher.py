@@ -14,24 +14,41 @@ Lane contract (teacher lane, Person B)
 * The hosted regressor accepts only 1-D targets (E7 p1), so outcomes are combined per
   ``engine.multi_outcome_mode``:
 
-      stacked      ONE request for all non-constant ("active") outcomes, in long format with
-                   outcome-major blocks: block j repeats every training row with a final
-                   categorical column holding the outcome index k = active[j], and its target
-                   is (r[:, k] - mean_k) / std_k (training mean, std with ddof 0). Queries are
+      stacked      all non-constant ("active") outcomes in long format with outcome-major
+                   blocks: block j repeats every training row with a final categorical column
+                   holding the outcome index k = active[j], and its target is
+                   (r[:, k] - mean_k) / std_k (training mean, std with ddof 0). Queries are
                    expanded the same way; mean, median and every quantile are de-standardized
                    (value * std_k + mean_k). With one active outcome no column is added.
       per_outcome  one request per active outcome on the original features and raw residuals.
 
   An outcome whose training residuals are all identical is constant: its predicted residual
   is that constant with zero spread, and it is never sent.
+* Query rows are sent in consecutive chunks of at most ``tabpfn.max_query_rows_per_request``
+  rows (after stacking). Every chunk is its own request with the same training context, its own
+  key, gate, cache entry and call-log records; the answers are concatenated in order. A chunk
+  whose row count equals the number of quantile levels Q is sent with its last row duplicated
+  once (the extra answer row is dropped), so the provider's (Q, n) quantile layout can always be
+  told from the transposed one by shape; the key covers the rows exactly as sent.
 * Every request has a :func:`request_key`. A stored key is served from the
-  :class:`RequestCache` without any network call. An uncached request first reads account
-  usage and a cost quote (both free, E7 p2/p3), then is refused with :class:`BudgetError`
-  when the quote exceeds ``tabpfn.max_tokens_per_request``, when
-  ``tabpfn.project_token_budget`` is unset, when tokens already quoted for dispatched
-  requests plus this quote exceed that budget, or when the account's remaining tokens are
-  below the quote. An accepted request is logged as a dispatch BEFORE the billable call, sent
-  once (never retried here), cached completely, and logged again with its outcome.
+  :class:`RequestCache` without any network call. An uncached request runs entirely under the
+  cache's inter-process :class:`CacheLock` (<cache_dir>/.lock):
+
+      re-check the cache -> the call log must exist when the cache holds entries
+      (LedgerMissingError) -> the key must have no unresolved dispatch (UnresolvedDispatchError)
+      -> offline request checks -> the cache, unvalidated and call-log directories must be
+      writable with the configured persistence settings -> free usage read and cost quote
+      (E7 p2/p3) -> gate -> dispatch record -> ONE billable call -> raw response written to
+      unvalidated/<key>.npz -> validation -> validated entry <key>.npz -> unvalidated file
+      deleted -> completed record.
+
+  The gate refuses (:class:`BudgetError`) when the quote exceeds
+  ``tabpfn.max_tokens_per_request``, when ``tabpfn.project_token_budget`` is unset, when tokens
+  already quoted for dispatched requests plus this quote exceed that budget, when the account's
+  remaining tokens are below the quote, or when a configured
+  ``tabpfn.verified_request_limit_per_minute`` / ``_per_hour`` would be exceeded by this
+  dispatch. A request is never re-sent automatically: a dispatch without a later completed or
+  abandoned record blocks its key until an operator calls :meth:`TabPFNTeacher.resolve_unresolved`.
 * :class:`TabPFNProvider` is the only code that imports ``tabpfn_client``, lazily. It follows
   the pinned client 0.10.1 contract executed or read in experiments/proofs/E7_tabpfn_contract:
   categoricals are declared explicitly (no auto-detection below 100 rows), every
@@ -45,9 +62,10 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
@@ -61,9 +79,14 @@ from learned_judgment.teacher_cache import (
     QUOTE_FIELD,
     CacheCorruptError,
     CachedEntry,
+    CacheLock,
+    CacheLockedError,
     CallLog,
     RequestCache,
     canonical_json,
+    dispatch_times,
+    tokens_quoted,
+    unresolved_dispatches,
     update_digest,
     utc_timestamp,
 )
@@ -75,18 +98,24 @@ __all__ = [
     "STACKED_OUTCOME_COLUMN",
     "BudgetError",
     "CacheCorruptError",
+    "CacheLock",
+    "CacheLockedError",
     "CachedEntry",
     "CallLog",
+    "LedgerMissingError",
     "ProviderResponseError",
     "RequestCache",
     "TabPFNProvider",
     "TabPFNTeacher",
     "TeacherSettings",
+    "UnresolvedDispatchError",
     "budget_refusal_reasons",
     "constant_outcomes",
     "destandardize",
     "fill_outcomes",
+    "median_quantile_gap",
     "parse_main_output",
+    "rate_limit_refusal_reasons",
     "remaining_tokens",
     "request_key",
     "stack_query",
@@ -100,8 +129,9 @@ TASK = "regression"
 OUTPUT_TYPE = "main"
 MAIN_OUTPUT_KEYS = ("mean", "median", "mode", "quantiles")
 STACKED_OUTCOME_COLUMN = "stacked_outcome_index"
+RESOLVE_ACTIONS = ("adopt", "abandon")
 
-_KEY_SCHEMA = "learned-judgment/teacher-request-key/v1"
+_KEY_SCHEMA = "learned-judgment/teacher-request-key/v2"
 _PROJECT_ROOT = CONFIG_PATH.parent
 _AUTO_MODEL_PATHS = ("auto", "default")  # aliases that let the server choose the model
 # Constructor flags that change what the client sends besides tabpfn_config: tabpfn_systems
@@ -133,6 +163,15 @@ _LIMIT_PAIRS = (
 _UNLIMITED_USAGE_LIMIT = -1  # documented "unlimited" marker of usage_limit (E7 p2)
 _KEYED_SETTINGS = ("client_version", "model_path", "n_estimators", "random_state", "quantile_levels")
 _USAGE_COUNTERS = ("current_usage", "daily_tokens_used", "monthly_tokens_used")
+_BILLED_PHASES = ("fit", "predict", "received")  # provider phases at or after the network stage
+# Behaviours config.yaml names as switches; the teacher always performs them and refuses to be
+# configured otherwise (review finding T7).
+_ALWAYS_ON_SWITCHES = (
+    ("tabpfn.check_usage_before_uncached_request", "reads account usage before every uncached request"),
+    ("tabpfn.estimate_cost_before_uncached_request", "reads a cost quote before every uncached request"),
+    ("tabpfn.cache_requests_and_responses", "caches every request and response"),
+)
+_RATE_WINDOWS = (("verified_request_limit_per_minute", 60.0), ("verified_request_limit_per_hour", 3600.0))
 
 
 class BudgetError(RuntimeError):
@@ -141,6 +180,18 @@ class BudgetError(RuntimeError):
 
 class ProviderResponseError(RuntimeError):
     """A provider response (prediction, quote or usage) violated the verified contract."""
+
+
+class UnresolvedDispatchError(RuntimeError):
+    """The call log holds a dispatch of this key without a later completed or abandoned record.
+
+    The request may already have been billed. It is never re-sent automatically; an operator
+    decides with :meth:`TabPFNTeacher.resolve_unresolved` (``adopt`` or ``abandon``).
+    """
+
+
+class LedgerMissingError(RuntimeError):
+    """The call log (the project's spend ledger) is missing while the cache holds entries."""
 
 
 def _is_int(value: Any) -> bool:
@@ -161,9 +212,14 @@ class TeacherSettings:
     """Everything the teacher reads from config.yaml; no field has a default.
 
     Keyed into every request (they change what is sent): client_version, model_path,
-    n_estimators, random_state and quantile_levels. Not keyed: spread_levels (post-processing),
+    n_estimators, random_state and quantile_levels (the provider base URL is keyed too; it comes
+    from the installed client, not from here). Not keyed: spread_levels (post-processing),
     multi_outcome_mode (visible in the request arrays), cache_dir and call_log (paths),
-    max_tokens_per_request and project_token_budget (the gate).
+    max_tokens_per_request, project_token_budget and the verified request limits (the gate),
+    max_query_rows_per_request (each chunk's rows are keyed), lock_timeout_s and lock_poll_s.
+
+    lock_poll_s is ``persistence.replace_pause_s``: the pause between attempts on a file another
+    process holds, used here between attempts on the cache lock.
     """
 
     client_version: str
@@ -177,6 +233,11 @@ class TeacherSettings:
     call_log: Path
     max_tokens_per_request: int
     project_token_budget: int | None
+    max_query_rows_per_request: int
+    lock_timeout_s: float
+    lock_poll_s: float
+    verified_request_limit_per_minute: int | None
+    verified_request_limit_per_hour: int | None
 
     def __post_init__(self) -> None:
         problems: list[str] = []
@@ -184,7 +245,7 @@ class TeacherSettings:
             problems.append("client_version must be a non-empty string")
         if not isinstance(self.model_path, str) or not self.model_path or self.model_path in _AUTO_MODEL_PATHS:
             problems.append(f"model_path must name a pinned model, not {self.model_path!r}")
-        for name in ("n_estimators", "max_tokens_per_request"):
+        for name in ("n_estimators", "max_tokens_per_request", "max_query_rows_per_request"):
             value = getattr(self, name)
             if not _is_int(value) or value < 1:
                 problems.append(f"{name} must be a positive integer; got {value!r}")
@@ -194,6 +255,14 @@ class TeacherSettings:
             not _is_int(self.project_token_budget) or self.project_token_budget < 0
         ):
             problems.append(f"project_token_budget must be null or a non-negative integer; got {self.project_token_budget!r}")
+        for name, _ in _RATE_WINDOWS:
+            value = getattr(self, name)
+            if value is not None and (not _is_int(value) or value < 1):
+                problems.append(f"{name} must be null or a positive integer; got {value!r}")
+        for name in ("lock_timeout_s", "lock_poll_s"):
+            value = getattr(self, name)
+            if not _is_real(value) or not math.isfinite(value) or value <= 0:
+                problems.append(f"{name} must be a positive finite number of seconds; got {value!r}")
         if self.multi_outcome_mode not in MULTI_OUTCOME_MODES:
             problems.append(f"multi_outcome_mode must be one of {MULTI_OUTCOME_MODES}; got {self.multi_outcome_mode!r}")
         for name in ("cache_dir", "call_log"):
@@ -208,6 +277,12 @@ class TeacherSettings:
             levels = tuple(float(level) for level in levels)
             if any(not 0.0 < level < 1.0 for level in levels) or any(b <= a for a, b in zip(levels, levels[1:])):
                 problems.append(f"quantile_levels must be strictly increasing inside (0, 1); got {list(levels)}")
+        if levels and _is_int(self.max_query_rows_per_request) and self.max_query_rows_per_request <= len(levels):
+            # Structural: a chunk of exactly Q rows is padded to Q + 1 rows, which must still fit.
+            problems.append(
+                f"max_query_rows_per_request must exceed the number of quantile levels ({len(levels)}); "
+                f"got {self.max_query_rows_per_request}"
+            )
         spread = tuple(self.spread_levels) if isinstance(self.spread_levels, (list, tuple)) else ()
         if len(spread) != 2 or not all(_is_real(level) for level in spread):
             problems.append(f"spread_levels must be two numbers (low, high); got {self.spread_levels!r}")
@@ -222,12 +297,19 @@ class TeacherSettings:
             raise ValueError("invalid TeacherSettings: " + "; ".join(problems))
         object.__setattr__(self, "quantile_levels", levels)
         object.__setattr__(self, "spread_levels", spread)
+        object.__setattr__(self, "lock_timeout_s", float(self.lock_timeout_s))
+        object.__setattr__(self, "lock_poll_s", float(self.lock_poll_s))
 
     @classmethod
     def from_config(cls, config: Mapping[str, Any]) -> "TeacherSettings":
-        """Read ``tabpfn.*`` and ``engine.*`` with :func:`require`; ``tabpfn.project_token_budget``
-        with :func:`optional` (null means "no budget set", which refuses every uncached request).
+        """Read ``tabpfn.*``, ``engine.*`` and ``persistence.replace_pause_s`` with :func:`require`;
+        ``tabpfn.project_token_budget`` and ``tabpfn.verified_request_limit_per_minute`` /
+        ``_per_hour`` with :func:`optional` (a null budget refuses every uncached request; a null
+        limit is not enforced and every dispatch record says so).
 
+        ``tabpfn.check_usage_before_uncached_request``, ``tabpfn.estimate_cost_before_uncached_request``
+        and ``tabpfn.cache_requests_and_responses`` must be true: the teacher always does these
+        things, so any other value raises ConfigError instead of being silently ignored.
         Relative paths are resolved against the repository root (the directory of config.yaml).
         """
 
@@ -236,6 +318,12 @@ class TeacherSettings:
             if not _is_int(value):
                 raise ConfigError(f"config.yaml key {key!r} must be an integer; got {value!r}")
             return value
+
+        def seconds(key: str) -> float:
+            value = require(config, key)
+            if not _is_real(value):
+                raise ConfigError(f"config.yaml key {key!r} must be a number of seconds; got {value!r}")
+            return float(value)
 
         def text(key: str) -> str:
             value = require(config, key)
@@ -253,9 +341,19 @@ class TeacherSettings:
             value = Path(text(key))
             return value if value.is_absolute() else _PROJECT_ROOT / value
 
-        budget = optional(config, "tabpfn.project_token_budget")
-        if budget is not None and not _is_int(budget):
-            raise ConfigError(f"config.yaml key 'tabpfn.project_token_budget' must be null or an integer; got {budget!r}")
+        def optional_integer(key: str) -> int | None:
+            value = optional(config, key)
+            if value is not None and not _is_int(value):
+                raise ConfigError(f"config.yaml key {key!r} must be null or an integer; got {value!r}")
+            return value
+
+        for key, behaviour in _ALWAYS_ON_SWITCHES:
+            value = require(config, key)
+            if value is not True:
+                raise ConfigError(
+                    f"config.yaml key {key!r} must be true; got {value!r}. The teacher always {behaviour}; "
+                    f"this cannot be switched off"
+                )
         spread = numbers("engine.spread_levels")
         if len(spread) != 2:
             raise ConfigError(f"config.yaml key 'engine.spread_levels' must hold exactly two levels; got {list(spread)}")
@@ -271,7 +369,12 @@ class TeacherSettings:
                 cache_dir=path("tabpfn.cache_dir"),
                 call_log=path("tabpfn.call_log"),
                 max_tokens_per_request=integer("tabpfn.max_tokens_per_request"),
-                project_token_budget=budget,
+                project_token_budget=optional_integer("tabpfn.project_token_budget"),
+                max_query_rows_per_request=integer("tabpfn.max_query_rows_per_request"),
+                lock_timeout_s=seconds("tabpfn.lock_timeout_s"),
+                lock_poll_s=seconds("persistence.replace_pause_s"),
+                verified_request_limit_per_minute=optional_integer("tabpfn.verified_request_limit_per_minute"),
+                verified_request_limit_per_hour=optional_integer("tabpfn.verified_request_limit_per_hour"),
             )
         except ValueError as exc:
             raise ConfigError(f"config.yaml tabpfn/engine settings are invalid: {exc}") from exc
@@ -293,17 +396,17 @@ def _tabpfn_config(settings: TeacherSettings, categorical_indices: Sequence[int]
     }
 
 
-def _request_description(
-    settings: TeacherSettings, categorical_indices: Sequence[int], column_names: Sequence[str]
-) -> dict[str, Any]:
+def _request_description(settings: TeacherSettings, categorical_indices: Sequence[int], base_url: str) -> dict[str, Any]:
+    """Everything keyed besides the arrays. Column names are NOT keyed: the provider uploads
+    numpy arrays, so the server never sees them (they are kept in the cache metadata)."""
     return {
         "schema": _KEY_SCHEMA,
+        "base_url": base_url,
         "client_version": settings.client_version,
         "task": TASK,
         "tabpfn_config": _tabpfn_config(settings, categorical_indices),
         "request_flags": dict(_PINNED_REQUEST_FLAGS),
         "predict_params": {"output_type": OUTPUT_TYPE, "quantiles": list(settings.quantile_levels)},
-        "column_names": list(column_names),
     }
 
 
@@ -316,20 +419,19 @@ def _float64(name: str, value: Any, ndim: int) -> np.ndarray:
     return array
 
 
-def _check_request_columns(
-    n_features: int, categorical_indices: Sequence[int], column_names: Sequence[str]
-) -> tuple[tuple[int, ...], tuple[str, ...]]:
-    names = tuple(column_names)
-    if len(names) != n_features or not all(isinstance(name, str) and name for name in names):
-        raise ValueError(f"column_names must be {n_features} non-empty strings; got {list(names)}")
-    if len(set(names)) != len(names):
-        raise ValueError(f"column_names must be unique; got {list(names)}")
+def _check_categorical(n_features: int, categorical_indices: Sequence[int]) -> tuple[int, ...]:
     indices = tuple(categorical_indices)
     if not all(_is_int(index) for index in indices):
         raise ValueError(f"categorical_indices must be integers; got {list(indices)}")
     if any(b <= a for a, b in zip(indices, indices[1:])) or any(not 0 <= i < n_features for i in indices):
         raise ValueError(f"categorical_indices must be strictly increasing inside [0, {n_features}); got {list(indices)}")
-    return indices, names
+    return indices
+
+
+def _check_base_url(base_url: Any) -> str:
+    if not isinstance(base_url, str) or not base_url:
+        raise ValueError(f"base_url must be a non-empty string; got {base_url!r}")
+    return base_url
 
 
 def _check_request_arrays(x_train: Any, y_train: Any, x_query: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -350,31 +452,32 @@ def request_key(
     y_train: np.ndarray,
     x_query: np.ndarray,
     categorical_indices: Sequence[int],
-    column_names: Sequence[str],
+    base_url: str,
 ) -> str:
     """sha256 hex key of one provider request (recipe of proof B_students_eval_contract/p09_hash).
 
     Args:
         x_train:             float64 (n, F), the training features exactly as sent.
         y_train:             float64 (n,), the training target exactly as sent.
-        x_query:             float64 (m, F), the query rows exactly as sent.
+        x_query:             float64 (m, F), the query rows exactly as sent (including a padding row).
         categorical_indices: strictly increasing column indices declared categorical.
-        column_names:        F unique names of the columns, in order.
+        base_url:            the provider URL the request goes to (TabPFNProvider.base_url()).
 
-    Keyed: key schema version, client version, task, the tabpfn_config sent (model_path,
-    n_estimators, random_state, categorical indices, ignore_pretraining_limits), the pinned
-    request flags, predict params (output_type "main" and the exact quantile list, in order),
-    column names, and canonical digests of x_train, y_train and x_query (dtype, shape,
-    C-order little-endian bytes, -0.0 folded to +0.0). Not keyed: paths, budgets, spread
-    levels, the multi-outcome mode (visible in the arrays), and the base URL.
+    Keyed: key schema version (v2), base URL, client version, task, the tabpfn_config sent
+    (model_path, n_estimators, random_state, categorical indices, ignore_pretraining_limits),
+    the pinned request flags, predict params (output_type "main" and the exact quantile list, in
+    order) and canonical digests of x_train, y_train and x_query (dtype, shape, C-order
+    little-endian bytes, -0.0 folded to +0.0). Not keyed: column names (never sent), paths,
+    budgets, rate limits, spread levels and the multi-outcome mode (visible in the arrays).
     """
     x_train, y_train, x_query = _check_request_arrays(x_train, y_train, x_query)
-    indices, names = _check_request_columns(x_train.shape[1], categorical_indices, column_names)
+    indices = _check_categorical(x_train.shape[1], categorical_indices)
+    base_url = _check_base_url(base_url)
     digest = hashlib.sha256()
     digest.update(_KEY_SCHEMA.encode("utf-8") + b"\x00")
     for tag, array in (("x_train", x_train), ("y_train", y_train), ("x_query", x_query)):
         update_digest(digest, array, tag)
-    digest.update(canonical_json(_request_description(settings, indices, names)).encode("utf-8"))
+    digest.update(canonical_json(_request_description(settings, indices, base_url)).encode("utf-8"))
     return digest.hexdigest()
 
 
@@ -514,8 +617,9 @@ def parse_main_output(raw: Any, *, n_rows: int, quantile_levels: Sequence[float]
     "one list for each quantile" array (Q, n) (estimator.py ``_FULL_OUTPUT_ROW_AXIS["quantiles"]
     == 1``). This function transposes that documented layout and checks exact keys, exact
     shapes, finiteness and non-decreasing quantiles along the level axis. Nothing is sorted or
-    repaired: any violation raises ProviderResponseError. (When n == Q the orientation cannot be
-    told from the shape; the documented layout is assumed.)
+    repaired: any violation raises ProviderResponseError. ``n_rows == Q`` raises ValueError,
+    because (Q, n) and (n, Q) then have the same shape; the teacher never sends such a request
+    (it pads it with one duplicated row).
 
     Returns:
         {"mean": (n,), "median": (n,), "mode": (n,), "quantiles": (n, Q)}, all float64.
@@ -523,6 +627,8 @@ def parse_main_output(raw: Any, *, n_rows: int, quantile_levels: Sequence[float]
     q = len(quantile_levels)
     if n_rows < 1 or q < 1:
         raise ValueError(f"n_rows and the number of quantile levels must be >= 1; got {n_rows}, {q}")
+    if n_rows == q:
+        raise ValueError(f"n_rows == {q} quantile levels: the quantile layout cannot be told from its shape")
     if not isinstance(raw, Mapping):
         raise ProviderResponseError(f"'main' output must be a dict; got {type(raw).__name__}")
     keys = set(raw)
@@ -549,6 +655,19 @@ def parse_main_output(raw: Any, *, n_rows: int, quantile_levels: Sequence[float]
         raise ProviderResponseError(f"quantiles decrease along the level axis in {crossing} of {n_rows} rows")
     arrays["quantiles"] = quantiles
     return arrays
+
+
+def median_quantile_gap(arrays: Mapping[str, np.ndarray], quantile_levels: Sequence[float]) -> float | None:
+    """max |median - quantile(0.5)| over the rows of a validated response; None when 0.5 is not a level.
+
+    Recorded, never enforced: whether the server's median equals its 0.5 quantile is unverified
+    until the first real request.
+    """
+    levels = [float(level) for level in quantile_levels]
+    if 0.5 not in levels:
+        return None
+    column = np.asarray(arrays["quantiles"])[:, levels.index(0.5)]
+    return float(np.max(np.abs(np.asarray(arrays["median"]) - column)))
 
 
 def remaining_tokens(usage: Mapping[str, Any]) -> int | None:
@@ -608,6 +727,32 @@ def budget_refusal_reasons(
     return reasons
 
 
+def rate_limit_refusal_reasons(
+    *,
+    dispatch_times: Sequence[datetime],
+    now: datetime,
+    per_minute: int | None,
+    per_hour: int | None,
+) -> tuple[list[str], dict[str, int]]:
+    """Reasons to refuse a dispatch at ``now`` given earlier dispatch times, and the window counts.
+
+    A limit of None is not enforced. A dispatch is refused when the dispatches of the last 60 s
+    (3600 s) plus this one would exceed tabpfn.verified_request_limit_per_minute (_per_hour).
+    Dispatch times later than ``now`` count as recent.
+
+    Returns:
+        (reasons, {"dispatches_last_minute": int, "dispatches_last_hour": int}).
+    """
+    counts: dict[str, int] = {}
+    reasons: list[str] = []
+    for (name, window_s), limit, label in zip(_RATE_WINDOWS, (per_minute, per_hour), ("minute", "hour")):
+        recent = sum(1 for when in dispatch_times if now - when < timedelta(seconds=window_s))
+        counts[f"dispatches_last_{label}"] = recent
+        if limit is not None and recent + 1 > limit:
+            reasons.append(f"{recent} dispatches in the last {label} plus this one exceed tabpfn.{name} {limit}")
+    return reasons, counts
+
+
 def _json_safe(value: Any) -> Any:
     """Provider metadata as strict JSON: non-finite floats become {"non_finite": repr}, unknown types str."""
     if value is None or isinstance(value, (bool, str)):
@@ -625,6 +770,19 @@ def _json_safe(value: Any) -> Any:
     return str(value)
 
 
+def _guarded(read: Callable[[], Any]) -> Any:
+    """``read()``, or {"error": text} when it raises: metadata read after a billed call must never
+    cost the response itself."""
+    try:
+        return read()
+    except Exception as exc:
+        return {"error": f"{type(exc).__name__}: {exc}"}
+
+
+def _error_text(exc: BaseException) -> str:
+    return f"{type(exc).__name__}: {exc}"
+
+
 # --------------------------------------------------------------------------------------
 # Provider (the only code that imports tabpfn_client)
 # --------------------------------------------------------------------------------------
@@ -633,13 +791,16 @@ def _json_safe(value: Any) -> Any:
 class TabPFNProvider:
     """Hosted TabPFN regressor behind the pinned tabpfn-client.
 
-    ``connect``, ``usage`` and ``quote`` are free. ``predict_main`` is billable (at least
-    10,000 tokens per call on v3.5, E7 p3) and is only ever called by the teacher after its gate.
+    ``connect``, ``usage`` and ``quote`` are free; ``base_url``, ``outgoing_config`` and
+    ``validate_request`` are offline. ``predict_raw`` (and ``predict_main``, which validates its
+    answer) is billable (at least 10,000 tokens per call on v3.5, E7 p3) and is only ever called
+    by the teacher after its gate.
 
     Attributes:
-        prediction_calls_started: number of predict_main calls that reached the network stage.
-        last_phase: stage of the latest predict_main ("fit", "predict", "validate_response",
-            "done"), so a caller can log where a failure happened.
+        prediction_calls_started: number of billable calls that reached the network stage.
+        last_phase: stage of the latest billable call ("validate_request", "fit", "predict",
+            "received", then "validate_response" and "done" in predict_main), so a caller can
+            log where a failure happened.
     """
 
     def __init__(self, settings: TeacherSettings) -> None:
@@ -667,6 +828,13 @@ class TabPFNProvider:
     def _require_connected(self) -> None:
         if not self._connected:
             raise RuntimeError("TabPFNProvider.connect() must succeed before any provider call")
+
+    def base_url(self) -> str:
+        """The URL the pinned client sends requests to (offline): ``ServiceClient.base_url``, which
+        the client sets from TABPFN_CLIENT_API_URL at import. Keyed into every request."""
+        from tabpfn_client.client import ServiceClient
+
+        return _check_base_url(str(ServiceClient.base_url))
 
     def usage(self) -> dict[str, Any]:
         """Account usage (free read). Only allow-listed counters, limits and reset times:
@@ -755,7 +923,7 @@ class TabPFNProvider:
             raise RuntimeError(f"the client would send tabpfn_config {sent}, not the keyed settings {expected}")
         return regressor, sent
 
-    def predict_main(
+    def validate_request(
         self,
         x_train: np.ndarray,
         y_train: np.ndarray,
@@ -763,27 +931,17 @@ class TabPFNProvider:
         *,
         categorical_indices: Sequence[int],
         quantile_levels: Sequence[float],
-    ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
-        """BILLABLE: one fit and one ``predict(output_type="main", quantiles=levels)``.
-
-        Args:
-            x_train: float64 (n, F), n >= 2, finite.
-            y_train: float64 (n,), finite.
-            x_query: float64 (m, F), m >= 1, finite.
-            categorical_indices: strictly increasing columns declared categorical.
-            quantile_levels: must equal settings.quantile_levels (the keyed list).
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, tuple[int, ...], tuple[float, ...]]:
+        """Every offline check of one request (no network): float64 arrays x_train (n, F) with
+        n >= 2, y_train (n,), x_query (m, F) with m >= 1 and m != Q, all finite; valid categorical
+        indices; quantile levels equal to the keyed ones; and the client's outgoing tabpfn_config
+        equal to the keyed one.
 
         Returns:
-            ({"mean": (m,), "median": (m,), "mode": (m,), "quantiles": (m, Q)}, metadata) where
-            metadata holds the fitted model id, server timings, response metadata, the
-            tabpfn_config sent, base URL, client version and wall-clock seconds.
+            (x_train, y_train, x_query, categorical indices, quantile levels).
         """
-        self._require_connected()
-        self.last_phase = "validate_request"
         x_train, y_train, x_query = _check_request_arrays(x_train, y_train, x_query)
-        indices, _ = _check_request_columns(
-            x_train.shape[1], categorical_indices, [str(i) for i in range(x_train.shape[1])]
-        )
+        indices = _check_categorical(x_train.shape[1], categorical_indices)
         if x_train.shape[0] < MIN_TRAIN_ROWS or x_query.shape[0] < 1:
             raise ValueError(f"need >= {MIN_TRAIN_ROWS} training rows and >= 1 query row; got {x_train.shape}, {x_query.shape}")
         if not (np.all(np.isfinite(x_train)) and np.all(np.isfinite(y_train)) and np.all(np.isfinite(x_query))):
@@ -791,6 +949,41 @@ class TabPFNProvider:
         levels = tuple(float(level) for level in quantile_levels)
         if levels != self.settings.quantile_levels:
             raise ValueError(f"quantile_levels {list(levels)} differ from the keyed {list(self.settings.quantile_levels)}")
+        if x_query.shape[0] == len(levels):
+            raise ValueError(
+                f"{x_query.shape[0]} query rows equal the number of quantile levels: the response layout would be "
+                f"ambiguous; pad the query with one duplicated row"
+            )
+        self.outgoing_config(indices)
+        return x_train, y_train, x_query, indices, levels
+
+    def predict_raw(
+        self,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        x_query: np.ndarray,
+        *,
+        categorical_indices: Sequence[int],
+        quantile_levels: Sequence[float],
+    ) -> tuple[Any, dict[str, Any]]:
+        """BILLABLE: one fit and one ``predict(output_type="main", quantiles=levels)``; the answer
+        is returned exactly as the client produced it, NOT validated.
+
+        Args:
+            x_train, y_train, x_query, categorical_indices, quantile_levels: see :meth:`validate_request`.
+
+        Returns:
+            (raw, metadata): ``raw`` as returned by the client (documented: a dict with mean,
+            median, mode (m,) and quantiles (Q, m)); ``metadata`` (strict JSON) holds the fitted
+            model id, server timings, response metadata, the tabpfn_config sent, base URL, client
+            version and wall-clock seconds. A metadata item that cannot be read is recorded as
+            {"error": text} instead of raising, so the response is never lost.
+        """
+        self._require_connected()
+        self.last_phase = "validate_request"
+        x_train, y_train, x_query, indices, levels = self.validate_request(
+            x_train, y_train, x_query, categorical_indices=categorical_indices, quantile_levels=quantile_levels
+        )
         import tabpfn_client
         from tabpfn_client.client import ServiceClient
 
@@ -804,19 +997,41 @@ class TabPFNProvider:
         start = time.perf_counter()
         raw = regressor.predict(x_query, output_type=OUTPUT_TYPE, quantiles=list(levels))
         predict_s = time.perf_counter() - start
+        self.last_phase = "received"
+        metadata = _json_safe(
+            {
+                "model_id": _guarded(lambda: str(regressor.model_id_)),
+                "timings": _guarded(lambda: _json_safe(regressor.get_timings())),
+                # Private attribute of the pinned 0.10.1 client: the server's response metadata (E7).
+                "response_metadata": _guarded(lambda: _json_safe(dict(regressor._last_meta))),
+                "tabpfn_config_sent": sent,
+                "api_mode": "sync",
+                "base_url": _guarded(lambda: str(ServiceClient.base_url)),
+                "client_version": _guarded(lambda: str(tabpfn_client.__version__)),
+                "wall_s": {"fit": fit_s, "predict": predict_s},
+            }
+        )
+        return raw, metadata
+
+    def predict_main(
+        self,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        x_query: np.ndarray,
+        *,
+        categorical_indices: Sequence[int],
+        quantile_levels: Sequence[float],
+    ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+        """BILLABLE: :meth:`predict_raw` followed by :func:`parse_main_output`.
+
+        Returns ({"mean": (m,), "median": (m,), "mode": (m,), "quantiles": (m, Q)}, metadata).
+        The teacher does not use this method: it stores the raw answer before validating it.
+        """
+        raw, metadata = self.predict_raw(
+            x_train, y_train, x_query, categorical_indices=categorical_indices, quantile_levels=quantile_levels
+        )
         self.last_phase = "validate_response"
-        arrays = parse_main_output(raw, n_rows=x_query.shape[0], quantile_levels=levels)
-        metadata = {
-            "model_id": str(regressor.model_id_),
-            "timings": _json_safe(regressor.get_timings()),
-            # Private attribute of the pinned 0.10.1 client: the server's response metadata (E7).
-            "response_metadata": _json_safe(dict(regressor._last_meta)),
-            "tabpfn_config_sent": sent,
-            "api_mode": "sync",
-            "base_url": str(ServiceClient.base_url),
-            "client_version": str(tabpfn_client.__version__),
-            "wall_s": {"fit": fit_s, "predict": predict_s},
-        }
+        arrays = parse_main_output(raw, n_rows=int(np.asarray(x_query).shape[0]), quantile_levels=quantile_levels)
         self.last_phase = "done"
         return arrays, metadata
 
@@ -826,13 +1041,42 @@ class TabPFNProvider:
 # --------------------------------------------------------------------------------------
 
 
+@dataclass(frozen=True)
+class _Request:
+    """One provider request as the teacher sends it (one chunk of query rows)."""
+
+    key: str
+    x_train: np.ndarray  # (n, F) exactly as sent
+    y_train: np.ndarray  # (n,) exactly as sent
+    x_sent: np.ndarray  # (m + padded_rows, F) exactly as sent
+    kept_rows: int  # m: answer rows returned to the caller
+    categorical_indices: tuple[int, ...]
+    column_names: tuple[str, ...]
+    base_url: str
+    context: dict[str, Any]
+    chunk: dict[str, int]
+    base: dict[str, Any]  # fields of every call-log record of this request
+
+    @property
+    def padded_rows(self) -> int:
+        return int(self.x_sent.shape[0] - self.kept_rows)
+
+    def arrays(self) -> dict[str, np.ndarray]:
+        return {"x_train": self.x_train, "y_train": self.y_train, "x_query": self.x_sent}
+
+
+def _same_path(a: Path, b: Path) -> bool:
+    return os.path.normcase(os.path.abspath(a)) == os.path.normcase(os.path.abspath(b))
+
+
 class TabPFNTeacher:
     """Residual model backed by the hosted TabPFN regressor; implements ResidualModel.
 
     Attributes:
         last_request_hash:   key of the last request behind the latest prediction (None when
                              every outcome was constant or nothing was predicted yet).
-        last_request_hashes: every key used by the latest prediction, in request order.
+        last_request_hashes: every key used by the latest prediction, in request order (one per
+                             chunk and per request of the per_outcome mode).
     """
 
     def __init__(
@@ -852,16 +1096,40 @@ class TabPFNTeacher:
         differing = [name for name in _KEYED_SETTINGS if getattr(provider.settings, name) != getattr(settings, name)]
         if differing:
             raise ValueError(f"provider and teacher settings differ in keyed fields {differing}")
+        if not _same_path(cache.directory, settings.cache_dir) or not _same_path(call_log.path, settings.call_log):
+            raise ValueError(
+                f"cache directory {cache.directory} and call log {call_log.path} must be the configured "
+                f"{settings.cache_dir} and {settings.call_log}"
+            )
+        lock = CacheLock(cache.lock_path, timeout_s=settings.lock_timeout_s, poll_s=settings.lock_poll_s)
+        if call_log.lock.identity != lock.identity:
+            raise ValueError(f"the call log must lock {cache.lock_path}, the cache's lock file; it locks {call_log.lock.path}")
         self.layout = layout
         self.settings = settings
         self.provider = provider
         self.cache = cache
         self.call_log = call_log
+        self._lock = lock
         self._clock = clock
         self._features: np.ndarray | None = None
         self._residuals: np.ndarray | None = None
         self.last_request_hash: str | None = None
         self.last_request_hashes: tuple[str, ...] = ()
+
+    @classmethod
+    def from_settings(
+        cls,
+        layout: FeatureLayout,
+        settings: TeacherSettings,
+        *,
+        provider: TabPFNProvider,
+        clock: Callable[[], datetime],
+    ) -> "TabPFNTeacher":
+        """A teacher with the configured cache, call log and the cache's lock (settings.cache_dir/.lock)."""
+        cache = RequestCache(settings.cache_dir)
+        lock = CacheLock(cache.lock_path, timeout_s=settings.lock_timeout_s, poll_s=settings.lock_poll_s)
+        call_log = CallLog(settings.call_log, clock=clock, lock=lock)
+        return cls(layout, settings, provider=provider, cache=cache, call_log=call_log, clock=clock)
 
     # ----- ResidualModel -------------------------------------------------------------
 
@@ -898,10 +1166,12 @@ class TabPFNTeacher:
     def predict_residual_distribution(self, query_features: np.ndarray) -> ResidualDistribution:
         """Residual distribution for query rows (m, F): mean/median/spread (m, K), quantiles (m, K, Q).
 
-        One request in "stacked" mode, one per non-constant outcome in "per_outcome" mode; each
-        is served from the cache when stored. Raises RuntimeError before fit(), ValueError on
-        invalid rows, BudgetError when the gate refuses, ProviderResponseError on a contract
-        violation and CacheCorruptError on a damaged cache entry.
+        "stacked" mode makes one request per chunk of at most tabpfn.max_query_rows_per_request
+        stacked rows; "per_outcome" mode does the same for each non-constant outcome. Each
+        request is served from the cache when stored. Raises RuntimeError before fit(),
+        ValueError on invalid rows, BudgetError when the gate refuses, UnresolvedDispatchError /
+        LedgerMissingError / CacheLockedError when a request cannot safely be decided,
+        ProviderResponseError on a contract violation and CacheCorruptError on a damaged entry.
         """
         if self._features is None or self._residuals is None:
             raise RuntimeError("fit() must be called before predicting")
@@ -930,7 +1200,61 @@ class TabPFNTeacher:
         self.last_request_hash = keys[-1] if keys else None
         return distribution
 
+    # ----- operator decisions ----------------------------------------------------------
+
+    def resolve_unresolved(self, key: str, *, action: str) -> dict[str, Any]:
+        """Resolve a dispatch of ``key`` that has no completed or abandoned record. No network call.
+
+        Args:
+            key:    the request key named by UnresolvedDispatchError.
+            action: "adopt": validate the response stored in unvalidated/<key>.npz now (or take
+                    the validated <key>.npz when it already exists); when valid, cache it and log
+                    "completed" with adopted true. An invalid or missing response logs
+                    "adopt_rejected" and raises; the dispatch stays unresolved.
+                    "abandon": log "abandoned" (a new dispatch of the key is allowed afterwards)
+                    and move any unvalidated response to unvalidated/abandoned/ as evidence.
+
+        Returns:
+            The call-log record written for the decision.
+
+        Raises:
+            ValueError for an unknown action or a key without an unresolved dispatch;
+            ProviderResponseError / CacheCorruptError / ValueError when adoption is rejected.
+        """
+        if action not in RESOLVE_ACTIONS:
+            raise ValueError(f"action must be one of {RESOLVE_ACTIONS}; got {action!r}")
+        self.cache.paths(key)  # validates the key format
+        with self._lock:
+            self._require_ledger()
+            dispatch = unresolved_dispatches(self.call_log.read()).get(key)
+            if dispatch is None:
+                raise ValueError(f"the call log {self.call_log.path} has no unresolved dispatch of request {key}")
+            base = {
+                name: dispatch.get(name)
+                for name in ("key", "skill", "mode", "outcomes", "n_train", "n_query", "n_features", "chunk", "padded_rows")
+            }
+            base.update({"operator_action": action, "dispatched_utc": dispatch.get("timestamp_utc")})
+            quote_tokens = dispatch.get(QUOTE_FIELD)
+            if action == "abandon":
+                moved = self.cache.abandon_unvalidated(key, self._now().strftime("%Y%m%dT%H%M%S%fZ"))
+                record = {
+                    **base,
+                    "event": "abandoned",
+                    "cache_hit": False,
+                    DISPATCH_FLAG: False,
+                    QUOTE_FIELD: quote_tokens,
+                    "unvalidated_moved_to": None if moved is None else str(moved),
+                }
+                self.call_log.append(record)
+                return record
+            return self._adopt(key, base, quote_tokens)
+
     # ----- internals -----------------------------------------------------------------
+
+    def _now(self) -> datetime:
+        now = self._clock()
+        utc_timestamp(lambda: now)  # raises unless timezone-aware UTC
+        return now
 
     def _check_features(self, name: str, values: np.ndarray) -> np.ndarray:
         try:
@@ -959,7 +1283,7 @@ class TabPFNTeacher:
         if self.settings.multi_outcome_mode == "stacked":
             x_train, y_train, mean, std = stack_training(self._features, self._residuals, active)
             extra = len(active) > 1
-            arrays = self._request(
+            arrays = self._request_rows(
                 x_train,
                 y_train,
                 stack_query(query, active),
@@ -973,7 +1297,7 @@ class TabPFNTeacher:
                 for name in ("mean", "median", "quantiles")
             )
         parts = [
-            self._request(
+            self._request_rows(
                 self._features,
                 np.ascontiguousarray(self._residuals[:, index]),
                 query,
@@ -995,7 +1319,7 @@ class TabPFNTeacher:
             "standardization": standardization,
         }
 
-    def _request(
+    def _request_rows(
         self,
         x_train: np.ndarray,
         y_train: np.ndarray,
@@ -1006,109 +1330,461 @@ class TabPFNTeacher:
         context: dict[str, Any],
         keys: list[str],
     ) -> dict[str, np.ndarray]:
-        """Serve one request from the cache, or gate, send, cache and log it. Returns the
-        response arrays {"mean": (m,), "median": (m,), "mode": (m,), "quantiles": (m, Q)}."""
+        """Send x_query (rows, F) in consecutive chunks of at most max_query_rows_per_request rows,
+        all with the same training context; returns the answers concatenated in row order:
+        {"mean": (rows,), "median": (rows,), "mode": (rows,), "quantiles": (rows, Q)}."""
+        cap = self.settings.max_query_rows_per_request
+        total = int(x_query.shape[0])
+        bounds = [(start, min(start + cap, total)) for start in range(0, total, cap)]
+        parts = [
+            self._request(
+                x_train,
+                y_train,
+                np.ascontiguousarray(x_query[start:stop]),
+                categorical_indices=categorical_indices,
+                column_names=column_names,
+                context=context,
+                chunk={"index": index, "count": len(bounds), "first_row": start, "stop_row": stop, "total_rows": total},
+                keys=keys,
+            )
+            for index, (start, stop) in enumerate(bounds)
+        ]
+        return {name: np.concatenate([part[name] for part in parts], axis=0) for name in MAIN_OUTPUT_KEYS}
+
+    def _request(
+        self,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        x_query: np.ndarray,
+        *,
+        categorical_indices: tuple[int, ...],
+        column_names: tuple[str, ...],
+        context: dict[str, Any],
+        chunk: dict[str, int],
+        keys: list[str],
+    ) -> dict[str, np.ndarray]:
+        """Serve one request from the cache, or gate, send, store and log it. Returns the answer
+        rows of ``x_query`` (m, F): {"mean": (m,), "median": (m,), "mode": (m,), "quantiles": (m, Q)}."""
+        rows = int(x_query.shape[0])
+        if len(column_names) != x_train.shape[1]:
+            raise ValueError(f"{len(column_names)} column names for {x_train.shape[1]} columns")
+        # m == Q would make the (Q, m) quantile layout indistinguishable from (m, Q): send one more row.
+        if rows == len(self.settings.quantile_levels):
+            x_sent = np.ascontiguousarray(np.concatenate([x_query, x_query[-1:]], axis=0))
+        else:
+            x_sent = x_query
+        base_url = self.provider.base_url()
         key = request_key(
             settings=self.settings,
             x_train=x_train,
             y_train=y_train,
-            x_query=x_query,
+            x_query=x_sent,
             categorical_indices=categorical_indices,
-            column_names=column_names,
+            base_url=base_url,
         )
-        shape = {"n_train": int(x_train.shape[0]), "n_query": int(x_query.shape[0]), "n_features": int(x_train.shape[1])}
-        base = {"key": key, "skill": context["skill"], "mode": context["mode"], "outcomes": context["outcomes"], **shape}
-
+        base = {
+            "key": key,
+            "skill": context["skill"],
+            "mode": context["mode"],
+            "outcomes": context["outcomes"],
+            "n_train": int(x_train.shape[0]),
+            "n_query": int(x_sent.shape[0]),
+            "n_features": int(x_train.shape[1]),
+            "chunk": chunk,
+            "padded_rows": int(x_sent.shape[0] - rows),
+        }
+        request = _Request(
+            key=key,
+            x_train=x_train,
+            y_train=y_train,
+            x_sent=x_sent,
+            kept_rows=rows,
+            categorical_indices=tuple(categorical_indices),
+            column_names=tuple(column_names),
+            base_url=base_url,
+            context=context,
+            chunk=chunk,
+            base=base,
+        )
         entry = self.cache.get(key)
-        if entry is not None:
-            arrays = self._check_cached(entry, x_train, y_train, x_query)
-            self.call_log.append({**base, "event": "cache_hit", "cache_hit": True, DISPATCH_FLAG: False, QUOTE_FIELD: None})
-            keys.append(key)
-            return arrays
+        arrays = self._serve_cached(request, entry, after_lock_wait=False) if entry is not None else self._uncached(request)
+        keys.append(key)
+        return {name: np.ascontiguousarray(array[:rows]) for name, array in arrays.items()}
 
-        usage_before = self.provider.usage()
-        quote = self.provider.quote(shape["n_train"], shape["n_query"], shape["n_features"])
-        tokens = quote["estimated_cost"]
-        spent = self.call_log.tokens_quoted_for_billed_calls()
-        gate = {QUOTE_FIELD: tokens, "quote": quote, "usage_before": usage_before, "tokens_quoted_before": spent}
-        reasons = budget_refusal_reasons(
-            quote_tokens=tokens,
-            max_tokens_per_request=self.settings.max_tokens_per_request,
-            project_token_budget=self.settings.project_token_budget,
-            tokens_already_quoted=spent,
-            remaining_account_tokens=remaining_tokens(usage_before),
-        )
-        if reasons:
-            self.call_log.append({**base, **gate, "event": "refused", "cache_hit": False, DISPATCH_FLAG: False, "reasons": reasons})
-            raise BudgetError(f"request {key} refused before any billable call: " + "; ".join(reasons))
+    def _require_ledger(self) -> None:
+        """The call log is the project's spend ledger: it must exist once the cache holds anything."""
+        if not self.call_log.exists() and self.cache.has_entries():
+            raise LedgerMissingError(
+                f"the call log {self.call_log.path} does not exist, but the cache {self.cache.directory} holds "
+                f"entries: the project budget cannot be counted. Restore the call log (for example from a backup) "
+                f"before any further teacher request. Do not create an empty one: that would restart the "
+                f"project budget at zero."
+            )
 
-        self.call_log.append({**base, **gate, "event": "dispatch", "cache_hit": False, DISPATCH_FLAG: True})
+    def _append(self, record: dict[str, Any]) -> None:
+        with self._lock:
+            self._require_ledger()
+            self.call_log.append(record)
+
+    def _serve_cached(self, request: _Request, entry: CachedEntry, *, after_lock_wait: bool) -> dict[str, np.ndarray]:
+        arrays = self._check_cached(entry, request)
+        record = {**request.base, "event": "cache_hit", "cache_hit": True, DISPATCH_FLAG: False, QUOTE_FIELD: None}
+        if after_lock_wait:
+            record["found_after_lock_wait"] = True
+        self._append(record)
+        return arrays
+
+    def _request_meta(self, request: _Request) -> dict[str, Any]:
+        return {
+            "description": _request_description(self.settings, request.categorical_indices, request.base_url),
+            "categorical_indices": list(request.categorical_indices),
+            "base_url": request.base_url,
+            "column_names": list(request.column_names),
+            "n_train": request.base["n_train"],
+            "n_query": request.base["n_query"],
+            "n_features": request.base["n_features"],
+            "padded_rows": request.padded_rows,
+            "chunk": request.chunk,
+            "teacher_context": request.context,
+        }
+
+    def _uncached(self, request: _Request) -> dict[str, np.ndarray]:
+        """The whole uncached path under the cache lock; returns the answer to every sent row."""
+        with self._lock:
+            entry = self.cache.get(request.key)
+            if entry is not None:  # another process stored it while this one waited for the lock
+                return self._serve_cached(request, entry, after_lock_wait=True)
+            self._require_ledger()
+            records = self.call_log.read()
+            dispatch = unresolved_dispatches(records).get(request.key)
+            if dispatch is not None:
+                raise UnresolvedDispatchError(self._unresolved_message(request.key, dispatch))
+            self.provider.validate_request(
+                request.x_train,
+                request.y_train,
+                request.x_sent,
+                categorical_indices=request.categorical_indices,
+                quantile_levels=self.settings.quantile_levels,
+            )
+            self._require_writable(request)
+            usage_before = self.provider.usage()
+            quote = self.provider.quote(request.base["n_train"], request.base["n_query"], request.base["n_features"])
+            tokens = quote["estimated_cost"]
+            spent = tokens_quoted(records, self.call_log.path)
+            rate_reasons, rate_counts = rate_limit_refusal_reasons(
+                dispatch_times=dispatch_times(records, self.call_log.path),
+                now=self._now(),
+                per_minute=self.settings.verified_request_limit_per_minute,
+                per_hour=self.settings.verified_request_limit_per_hour,
+            )
+            configured = (
+                self.settings.verified_request_limit_per_minute is not None
+                or self.settings.verified_request_limit_per_hour is not None
+            )
+            gate = {
+                QUOTE_FIELD: tokens,
+                "quote": quote,
+                "usage_before": usage_before,
+                "tokens_quoted_before": spent,
+                "rate_limit_configured": configured,
+            }
+            if configured:
+                gate["rate_limit"] = {
+                    "per_minute": self.settings.verified_request_limit_per_minute,
+                    "per_hour": self.settings.verified_request_limit_per_hour,
+                    **rate_counts,
+                }
+            reasons = budget_refusal_reasons(
+                quote_tokens=tokens,
+                max_tokens_per_request=self.settings.max_tokens_per_request,
+                project_token_budget=self.settings.project_token_budget,
+                tokens_already_quoted=spent,
+                remaining_account_tokens=remaining_tokens(usage_before),
+            ) + rate_reasons
+            if reasons:
+                self.call_log.append(
+                    {**request.base, **gate, "event": "refused", "cache_hit": False, DISPATCH_FLAG: False, "reasons": reasons}
+                )
+                raise BudgetError(f"request {request.key} refused before any billable call: " + "; ".join(reasons))
+            self.call_log.append({**request.base, **gate, "event": "dispatch", "cache_hit": False, DISPATCH_FLAG: True})
+            return self._dispatch(request, usage_before=usage_before, quote=quote)
+
+    def _require_writable(self, request: _Request) -> None:
+        """Refuse (BudgetError) unless the persistence settings load and the cache directory, its
+        unvalidated folder and the call log's directory can each take a temporary file."""
+        problems: list[str] = []
+        for label, probe in (
+            ("the cache directory or its unvalidated folder", self.cache.probe_writable),
+            ("the call-log directory", self.call_log.probe_writable),
+        ):
+            try:
+                probe()
+            except Exception as exc:  # OSError, ConfigError (persistence.*), ValueError: all refuse the request
+                problems.append(f"{label} cannot be written with the configured persistence settings ({_error_text(exc)})")
+        if not problems:
+            return
+        message = f"request {request.key} refused before any billable call: " + "; ".join(problems)
         try:
-            arrays, metadata = self.provider.predict_main(
-                x_train,
-                y_train,
-                x_query,
-                categorical_indices=categorical_indices,
+            self.call_log.append(
+                {**request.base, "event": "refused", "cache_hit": False, DISPATCH_FLAG: False, QUOTE_FIELD: None, "reasons": problems}
+            )
+        except Exception as exc:
+            message += f" (the refusal could not be logged either: {_error_text(exc)})"
+        raise BudgetError(message)
+
+    def _unresolved_message(self, key: str, dispatch: Mapping[str, Any]) -> str:
+        path = self.cache.unvalidated_path(key)
+        stored = f"the response received is stored unvalidated at {path}" if path.exists() else "no response is stored"
+        return (
+            f"request {key} was dispatched at {dispatch.get('timestamp_utc')} (call log {self.call_log.path}) and has no "
+            f"later completed or abandoned record, so it may already have been billed; {stored}. It is not sent again "
+            f"automatically. Check the account usage, then call TabPFNTeacher.resolve_unresolved({key!r}, "
+            f"action='adopt') to validate and cache the stored response without any network call, or "
+            f"action='abandon' to allow a new billable dispatch of this request."
+        )
+
+    def _dispatch(self, request: _Request, *, usage_before: dict[str, Any], quote: dict[str, Any]) -> dict[str, np.ndarray]:
+        """The billable call, then raw response to disk, validation and the validated entry."""
+        tokens = quote["estimated_cost"]
+        try:
+            raw, metadata = self.provider.predict_raw(
+                request.x_train,
+                request.y_train,
+                request.x_sent,
+                categorical_indices=request.categorical_indices,
                 quantile_levels=self.settings.quantile_levels,
             )
         except BaseException as exc:
             self.call_log.append(
                 {
-                    **base,
+                    **request.base,
                     "event": "provider_error",
                     "cache_hit": False,
                     DISPATCH_FLAG: False,
                     QUOTE_FIELD: tokens,
-                    "possibly_billed": self.provider.last_phase in ("fit", "predict", "validate_response"),
+                    "possibly_billed": self.provider.last_phase in _BILLED_PHASES,
                     "phase": self.provider.last_phase,
-                    "error": f"{type(exc).__name__}: {exc}",
+                    "error": _error_text(exc),
                     "usage_after": self._usage_or_error(),
                 }
             )
             raise
+        request_meta = self._request_meta(request)
+        received = {
+            "key": request.key,
+            "received_utc": _guarded(lambda: utc_timestamp(self._clock)),
+            "quote": quote,
+            "usage_before": usage_before,
+            "provider": metadata,
+        }
+        unvalidated_path: Path | None = None
+        unvalidated_error: str | None = None
+        try:
+            unvalidated_path = self.cache.put_unvalidated(
+                request.key,
+                request_arrays=request.arrays(),
+                request_meta=request_meta,
+                raw_response=raw,
+                response_meta=received,
+            )
+        except Exception as exc:  # keep going: validation and the validated entry may still succeed
+            unvalidated_error = _error_text(exc)
+            self.call_log.append(
+                {
+                    **request.base,
+                    "event": "unvalidated_write_failed",
+                    "cache_hit": False,
+                    DISPATCH_FLAG: False,
+                    QUOTE_FIELD: tokens,
+                    "billed": True,
+                    "error": unvalidated_error,
+                }
+            )
         usage_after = self._usage_or_error()
-        record = {
-            **base,
-            "cache_hit": False,
-            DISPATCH_FLAG: False,
-            QUOTE_FIELD: tokens,
+        try:
+            arrays = parse_main_output(raw, n_rows=int(request.x_sent.shape[0]), quantile_levels=self.settings.quantile_levels)
+        except ProviderResponseError as exc:
+            self.call_log.append(
+                {
+                    **request.base,
+                    "event": "response_rejected",
+                    "cache_hit": False,
+                    DISPATCH_FLAG: False,
+                    QUOTE_FIELD: tokens,
+                    "billed": True,
+                    "error": _error_text(exc),
+                    "unvalidated_path": None if unvalidated_path is None else str(unvalidated_path),
+                    "usage_after": usage_after,
+                }
+            )
+            where = f"is kept unvalidated at {unvalidated_path}" if unvalidated_path else f"could not be stored ({unvalidated_error})"
+            raise ProviderResponseError(
+                f"{exc}. The billed response {where}; the request is not sent again automatically: inspect it, then "
+                f"call TabPFNTeacher.resolve_unresolved({request.key!r}, action='adopt' or 'abandon')"
+            ) from exc
+        response_meta = {
+            **received,
             "usage_after": usage_after,
             "usage_delta": _usage_delta(usage_before, usage_after),
         }
-        try:
-            self.cache.put(
-                key,
-                request_arrays={"x_train": x_train, "y_train": y_train, "x_query": x_query},
-                request_meta={
-                    "description": _request_description(self.settings, categorical_indices, column_names),
-                    **shape,
-                    "teacher_context": context,
-                },
-                response_arrays=arrays,
-                response_meta={
-                    "key": key,
-                    "timestamp_utc": utc_timestamp(self._clock),
-                    "quote": quote,
-                    "usage_before": usage_before,
-                    "usage_after": usage_after,
-                    "provider": metadata,
-                },
-            )
-        except BaseException as exc:
-            self.call_log.append({**record, "event": "cache_write_failed", "billed": True, "error": f"{type(exc).__name__}: {exc}"})
-            raise
-        self.call_log.append({**record, "event": "completed", "timings": metadata.get("timings"), "wall_s": metadata.get("wall_s")})
-        keys.append(key)
+        self._store(
+            key=request.key,
+            base=request.base,
+            request_arrays=request.arrays(),
+            request_meta=request_meta,
+            arrays=arrays,
+            response_meta=response_meta,
+            quote_tokens=tokens,
+            adopted=False,
+            extra={
+                "usage_after": usage_after,
+                "usage_delta": response_meta["usage_delta"],
+                "timings": metadata.get("timings"),
+                "wall_s": metadata.get("wall_s"),
+                "unvalidated_write_error": unvalidated_error,
+            },
+        )
         return arrays
 
-    def _check_cached(
-        self, entry: CachedEntry, x_train: np.ndarray, y_train: np.ndarray, x_query: np.ndarray
-    ) -> dict[str, np.ndarray]:
-        for name, sent in (("x_train", x_train), ("y_train", y_train), ("x_query", x_query)):
+    def _store(
+        self,
+        *,
+        key: str,
+        base: Mapping[str, Any],
+        request_arrays: dict[str, np.ndarray],
+        request_meta: dict[str, Any],
+        arrays: dict[str, np.ndarray],
+        response_meta: dict[str, Any],
+        quote_tokens: Any,
+        adopted: bool,
+        extra: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Write the validated entry, then delete the unvalidated file, then log "completed"."""
+        gap = median_quantile_gap(arrays, self.settings.quantile_levels)
+        response_meta = {**response_meta, "median_vs_q50_max_abs_diff": gap, "adopted": adopted}
+        unvalidated = self.cache.unvalidated_path(key)
+        try:
+            sidecar_error = self.cache.put(
+                key,
+                request_arrays=request_arrays,
+                request_meta=request_meta,
+                response_arrays=arrays,
+                response_meta=response_meta,
+            )
+        except BaseException as exc:
+            self.call_log.append(
+                {
+                    **base,
+                    "event": "cache_write_failed",
+                    "cache_hit": False,
+                    DISPATCH_FLAG: False,
+                    QUOTE_FIELD: quote_tokens,
+                    "billed": True,
+                    "error": _error_text(exc),
+                    "unvalidated_path": str(unvalidated) if unvalidated.exists() else None,
+                }
+            )
+            raise
+        cleanup_error: str | None = None
+        try:
+            self.cache.remove_unvalidated(key)
+        except OSError as exc:
+            cleanup_error = _error_text(exc)
+        record = {
+            **base,
+            **extra,
+            "event": "completed",
+            "cache_hit": False,
+            DISPATCH_FLAG: False,
+            QUOTE_FIELD: quote_tokens,
+            "adopted": adopted,
+            "median_vs_q50_max_abs_diff": gap,
+            "sidecar_error": sidecar_error,
+            "unvalidated_cleanup_error": cleanup_error,
+        }
+        self.call_log.append(record)
+        return record
+
+    def _adopt(self, key: str, base: dict[str, Any], quote_tokens: Any) -> dict[str, Any]:
+        """Adopt the stored response of an unresolved dispatch (caller holds the lock)."""
+        existing = self.cache.get(key)
+        if existing is not None:  # the validated entry was written before the completed record
+            cleanup_error: str | None = None
+            try:
+                self.cache.remove_unvalidated(key)
+            except OSError as exc:
+                cleanup_error = _error_text(exc)
+            record = {
+                **base,
+                "event": "completed",
+                "cache_hit": False,
+                DISPATCH_FLAG: False,
+                QUOTE_FIELD: quote_tokens,
+                "adopted": True,
+                "adopted_from": "validated_cache_entry",
+                "median_vs_q50_max_abs_diff": existing.response_meta.get("median_vs_q50_max_abs_diff"),
+                "unvalidated_cleanup_error": cleanup_error,
+            }
+            self.call_log.append(record)
+            return record
+        try:
+            stored = self.cache.get_unvalidated(key)
+            if stored is None:
+                raise ValueError(
+                    f"no response is stored for request {key} at {self.cache.unvalidated_path(key)}: nothing to adopt; "
+                    f"use action='abandon'"
+                )
+            x_train, y_train, x_query = (stored.request_arrays.get(name) for name in ("x_train", "y_train", "x_query"))
+            indices = stored.request_meta.get("categorical_indices")
+            base_url = stored.request_meta.get("base_url")
+            if x_train is None or y_train is None or x_query is None or not isinstance(indices, list):
+                raise CacheCorruptError(f"{stored.path} does not hold the request it answers")
+            recomputed = request_key(
+                settings=self.settings,
+                x_train=x_train,
+                y_train=y_train,
+                x_query=x_query,
+                categorical_indices=indices,
+                base_url=base_url,
+            )
+            if recomputed != key:
+                raise ValueError(
+                    f"the request stored in {stored.path} hashes to {recomputed} under the current settings, not {key}: "
+                    f"restore the settings used at dispatch, or abandon"
+                )
+            arrays = parse_main_output(
+                stored.raw_response, n_rows=int(x_query.shape[0]), quantile_levels=self.settings.quantile_levels
+            )
+        except (ValueError, TypeError, ProviderResponseError, CacheCorruptError) as exc:
+            self.call_log.append(
+                {
+                    **base,
+                    "event": "adopt_rejected",
+                    "cache_hit": False,
+                    DISPATCH_FLAG: False,
+                    QUOTE_FIELD: quote_tokens,
+                    "error": _error_text(exc),
+                }
+            )
+            raise
+        return self._store(
+            key=key,
+            base=base,
+            request_arrays={"x_train": x_train, "y_train": y_train, "x_query": x_query},
+            request_meta=stored.request_meta,
+            arrays=arrays,
+            response_meta={**stored.response_meta, "usage_after": None, "adopted_utc": utc_timestamp(self._clock)},
+            quote_tokens=quote_tokens,
+            adopted=True,
+            extra={"adopted_from": "unvalidated_response"},
+        )
+
+    def _check_cached(self, entry: CachedEntry, request: _Request) -> dict[str, np.ndarray]:
+        for name, sent in request.arrays().items():
             stored = entry.request_arrays.get(name)
             if stored is None or stored.dtype != sent.dtype or not np.array_equal(stored, sent):
                 raise CacheCorruptError(f"cache entry {entry.key} stores a different {name} than the request it is keyed by")
-        rows, q = x_query.shape[0], len(self.settings.quantile_levels)
+        rows, q = request.x_sent.shape[0], len(self.settings.quantile_levels)
         arrays: dict[str, np.ndarray] = {}
         for name in MAIN_OUTPUT_KEYS:
             array = entry.response_arrays.get(name)
@@ -1124,7 +1800,7 @@ class TabPFNTeacher:
         try:
             return self.provider.usage()
         except Exception as exc:  # recorded, never raised: the call outcome matters more
-            return {"error": f"{type(exc).__name__}: {exc}"}
+            return {"error": _error_text(exc)}
 
 
 def _usage_delta(before: Mapping[str, Any], after: Mapping[str, Any]) -> dict[str, int]:

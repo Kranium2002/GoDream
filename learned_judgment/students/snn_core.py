@@ -144,56 +144,82 @@ class SpikingNetwork:
 
     # ----- inference -------------------------------------------------------------------
 
-    def _run(self, inputs: np.ndarray, count: bool) -> tuple[np.ndarray, np.ndarray | None]:
-        inputs = np.asarray(inputs, dtype=np.float64)
-        if inputs.ndim != 2 or inputs.shape[1] != self.n_inputs:
-            raise ValueError(f"inputs must have shape (n, {self.n_inputs}); got {inputs.shape}")
-        if not np.all(np.isfinite(inputs)):
-            raise ValueError("inputs contain non-finite values")
+    def _simulate(
+        self, inputs: np.ndarray, counts: np.ndarray | None, trains: list[np.ndarray] | None
+    ) -> np.ndarray:
+        """The one implementation of the dynamics: logits (n, C) for float64 inputs (n, D).
+
+        Fills ``counts`` (L, T, n) and ``trains`` (one uint8 array (T, n, H_l) per hidden layer)
+        when given. Every public method runs through here, so a batch, a single decision and a
+        recorded run use the same arithmetic in the same order.
+        """
         n = inputs.shape[0]
-        layers = len(self.hidden_weights)
-        first_current = inputs @ self.hidden_weights[0].T + self.hidden_biases[0]
-        membranes = [np.zeros((n, size)) for size in self.hidden_sizes]
-        readout = np.zeros((n, self.n_outputs))
-        total = np.zeros((n, self.n_outputs))
-        counts = np.zeros((layers, self.time_steps, n), dtype=np.int64) if count else None
+        weights, biases = self.hidden_weights, self.hidden_biases
+        layers = len(weights)
+        first_current = inputs @ weights[0].T + biases[0]
+        membranes = [np.zeros((n, weight.shape[0])) for weight in weights]
+        readout = np.zeros((n, self.readout_weight.shape[0]))
+        total = np.zeros_like(readout)
         for step in range(self.time_steps):
             current = first_current
             spikes = None
             for layer in range(layers):
                 if layer > 0:
-                    current = spikes @ self.hidden_weights[layer].T + self.hidden_biases[layer]
+                    current = spikes @ weights[layer].T + biases[layer]
                 threshold = self.thresholds[layer]
                 reset = (membranes[layer] > threshold).astype(np.float64)
                 membranes[layer] = (self.betas[layer] * membranes[layer] + current) - reset * threshold
                 spikes = (membranes[layer] > threshold).astype(np.float64)
                 if counts is not None:
                     counts[layer, step] = spikes.sum(axis=1).astype(np.int64)
+                if trains is not None:
+                    trains[layer][step] = spikes
             readout = self.readout_beta * readout + (spikes @ self.readout_weight.T + self.readout_bias)
             total = total + readout
-        return total / float(self.time_steps), counts
+        return total / float(self.time_steps)
+
+    def _checked(self, inputs: np.ndarray) -> np.ndarray:
+        inputs = np.asarray(inputs, dtype=np.float64)
+        if inputs.ndim != 2 or inputs.shape[1] != self.n_inputs:
+            raise ValueError(f"inputs must have shape (n, {self.n_inputs}); got {inputs.shape}")
+        if not np.all(np.isfinite(inputs)):
+            raise ValueError("inputs contain non-finite values")
+        return inputs
 
     def forward(self, inputs: np.ndarray) -> np.ndarray:
         """Logits (n, C) for encoded inputs (n, D)."""
-        return self._run(inputs, count=False)[0]
+        return self._simulate(self._checked(inputs), None, None)
 
     def forward_with_spikes(self, inputs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Logits (n, C) and spike counts (L, T, n): spikes each hidden layer emitted at each
         step for each input row."""
-        logits, counts = self._run(inputs, count=True)
-        assert counts is not None
-        return logits, counts
+        inputs = self._checked(inputs)
+        counts = np.zeros((len(self.hidden_weights), self.time_steps, inputs.shape[0]), dtype=np.int64)
+        return self._simulate(inputs, counts, None), counts
+
+    def forward_with_spike_trains(self, inputs: np.ndarray) -> tuple[np.ndarray, tuple[np.ndarray, ...]]:
+        """Logits (n, C) and, per hidden layer, the spike train as uint8 (T, n, H_l):
+        1 where that neuron fired at that step for that input row."""
+        inputs = self._checked(inputs)
+        trains = [np.zeros((self.time_steps, inputs.shape[0], size), dtype=np.uint8) for size in self.hidden_sizes]
+        return self._simulate(inputs, None, trains), tuple(trains)
 
     def decide(self, inputs: np.ndarray) -> np.ndarray:
         """int (n,): index of the chosen output for each encoded input row."""
         return np.argmax(self.forward(inputs), axis=1)
 
     def decide_one(self, encoded: np.ndarray) -> int:
-        """Index of the chosen output for one encoded input (D,)."""
+        """Index of the chosen output for one encoded input (D,): the per-decision path.
+
+        Runs the same dynamics as :meth:`forward` on a batch of one, with only the shape and
+        finiteness checks a single vector needs.
+        """
         encoded = np.asarray(encoded, dtype=np.float64)
         if encoded.shape != (self.n_inputs,):
             raise ValueError(f"encoded input must have shape ({self.n_inputs},); got {encoded.shape}")
-        return int(np.argmax(self.forward(encoded[None, :])[0]))
+        if not np.isfinite(encoded).all():
+            raise ValueError("encoded input contains non-finite values")
+        return int(np.argmax(self._simulate(encoded[None, :], None, None)[0]))
 
     # ----- serialization ---------------------------------------------------------------
 

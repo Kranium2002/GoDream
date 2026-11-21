@@ -90,8 +90,46 @@ skills:
     status: primary
     attempts_per_skill_target: [10, 40]
     supported_action_schema: null  # Filled only after command-interface verification.
-    candidate_points_per_dim: null  # Candidate grid resolution per action dimension; set with the action schema.
-    objective_weights: null  # Preregister and tune on dev data.
+    # Candidate grid resolution per action dimension, in action order: side velocity, start delay, hold duration.
+    candidate_points_per_dim: [9, 4, 3]
+    # Action space. Names of the command fields follow Person A's answer (HANDOFF_PERSON_A.md); they are looked up
+    # in the verified command schema, and the SkillSpec refuses to build until that schema is verified.
+    action:
+      side_velocity_field: vel_y  # Sideways speed; its sign picks the dodge side. Range: the field's verified range.
+      forward_velocity_field: vel_x  # Held at the dog's forward speed during the whole episode.
+      yaw_rate_field: yaw_rate  # Held at 0 during the whole episode.
+      start_delay_s: [0.0, 0.6]  # Wait after the decision instant before the dodge command. Starting value; tune on dev.
+      hold_duration_s: [0.2, 1.0]  # How long the dodge command is held. Starting value; tune on dev.
+    episode_duration_s: null  # Total simulated time per attempt; set with Person A's ball flight times.
+    # Observed situation ranges. Person A publishes the ball ranges with the throw model; all null until then.
+    situation_ranges:
+      ball_rel_x_m: null
+      ball_rel_y_m: null
+      ball_rel_z_m: null
+      ball_vel_x_m_s: null
+      ball_vel_y_m_s: null
+      ball_vel_z_m_s: null
+      dog_forward_speed_m_s: null
+      declared_payload_kg: [0.0, 3.6]  # Payload 0-3 kg with a declared label up to 20% wrong (MISSION.md).
+    declared_surfaces: null  # Level names of the declared floor type, from Person A's presets.
+    # Constants of the physics guess (a straight-line dog and a ballistic ball). The residual model absorbs the rest.
+    physics:
+      gravity_m_s2: 9.81  # MuJoCo model default, config runtime.
+      assumed_latency_s: 0.15  # Command latency the formula assumes; the true latency is hidden (0.05-0.3 s).
+      time_step_s: 0.02  # Step of the closest-approach search; equals the 50 Hz control period.
+      collision_softness_m: 0.05  # Width of the logistic that turns predicted clearance into a collision probability.
+      body_half_length_m: null  # Half length of the trunk along x, from the verified Go2 model.
+      body_radius_m: null  # Radius of the capsule around the trunk, from the verified Go2 model.
+      base_height_m: null  # Height of the base above the floor while trotting, from a verified run.
+    # Risk-aware objective, higher is better. Starting weights, fixed before any data; tune on dev data only.
+    objective_weights:
+      collision: 10.0  # Per unit of predicted collision probability.
+      fall: 10.0  # Per unit of predicted fall probability.
+      separation: 1.0  # Per metre of the low predictive quantile of closest separation, up to separation_cap_m.
+      separation_cap_m: 0.5
+      contact_margin_m: 0.02  # Clearance below this counts as contact when reading the separation distribution.
+      motion: 0.5  # Per metre of commanded sideways travel (speed x hold time).
+      recovery: 0.5  # Per second of predicted recovery time.
     confidence_threshold: null  # Select on dev data.
   brake:
     status: planned

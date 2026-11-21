@@ -9,7 +9,7 @@ Run from D:\\BerlinPrior:
 import sys
 from pathlib import Path
 
-print("FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))

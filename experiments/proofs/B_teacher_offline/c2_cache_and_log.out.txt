@@ -1,36 +1,69 @@
-FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
-== RequestCache ==
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+== RequestCache: one authoritative <key>.npz ==
   [ok] get of an unknown key is None (directory does not exist yet)
+  [ok] has_entries of a missing directory is False
+  [ok] put returns no sidecar error
   [ok] entry returned
   [ok] request x_train bitwise equal (dtype float64, shape (7, 3))
   [ok] request y_train bitwise equal (dtype float64, shape (8,))
   [ok] request x_query bitwise equal (dtype float64, shape (4, 3))
   [ok] response mean bitwise equal
   [ok] response quantiles bitwise equal
-  [ok] request metadata round-trips
+  [ok] request metadata round-trips (non-ASCII text included)
   [ok] response metadata round-trips
   [ok] get of another unknown key is None
-  files: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.npz']
-  [ok] exactly <key>.npz + <key>.json, no temp files left
+  files: ['aaaaaaaa....json', 'aaaaaaaa...a.npz']
+  [ok] exactly <key>.npz + its sidecar <key>.json, no temp files left
+  [ok] has_entries is True
+  [ok] an edited sidecar is never read: the entry is still served
+  [ok] a deleted sidecar is never needed: the entry is still served
+  [ok] a sidecar without its .npz is no entry: get is None
   [ok] second put of the same key leaves a readable entry
   [ok]   ...holding the second response bitwise
   [ok]   ...no temp files left
   [ok] NaN in metadata is rejected before writing: Out of range float values are not JSON compliant: nan
   [ok] string array is rejected: request array 'x' has dtype <U1; only numeric arrays are cached
   [ok] malformed key is rejected: a cache key must be 64 lowercase hex characters (sha256); got 'not-a-key'
-  [ok] altered .npz is detected: <tmp>\cache\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.npz does not match the sha256 recorded in <tmp>\cache\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json
+  [ok] altered .npz near the end (zip directory) is detected: <tmp>\cache\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.npz is not a readable archive: BadZipFile: File name in directory 'meta__
+  [ok] altered .npz inside the array data is detected: <tmp>\cache\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.npz is not a readable archive: BadZipFile: Bad CRC-32 for file 'response_
+  [ok] the restored entry reads again
+  [ok] an entry copied under another key is detected: <tmp>\cache\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.npz is not a learned-judgment/teacher-cache
+
+== unvalidated responses: stored exactly as received ==
+  [ok] written to unvalidated/<key>.npz
+  [ok] numeric item kept with its own dtype and NaN
+  [ok] list with None kept as JSON
+  [ok] ragged list kept as JSON
+  [ok] text kept
+  [ok] request arrays kept bitwise
+  [ok] the unvalidated file is no validated entry
+  [ok] a non-mapping raw value is kept too
+  [ok] remove_unvalidated deletes it
+  [ok] abandon moves it to unvalidated/abandoned/<key>.<stamp>.npz
+  [ok] abandon of a key without a file returns None
+
+== CacheLock ==
+  [ok] the lock file holds pid and UTC time
+  [ok] re-entrant for the holding thread, also through another CacheLock of the same file
+  [ok] still held after the inner release
+  [ok] another thread waits and gets CacheLockedError
+  [ok] the outermost release removes the lock file
+  [ok] release without holding raises: release of the cache lock <tmp>\cache\.lock, which this thread does not hold
 
 == CallLog ==
   [ok] read of a missing log is []
   [ok] tokens of an empty log is 0
   [ok] 5 records read back in order
   [ok] each record carries the injected clock's UTC timestamp
+  [ok] the file is ASCII and non-ASCII text round-trips
   [ok] tokens quoted for billed calls counts only dispatch records: 22345
+  [ok] no lock file is left after appends and reads
   [ok] credential key at top level is rejected: call-log field record.access_token names a credential; credentials are never logged
   [ok] credential key nested is rejected: call-log field record.meta.Authorization names a credential; credentials are never logged
   [ok] caller-set timestamp is rejected: timestamp_utc is set by the call log from its clock
   [ok] non-finite float is rejected: Out of range float values are not JSON compliant: inf
   [ok] rejected records were not written
   [ok] a naive (non-UTC) clock is rejected: the clock must return a timezone-aware UTC datetime; got datetime.datetime(2026, 11, 21, 12, 0)
+  [ok] a call log without a lock is rejected: lock must be a CacheLock; got NoneType
 
 RESULT: 0 failed check(s)

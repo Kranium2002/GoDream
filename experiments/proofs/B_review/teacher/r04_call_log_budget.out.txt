@@ -1,0 +1,16 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+== 1. call log missing: the project budget silently restarts at zero ==
+  after 3 requests: tokens quoted 30000 | billed 3 | cache entries 3
+  4th request refused as expected: tokens already quoted for dispatched requests (30000) plus this quote (10000) exceed tabpf
+  log removed -> 4th request sent; tokens quoted now 10000 | billed in total 4 against project_token_budget 30000
+
+== 2. a provider error message containing U+2028 makes the log unreadable ==
+  provider error recorded: 'Fail to call predict: [HTTP 500] upstream said:\u2028retry later.'
+  physical records split on '\n': 2 | str.splitlines() pieces: 3
+  next uncached request: ValueError <tmp>\calls.jsonl:2 is not a valid call-log line: Unterminated string starting at: line 1 column 54 (char 53)
+
+== 3. a partial last line (crash during append) ==
+  next uncached request: ValueError <tmp>\calls.jsonl:3 is not a valid call-log line: Expecting ':' delimiter: line 1 column 39 (char 38)
+  billed in total: 1 (fails closed: no extra billing)
+exit=0
+

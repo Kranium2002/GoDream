@@ -13,7 +13,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-print("FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
@@ -23,7 +23,14 @@ import numpy as np  # noqa: E402
 from learned_judgment.config import load_config  # noqa: E402
 from learned_judgment.engine.features import FeatureLayout  # noqa: E402
 from learned_judgment.engine.types import ResidualModel  # noqa: E402
-from learned_judgment.teacher import CallLog, RequestCache, TabPFNProvider, TabPFNTeacher, TeacherSettings  # noqa: E402
+from learned_judgment.teacher import (  # noqa: E402
+    CacheLock,
+    CallLog,
+    RequestCache,
+    TabPFNProvider,
+    TabPFNTeacher,
+    TeacherSettings,
+)
 
 FAILURES: list[str] = []
 
@@ -64,12 +71,14 @@ with tempfile.TemporaryDirectory() as tmp:
     )
     clock = lambda: datetime.now(timezone.utc)  # noqa: E731
     provider = TabPFNProvider(settings)
+    cache = RequestCache(settings.cache_dir)
+    lock = CacheLock(cache.lock_path, timeout_s=settings.lock_timeout_s, poll_s=settings.lock_poll_s)
     teacher = TabPFNTeacher(
         LAYOUT,
         settings,
         provider=provider,
-        cache=RequestCache(settings.cache_dir),
-        call_log=CallLog(settings.call_log, clock=clock),
+        cache=cache,
+        call_log=CallLog(settings.call_log, clock=clock, lock=lock),
         clock=clock,
     )
     check("TabPFNTeacher satisfies the ResidualModel protocol", isinstance(teacher, ResidualModel))
@@ -126,7 +135,7 @@ with tempfile.TemporaryDirectory() as tmp:
         ValueError,
         lambda: TabPFNTeacher(
             LAYOUT, settings, provider=TabPFNProvider(dataclasses.replace(settings, n_estimators=4)),
-            cache=RequestCache(settings.cache_dir), call_log=CallLog(settings.call_log, clock=clock), clock=clock,
+            cache=cache, call_log=CallLog(settings.call_log, clock=clock, lock=lock), clock=clock,
         ),
     )
     reserved = dataclasses.replace(LAYOUT, names=("sit_x", "sit_side", "act_t", "physics_r0", "stacked_outcome_index"))
@@ -134,10 +143,29 @@ with tempfile.TemporaryDirectory() as tmp:
         "a feature named like the reserved stacked outcome column",
         ValueError,
         lambda: TabPFNTeacher(
-            reserved, settings, provider=provider, cache=RequestCache(settings.cache_dir),
-            call_log=CallLog(settings.call_log, clock=clock), clock=clock,
+            reserved, settings, provider=provider, cache=cache,
+            call_log=CallLog(settings.call_log, clock=clock, lock=lock), clock=clock,
         ),
     )
+    other_lock = CacheLock(Path(tmp) / "elsewhere.lock", timeout_s=1.0, poll_s=0.01)
+    raises(
+        "a call log that locks another file than <cache_dir>/.lock",
+        ValueError,
+        lambda: TabPFNTeacher(
+            LAYOUT, settings, provider=provider, cache=cache,
+            call_log=CallLog(settings.call_log, clock=clock, lock=other_lock), clock=clock,
+        ),
+    )
+    raises(
+        "a cache directory other than settings.cache_dir",
+        ValueError,
+        lambda: TabPFNTeacher(
+            LAYOUT, settings, provider=provider, cache=RequestCache(Path(tmp) / "other_cache"),
+            call_log=CallLog(settings.call_log, clock=clock, lock=lock), clock=clock,
+        ),
+    )
+    check("from_settings builds the configured cache, call log and lock",
+          TabPFNTeacher.from_settings(LAYOUT, settings, provider=provider, clock=clock).call_log.lock.path == cache.lock_path)
 
 print(f"\nRESULT: {len(FAILURES)} failed check(s)" + (f": {FAILURES}" if FAILURES else ""))
 sys.exit(1 if FAILURES else 0)

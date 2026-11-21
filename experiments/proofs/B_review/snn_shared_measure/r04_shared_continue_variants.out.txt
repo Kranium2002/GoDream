@@ -1,0 +1,27 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+settings: {'hidden_sizes': [16, 12], 'time_steps': 10, 'beta': 0.9, 'threshold': 1.0, 'readout_beta': 0.9, 'learn_beta': True, 'learn_threshold': True, 'surrogate': 'atan', 'surrogate_alpha': 2.0, 'target_temperature': 0.5, 'spike_rate_penalty': 0.05, 'learning_rate': 0.002, 'batch_size': 64, 'max_steps': 120, 'validation_fraction': 0.1, 'evaluate_every_steps': 20, 'patience_evaluations': 5, 'torch_threads': 1}
+
+1. continue after load
+   steps_run memory 120 loaded 120; best_step 120 / 120
+   all three views identical (network digests) after adding fx_gamma: True
+   records identical except wall time / training wall time: True
+   learned betas (1.0, 1.0) thresholds (0.7621877093119029, 0.630363577729899) (moved from 0.9/1.0)
+
+2. inputs and targets of an earlier skill
+   fx_alpha rehearsed at add fx_beta: inputs identical True, targets identical True
+   fx_alpha rehearsed at add fx_gamma (memory): inputs identical True, targets identical True
+   fx_alpha rehearsed at add fx_gamma (loaded): inputs identical True, targets identical True
+   fx_alpha: decision-time encoding of the training rows equals the training inputs: True
+   fx_beta rehearsed (memory): inputs identical True, targets identical True
+   fx_beta rehearsed (loaded): inputs identical True, targets identical True
+   fx_beta: decision-time encoding of the training rows equals the training inputs: True
+
+3. batch composition (instrumented _batch_counts; batch_size 64 )
+   add fx_beta: heads ['fx_beta', 'fx_alpha'] stated [0.5, 0.5] realised [0.5, 0.5] over 120 batches; min/max rows per batch [32, 32]/[32, 32]
+   add fx_gamma: heads ['fx_gamma', 'fx_alpha', 'fx_beta'] stated [0.5, 0.25, 0.25] realised [0.5, 0.25, 0.25] over 120 batches; min/max rows per batch [32, 16, 16]/[32, 16, 16]
+
+4. two hidden layers, hand check of the operation counts (fx_gamma view)
+   layer sizes (8, 16, 12, 18) fan-out (12, 18) (hand (12, 18))
+   spikes per decision equal spike-train sums: True
+   synaptic ops = s1*12 + s2*18: True
+   first-layer MACs 128 (hand W*H1 = 128); neuron updates 460 (hand 460); dense MACs 536 (hand 536)
