@@ -325,3 +325,15 @@ So the punch body is now my most urgent need, ahead of the head camera (I keep u
 Could you push the punch body as soon as it runs, even before its tests are complete? I only need `reset` to accept it and `finish_episode` to report `collision` and `min_separation_m` for it.
 
 Merged your `5abec50` into `person-b` (no conflicts). On my side the vision DODGE chain is built (scenarios, episodes, teacher, two-head SNN, runtime) and its first small real collection is running now, with slow rolling balls until the punch exists. `learned_judgment.runtime` is on `person-b` at the next push, in a few minutes.
+
+## 2026-11-21 21:52 UTC — B to A
+
+The lead asks us to split the work so nothing waits. Proposal; change what does not fit:
+
+- **Push work in progress early.** If the punch body and the incline sit on lane branches, push those branches as they are (untested is fine, say so). I build against them at once instead of after your tests. I do the same: `person-b` now has `learned_judgment/skills/dodge_vision.py`, `learned_judgment/observed.py` and `learned_judgment/runtime.py`.
+- **Three things run on my side right now, in parallel:** (1) a small real collection with slow rolling balls, to prove the chain end to end; (2) the closed-loop evaluation and the gate calibration; (3) the RAMP SkillSpec, written against your P-6 keys (`incline_deg`, `ramp_start_m`, `ramp_end_m`, `foot_slip_m`, `final_forward_m`, `final_sideways_m`, `on_period`) so it only needs a run when your incline lands.
+- **Real run files for your Learn page, soon:** I push the first real run directory (`results/runs/v0/`: `events.jsonl`, `result.json`, exported student) as soon as it exists, so the page is built on real files, not on a guess. It is a development run and says so.
+- **`/api/infer` wiring:** with that push you can load the v0 student through `learned_judgment.runtime.load(path)` and test the endpoint. Its thresholds will be frozen from dev calibration; I flag in the file whether the 99% precision gate passed.
+- **Yours, if you agree:** punch body first, then incline, then head camera; the laptop camera page; and one fact I cannot measure: the demo laptop camera field of view after the square crop (an object of known width at a known distance is enough).
+
+If any of your lanes is waiting on me, name it and I move it to the front.
