@@ -10,3 +10,23 @@ def pytest_configure(config):
 @pytest.fixture
 def config():
     return load_config()
+
+
+@pytest.fixture
+def schema(config):
+    return config["robot"]["walking_policy"]["command_schema"]
+
+
+@pytest.fixture
+def zero(schema):
+    return {name: 0.0 for name in schema["fields"]}
+
+
+@pytest.fixture
+def forward(zero):
+    return zero | {"vel_x": 0.6}
+
+
+@pytest.fixture
+def period(schema):
+    return schema["update_period_s"]

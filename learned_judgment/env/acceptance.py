@@ -4,6 +4,7 @@
 
 run_locomotion and run_stop only measure. The CLI judges each condition against robot.acceptance in config.yaml,
 writes DIR/locomotion.json and one DIR/<condition>.npz trace per condition, and exits 1 if any condition fails.
+prove_commands runs every command field at both ends of its schema range and saves the signed responses.
 """
 import argparse
 import json
@@ -61,6 +62,7 @@ def _episode(config, schedule, seed, trace_path) -> dict:
     yaw = np.unwrap(np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)))
     v_xy = qvel[:, :2]  # free-joint linear velocity is in the world frame
     forward = v_xy[:, 0] * np.cos(yaw) + v_xy[:, 1] * np.sin(yaw)  # along the dog's own heading
+    left = -v_xy[:, 0] * np.sin(yaw) + v_xy[:, 1] * np.cos(yaw)  # along the heading frame's y (left)
     late = t > acc["exclude_first_s"]
     max_tilt_deg = float(np.degrees(np.arccos(np.clip(worst["cos_tilt"], -1.0, 1.0))))
     if trace_path is not None:
@@ -69,12 +71,41 @@ def _episode(config, schedule, seed, trace_path) -> dict:
         "fallen": worst["trunk_floor"] or max_tilt_deg > acc["fall_tilt_deg"],
         "max_tilt_deg": max_tilt_deg,
         "mean_speed_m_s": float(forward[late].mean()),
+        "mean_lateral_speed_m_s": float(left[late].mean()),
         "mean_yaw_rate_rad_s": float((np.diff(yaw) / wp.control_dt)[late[1:]].mean()),
         "final_speed_m_s": float(np.linalg.norm(v_xy, axis=1)[t > t[-1] - acc["final_window_s"]].mean()),
         "rtf": sim_s / wall,
         "cpu_fraction": cpu / wall,
         "trace_path": None if trace_path is None else Path(trace_path).as_posix(),
     }
+
+
+# The signed response to each native command index of [vel_x, vel_y, yaw_rate]: forward speed along the heading,
+# leftward speed along the heading frame's y, yaw rate.
+_RESPONSE = ("mean_speed_m_s", "mean_lateral_speed_m_s", "mean_yaw_rate_rad_s")
+
+
+def prove_commands(config: dict, out_dir: str | Path) -> Path:
+    """Run each command_schema field at its min and at its max for 10 s, the other fields zero, and write
+    out_dir/commands.json: per field and end the commanded value, the signed measured response (mean after the first
+    exclude_first_s), fallen, proven (not fallen and the response has the commanded sign) and the trace path."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    fields = config["robot"]["walking_policy"]["command_schema"]["fields"]
+    proof = {}
+    for name, f in fields.items():
+        for end in ("min", "max"):
+            command = [0.0] * len(fields)
+            command[f["native_index"]] = f[end]
+            m = _episode(config, [(10, command)], config["runtime"]["seed"], out / f"{name}_{end}.npz")
+            measured = m[_RESPONSE[f["native_index"]]]
+            proof.setdefault(name, {})[f"at_{end}"] = {
+                "commanded": f[end], "measured": measured, "fallen": m["fallen"],
+                "proven": not m["fallen"] and measured * f[end] > 0, "trace_path": m["trace_path"]}
+            print(f"{name} at_{end}: {json.dumps(proof[name][f'at_{end}'])}", flush=True)
+    path = out / "commands.json"
+    path.write_text(json.dumps(proof, indent=2))
+    return path
 
 
 def trunk_on_floor(model, data) -> bool:

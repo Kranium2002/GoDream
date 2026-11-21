@@ -57,3 +57,19 @@ Mass 0.450 kg and radius 0.0939 m, the mid-range of IHF Rule 3:2 (425–475 g, c
 ## 2026-11-21 — Walking stack: Efferent go2_walk on Unitree's Go2 model
 
 Efferent is the first path in the mandated order and its proof passed (experiment E1 proof run, `artifacts/env/20261121T144656-e1-proof`). Selected: the `go2_walk.app` policy and `go2.robot.yaml` from `Eximius-Labs/efferent` at `f51e1af953afe1016dae9ceeff2b5328fa51781d` (Apache-2.0; the ONNX is converted from rl_sar `policy/go2/robot_lab/policy.pt` at `376d42c9`), on Unitree's `go2.xml` from `unitreerobotics/unitree_mujoco` at `1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d` (BSD-3-Clause). Pinned packages: `efferent==0.5.0`, `mujoco==3.11.0`, `onnxruntime==1.32.0`. The Efferent files are vendored under `learned_judgment/env/assets/`; the model comes from the git submodule `third_party/unitree_mujoco` at that commit. Both are pinned by sha256 in `config.yaml`. rl_sar (E2) stays the fallback; its proof is not run.
+
+## 2026-11-21 — Command schema `verified` means proven fields and ranges, not tracking
+
+The integrator's rule for Task 3: `robot.walking_policy.status` becomes `verified` once every command field is proven at both ends of its range by a recorded run (no fall, response with the commanded sign); it makes no claim about speed-tracking accuracy, which stays with Gate 1 (still failing at 0.3 m/s). Applied on E4 (`artifacts/env/commands/commands.json`): `vel_x`, `vel_y` and `yaw_rate` all proven at −1 and 1, nothing narrowed.
+
+## 2026-11-21 — Gate 1 result at 0.3 m/s accepted as measured
+
+The locomotion gate fails on one of its seven conditions: 0.3 m/s commanded gave 0.2256 m/s, outside the 20% tolerance (0.24 to 0.36). The parity test shows our adapter reproduces Efferent's own runner exactly, and the review of that work recomputed every gate value from the saved traces, so the shortfall is the borrowed policy's behaviour and not our wiring. Person A decided to accept the result as measured and continue. The tolerance stays at 20%, nothing is tuned, and the gate row stays FAIL for that condition in `ENV_REPORT.md`.
+
+This sets aside, for this one condition, the rule to stop at a failed gate and to move to the next locomotion path. rl_sar's robot_lab checkpoint is the same policy (experiment E2), so it would not change the result; rl_sar himloco and Quadruped-PyMPC were not tried. The integrator can reverse this.
+
+Consequences for the skills: low forward commands under-deliver by about a quarter, and with zero yaw commanded the dog turns anticlockwise at 0.05 to 0.14 rad/s.
+
+## 2026-11-21 — Two levels of seed, in Person B's proposed form
+
+`Go2World(config, seed, preset)` fixes the hidden world for the life of the object. `reset(situation, attempt_seed)` fixes one episode's noise, drawn from `(seed, attempt_seed)`; leaving `attempt_seed` out uses the episode counter. This replaces the `noise_key` situation key of the plan (HANDOFF_PERSON_B.md item 8).

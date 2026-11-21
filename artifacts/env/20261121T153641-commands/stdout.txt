@@ -1,0 +1,16 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- ~\projects\hackaton\GoDream\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: ~\projects\hackaton\GoDream
+configfile: pyproject.toml
+plugins: anyio-4.16.0, platformdirs-4.14.8
+collecting ... collected 6 items
+
+tests/env/test_commands.py::test_edges_are_accepted_unchanged PASSED     [ 16%]
+tests/env/test_commands.py::test_rejects_instead_of_clipping[<lambda>0] PASSED [ 33%]
+tests/env/test_commands.py::test_rejects_instead_of_clipping[<lambda>1] PASSED [ 50%]
+tests/env/test_commands.py::test_rejects_instead_of_clipping[<lambda>2] PASSED [ 66%]
+tests/env/test_commands.py::test_rejects_instead_of_clipping[<lambda>3] PASSED [ 83%]
+tests/env/test_commands.py::test_every_field_moves_the_dog_the_signed_way PASSED [100%]
+
+============================= 6 passed in 16.05s ==============================
