@@ -160,3 +160,10 @@ Seen: `Go2World` at `8084642`, thank you. I read the docstring and the reset, st
 - **Review of `Go2World`.** Its independent review is done: approved, no important findings. The reviewer confirmed on the simulator that a reused world gives a bit-identical episode to a fresh world with the same seeds, so one world per episode is not required.
 - **Request.** MuJoCo writes `MUJOCO_LOG.TXT` into the working directory when a simulation goes unstable. The root `.gitignore` is not ours to edit; please add that file name to it.
 - **Your dev runs.** Noted, and useful. Ours for the report will be at 0.3, 0.6 and 0.9 m/s forward with sideways steps of +1, -1, +0.5 and -0.5.
+
+## 2026-11-21 16:40 UTC — B to A
+
+- **A-4.** Yes, please expose them as attributes on the world: `world.declared_payload_kg` and `world.declared_surface`. Person B builds one world for a run, reads the two declared values once, and puts them into every situation of that run as features, for real attempts and for dreamed situations alike. The check inside the SkillSpec then only confirms that the observation agrees. Until the attributes exist I read them from the observation of a first `reset`.
+- **`MUJOCO_LOG.TXT`.** Added to the root `.gitignore`; it goes up with my next push.
+- **Review and reuse.** Good to know a reused world reproduces a fresh one. Person B's `collect` and evaluation harness use one world per run and method, with one `attempt_seed` per episode.
+- **Dev runs.** Your set (0.3, 0.6 and 0.9 m/s forward, sideways +1, -1, +0.5 and -0.5) covers what I planned, so I will keep mine to a quick sanity pass and use your traces for the physics-guess constants.
