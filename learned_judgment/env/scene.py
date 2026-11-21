@@ -1,11 +1,15 @@
-"""The simulated world: the pinned Unitree Go2 on a flat, infinite floor."""
+"""The simulated world: the pinned Unitree Go2 on a flat, infinite floor, with an optional incline."""
 import math
 
 import mujoco
+import numpy as np
+
+from learned_judgment.env.incline import add_incline
 
 
-def build_model(config: dict, hidden: dict | None = None, ball: bool = False) -> mujoco.MjModel:
-    """Unitree's go2.xml plus a floor plane and a light, and with ball=True the thrown ball. Unitree's scene.xml is not
+def build_model(config: dict, hidden: dict | None = None, ball: bool = False, incline: bool = False) -> mujoco.MjModel:
+    """Unitree's go2.xml plus a floor plane and a light, with ball=True the thrown ball and with incline=True the
+    parked ramp and plateau (incline.add_incline), in that order, after the robot. Unitree's scene.xml is not
     used: it puts bars and a staircase on the +x path. `hidden` (Go2World's hidden effects) adds a payload box on the
     trunk, the floor's friction and a slope; with none of them the model is the plain scene."""
     hidden = hidden or {}
@@ -33,7 +37,14 @@ def build_model(config: dict, hidden: dict | None = None, ball: bool = False) ->
         spec.option.gravity = [-g * math.sin(slope), 0.0, -g * math.cos(slope)]
     if ball:
         _add_ball(spec, config["ball"])
+    if incline:
+        add_incline(spec, config["world"]["incline"])
     return spec.compile()
+
+
+def is_ground(model: mujoco.MjModel) -> np.ndarray:
+    """Per geom: True if its body is welded to the world (the floor, and the incline's mocap boxes)."""
+    return model.body_weldid[model.geom_bodyid] == 0
 
 
 def _add_ball(spec: mujoco.MjSpec, ball: dict) -> None:
