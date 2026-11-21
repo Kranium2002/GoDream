@@ -3,6 +3,7 @@
 import { cameraProblem, createFrameWindow, createRateMeter, createSampler, createSender } from "./live.js";
 import { preprocess, readWindowSettings } from "./vision.js";
 import { readout } from "./readout.js";
+import { createStage } from "./stage.js";
 
 const RETRY_MS = 3000; // after an unavailable answer, wait this long before offering the next window
 
@@ -40,23 +41,8 @@ export function initLiveView({ api, el }) {
   }
 
   // ---- simulator stage: streams load only while this view is shown --------------------------------------------
-  function stage(img, note, url, unavailableReason) {
-    const want = visible && !unavailableReason ? url : null;
-    note.hidden = !unavailableReason;
-    note.textContent = unavailableReason ? `Unavailable: ${unavailableReason}` : "";
-    if (want && img.getAttribute("src") !== want) {
-      img.onerror = () => { img.hidden = true; note.hidden = false; note.textContent = "The simulator stream could not be loaded."; };
-      img.setAttribute("src", want);
-    } else if (!want) {
-      img.removeAttribute("src"); // closes the stream
-    }
-    img.hidden = !want;
-  }
-  function updateStage() {
-    stage($("stage-tracking"), $("trk-note"), "/api/stream?camera=tracking", null);
-    const head = headCapability?.available ? null : headCapability?.reason || "The server does not report the head camera.";
-    stage($("stage-head"), $("head-note"), "/api/stream?camera=head", head);
-  }
+  const stage = createStage({ trackingImg: $("stage-tracking"), trackingNote: $("trk-note"), headImg: $("stage-head"), headNote: $("head-note") });
+  const updateStage = () => stage.update(visible, headCapability);
 
   // ---- camera ----------------------------------------------------------------------------------------------------
   async function start() {
