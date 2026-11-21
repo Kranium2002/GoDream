@@ -298,6 +298,7 @@ ball:
   solref: [0.04, 0.1]
   # Same masks as go2.xml's collision geoms (group 3) and the floor: the ball collides with both (E6 simulator half).
   collision_masks: {contype: 1, conaffinity: 1}
+  rgba: [0.5, 0.5, 0.5, 1.0]  # MuJoCo's default geom colour, as before this key existed; the floor is the same grey.
   # m/s^2, downward. The model's own: go2.xml sets no gravity, so MuJoCo's default (0, 0, -9.81); the sampler needs it
   # without a model, and tests/env/test_ball.py checks the two agree.
   gravity_m_s2: 9.81
@@ -311,6 +312,18 @@ ball:
   throw_release_height_range_m: [0.6, 1.2]  # height of the release point above the trunk origin
   throw_speed_range_m_s: [3.3, 4.8]  # horizontal speed of the ball; with the ranges above, flights of 0.61-1.59 s
   throw_aim_error_range_m: [-0.7, 0.7]
+
+# The punch (Go2World situation key object_kind "punch"): a fist-sized sphere that ignores gravity (MuJoCo body
+# gravcomp 1), so from the six ball_* keys it flies straight at constant speed until it touches something, and collides
+# physically with finite mass. It takes the ball's place in the scene, the observation's `ball` entry, the trace arrays
+# and the DODGE outcome keys. Contact parameters are MuJoCo's defaults.
+punch:
+  radius_m: 0.05  # A fist: about 10 cm across.
+  mass_kg: 0.6  # About a fist and wrist; finite, so a hit pushes the dog. The objects research tried 0.3-1.0 kg.
+  # Bright yellow (luma about 0.85): the floor and the handball are both 0.5 grey, so a grey object changes a 12 x 12
+  # grayscale head-camera pixel by only 0.03-0.09 (Dev B's measurement, 2026-11-21).
+  rgba: [1.0, 0.9, 0.2, 1.0]
+  collision_masks: {contype: 1, conaffinity: 1}  # The ball's: it collides with the robot and the floor.
 
 skills:
   dodge:

@@ -18,7 +18,8 @@ from learned_judgment.env.scene import build_model, is_ground
 from learned_judgment.env.throws import BALL_KEYS, sample_dodge_situations
 
 STREAMS = ("situation", "world", "ball", "noise")
-SITUATION_KEYS = ("dog_forward_speed_m_s", "settle_s", *BALL_KEYS, "incline_deg")
+SITUATION_KEYS = ("dog_forward_speed_m_s", "settle_s", *BALL_KEYS, "object_kind", "incline_deg")
+OBJECT_KINDS = ("ball", "punch")  # object_kind: config.yaml `ball` and `punch`
 FEET = ("FL", "FR", "RL", "RR")  # go2.xml foot geoms, in the model's body order
 BAD_STATE = (mujoco.mjtWarning.mjWARN_BADQPOS, mujoco.mjtWarning.mjWARN_BADQVEL, mujoco.mjtWarning.mjWARN_BADQACC)
 TRACE_KEYS = ("t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang_vel_rad_s", "joint_pos_rad",
@@ -116,7 +117,10 @@ class Go2World:
     `ball`: an IHF size 3 handball) is a free MuJoCo body that collides with nothing until the decision instant, is then
     placed there with that velocity and no spin, and is never touched again. sample_dodge_situation() draws a situation
     (the six keys and dog_forward_speed_m_s) from the world's own `ball` stream with sample_dodge_situations
-    (learned_judgment/env/throws.py).
+    (learned_judgment/env/throws.py). object_kind (default "ball") chooses the thrown object: "punch" (config.yaml
+    `punch`) is a sphere outside gravity (MuJoCo gravcomp) that flies straight at constant speed until it touches
+    something; it takes the ball's place in the observation's `ball` entry (radius_m is its own), the trace arrays and
+    the outcome keys, and its kind is only in <trace>.hidden.json. Any other kind raises ValueError.
 
     Incline (RAMP). incline_deg (degrees, 0 to world.incline.max_deg; absent or 0: the plain flat scene, the same
     episode as without the key) places, at the decision instant, a slope rising at that angle world.incline.start_x_m
@@ -206,8 +210,9 @@ class Go2World:
         self._episodes = 0
         self._active = False
         self._renderer = None
-        # (ball, incline) -> (model, policy); a scene with the ball or the incline is built for its first episode
-        self._scenes = {(False, False): (self.model, self.policy)}
+        # (object kind or None, incline) -> (model, policy); a scene with an object or the incline is built for its
+        # first episode
+        self._scenes = {(None, False): (self.model, self.policy)}
         self._ground = is_ground(self.model)
         self._ball_live = False
 
@@ -251,6 +256,9 @@ class Go2World:
         if ball and missing:
             raise ValueError(f"missing ball key(s) {missing}: give all six of {list(BALL_KEYS)} or none")
         throw = [_number(k, situation[k]) for k in BALL_KEYS] if ball else None
+        kind = situation.get("object_kind", "ball")
+        if kind not in OBJECT_KINDS:
+            raise ValueError(f"object_kind must be one of {list(OBJECT_KINDS)}, got {kind!r}")
         incline = _number("incline_deg", situation.get("incline_deg", 0.0))
         if not 0.0 <= incline <= self.config["world"]["incline"]["max_deg"]:
             raise ValueError(f"incline_deg must be from 0 to world.incline.max_deg "
@@ -267,7 +275,8 @@ class Go2World:
         self._active = self._ball_live = False
         self._attempt_seed, self.attempt_streams = attempt, streams
         self._episodes += 1
-        self._use_scene(ball, incline > 0.0)
+        self._object = kind if ball else None
+        self._use_scene(self._object, incline > 0.0)
         self._incline = incline
         dt, self._delay = self.policy.control_dt, 0  # control periods from issuing a command to the policy receiving it
         if "latency" in self._hidden:
@@ -399,15 +408,15 @@ class Go2World:
     # The ball. Its scene is the plain one plus a free body after the robot (scene.build_model), so the robot's qpos,
     # qvel, body and geom indices are the same in both scenes.
 
-    def _use_scene(self, ball: bool, incline: bool = False) -> None:
-        """Point model and policy at the scene with or without the ball and the incline, building it on first use.
-        The ball collides with nothing until _throw. Ball and incline come after the robot, the ball first, so the
-        robot's and the ball's indices are the same in every scene."""
+    def _use_scene(self, ball: str | None, incline: bool = False) -> None:
+        """Point model and policy at the scene with the thrown object of kind `ball` (or none) and with or without
+        the incline, building it on first use. The object collides with nothing until _throw. Object and incline come
+        after the robot, the object first, so the robot's and the object's indices are the same in every scene."""
         key = (ball, incline)
         if key not in self._scenes:
-            model = build_model(self.config, self._hidden, ball=ball, incline=incline)
+            model = build_model(self.config, self._hidden, ball=ball or False, incline=incline)
             self._scenes[key] = (model, WalkingPolicy(self.config, model, self._hidden.get("motor_strength", 1.0)))
-        if ball and not hasattr(self, "_ball_geom"):
+        if ball:
             model = self._scenes[key][0]
             body = model.body("ball")
             self._ball_geom, self._ball_q, self._ball_v = model.geom("ball").id, model.jnt_qposadr[body.jntadr[0]], \
@@ -419,6 +428,7 @@ class Go2World:
             # Centres closer than this can mean surfaces closer than 0 (bounding spheres); contacts start within margin.
             self._reach = model.geom_rbound[self._robot_geoms] + model.geom_rbound[self._ball_geom]
             self._margin = model.geom_margin[[*self._robot_geoms, self._ball_geom]].max()
+            self._ball_radius = float(model.geom_size[self._ball_geom][0])
         if self.model is not self._scenes[key][0]:
             self.model, self.policy = self._scenes[key]
             self._ground = is_ground(self.model)
@@ -471,7 +481,7 @@ class Go2World:
             "fallen": self._fall_n is not None,
             "ball": None if not self._ball_live else {"pos_m": d.qpos[self._ball_q:self._ball_q + 3].copy(),
                                                       "vel_m_s": d.qvel[self._ball_v:self._ball_v + 3].copy(),
-                                                      "radius_m": self.config["ball"]["radius_m"]},
+                                                      "radius_m": self._ball_radius},
             "command_active": dict(self._issued),
             **self._declared,
         }
@@ -503,7 +513,7 @@ class Go2World:
             break
         hidden = {"preset": self.preset, "seed": self.seed, "attempt_seed": self._attempt_seed,
                   "hidden_effects": self._hidden, "attempt_latency_s": self._delay * self.policy.control_dt,
-                  "incline_deg": self._incline,
+                  "incline_deg": self._incline, "object_kind": self._object,
                   "policy_command": self._policy_commands}
         path.with_suffix(".hidden.json").write_text(json.dumps(hidden, indent=2, default=lambda o: o.tolist()))
         return path.as_posix()
