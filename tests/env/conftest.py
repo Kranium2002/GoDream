@@ -1,6 +1,6 @@
 import pytest
 
-from learned_judgment.env import load_config
+from learned_judgment.env import Go2World, load_config
 
 
 def pytest_configure(config):
@@ -30,3 +30,8 @@ def forward(zero):
 @pytest.fixture
 def period(schema):
     return schema["update_period_s"]
+
+
+@pytest.fixture
+def world(config):
+    return Go2World(config, config["runtime"]["seed"])

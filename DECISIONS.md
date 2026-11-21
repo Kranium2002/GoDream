@@ -73,3 +73,7 @@ Consequences for the skills: low forward commands under-deliver by about a quart
 ## 2026-11-21 — Two levels of seed, in Person B's proposed form
 
 `Go2World(config, seed, preset)` fixes the hidden world for the life of the object. `reset(situation, attempt_seed)` fixes one episode's noise, drawn from `(seed, attempt_seed)`; leaving `attempt_seed` out uses the episode counter. This replaces the `noise_key` situation key of the plan (HANDOFF_PERSON_B.md item 8).
+
+## 2026-11-21 — Per-attempt random streams on their own SeedSequence branch
+
+`make_streams(seed)` spawns the four streams (`situation`, `world`, `ball`, `noise`) from `numpy.random.SeedSequence(seed)`; the per-attempt streams of `reset(attempt_seed=k)` spawn from `SeedSequence(seed, spawn_key=(4, k))`. Seeding with the plain list `[seed, k]` was rejected: NumPy pads short entropy with zeros, so `[seed, 0]` gives the same streams as `seed` and attempt 0 would repeat the world's own draws (`tests/env/test_determinism.py` checks they differ). Changing this rule changes every recorded attempt's noise, so it is fixed from now on.

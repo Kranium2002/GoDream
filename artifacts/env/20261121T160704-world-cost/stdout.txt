@@ -1,0 +1,7 @@
+python 3.13.18 Windows-10-10.0.19045-SP0 | world.settle_s 2.0
+construct Go2World: median 0.1222 s; runs [0.7019, 0.1266, 0.1222, 0.1125, 0.1116]
+reset() default situation: median 0.5824 s; runs [0.5066, 0.5824, 0.5864, 0.5725, 0.6914]
+step(command, 10.0) real-time factor: median 7.9612 sim s per wall s; runs [8.2313, 7.279, 7.9612]
+step(command, 0.02) x 500 real-time factor: median 7.7924 sim s per wall s; runs [7.8949, 7.4164, 7.7924]
+finish_episode() writing a 20 s trace: median 0.0308 s; runs [0.0393, 0.0308, 0.0305]
+finish_episode() with save_traces false: median 0.0000 s; runs [0.0001, 0.0, 0.0]

@@ -68,7 +68,7 @@ def _episode(config, schedule, seed, trace_path) -> dict:
     if trace_path is not None:
         np.savez(trace_path, t=t, qpos=qpos, qvel=qvel, command=commands, seed=seed, sim_s=sim_s, wall_s=wall)
     return {
-        "fallen": worst["trunk_floor"] or max_tilt_deg > acc["fall_tilt_deg"],
+        "fallen": worst["trunk_floor"] or max_tilt_deg > config["robot"]["fall"]["max_tilt_deg"],
         "max_tilt_deg": max_tilt_deg,
         "mean_speed_m_s": float(forward[late].mean()),
         "mean_lateral_speed_m_s": float(left[late].mean()),
