@@ -15,7 +15,7 @@
       <nav class="areas" aria-label="Sections">
         <a href="#robot">Robot</a>
         <a href="#learn">Learnt skills</a>
-        <a href="#live">Camera test</a>
+        <a href="#try">Try it</a>
       </nav>
       <div class="conn" role="status" aria-live="polite">
         <p><span class="mark" id="conn-mark" aria-hidden="true">&#9675;</span> <span id="conn-text">Connecting to the server</span></p>
@@ -48,6 +48,40 @@
           </div>
         </div>
         <ol class="track__steps" id="track-steps"></ol>
+      </div>
+
+      <div class="drive" id="drive" aria-labelledby="drive-h" hidden>
+        <div class="drive__head">
+          <h2 id="drive-h">Drive the simulated dog</h2>
+          <button class="btn btn--secondary btn--small" type="button" id="drive-close">Close</button>
+        </div>
+        <p class="cap-note" id="drive-cap" hidden></p>
+        <div class="drive__pad" role="group" aria-label="Direction">
+          <button class="pad" type="button" data-dir="turn_left" aria-keyshortcuts="Q">Turn left <kbd>Q</kbd></button>
+          <button class="pad" type="button" data-dir="forward" aria-keyshortcuts="W">Forward <kbd>W</kbd></button>
+          <button class="pad" type="button" data-dir="turn_right" aria-keyshortcuts="E">Turn right <kbd>E</kbd></button>
+          <button class="pad" type="button" data-dir="left" aria-keyshortcuts="A">Left <kbd>A</kbd></button>
+          <button class="pad pad--stop" type="button" data-dir="stop" aria-keyshortcuts="Space">Stop <kbd>Space</kbd></button>
+          <button class="pad" type="button" data-dir="right" aria-keyshortcuts="D">Right <kbd>D</kbd></button>
+          <span></span>
+          <button class="pad" type="button" data-dir="back" aria-keyshortcuts="S">Back <kbd>S</kbd></button>
+          <span></span>
+        </div>
+        <div class="drive__row">
+          <label for="drive-speed">Speed</label>
+          <select id="drive-speed">
+            <option value="0.25">A quarter of the supported range</option>
+            <option value="0.5" selected>Half of the supported range</option>
+            <option value="1">The full supported range</option>
+          </select>
+        </div>
+        <div class="drive__row">
+          <label for="drive-preset">World</label>
+          <select id="drive-preset"></select>
+          <button class="btn btn--secondary btn--small" type="button" id="drive-reset">Reset the episode</button>
+        </div>
+        <p class="drive__status" id="drive-status" role="status" aria-live="polite">The dog is roaming on the zero command until you press a direction.</p>
+        <p class="hint">Scenario episodes, such as throwing a punch or crossing the ramp, arrive with the next server task.</p>
       </div>
 
       <aside class="dock" id="dock" aria-labelledby="dock-h" hidden>
@@ -164,30 +198,98 @@
       </details>
     </section>
 
+    <section class="area" id="try" aria-labelledby="try-h">
+      <h2 id="try-h">Try what it learned</h2>
+      <p class="lead">Validate a skill two ways: walk the simulated dog around yourself, or stand in front of the laptop camera and see the world the way the robot's network sees it.</p>
+      <ul class="cards cards--two">
+        <li><button class="card" type="button" id="try-sim">
+          <span class="card__skill">Try it in the simulation</span>
+          <span class="card__facts">Drive the real simulated Go2 and look at it from any angle on the stage above.</span>
+          <span class="card__go">Open the drive controls</span>
+        </button></li>
+        <li><a class="card" href="#live">
+          <span class="card__skill">Try it on the camera</span>
+          <span class="card__facts">Your camera turned into the robot's view, step by step, with the frozen model's decision.</span>
+          <span class="card__go">Go to the camera test</span>
+        </a></li>
+      </ul>
+    </section>
+
     <section class="area" id="live" aria-labelledby="live-h">
-      <h2 id="live-h">Camera test</h2>
-      <p class="lead">A separate test of the frozen model: it never learns from the camera. Frames stay in this page's memory; only the grey cells of the window go to the server on this computer.</p>
+      <h2 id="live-h">Try it on the camera</h2>
+      <p class="lead">A separate test of a frozen model: it never learns from the camera. Frames stay in this page's memory and nothing from the camera is stored; only the grey cells of each window go to the server on this computer.</p>
       <p class="cap-note" id="window-note" hidden></p>
       <p id="window-text" hidden></p>
+      <p class="dev-flag" id="dev-flag" role="status" hidden>Development thresholds: the server says this model's decision thresholds are not calibrated yet.</p>
       <div class="btn-row">
         <button class="btn btn--primary" type="button" id="cam-start">Start camera</button>
         <button class="btn btn--secondary" type="button" id="cam-stop" disabled>Stop camera</button>
       </div>
       <p id="cam-status" role="status" aria-live="polite">The camera is off. Nothing is requested until you press Start camera.</p>
 
+      <div class="eye">
+        <section class="panel eye__raw" aria-labelledby="cam-label">
+          <h3 id="cam-label">Your camera, not mirrored</h3>
+          <div class="eye__video">
+            <video id="cam-video" muted playsinline aria-labelledby="cam-label"></video>
+            <span class="eye__crop" id="cam-crop" aria-hidden="true" hidden></span>
+          </div>
+          <p class="hint">The outlined square is the part the robot uses.</p>
+          <dl class="stats">
+            <dt>Camera frames per second</dt><dd id="st-fps">not measured</dd>
+            <dt>Window filled</dt><dd id="st-fill">not started</dd>
+            <dt>Windows dropped while waiting</dt><dd id="st-dropped">0</dd>
+          </dl>
+        </section>
+
+        <section class="panel eye__seen" aria-labelledby="seen-h">
+          <h3 id="seen-h">What the robot sees</h3>
+          <ol class="eye__steps">
+            <li>
+              <span class="eye__step">1 · Centre square in grey</span>
+              <canvas id="cam-greyfull" width="1" height="1" role="img" aria-label="The centre square of the newest frame in grey"></canvas>
+            </li>
+            <li>
+              <span class="eye__step" id="grey-label">2 · The cells the network reads</span>
+              <canvas id="cam-grey" width="1" height="1" role="img" aria-labelledby="grey-label grey-text"></canvas>
+            </li>
+          </ol>
+          <p class="hint" id="grey-text">Nothing yet.</p>
+          <h4 class="eye__strip-h" id="strip-h">3 · The window sent to the model, oldest first</h4>
+          <ol class="eye__strip" id="cam-strip" aria-labelledby="strip-h"></ol>
+        </section>
+      </div>
+
       <div class="split">
+        <section class="panel instruments" aria-labelledby="dec-h">
+          <h3 id="dec-h">Decision</h3>
+          <p class="action" id="dec-action" role="status" aria-live="polite">No decision yet.</p>
+          <p id="dec-issued"></p>
+          <div class="decision">
+            <dl class="stats" id="dec-rows"></dl>
+            <div>
+              <h4>Persistence gate</h4>
+              <ul class="gate" id="dec-gate"><li class="empty">No gate state yet.</li></ul>
+              <dl class="stats stats--session">
+                <dt>Decisions this session</dt><dd id="st-decisions">0</dd>
+                <dt>Active commands issued</dt><dd id="st-issued">0</dd>
+              </dl>
+            </div>
+          </div>
+        </section>
+
         <section class="panel" aria-labelledby="stage-h">
-          <h2 id="stage-h">Simulated dog</h2>
+          <h3 id="stage-h">The simulated dog</h3>
           <div class="stage" id="stage">
             <div class="stage__view">
-              <h3 id="trk-label">Tracking view</h3>
+              <h4 id="trk-label">Tracking view</h4>
               <div class="stage__frame stage__frame--track">
                 <img id="stage-tracking" alt="Live simulator frames from the tracking camera" hidden>
                 <p class="stage__note" id="trk-note" hidden></p>
               </div>
             </div>
             <div class="stage__view">
-              <h3 id="head-label">Head camera</h3>
+              <h4 id="head-label">Head camera</h4>
               <div class="stage__frame stage__frame--head">
                 <img id="stage-head" alt="Live simulator frames from the dog's head camera" hidden>
                 <p class="stage__note" id="head-note" hidden></p>
@@ -195,42 +297,7 @@
             </div>
           </div>
         </section>
-
-        <section class="panel" aria-labelledby="cam-h">
-          <h2 id="cam-h">Camera</h2>
-          <div class="cam">
-            <div class="cam__view">
-              <h3 id="cam-label">Not mirrored: what the dog's camera would see</h3>
-              <video id="cam-video" muted playsinline aria-labelledby="cam-label"></video>
-            </div>
-            <div class="cam__model">
-              <h3 id="grey-label">What the network sees</h3>
-              <canvas id="cam-grey" width="1" height="1" role="img" aria-labelledby="grey-label grey-text"></canvas>
-              <p class="hint" id="grey-text">Nothing yet.</p>
-            </div>
-          </div>
-          <dl class="stats">
-            <dt>Camera frames per second</dt><dd id="st-fps">not measured</dd>
-            <dt>Window filled</dt><dd id="st-fill">not started</dd>
-            <dt>Windows dropped while waiting</dt><dd id="st-dropped">0</dd>
-            <dt>Decisions this session</dt><dd id="st-decisions">0</dd>
-            <dt>Active commands issued</dt><dd id="st-issued">0</dd>
-          </dl>
-        </section>
       </div>
-
-      <section class="panel" aria-labelledby="dec-h">
-        <h2 id="dec-h">Decision</h2>
-        <p class="action" id="dec-action" role="status" aria-live="polite">No decision yet.</p>
-        <p id="dec-issued"></p>
-        <div class="decision">
-          <dl class="stats" id="dec-rows"></dl>
-          <div>
-            <h3>Persistence gate</h3>
-            <ul class="gate" id="dec-gate"><li class="empty">No gate state yet.</li></ul>
-          </div>
-        </div>
-      </section>
     </section>
 
     <section class="panel caps" aria-labelledby="caps-h">

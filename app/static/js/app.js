@@ -6,6 +6,7 @@ import { canStart, INITIAL_RUN, runStep } from "./run.js";
 import { initLiveView } from "./live-view.js";
 import { initLearnView } from "./learn-view.js";
 import { initRobotStage } from "./robot-stage.js";
+import { initDriveView } from "./drive-view.js";
 
 const api = createApi((url, init) => fetch(url, init));
 const $ = (id) => document.getElementById(id);
@@ -29,6 +30,10 @@ const learn = initLearnView({ api, el });
 // ---- the robot stage and the sections below it --------------------------------------------------------------
 const stage = initRobotStage({ api });
 const wide = matchMedia("(min-width: 1000px)");
+const drive = initDriveView({ api, onOpen: () => {
+  $("robot").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  placeDog();
+}, onClose: () => placeDog() });
 
 // Streams load only while their section is on screen; the camera itself is the person's to start and stop.
 const watched = { robot: (v) => stage.setVisible(v), learn: (v) => learn.setVisible(v), live: (v) => live.setVisible(v) };
@@ -61,7 +66,7 @@ function placeDog() {
   const open = !$("dock").hidden;
   let left = s.left, right = s.right, top = s.top, bottom = s.bottom;
   if (open && wide.matches) right = $("dock").getBoundingClientRect().left;
-  else if (!open && wide.matches) left = $("hero-copy").getBoundingClientRect().right;
+  else if (!open && wide.matches) left = $(document.body.classList.contains("drive-open") ? "drive" : "hero-copy").getBoundingClientRect().right;
   else if (!open) bottom = $("hero-copy").getBoundingClientRect().top; // narrow with the dock open: it covers the stage
   const x = 2 * ((left + right) / 2 - s.left) / s.width - 1;
   const y = 1 - 2 * ((top + bottom) / 2 - s.top) / s.height;
@@ -98,6 +103,7 @@ async function loadState() {
   capabilities = normaliseCapabilities(s.capabilities);
   renderCapabilities();
   live.setState(s, capabilities);
+  drive.setState(s, capabilities);
   learn.setState(s, capabilities);
 }
 

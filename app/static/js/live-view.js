@@ -4,8 +4,9 @@ import { cameraProblem, createFrameWindow, createRateMeter, createSampler, creat
 import { preprocess, readWindowSettings } from "./vision.js";
 import { readout } from "./readout.js";
 import { createStage } from "./stage.js";
+import { cropRect } from "./drive.js";
 
-const RETRY_MS = 3000; // after an unavailable answer, wait this long before offering the next window
+const RETRY_MS = 3000; // after an unavailable or failed answer, wait this long before offering the next window
 
 export function initLiveView({ api, el }) {
   const $ = (id) => document.getElementById(id);
@@ -73,6 +74,7 @@ export function initLiveView({ api, el }) {
   function newRun(s) {
     const r = { settings: s, frameWindow: createFrameWindow(s.frames, s.height * s.width), sampler: createSampler(s.hz),
       decisions: 0, issued: 0, retryAt: 0, lastAction: null, sessionStart: true };
+    buildStrip(s);
     r.sender = createSender(async (snap) => {
       const sentAt = performance.now();
       const first = r.sessionStart; // until the server has answered one window of this session
@@ -96,6 +98,9 @@ export function initLiveView({ api, el }) {
     meter.clear();
     clearDecision("Camera off: no decision.");
     grey.width = grey.height = 1;
+    $("cam-greyfull").width = $("cam-greyfull").height = 1;
+    $("cam-strip").replaceChildren();
+    $("cam-crop").hidden = true;
     $("grey-text").textContent = "Nothing yet.";
     $("st-fps").textContent = "not measured";
     $("st-fill").textContent = "not started";
@@ -127,27 +132,49 @@ export function initLiveView({ api, el }) {
     if (!W || !H) return;
     if (capture.width !== W || capture.height !== H) { capture.width = W; capture.height = H; }
     captureCtx.drawImage(video, 0, 0); // same size as the frame: no scaling, no mirroring
-    let cells;
+    let cells, square;
     try {
-      cells = preprocess(captureCtx.getImageData(0, 0, W, H).data, W, H, r.settings);
+      const px = captureCtx.getImageData(0, 0, W, H).data;
+      cells = preprocess(px, W, H, r.settings);
+      // For people only: the same centre square in grey at up to 96 x 96, by the same area averaging (levels 0-255).
+      const g = Math.min(96, W, H);
+      square = preprocess(px, W, H, { ...r.settings, height: g, width: g, divisor: 1 });
+      drawCells($("cam-greyfull"), square, g, g, 1);
     } catch (e) {
       status(e.message);
       return;
     }
-    drawGrey(cells, r.settings);
+    drawCells(grey, cells, r.settings.width, r.settings.height, 255);
+    $("grey-text").textContent = `${r.settings.height} x ${r.settings.width} grey cells of the newest frame, as sent to the model.`;
+    placeCrop(W, H);
     r.frameWindow.push(cells, t);
+    r.frameWindow.list().forEach((v, k) => { const c = $("cam-strip").children[k]?.querySelector("canvas"); if (c) drawCells(c, v, r.settings.width, r.settings.height, 255); });
     const snap = r.frameWindow.snapshot();
     $("st-fill").textContent = snap ? `${r.settings.frames} of ${r.settings.frames} frames` : "filling";
     if (snap && performance.now() >= r.retryAt) r.sender.offer(snap);
     $("st-dropped").textContent = String(r.sender.dropped());
   }
 
-  function drawGrey(cells, s) {
-    if (grey.width !== s.width || grey.height !== s.height) { grey.width = s.width; grey.height = s.height; }
-    const img = new ImageData(s.width, s.height);
-    cells.forEach((v, k) => { const g = Math.max(0, Math.min(255, Math.round(v * 255))); img.data.set([g, g, g, 255], 4 * k); });
-    grey.getContext("2d").putImageData(img, 0, 0);
-    $("grey-text").textContent = `${s.height} x ${s.width} grey cells of the newest frame, centre square, as sent to the model.`;
+  // Grey values (times toByte) into a canvas of w x h pixels; CSS scales it up with its pixels kept.
+  function drawCells(canvas, cells, w, h, toByte) {
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    const img = new ImageData(w, h);
+    cells.forEach((v, k) => { const g = Math.max(0, Math.min(255, Math.round(v * toByte))); img.data.set([g, g, g, 255], 4 * k); });
+    canvas.getContext("2d").putImageData(img, 0, 0);
+  }
+
+  // The centre square the model uses, outlined on the preview.
+  function placeCrop(W, H) {
+    const c = cropRect(W, H, video.clientWidth, video.clientHeight), box = $("cam-crop");
+    box.hidden = !c;
+    if (c) Object.assign(box.style, { left: `${c.left}px`, top: `${c.top}px`, width: `${c.size}px`, height: `${c.size}px` });
+  }
+
+  // One small canvas per frame of the window, oldest first.
+  function buildStrip(s) {
+    $("cam-strip").replaceChildren(...Array.from({ length: s.frames }, (_, k) => el("li", {},
+      el("canvas", { width: s.width, height: s.height, role: "img", "aria-label": `Frame ${k + 1} of ${s.frames}` }),
+      el("span", { class: "hint" }, k === 0 ? "oldest" : k === s.frames - 1 ? "newest" : String(k + 1)))));
   }
 
   // ---- decisions -------------------------------------------------------------------------------------------------
@@ -166,7 +193,7 @@ export function initLiveView({ api, el }) {
     if (r !== run) return;
     const view = readout(result);
     if (view.state !== "decision") {
-      if (view.state === "unavailable") r.retryAt = performance.now() + RETRY_MS;
+      r.retryAt = performance.now() + RETRY_MS; // unavailable or failed: pause instead of repeating the request 30 times a second
       setAction(r, `${view.state}:${view.message}`, view.state === "unavailable"
         ? `Inference is unavailable: ${view.message}`
         : `Inference failed: ${view.message} (${view.code})`);
@@ -175,6 +202,7 @@ export function initLiveView({ api, el }) {
     }
     r.decisions++;
     if (view.issued === true) r.issued++;
+    $("dev-flag").hidden = !view.development;
     $("st-decisions").textContent = String(r.decisions);
     $("st-issued").textContent = String(r.issued);
     setAction(r, view.action.code, `${view.action.label} (${view.action.code})`);

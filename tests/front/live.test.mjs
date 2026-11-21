@@ -108,3 +108,11 @@ test("camera errors read as plain messages", async () => {
   assert.match(cameraProblem({ error: { name: "NotReadableError" } }), /another program/);
   assert.match(cameraProblem({ error: { name: "WeirdError", message: "boom" } }), /WeirdError: boom/);
 });
+
+test("the rolling window lists its frames oldest first, for the strip the page draws", () => {
+  const w = createFrameWindow(3, 2);
+  w.push(f(1), 10); w.push(f(2), 20); w.push(f(3), 30); w.push(f(4), 40);
+  assert.deepEqual(w.list().map((v) => v[0]), [2, 3, 4]);
+  w.clear();
+  assert.deepEqual(w.list(), []);
+});

@@ -17,6 +17,7 @@ export function createFrameWindow(frames, size) {
       buf.forEach((f, k) => window.set(f.values, k * size));
       return { window, capturedAt: buf[buf.length - 1].capturedAt };
     },
+    list: () => buf.map((f) => f.values), // the frames, oldest first
     clear() { buf = []; },
   };
 }
