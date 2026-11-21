@@ -37,6 +37,10 @@ SCENARIOS = f"{ROOT}.scenarios"
 FLOOR_Z = require(CONFIG, "ball.radius_m") - require(CONFIG, f"{ROOT}.physics.base_height_m")
 CAMERA = require(CONFIG, "vision.head_camera.pos_m")
 TOL = 1e-9
+needs_ball = pytest.mark.skipif(
+    "ball" not in require(CONFIG, f"{ROOT}.object_kinds"),
+    reason=f"assumes rolling balls; config {ROOT}.object_kinds = {require(CONFIG, f'{ROOT}.object_kinds')} has no 'ball'",
+)
 
 
 def sample(n: int, seed: int = 7) -> list[dict]:
@@ -89,6 +93,7 @@ def test_sampler_is_deterministic_and_prefix_independent() -> None:
     assert sample(200, seed=8) != sample(200)
 
 
+@needs_ball
 def test_scenarios_have_valid_kinds_keys_and_ranges() -> None:
     assert set(require(CONFIG, f"{ROOT}.kind_weights")) == set(KINDS)
     assert {s["kind"] for s in SAMPLE} == set(KINDS)
@@ -196,6 +201,7 @@ def test_physics_centre_roll_collides_under_no_op() -> None:
     assert no_op_guess(first("incoming_center", roll=True))[1] > 0.5
 
 
+@needs_ball
 def test_physics_sanity() -> None:
     assert no_op_guess(first("incoming_center", roll=False))[1] > 0.5
     assert no_op_guess(first("off_path", roll=True))[1] < 0.5
@@ -243,6 +249,7 @@ def test_episode_augmentation_matches_augment_window_on_one_frame() -> None:
 # ----- episodes on the real world --------------------------------------------------------------------------------
 
 
+@needs_ball
 def test_observe_and_act_on_a_centre_roll_is_repeatable(world_and_view) -> None:
     world, view = world_and_view
     scenario = first("incoming_center", roll=True)
@@ -257,6 +264,7 @@ def test_observe_and_act_on_a_centre_roll_is_repeatable(world_and_view) -> None:
     assert np.array_equal(again[0], features) and again[1] == measured
 
 
+@needs_ball
 def test_frames_change_as_a_ball_rolls_in(world_and_view) -> None:
     world, view = world_and_view
     windows = render_windows(world, view, first("incoming_center", roll=True), 0, [9, 24, 39], SETTINGS)
@@ -266,6 +274,7 @@ def test_frames_change_as_a_ball_rolls_in(world_and_view) -> None:
     assert not np.array_equal(frames[0], frames[-1])
 
 
+@needs_ball
 def test_closed_loop_on_the_zero_command_matches_observe_and_act(world_and_view) -> None:
     world, view = world_and_view
     scenario = first("incoming_left", roll=True)
