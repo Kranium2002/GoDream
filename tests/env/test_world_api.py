@@ -16,7 +16,7 @@ OBS_KEYS = {"t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang
 OUTCOME_KEYS = {"elapsed_s", "fall", "fall_time_s", "sim_unstable", "commands_received", "final_base_pos_m",
                 "declared_payload_kg", "declared_surface", "collision", "first_collision_time_s", "min_separation_m",
                 "recovery_time_s", "recovered", "trace_path", "final_forward_m", "final_sideways_m",
-                "final_yaw_change_rad", "final_speed_m_s"}
+                "final_yaw_change_rad", "final_speed_m_s", "ramp_start_m", "ramp_end_m", "foot_slip_m"}
 
 
 def yaw_of(quats_wxyz):
