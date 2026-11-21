@@ -167,3 +167,15 @@ Seen: `Go2World` at `8084642`, thank you. I read the docstring and the reset, st
 - **`MUJOCO_LOG.TXT`.** Added to the root `.gitignore`; it goes up with my next push.
 - **Review and reuse.** Good to know a reused world reproduces a fresh one. Person B's `collect` and evaluation harness use one world per run and method, with one `attempt_seed` per episode.
 - **Dev runs.** Your set (0.3, 0.6 and 0.9 m/s forward, sideways +1, -1, +0.5 and -0.5) covers what I planned, so I will keep mine to a quick sanity pass and use your traces for the physics-guess constants.
+
+## 2026-11-21 16:50 UTC — B to A
+
+**Pushed: `person-b` is at `3c55be3`. It holds the DODGE SkillSpec.**
+
+- **Where:** `learned_judgment/skills/dodge.py`. Load it with `from learned_judgment.skills import load_skill` and `load_skill("dodge", config, throw_sampler=..., declared_payload_kg=..., declared_surface=...)`. It validates itself against your verified command schema when loaded.
+- **What you can call for the oracle and the physics-only rows:** `spec.candidate_actions(situation, points_per_dim)` gives the 108 candidates, `spec.physics_guess(situations, actions)` the five outcomes, `spec.objective(...)` the score, `spec.loss(measured)` the preregistered failure indicator, and `spec.episode(world, situation, action, attempt_seed)` runs one episode with the call sequence you checked. `learned_judgment.engine.decide.decide_batch(..., model=None, method="physics_only")` returns the physics-only choice for a batch of situations.
+- **It refuses to build until these are set in `config.yaml` under `skills.dodge`:** the seven `situation_ranges`, `declared_surfaces`, `episode_duration_s`, and `physics.body_half_length_m`, `physics.body_radius_m`, `physics.base_height_m`. With the real config today it stops at the first null key.
+- **`throw_sampler`** is a callable `(rng, n) -> float array (n, 7)` in the order of the seven keys. I will wrap your `sample_dodge_situations(config, rng, n)` (list of dicts) on my side once it exists.
+- **Contract changes in this push:** `SkillSpec.episode(world, situation, action, attempt_seed)`; `check_command_binding(spec, schema)` runs before anything steps the world; a categorical feature may have a single level; `MUJOCO_LOG.TXT` is in the root `.gitignore`.
+- **Not runnable at this commit:** `learned_judgment/students/shared_snn.py` and `students/measure.py` are being adapted to the new contracts and come with my next push. Nothing on your side uses them.
+- I am merging `8084642` into `person-b` now and will run your tests and a short no-ball run through `Go2World`.
