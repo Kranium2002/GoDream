@@ -48,6 +48,25 @@ test("startRun() POSTs the declared spec and the cost confirmation flag", async 
   assert.deepEqual(r, { ok: true, status: 202, data: { run_id: "r1" } });
 });
 
+test("infer() adds session_start: true only for the first window of a camera session", async () => {
+  const { calls, fetchFn } = recorder(() => json(200, { action: "NO_OP" }));
+  const api = createApi(fetchFn);
+  await api.infer(Float32Array.of(0.5), 1, 10, true);
+  await api.infer(Float32Array.of(0.5), 1, 20, false);
+  await api.infer(Float32Array.of(0.5), 1, 30);
+  assert.deepEqual(JSON.parse(calls[0].init.body), { window: [0.5], frames: 1, captured_ms: 10, session_start: true });
+  assert.equal("session_start" in JSON.parse(calls[1].init.body), false);
+  assert.equal("session_start" in JSON.parse(calls[2].init.body), false);
+});
+
+test("runs() GETs /api/runs", async () => {
+  const { calls, fetchFn } = recorder(() => json(200, ["r1", "r2"]));
+  const r = await createApi(fetchFn).runs();
+  assert.equal(calls[0].url, "/api/runs");
+  assert.equal(calls[0].init.method, "GET");
+  assert.deepEqual(r, { ok: true, status: 200, data: ["r1", "r2"] });
+});
+
 test("infer() POSTs the window as a plain list with its frame count and capture time", async () => {
   const { calls, fetchFn } = recorder(() => json(200, { action: "NO_OP" }));
   const r = await createApi(fetchFn).infer(Float32Array.of(0.5, 0.25), 2, 1234.5);

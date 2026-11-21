@@ -8,6 +8,8 @@ const LABELS = { baseline: "Baseline measured", attempts: "Real simulator attemp
   dream: "PFN dreams", train: "SNN training", evaluate: "Held-out evaluation" };
 const STOPPED = ["refused", "failed", "stopped"];
 
+import { readout } from "./readout.js";
+
 const finite = (v) => typeof v === "number" && Number.isFinite(v);
 const text = (v) => (typeof v === "string" ? v : JSON.stringify(v));
 
@@ -113,8 +115,10 @@ export function resultView(result) {
     && metrics.every((m) => m && typeof m.name === "string" && m.values && typeof m.values === "object" && !Array.isArray(m.values));
   if (!fits) return { kind: "raw", rows: flatRows(result) };
   const keys = [...new Set(metrics.flatMap((m) => Object.keys(m.values)))];
+  const { metrics: _m, paired: _p, seeds: _s, scenario_ids: _i, ...rest } = result;
   return {
     kind: "table",
+    extra: flatRows(rest), // every key the table does not show, as sent
     seeds: Array.isArray(result.seeds) ? result.seeds.map(text).join(", ") : null,
     scenarioCount: Array.isArray(result.scenario_ids) ? result.scenario_ids.length : null,
     methods: keys.map((key) => ({ key, label: METHOD_LABELS[key] ?? key })),
@@ -132,7 +136,24 @@ export function resultView(result) {
   };
 }
 
+// GET /api/runs: the run ids found on disk (a list of strings); anything else gives none.
+export function runIds(data) {
+  return Array.isArray(data) ? [...new Set(data.filter((id) => typeof id === "string" && id))] : [];
+}
+
 // ---- stage indicators ------------------------------------------------------------------------------------------
+// One line from an SSE infer event: its action and the confidences it carries, the gate only when it carries one.
+export function inferLine(data) {
+  if (typeof data?.action !== "string") return null;
+  const view = readout({ ok: true, data });
+  const parts = [`${view.action.label} (${view.action.code})`];
+  for (const [label, key] of [["threat confidence", "threat_confidence"], ["action confidence", "action_confidence"]]) {
+    if (finite(data[key])) parts.push(`${label} ${data[key].toFixed(2)}`);
+  }
+  if (view.gate.length) parts.push(view.gate[view.gate.length - 1].label.toLowerCase());
+  return parts.join(", ");
+}
+
 // RAMP mode, only when an observation actually carries it (field name assumed: ramp_mode, or mode).
 export function rampMode(obs) {
   const v = obs?.ramp_mode ?? obs?.mode;

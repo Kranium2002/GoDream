@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  STEPS, applyLine, emptyTimeline, flatRows, fromRunResponse, lossCurve, rampMode, resultView, timelineRows, trainSeries,
+  STEPS, applyLine, emptyTimeline, flatRows, fromRunResponse, inferLine, lossCurve, rampMode, resultView, runIds, timelineRows, trainSeries,
 } from "../../app/static/js/learn.js";
 
 // Pure-function fixtures in the agreed event-line shape; never shown on the page.
@@ -138,4 +138,34 @@ test("rampMode is read only when an observation actually carries NORMAL or SLOPE
   assert.equal(rampMode({ mode: "something" }), null);
   assert.equal(rampMode({ t_s: 1 }), null);
   assert.equal(rampMode(null), null);
+});
+
+test("a table result keeps every other key as key and value below the table", () => {
+  const v = resultView({
+    run_id: "r1", skill: "DODGE", declaration: { skill: "DODGE", params: { threats: ["ball"] } }, seeds: [1], scenario_ids: ["s"],
+    metrics: [{ name: "collision rate", unit: "", higher_is_better: false, values: { snn: { value: 0.1 } } }],
+    paired: [],
+    per_scenario: { s: { collision: false } }, calibration: [0.1, 0.2],
+  });
+  assert.equal(v.kind, "table");
+  assert.deepEqual(v.extra, [
+    ["run_id", "r1"], ["skill", "DODGE"], ["declaration.skill", "DODGE"], ["declaration.params.threats", "[\"ball\"]"],
+    ["per_scenario.s.collision", "false"], ["calibration", "[0.1,0.2]"],
+  ]);
+});
+
+test("runIds reads the run list on disk: strings only, in order, without repeats", () => {
+  assert.deepEqual(runIds(["r1", "r2", "r1", 7, null, ""]), ["r1", "r2"]);
+  assert.deepEqual(runIds({ runs: ["r1"] }), []);
+  assert.deepEqual(runIds(null), []);
+});
+
+test("inferLine shows the action and confidences an infer event carries, and the gate only when present", () => {
+  assert.equal(inferLine({ action: "DODGE_LEFT", threat_confidence: 0.934, action_confidence: 0.8812 }),
+    "Dodge left (DODGE_LEFT), threat confidence 0.93, action confidence 0.88");
+  assert.equal(inferLine({ action: "NO_OP", threat_confidence: 0.1, gate: { passed: false } }),
+    "No action (NO_OP), threat confidence 0.10, gate closed");
+  assert.equal(inferLine({ action: "UNCERTAIN", gate: { passed: true } }), "Uncertain: stays still (UNCERTAIN), gate passed");
+  assert.equal(inferLine({ threat_confidence: 0.5 }), null);
+  assert.equal(inferLine(null), null);
 });
