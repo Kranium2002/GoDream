@@ -16,7 +16,7 @@ OBS_KEYS = {"t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang
 OUTCOME_KEYS = {"elapsed_s", "fall", "fall_time_s", "sim_unstable", "commands_received", "final_base_pos_m",
                 "declared_payload_kg", "declared_surface", "collision", "first_collision_time_s", "min_separation_m",
                 "recovery_time_s", "recovered", "trace_path", "final_forward_m", "final_sideways_m",
-                "final_yaw_change_rad", "final_speed_m_s"}
+                "final_yaw_change_rad", "final_speed_m_s", "ramp_start_m", "ramp_end_m", "foot_slip_m"}
 
 
 def yaw_of(quats_wxyz):
@@ -216,6 +216,15 @@ def test_final_yaw_change_follows_a_left_turn(world, zero):
     out = world.finish_episode()
     assert 0.3 < out["final_yaw_change_rad"] < 1.0  # anticlockwise is +; 0.8 rad/s for 1 s less the latency and rise
     assert abs(out["final_forward_m"]) < 0.1 and abs(out["final_sideways_m"]) < 0.1  # turned on the spot
+
+
+def test_final_yaw_change_counts_whole_turns(world, zero):
+    # 0.8 rad/s for 5 s turns about 3.5 rad: past pi, where a wrapped angle would read negative.
+    world.reset()
+    world.step(zero | {"yaw_rate": 0.8}, 5.0)
+    out = world.finish_episode()
+    yaw = np.unwrap(yaw_of(np.load(out["trace_path"])["base_quat_wxyz"]))
+    assert out["final_yaw_change_rad"] > np.pi and out["final_yaw_change_rad"] == pytest.approx(yaw[-1] - yaw[0])
 
 
 def shoved_episode(config, save_traces, zero, period):

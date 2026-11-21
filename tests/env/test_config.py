@@ -1,4 +1,6 @@
 """Pure utility tests for the config loader and the config's own consistency."""
+import math
+
 from learned_judgment.env import load_config
 
 
@@ -34,3 +36,11 @@ def test_dodge_declares_every_floor_type_a_preset_can_have():
     floor_types = set(config["world"]["hidden_effects"]["surface_friction_by_type"])
     assert {p["floor_type"] for p in config["world"]["presets"].values()} <= floor_types
     assert set(config["skills"]["dodge"]["declared_surfaces"]) == floor_types
+
+
+def test_incline_geometry_has_no_gap_up_to_its_largest_angle():
+    inc = load_config()["world"]["incline"]
+    a = math.radians(inc["max_deg"])
+    assert inc["thickness_m"] * math.cos(a) >= inc["length_m"] * math.sin(a)  # the slab's far end reaches the floor
+    assert inc["thickness_m"] >= inc["length_m"] * math.sin(a)  # so does the plateau
+    assert 0 < inc["range_deg"][0] < inc["range_deg"][1] <= inc["max_deg"]

@@ -16,7 +16,7 @@ import numpy as np
 
 from learned_judgment.env import load_config
 from learned_judgment.env.policy import WalkingPolicy
-from learned_judgment.env.scene import build_model
+from learned_judgment.env.scene import build_model, is_ground
 
 
 def run_locomotion(config: dict, vx: float, yaw_rate: float, duration_s: float, seed: int,
@@ -109,9 +109,10 @@ def prove_commands(config: dict, out_dir: str | Path) -> Path:
 
 
 def trunk_on_floor(model, data) -> bool:
-    """True if a current contact pairs the floor with a geom of the trunk (body base_link)."""
+    """True if a current contact pairs the ground (scene.is_ground: the floor or the incline) with a geom of the trunk
+    (body base_link)."""
     g = data.contact.geom  # (ncon, 2) geom ids
-    floor = g == model.geom("floor").id
+    floor = is_ground(model)[g]
     trunk = model.geom_bodyid[g] == model.body("base_link").id
     return bool(np.any((floor[:, 0] & trunk[:, 1]) | (floor[:, 1] & trunk[:, 0])))
 
