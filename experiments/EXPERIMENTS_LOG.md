@@ -50,4 +50,4 @@ Rebound tests stated by the rules, with the implied coefficient of restitution `
 
 **Cost.** About 16 minutes wall time, 2 agents. TabPFN calls: 0.
 
-**Decision and next step.** No ball is chosen yet. Task 5 starts its dev runs with the IHF size 3 handball (0.450 kg, radius 0.0939 m: a ball made to be thrown, in the middle of the momentum band), and moves to the volleyball if dev runs show that every hit topples the dog. The choice and every change are logged in DECISIONS.md.
+**Decision and next step.** The integrator chose the IHF size 3 handball on 2026-11-21 (0.450 kg, radius 0.0939 m: a ball made to be thrown, in the middle of the momentum band). `config.yaml` carries those values. If dev runs show that every hit topples the dog, the fallback is the volleyball, and that change is logged in DECISIONS.md before it is made.

@@ -78,8 +78,11 @@ world:
 
 ball:
   enabled: true
-  mass_kg: null  # Set from the verified scene/spec, not an assumed value.
-  radius_m: null
+  # IHF size 3 handball (resin), IHF Rules of the Game 1 July 2025, Rule 3:2: 425-475 g, circumference 58-60 cm.
+  # Mid-range values; radius = 0.59 m / (2*pi). Evidence: experiments/EXPERIMENTS_LOG.md entry E6.
+  spec: ihf_size_3_handball
+  mass_kg: 0.450
+  radius_m: 0.0939
   throw_origin_range_m: null
   throw_speed_range_m_s: null
   throw_direction_range_deg: null

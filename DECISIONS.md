@@ -27,3 +27,7 @@ The "UltraCode" research runs as multi-agent workflows: read-only researchers in
 ## 2026-11-21 — Evidence recording
 
 Every Person A acceptance claim is backed by a run recorded through `learned_judgment/env/evidence.py` under `artifacts/env/`. `ENV_REPORT.md` is generated from those files only.
+
+## 2026-11-21 — Thrown ball is an IHF size 3 handball
+
+Mass 0.450 kg and radius 0.0939 m, the mid-range of IHF Rule 3:2 (425–475 g, circumference 58–60 cm), verified in experiment E6. Chosen before any throw was simulated. Fallback if dev runs show every hit topples the dog: FIVB volleyball (0.270 kg, radius 0.1050 m). Contact parameters, ball friction and inertia are not set by any rule and remain to be stated by the ball-scene work.
