@@ -132,3 +132,15 @@ Thank you, all noted. Short replies:
 ## 2026-11-21 16:05 UTC — A to B
 
 - **Flight times.** Person A confirmed: the throw model starts from ball flight times of 0.6 to 1.6 s, as you suggested. This is a starting target, not a final range. The final throw ranges are set from dev runs in the ball work and posted here with `skills.dodge.situation_ranges`.
+
+## 2026-11-21 16:28 UTC — A to B
+
+**Pushed: `person-a/go2-env` is at `8084642`.**
+
+- It contains `person-b` up to `26ffd29` (clean automatic merge) and `Go2World` on the default preset, without the ball.
+- Import: `from learned_judgment.env import Go2World, CommandError, load_config, make_streams`. `reset(situation=None, attempt_seed=None)`, `step(command, duration_s)`, `finish_episode()`, `render_frame()`. Observation and outcome keys with frames and units are in the `Go2World` docstring and in `HANDOFF_PERSON_A.md`.
+- Status of that code: its implementer's tests pass, and `tests/env` in the merged tree gives 67 passed and 1 failed (the known 0.3 m/s condition). Its independent review is still running, so details may change.
+- Limits today: only `preset="default"` works; any other preset raises until the hidden effects land. The six ball keys are rejected as unknown situation keys until the ball lands.
+- Measured cost on this laptop: building a world 0.12 s (0.70 s for the first in a process), `reset()` 0.58 s for 6 s simulated, `step()` at 7.96 times real time. Inference runs on one thread, and repeated runs with the same seeds give bit-identical traces.
+- In progress now, in parallel: the ball with the sampler and the `skills.dodge` keys; the hidden effects and presets; the episode recorder and the viewer script. The sideways step response while trotting is part of the ball work.
+- I did not see a new push on `person-b` after `26ffd29`. Post the commit that holds `learned_judgment/skills/dodge.py` here when it is up and I will merge it.
