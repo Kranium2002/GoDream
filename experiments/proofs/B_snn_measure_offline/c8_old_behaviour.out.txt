@@ -1,0 +1,59 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+  overlay learned_judgment/students/measure.py: committed version (39493 bytes; working tree 62286 bytes)
+  [ok] the overlay imports its own committed measure.py: <tmp>\learned_judgment\students\measure.py False
+
+== decision checks on the committed (old) measure.py ==
+  c1_end_to_end.py (existing end-to-end check, adapted (M1-M5 fields)): exit 1; ImportError: cannot import name 'H4_ENERGY_RULE' from 'learned_judgment.students.measure' (<tmp>\learned_judgment\students\measure.py)
+  [ok] c1_end_to_end.py fails on the old code
+  c2_hand_network.py (M3 both estimates and the verdict rule, M6 spike trains, M7 hand-built DeployedStudent): exit 1; ImportError: cannot import name 'H4_ENERGY_RULE' from 'learned_judgment.students.measure' (<tmp>\learned_judgment\students\measure.py)
+  [ok] c2_hand_network.py fails on the old code
+  c4_overlap.py (M2 held-out overlap): exit 1; ImportError: cannot import name 'SEEN_IN_TRAINING_LABEL' from 'learned_judgment.students.measure' (<tmp>\learned_judgment\students\measure.py)
+  [ok] c4_overlap.py fails on the old code
+  c5_latency_bound.py (M5 latency through a bound student): exit 1; TypeError: measure_decision_latency() takes 2 positional arguments but 3 positional arguments (and 1 keyword-only argument) were given
+  [ok] c5_latency_bound.py fails on the old code
+  c6_shared_layout.py (M1 shared-layout DeployedStudent): exit 1; ImportError: cannot import name 'HeldOutOverlapError' from 'learned_judgment.students.measure' (<tmp>\learned_judgment\students\measure.py)
+  [ok] c6_shared_layout.py fails on the old code
+  c7_distinct_situations.py (M4 distinct situations): exit 1; TypeError: student must be an SNNStudent; got DeployedStudent
+  [ok] c7_distinct_situations.py fails on the old code
+
+== the old API, scenario by scenario (c8_old_probe.py inside the overlay) ==
+    FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+    
+    old measure.py: <tmp>\learned_judgment\students\measure.py; config: config.yaml plus skills.fixture_measure.candidate_points_per_dim, students.snn.max_steps=400
+    
+    == M1 / M7: a hand-built DeployedStudent (the form a shared network's view takes) ==
+      old measure_operations(DeployedStudent): TypeError: student must be an SNNStudent; got DeployedStudent
+      [ok] OLD M1: DEFECT the old functions refuse a DeployedStudent, so a shared network's view cannot be measured
+      the old c2's hand-built SNNStudent: ValueError: meta['student'] is not a learned-judgment/student-record/v2 record (missing ['action_records', 'candidate_grid', 'encoder', 'format', 'n_candidates', 'out_of_ra
+      [ok] OLD M7: DEFECT the old hand-network check cannot build its student, and the old functions take no DeployedStudent
+    
+    == a trained FIXTURE student for the dream scenarios ==
+    
+    == M2: subsets and supersets of the training dream passed as held out ==
+      old student_record accepted the subset (first 150 training rows) as held out: agreement 0.280 (fresh rows: 0.340)
+      [ok] OLD M2: DEFECT the subset (first 150 training rows) is accepted as held out, with no overlap count
+      old student_record accepted the superset (training dream + 500 fresh rows) as held out: agreement 0.318 (fresh rows: 0.340)
+      [ok] OLD M2: DEFECT the superset (training dream + 500 fresh rows) is accepted as held out, with no overlap count
+      old student_record accepted the fresh rows + one training row as held out: agreement 0.339 (fresh rows: 0.340)
+      [ok] OLD M2: DEFECT the fresh rows + one training row is accepted as held out, with no overlap count
+    
+    == M3: the two energy estimates ==
+      old operations keys holding an interval: ['energy_main_pj_interval']; energy keys: ['caveats', 'constants', 'dense_reference_macs', 'dense_reference_pj_per_decision', 'firing_rate_per_layer', 'first_layer_counted', 'first_layer_macs', 'label', 'layer_sizes', 'mean_spikes_per_layer', 'mean_synaptic_ops', 'n_decisions', 'neuron_updates', 'ratio_snn_main_to_dense', 'ratio_snn_with_neuron_updates_to_dense', 'snn_main_pj_each', 'snn_main_pj_per_decision', 'snn_with_neuron_updates_pj_per_decision', 'time_steps']
+      [ok] OLD M3: DEFECT only the main estimate has an interval and a break-even; no H4 verdict rule
+    
+    == M4: the same held-out dream twice over ==
+      old interval once [0.00316, 0.00470] (n=500), twice [0.00336, 0.00445] (n=1000); held-out dream block keys: ['method', 'n_candidates', 'n_rows', 'provider_backed', 'request_hashes', 'rows_sha256', 'skill', 'source', 'source_description']
+      [ok] OLD M4: DEFECT duplicated rows narrow the interval, and the held-out dream and the interval state no distinct-situation count
+    
+    == M5: what the old latency times ==
+      old decision path: SNNStudent.decide_index on one situation reshaped to (1, S): finite check -> InputEncoder.encode -> SpikingNetwork.decide (numpy) -> candidate index; the action lookup spec.candidate_actions is not timed
+      [ok] OLD M5: DEFECT the timed path leaves out the candidate lookup (no spec, no binding, no full-path timing)
+    
+    == M6: the old per-neuron statistics ==
+      [ok] OLD M6: DEFECT measure.py keeps its own copy of the network loop (_spikes_per_neuron)
+    
+    CHECK RESULT: 9 assertions held, 0 failed 
+  [ok] c8_old_probe.py reproduced every defect on the old code (exit 0)
+  [ok] temporary directory removed
+
+CHECK RESULT: 9 assertions held, 0 failed 

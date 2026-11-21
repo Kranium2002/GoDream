@@ -55,6 +55,7 @@ __all__ = [
     "keep_confident",
     "load_dreams",
     "save_dreams",
+    "select_rows",
 ]
 
 DREAM_FORMAT = "learned-judgment-dreamset-v2"
@@ -377,6 +378,32 @@ def dream(
     return dreams_from_decisions(spec, decisions, spread_levels=spread_levels)
 
 
+def select_rows(dreams: DreamSet, rows: Sequence[int] | np.ndarray) -> DreamSet:
+    """The DreamSet holding the given rows of ``dreams``, in the given order.
+
+    ``rows`` is a 1-D array of row indices in [0, n_rows) without repeats, or a boolean mask of
+    length n_rows. Every per-row array is indexed alike; the header (skill, method, names,
+    request hashes and groups) is kept, so each selected row still names the requests behind it.
+    The result may have zero rows.
+    """
+    index = np.asarray(rows)
+    if index.ndim != 1:
+        raise ValueError(f"rows must be 1-D; got shape {index.shape}")
+    if index.dtype == np.bool_:
+        if index.shape[0] != dreams.n_rows:
+            raise ValueError(f"a row mask must have length {dreams.n_rows}; got {index.shape[0]}")
+    else:
+        if index.size and not np.issubdtype(index.dtype, np.integer):
+            raise ValueError(f"rows must be integer indices or a boolean mask; got dtype {index.dtype}")
+        index = index.astype(np.int64)
+        if index.size and (index.min() < 0 or index.max() >= dreams.n_rows):
+            raise ValueError(f"row indices must lie in [0, {dreams.n_rows}); got {int(index.min())}..{int(index.max())}")
+        if np.unique(index).size != index.size:
+            raise ValueError("row indices must not repeat")
+    per_row = {name: getattr(dreams, name)[index] for name in (*_FLOAT_ARRAYS, *_INT_ARRAYS)}
+    return dataclasses.replace(dreams, **per_row)
+
+
 def keep_confident(dreams: DreamSet, max_chosen_spread: float) -> DreamSet:
     """Rows whose ``chosen_spread <= max_chosen_spread`` (exact comparison).
 
@@ -388,9 +415,7 @@ def keep_confident(dreams: DreamSet, max_chosen_spread: float) -> DreamSet:
     threshold = float(max_chosen_spread)
     if math.isnan(threshold) or threshold < 0.0:
         raise ValueError(f"max_chosen_spread must be >= 0 (a spread is non-negative); got {threshold}")
-    keep = dreams.chosen_spread <= threshold
-    per_row = {name: getattr(dreams, name)[keep] for name in (*_FLOAT_ARRAYS, *_INT_ARRAYS)}
-    return dataclasses.replace(dreams, **per_row)
+    return select_rows(dreams, dreams.chosen_spread <= threshold)
 
 
 def dream_rows(

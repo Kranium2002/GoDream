@@ -3,7 +3,7 @@
 FIXTURE CHECK - mechanics only. Builds a temporary copy of the repository's learned_judgment
 package, config.yaml and this proof directory, replaces the four files of this lane
 (students/snn.py, students/snn_train.py, students/targets.py, engine/train_in_dream.py) by their
-committed versions (git show HEAD:<path>, read only), and runs each check there with the same
+committed versions (git show OLD_COMMIT:<path>, read only), and runs each check there with the same
 Python. Every other module is the current working tree. A decision check must exit non-zero
 there; the reason printed is the first failing line (a missing name counts: the old code had no
 such guard). The three capability checks (c15-c17) are run and reported, not asserted, because
@@ -12,6 +12,10 @@ they test mechanics, not a fix. Writes only inside the temporary directory, whic
 Run from the repository root:
     .venv\\Scripts\\python.exe experiments\\proofs\\B_snn_offline\\c18_old_behaviour.py
 """
+
+# The commit that holds the old lane code. The check first read HEAD; after the fixed code was
+# committed, HEAD holds the fix, so the old code is named by its commit.
+OLD_COMMIT = "e077b7924728d252f14d5877c818063b4d1c819a"
 
 print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
@@ -64,7 +68,7 @@ try:
     for script in HERE.glob("*.py"):
         shutil.copy2(script, proof_dir / script.name)
     for path in LANE_FILES:
-        committed = subprocess.run(["git", "show", f"HEAD:{path}"], cwd=REPO_ROOT, capture_output=True, check=True).stdout
+        committed = subprocess.run(["git", "show", f"{OLD_COMMIT}:{path}"], cwd=REPO_ROOT, capture_output=True, check=True).stdout
         (overlay / path).write_bytes(committed)
         current = (REPO_ROOT / path).read_bytes()
         print(f"  overlay {path}: committed version ({len(committed)} bytes; working tree {len(current)} bytes)")

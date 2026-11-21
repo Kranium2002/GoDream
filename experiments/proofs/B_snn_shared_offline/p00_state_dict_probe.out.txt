@@ -1,4 +1,4 @@
-﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
 
 == config settings ==
   trunk_linears.0.weight                   parameter dtype=torch.float64 shape=(64, 9)

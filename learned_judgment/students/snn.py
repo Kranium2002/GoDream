@@ -67,6 +67,7 @@ __all__ = [
     "GRID_PROBE_MAX_ROWS",
     "STUDENT_KIND",
     "STUDENT_RECORD_FORMAT",
+    "BoundStudent",
     "DeployedStudent",
     "GridMismatchError",
     "OutOfRangeError",
@@ -702,6 +703,81 @@ class DeployedStudent:
         counted in the out_of_range log, because nothing is decided."""
         array, _ = self.check_situations(situations)
         return count_operations(self.network, self.encode(array))
+
+    def bind(self, spec: SkillSpec) -> "BoundStudent":
+        """This student bound to ``spec``: :meth:`check_spec` runs ONCE here, and the returned
+        :class:`BoundStudent` decides without repeating it (see there)."""
+        return BoundStudent(self, spec)
+
+
+@dataclass(frozen=True, eq=False)
+class BoundStudent:
+    """A :class:`DeployedStudent` bound to one SkillSpec whose grid was checked once.
+
+    Construction (normally through :meth:`DeployedStudent.bind`) runs
+    ``deployed.check_spec(spec)`` once: the action records and the candidate-grid digest over
+    the stored probe situations. The decide methods do not repeat that grid check; each call
+    only verifies that ``spec.actions`` and ``spec.situation`` are still the objects checked at
+    binding (an identity test) and raises :class:`GridMismatchError` if either was replaced.
+    A spec whose ``candidate_actions`` behaves differently after binding is not detected: bind
+    again after changing a spec. :meth:`DeployedStudent.decide_one` keeps its per-call check.
+
+    Per-decision paths (numpy only; the out_of_range policy and log as in DeployedStudent)::
+
+        decide_one        (S,) -> (A,)  input checks -> encode_one -> SpikingNetwork.decide_one
+                                        -> spec.candidate_actions(situation, points_per_dim)[index]
+                                        -> action_in_bounds        (situation in, command values out)
+        decide_index_one  (S,) -> int   input checks -> encode_one -> SpikingNetwork.decide_one
+                                        (no candidate lookup)
+
+    Attributes:
+        deployed: the student.
+        spec:     the SkillSpec checked at binding.
+    """
+
+    deployed: DeployedStudent
+    spec: SkillSpec
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.deployed, DeployedStudent):
+            raise TypeError(f"deployed must be a DeployedStudent; got {type(self.deployed).__name__}")
+        self.deployed.check_spec(self.spec)
+        object.__setattr__(self, "_actions", self.spec.actions)
+        object.__setattr__(self, "_situation", self.spec.situation)
+
+    @property
+    def skill(self) -> str:
+        return self.deployed.skill
+
+    @property
+    def digest(self) -> str:
+        """sha256 identity of the network (snn_core.SpikingNetwork.digest)."""
+        return self.deployed.digest
+
+    def _check_unchanged(self) -> None:
+        if self.spec.actions is not self._actions or self.spec.situation is not self._situation:
+            raise GridMismatchError(
+                f"spec {self.spec.name!r}: its actions or situation were replaced after binding; bind the student again "
+                "so that the grid check runs on the current spec"
+            )
+
+    def decide_index_one(self, situation: np.ndarray) -> int:
+        """(S,) situation -> index of the chosen candidate (no candidate lookup)."""
+        self._check_unchanged()
+        return self.deployed.decide_index_one(situation)
+
+    def decide_one(self, situation: np.ndarray) -> np.ndarray:
+        """(S,) situation -> (A,) chosen action: the full deployed path, without the grid check
+        that ran at binding."""
+        self._check_unchanged()
+        deployed = self.deployed
+        array, clipped = deployed.check_situations(deployed._one(situation))
+        index = deployed.network.decide_one(deployed.encode_one(array[0]))
+        action = deployed._action(self.spec, array[0], index, "situation")
+        if not np.all(self.spec.action_in_bounds(action[None, :])):
+            raise ValueError(f"skill {self.spec.name!r} produced a chosen action outside its declared bounds")
+        deployed.out_of_range_log.record(clipped)
+        return action
 
 
 # --------------------------------------------------------------------------------------
