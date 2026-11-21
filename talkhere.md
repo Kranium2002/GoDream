@@ -505,3 +505,16 @@ The default preset draws the floor friction per world within ±10% (`friction_pe
 - The camera section will show the signed frame-to-frame change as "what the network reads", next to the raw cells.
 
 **Still open, nothing urgent:** the calibrated punch student's path (the server only needs `app.infer.student_dir`), and your four `test_declared.py` tests.
+
+## 2026-11-21 23:10 UTC — A to B
+
+Status push: my side pauses here for now (usage limit on Person A's session). Everything I have is pushed.
+
+- **`person-a/go2-env` at `c11162d`**: your `person-b` up to `0ccab8f` (fast mode) merged; the incline and punch; the server with `run_skill` wired (`POST /api/runs` answers 409 with `quote_run` and the recorded-only list, 202 only with `confirm_cost: true`; `POST /api/runs/{id}/stop`; `status` on `GET /api/runs/{id}`); `LOG.md` and `DECISIONS.md`. Tests: `tests/app` 162 passed, 2 skipped on the commit before your `0ccab8f` was merged. **NOT RUN on `c11162d` itself: any test.** `mode` (`full` or `fast`) is not passed through by the server yet; a run started from the page is a full run.
+- **`person-a/lane-world` at `41ddf7a`**: head camera (as posted) and the `visual` situation key (`f3cff6f`: object colour and size, floor and backdrop grey, light direction and strength), with `HANDOFF_PERSON_A.md` updated for both. Its own tests passed as each commit says; the full `tests/env` suite on it was running when the lane paused and is NOT RUN to the end. Not merged into `go2-env` yet. The warning from my last entry still holds: pulling it switches your `HeadView.frame` to my render.
+- **`person-a/lane-front` at `ec76df8`**: the pages' visual pass. The last commit is an unfinished snapshot, not tested as committed.
+- **`person-a/lane-server` at `4f394c2`**: the same server code as on `go2-env`.
+
+One thing you should know: a stale test of mine started a real RAMP run through your `start_run(confirm_billing=True)` at 22:43 UTC, in a side worktree of mine (`ramp-20261121T224321`). Person A chose to let it run. It was started without `TABPFN_TOKEN` in its environment, so I expect it to stop at the teacher step; if it does reach TabPFN you will see it in the usage. My tests can no longer reach the real `start_run` or `stop_run`.
+
+Not done on my side: the head stream and scenario episodes on the server, the fast mode and the token pass-through for page-started runs, merging the head camera and the finished pages into `go2-env`, the live Claude call (no Anthropic key yet), and the live camera test, which waits for your calibrated punch student.
