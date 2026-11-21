@@ -160,14 +160,15 @@ def scalars(value):
     return [float(value)] if isinstance(value, (int, float, np.number)) and not isinstance(value, bool) else []
 
 
-@pytest.mark.parametrize("preset", PRESETS)
-def test_no_observation_or_outcome_number_reads_out_a_hidden_value(cfg, forward, preset):
+@pytest.mark.parametrize("preset, incline", [(p, 0.0) for p in PRESETS] + [("default", 10.0)])
+def test_no_observation_or_outcome_number_reads_out_a_hidden_value(cfg, forward, preset, incline):
+    # ramp_start_m and ramp_end_m are geometry for scoring, allowed in the outcome; the angle itself is not.
     w = Go2World(cfg, seed=5, preset=preset)
-    seen = [w.reset({"settle_s": 0.5}), w.step(forward, 0.3)]
+    seen = [w.reset({"settle_s": 0.5, "incline_deg": incline}), w.step(forward, 0.3)]
     out = w.finish_episode()
     hidden = json.loads(Path(out["trace_path"]).with_suffix(".hidden.json").read_text())
     secrets = [*scalars(hidden["hidden_effects"]), hidden["attempt_latency_s"],
-               np.radians(hidden["hidden_effects"]["slope"])]
+               np.radians(hidden["hidden_effects"]["slope"]), hidden["incline_deg"], np.radians(hidden["incline_deg"])]
     secrets = [s for s in secrets if s not in (0.0, 1.0)]  # values every preset's zeros and unit gains share
     numbers = scalars(seen + [{k: v for k, v in out.items() if k != "trace_path"}])
     assert not [s for s in secrets if any(abs(n - s) < 1e-9 for n in numbers)]
