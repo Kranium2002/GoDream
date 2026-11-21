@@ -7,7 +7,7 @@ const FRESH_MS = 1500; // a pose newer than this counts as "live"
 export function initRobotStage({ api }) {
   const $ = (id) => document.getElementById(id);
   const canvas = $("scene"), fallback = $("scene-fallback"), statusEl = $("scene-status");
-  let viewer = null, lastPoseAt = 0, problem = null, loading = false, visible = true, poseCount = 0;
+  let viewer = null, lastPoseAt = 0, problem = null, loading = false, visible = true, poseCount = 0, shift = [0, 0];
 
   const say = (text) => { if (statusEl.textContent !== text) statusEl.textContent = text; };
 
@@ -26,7 +26,7 @@ export function initRobotStage({ api }) {
     loading = false;
     if (!r.ok) return useFallback(r.message);
     try {
-      viewer ??= createViewer(canvas);
+      if (!viewer) { viewer = createViewer(canvas); viewer.setShift(...shift); }
       viewer.setRobot(r.data);
     } catch (e) {
       return useFallback(e.message);
@@ -68,7 +68,7 @@ export function initRobotStage({ api }) {
     onPose,
     onRobotChanged: loadRobot,
     setVisible,
-    setShift: (x) => viewer?.setShift(x),
+    setShift: (x, y) => { shift = [x, y]; viewer?.setShift(x, y); },
     resetView: () => viewer?.resetView(),
   };
 }

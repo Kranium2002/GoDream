@@ -17,6 +17,8 @@ export function createPoseBuffer() {
       const a = span > 0 ? Math.min(1, Math.max(0, (nowMs - latest.at) / span)) : 1;
       return blend(prev.pose, latest.pose, a);
     },
+    // True while the drawing is between two poses (plus one frame, so the newest pose itself is drawn).
+    moving(nowMs) { return Boolean(prev && latest && nowMs <= latest.at + (latest.at - prev.at) + 17); },
     clear() { prev = latest = null; },
   };
 }
