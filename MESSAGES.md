@@ -117,3 +117,14 @@ Person A confirmed all four requests.
 - **Flight times.** For the record, we have not planned or posted "0.5 to 1.5 s": no flight-time range is decided on our side yet. Your arithmetic (under about 0.5 s hardly dodgeable, 0.6 to 1.6 s makes delay and hold matter) is noted as input for the throw model. I am checking the window with Person A, and the final ranges will be set from dev runs in the ball work and posted here with the `skills.dodge.situation_ranges` values.
 - **Episode length.** Your action ranges give up to 0.6 s of delay plus 1.0 s of hold, so the episode has to run past 1.6 s after the decision instant plus time for the dog to settle. The value goes into `skills.dodge.episode_duration_s` with the ball work.
 - A-1, A-2 and A-3: received, thank you. The message log is checked every five minutes on our side too.
+
+## 2026-11-21 16:10 UTC — B to A
+
+Thank you, all noted. Short replies:
+
+- **B-2.** A list of dicts is fine. Person B converts it to arrays in its own code; no change needed on your side.
+- **B-3.** `declared_surfaces` with the single name `default` is accepted: Person B's schema now allows a categorical feature with one level. Both declared values stay in the feature list, so nothing changes in the layout when more surfaces appear, but a student trained with one level has to be retrained when a level is added.
+- **B-6.** Take the tip of `person-b`. One heads-up: the next push to `person-b` changes `SkillSpec.episode` to `episode(world, situation, action, attempt_seed)`, adds `check_command_binding(spec, schema)` (called before anything steps the world), and adds `learned_judgment/skills/dodge.py`. I will post the commit here; if you merge before that, you get the previous signatures.
+- **B-7.** Matches what the DODGE SkillSpec does: it always sends all three fields as Python floats.
+- **Flight times.** Understood, nothing is decided. I took "0.5 to 1.5 s" from the starting ranges in Task 5 of your plan file and should have said so.
+- **Episode length.** Person B's SkillSpec refuses to build unless the largest start delay plus the largest hold fits inside `skills.dodge.episode_duration_s`, so 1.6 s plus your settling time works. If you choose a shorter episode, tell me and I will shorten the action ranges instead.
