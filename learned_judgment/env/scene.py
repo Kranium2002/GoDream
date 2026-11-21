@@ -1,11 +1,17 @@
-"""The simulated world: the pinned Unitree Go2 on a flat, infinite floor."""
+"""The simulated world: the pinned Unitree Go2 on a flat, infinite floor, with an optional incline."""
 import math
 
 import mujoco
+import numpy as np
+
+from learned_judgment.env.incline import add_incline
 
 
-def build_model(config: dict, hidden: dict | None = None, ball: bool = False) -> mujoco.MjModel:
-    """Unitree's go2.xml plus a floor plane and a light, and with ball=True the thrown ball. Unitree's scene.xml is not
+def build_model(config: dict, hidden: dict | None = None, ball: bool | str = False,
+                incline: bool = False) -> mujoco.MjModel:
+    """Unitree's go2.xml plus a floor plane and a light, with `ball` the thrown object (True or "ball": the handball;
+    "punch": the punch) and with incline=True the parked ramp and plateau (incline.add_incline), in that order, after
+    the robot. Unitree's scene.xml is not
     used: it puts bars and a staircase on the +x path. `hidden` (Go2World's hidden effects) adds a payload box on the
     trunk, the floor's friction and a slope; with none of them the model is the plain scene."""
     hidden = hidden or {}
@@ -32,17 +38,31 @@ def build_model(config: dict, hidden: dict | None = None, ball: bool = False) ->
         g, slope = -spec.option.gravity[2], math.radians(hidden["slope"])
         spec.option.gravity = [-g * math.sin(slope), 0.0, -g * math.cos(slope)]
     if ball:
-        _add_ball(spec, config["ball"])
+        _add_ball(spec, config["ball"] if ball in (True, "ball") else config["punch"], punch=ball == "punch")
+    if incline:
+        add_incline(spec, config["world"]["incline"])
     return spec.compile()
 
 
-def _add_ball(spec: mujoco.MjSpec, ball: dict) -> None:
+def is_ground(model: mujoco.MjModel) -> np.ndarray:
+    """Per geom: True if its body is welded to the world (the floor, and the incline's mocap boxes)."""
+    return model.body_weldid[model.geom_bodyid] == 0
+
+
+def _add_ball(spec: mujoco.MjSpec, ball: dict, punch: bool = False) -> None:
     """A free body after the robot, so the robot's free joint stays the first one (Efferent takes the first free
     joint as the base) and its qpos, qvel, body and geom indices do not change. It starts 2 m up: Efferent's spawn
-    lowers the robot onto its lowest non-world geom, which must stay a robot geom."""
-    body = spec.worldbody.add_body(name="ball", pos=[0.0, 0.0, 2.0])
+    lowers the robot onto its lowest non-world geom, which must stay a robot geom. Body and geom are named "ball" for
+    either kind, so Go2World measures, observes and traces the punch exactly as the ball."""
+    body = spec.worldbody.add_body(name="ball", pos=[0.0, 0.0, 2.0], gravcomp=1.0 if punch else 0.0)
     body.add_freejoint()
+    if punch:  # a sphere with MuJoCo's default contact parameters, outside gravity (gravcomp 1)
+        body.add_geom(name="ball", type=mujoco.mjtGeom.mjGEOM_SPHERE, size=[ball["radius_m"], 0, 0],
+                      mass=ball["mass_kg"], rgba=ball["rgba"], contype=ball["collision_masks"]["contype"],
+                      conaffinity=ball["collision_masks"]["conaffinity"])
+        return
     body.add_geom(name="ball", type=mujoco.mjtGeom.mjGEOM_SPHERE, size=[ball["radius_m"], 0, 0], mass=ball["mass_kg"],
+                  rgba=ball["rgba"],
                   typeinertia=getattr(mujoco.mjtGeomInertia, f"mjINERTIA_{ball['inertia'].upper()}"),  # shell, volume
                   friction=ball["friction"], condim=ball["condim"], priority=ball["priority"], solref=ball["solref"],
                   contype=ball["collision_masks"]["contype"], conaffinity=ball["collision_masks"]["conaffinity"])
