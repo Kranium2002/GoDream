@@ -209,7 +209,7 @@ class Go2World:
         self._recovery_limits = math.cos(math.radians(limits["max_tilt_deg"])), limits["max_tilt_rate_rad_s"]
         self._episodes = 0
         self._active = False
-        self._renderer = None
+        self._renderers, self._scratch = {}, None  # per scene: (camera, height, width) -> Renderer; a private MjData
         # (object kind or None, incline) -> (model, policy); a scene with an object or the incline is built for its
         # first episode
         self._scenes = {(None, False): (self.model, self.policy)}
@@ -301,7 +301,6 @@ class Go2World:
         if incline:
             self._ramp = place_incline(self.model, self.policy.data, self.config["world"]["incline"], incline,
                                        self._start_pos, self._start_yaw)
-            mujoco.mj_kinematics(self.model, self.policy.data)  # so a frame at t_s 0 shows it; the policy reads qpos
         self._slip = 0.0
         self._issued = self._command = {name: float(v) for name, v in trot.items()}  # last issued; policy's (delayed)
         self._queue = deque([(native, self._command)] * self._delay)  # the trot, issued long enough ago
@@ -311,7 +310,7 @@ class Go2World:
         self._active = True
         return copy.deepcopy(self._observe())
 
-    def step(self, command: dict, duration_s: float, on_period=None) -> dict:
+    def step(self, command: dict, duration_s: float, on_period=None, on_physics_step=None) -> dict:
         if not self._active:
             raise RuntimeError("no episode in progress: call reset() first")
         native = validate_command(command, self.command_schema)
@@ -321,10 +320,11 @@ class Go2World:
         if not self._received or self._received[-1][1] != issued:  # recorded when it changes, at its issue time
             self._received.append((self._t(), dict(issued)))
         self._issued = issued
+        substep = self._watch if on_physics_step is None else lambda: (self._watch(), on_physics_step(self._t()))
         for _ in range(max(1, round(duration_s / self.policy.control_dt))):
             self._queue.append((native, issued))
             active, self._command = self._queue.popleft()  # the command issued self._delay control periods ago
-            self.policy.step(active, on_substep=self._watch)
+            self.policy.step(active, on_substep=substep)
             obs = self._observe()
             if on_period is not None:
                 on_period(copy.deepcopy(obs))
@@ -364,18 +364,45 @@ class Go2World:
             "trace_path": self._write_trace() if self.config["world"]["save_traces"] else None,
         }
 
-    def render_frame(self) -> np.ndarray:
-        """An H x W x 3 uint8 image of the current state from a camera tracking the trunk. The offscreen renderer is
-        made on the first call, so episodes that never render never need OpenGL."""
-        if self._renderer is None:
-            size = self.config["world"]["render"]
-            self._renderer = mujoco.Renderer(self.model, height=size["height"], width=size["width"])
+    def render_frame(self, camera: str = "tracking", size: tuple[int, int] | None = None) -> np.ndarray:
+        """An H x W x 3 uint8 image of the current state. camera "tracking" (world.render width x height): a camera
+        following the trunk from world.render.tracking_distance_m. camera "head" (world.render.head_camera, 96 x 96):
+        the camera on the trunk looking along its +x, without shadows and without the robot's own meshes. size=(H, W)
+        renders at another size (at most MuJoCo's offscreen buffer, 640 x 480). Any other camera raises ValueError.
+
+        The image is of the state as it is now: positions are recomputed from qpos in a private MjData, because
+        MuJoCo's derived positions lag one physics step behind qpos after a step and are stale after reset placed an
+        object. The world's own data is never written, so rendering (also from on_period or on_physics_step) never
+        changes an episode. A renderer is made on first use, so episodes that never render never need OpenGL."""
+        render = self.config["world"]["render"]
+        if camera == "tracking":
+            height, width = size or (render["height"], render["width"])
+        elif camera == "head":
+            height, width = size or (render["head_camera"]["height"], render["head_camera"]["width"])
+        else:
+            raise ValueError(f"unknown camera {camera!r}; render_frame has 'tracking' and 'head'")
+        if self._scratch is None:
+            self._scratch = mujoco.MjData(self.model)
             self._camera = mujoco.MjvCamera()
             mujoco.mjv_defaultFreeCamera(self.model, self._camera)
             self._camera.type, self._camera.trackbodyid = mujoco.mjtCamera.mjCAMERA_TRACKING, self._base
-            self._camera.distance = self.config["world"]["render"]["tracking_distance_m"]
-        self._renderer.update_scene(self.policy.data, camera=self._camera)
-        return self._renderer.render()
+            self._camera.distance = render["tracking_distance_m"]
+            self._head_option = mujoco.MjvOption()
+            self._head_option.geomgroup[2] = 0  # go2.xml's visual meshes: the dog does not see its nose or legs
+        s, d = self._scratch, self.policy.data
+        s.qpos[:], s.mocap_pos[:], s.mocap_quat[:] = d.qpos, d.mocap_pos, d.mocap_quat
+        for stage in (mujoco.mj_kinematics, mujoco.mj_comPos, mujoco.mj_camlight):  # poses, the tracked body, cameras
+            stage(self.model, s)
+        key = (camera, height, width)
+        if key not in self._renderers:  # one per camera: scene flags such as shadows persist in a renderer
+            self._renderers[key] = mujoco.Renderer(self.model, height=height, width=width)
+        renderer = self._renderers[key]
+        if camera == "tracking":
+            renderer.update_scene(s, camera=self._camera)
+        else:
+            renderer.update_scene(s, camera="head", scene_option=self._head_option)
+            renderer.scene.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = False
+        return renderer.render()
 
     def _t(self) -> float:
         return (self._n - self._n0) * self.model.opt.timestep
@@ -433,7 +460,9 @@ class Go2World:
         if self.model is not self._scenes[key][0]:
             self.model, self.policy = self._scenes[key]
             self._ground = is_ground(self.model)
-            self._renderer = None  # a renderer belongs to one model
+            for renderer in self._renderers.values():  # a renderer and the private MjData belong to one model
+                renderer.close()
+            self._renderers, self._scratch = {}, None
         if ball:
             self.model.geom_contype[self._ball_geom] = self.model.geom_conaffinity[self._ball_geom] = 0
 

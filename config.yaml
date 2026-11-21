@@ -175,6 +175,22 @@ world:
     # Tracking camera distance from the trunk, m. Fixed so added geometry (the incline) does not zoom the view out:
     # MuJoCo's default is 1.5 x model.stat.extent, 1.4394 for the flat scene (extent 0.9596) and about 10 with a ramp.
     tracking_distance_m: 1.4394
+    # render_frame(camera="head"): a fixed MuJoCo camera on base_link (agreed with Dev B, 2026-11-21 20:55 UTC). A
+    # camera looks along its own -z; this quaternion turns that onto trunk +x with image up along trunk +z (proof:
+    # scratchpad poc-w3/head_camera.py). The robot's own meshes are hidden and shadows are off in this view.
+    head_camera:
+      pos_m: [0.34, 0.0, 0.017]  # In the trunk frame, m: at the front of the head.
+      quat_wxyz: [0.5, 0.5, -0.5, -0.5]  # Camera to trunk frame.
+      fovy_deg: 45.0  # Vertical field of view: a laptop camera's after a centred square crop (Dev B).
+      width: 96  # Pixels; square, 8 x 8 source pixels per cell of Dev B's 12 x 12 input. size=(h, w) renders larger.
+      height: 96
+    # Near clipping plane, m, for every view. MuJoCo's is vis.map.znear x model.stat.extent, and the incline raises the
+    # extent about tenfold (0.96 to 10), which would clip anything within 0.1 m of a camera; 0.01 is the flat scene's
+    # own value (0.0096) rounded.
+    znear_m: 0.01
+    # Grey level (0-1) of a plain skybox behind the scene, instead of black: the black-sky horizon dominated a 12 x 12
+    # head image (research run, 2026-11-21: up to 7.7% of a frame in 0.04 s). A skybox adds no geometry.
+    backdrop_grey: 0.5
   # RAMP's traversable incline (Go2World situation key incline_deg; learned_judgment/env/incline.py). A non-zero
   # incline_deg places, at the decision instant and along the dog's heading then, a slab rising at that angle from the
   # floor and a level plateau after it: flat, slope, flat. Both are boxes on mocap bodies, so placing them per episode

@@ -20,6 +20,12 @@ def build_model(config: dict, hidden: dict | None = None, ball: bool | str = Fal
     # Same floor and light as Unitree's scene.xml (lines 20-21), without its material.
     spec.worldbody.add_geom(name="floor", type=mujoco.mjtGeom.mjGEOM_PLANE, size=[0, 0, 0.05])
     spec.worldbody.add_light(pos=[0, 0, 1.5], dir=[0, 0, -1], type=mujoco.mjtLightType.mjLIGHT_DIRECTIONAL)
+    render = config["world"]["render"]
+    head = render["head_camera"]
+    spec.body("base_link").add_camera(name="head", pos=head["pos_m"], quat=head["quat_wxyz"], fovy=head["fovy_deg"])
+    grey = [render["backdrop_grey"]] * 3  # a plain skybox: a backdrop with no geometry, so stat.extent is unchanged
+    spec.add_texture(name="backdrop", type=mujoco.mjtTexture.mjTEXTURE_SKYBOX, builtin=mujoco.mjtBuiltin.mjBUILTIN_FLAT,
+                     rgb1=grey, rgb2=grey, width=8, height=8)
     if hidden.get("payload", {}).get("mass_kg", 0) > 0:
         # A box resting on the top face of the trunk's collision box, offset in x, y; it adds mass and touches nothing.
         trunk = spec.body("base_link")
@@ -41,7 +47,9 @@ def build_model(config: dict, hidden: dict | None = None, ball: bool | str = Fal
         _add_ball(spec, config["ball"] if ball in (True, "ball") else config["punch"], punch=ball == "punch")
     if incline:
         add_incline(spec, config["world"]["incline"])
-    return spec.compile()
+    model = spec.compile()
+    model.vis.map.znear = render["znear_m"] / model.stat.extent  # MuJoCo scales znear by the extent
+    return model
 
 
 def is_ground(model: mujoco.MjModel) -> np.ndarray:
