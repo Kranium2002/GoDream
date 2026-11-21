@@ -31,14 +31,18 @@ empty_choice, not_a_choice, duplicate_choice, capability_missing, spec_missing. 
 empty_request, unsupported_request, ambiguous_request, planned_skill.
 
 Functions taking ``capabilities`` and ``implemented`` use, when None, :func:`world_capabilities` and
-the names from :func:`learned_judgment.skills.available_skills`. A malformed ``declared`` block
+the names from :func:`learned_judgment.skills.available_skills` plus the names of the modules of
+learned_judgment.skills that define a callable ``build_observed_spec`` (a module that fails to import
+is skipped). A malformed ``declared`` block
 raises ConfigError naming the key; a bad declaration never raises (except in resolve_declaration).
 """
 
 from __future__ import annotations
 
 import copy
+import importlib
 import math
+import pkgutil
 import re
 from collections.abc import Collection, Mapping
 from typing import Any
@@ -222,11 +226,27 @@ def _capabilities(capabilities: Collection[str] | None) -> frozenset[str]:
     return world_capabilities() if capabilities is None else _names(capabilities, "capabilities")
 
 
+def _observed_specs() -> frozenset[str]:
+    """Names of the modules of learned_judgment.skills that define a callable ``build_observed_spec``.
+    A module that fails to import is skipped."""
+    import learned_judgment.skills as skills
+
+    names = set()
+    for module_info in pkgutil.iter_modules(skills.__path__):
+        try:
+            module = importlib.import_module(f"{skills.__name__}.{module_info.name}")
+        except Exception:  # noqa: BLE001 - a module that does not import declares no SkillSpec
+            continue
+        if callable(getattr(module, "build_observed_spec", None)):
+            names.add(module_info.name)
+    return frozenset(names)
+
+
 def _implemented(implemented: Collection[str] | None) -> frozenset[str]:
     if implemented is None:
         from learned_judgment.skills import available_skills
 
-        return frozenset(available_skills())
+        return frozenset(available_skills()) | _observed_specs()
     return _names(implemented, "implemented")
 
 

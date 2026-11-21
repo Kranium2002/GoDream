@@ -1,9 +1,13 @@
 """learned_judgment.declared against the real config.yaml, with explicit capabilities and SkillSpec names."""
 
+import copy
+import importlib
 import math
+import sys
 
 import pytest
 
+import learned_judgment.skills as skills_package
 from learned_judgment.config import load_config
 from learned_judgment.declared import (
     DeclarationError,
@@ -368,6 +372,46 @@ def test_parse_cuts_source_text(config):
     limit = config["declared"]["max_source_text_chars"]
     result = parse("cross the slope " + "x" * (2 * limit), config)
     assert len(result["declaration"]["source_text"]) == limit and result["problems"] == []
+
+
+# --- the default set of implemented SkillSpecs ---
+
+_FAKE_MODULES = {
+    "zz_test_observed": "def build_observed_spec(config):\n    return None\n",
+    "zz_test_not_callable": "build_observed_spec = 3\n",
+    "zz_test_broken": "raise ImportError('this test module fails to import on purpose')\n",
+}
+
+
+@pytest.fixture
+def fake_skill_modules(tmp_path, monkeypatch):
+    """Temporary modules on the learned_judgment.skills path, and a registry that names only 'dodge'; all undone after."""
+    for name, text in _FAKE_MODULES.items():
+        (tmp_path / f"{name}.py").write_text(text, encoding="utf-8")
+    monkeypatch.setattr(skills_package, "__path__", [*skills_package.__path__, str(tmp_path)])
+    monkeypatch.setattr(skills_package, "available_skills", lambda: ("dodge",))
+    importlib.invalidate_caches()
+    yield
+    for name in _FAKE_MODULES:
+        sys.modules.pop(f"{skills_package.__name__}.{name}", None)
+        if hasattr(skills_package, name):
+            delattr(skills_package, name)
+
+
+def test_default_implemented_adds_modules_with_build_observed_spec(config, fake_skill_modules):
+    changed = copy.deepcopy(config)
+    declared = changed["declared"]["skills"]
+    declared["RAMP"]["spec"], declared["DODGE"]["spec"] = "zz_test_observed", "zz_test_not_callable"
+    ramp, dodge = skill_catalog(changed, capabilities=ALL)
+    assert ramp["available"] is True and ramp["missing"] == []
+    assert dodge["missing"] == [
+        "SkillSpec 'zz_test_not_callable' is not implemented yet (learned_judgment/skills/zz_test_not_callable.py)"
+    ]
+
+    declared["DODGE"]["spec"] = "dodge"  # the registry's names stay in the default set
+    assert check_declaration({"skill": "DODGE"}, changed, capabilities=ALL) == []
+    declared["RAMP"]["spec"] = "zz_test_broken"  # skipped, not raised
+    assert codes(check_declaration({"skill": "RAMP"}, changed, capabilities=ALL)) == [("spec_missing", "skill")]
 
 
 # --- the real simulator's capabilities ---
