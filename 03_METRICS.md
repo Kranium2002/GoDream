@@ -27,9 +27,8 @@ Run these per skill where applicable:
 | B5 | MLP trained on actual attempts | Neural baseline |
 | B6 | Direct TabPFN without physics feature | Measures physics contribution |
 | T1 | TabPFN residual teacher | Proposed decision-maker |
-| S1 | Per-skill MLP trained on teacher dreams | Fast student |
-| S2 | Shared MLP trained with dream rehearsal | Multi-skill student |
-| S3 | SNN | Optional, only if actually implemented and measured |
+| S1 | Per-skill SNN trained on teacher dreams | Fast spiking student |
+| S2 | Shared SNN trained with dream rehearsal | Multi-skill spiking student |
 
 Every table row refers to an executed method. Missing results are marked NOT RUN. Never copy a result from a fixture, example, previous run, or another skill.
 
@@ -43,7 +42,7 @@ Adaptation: train on one world preset with 40 attempts, switch presets, then add
 
 Teacher: 50%/80% predictive interval coverage, PIT by outcome dimension, and Spearman correlation of predicted spread with actual error. Dreams: true-world fidelity, error by distance to nearest actual attempt, and confidence-filter/dream-count sensitivity for 100/1,000/2,000/10,000 dreams as budget permits. Students: student/teacher error ratio, decision agreement, latency, and performance by situation bin.
 
-Measure median and p95 decision latency over 1,000 decisions on the demo laptop. Include teacher network time, per-skill MLP, shared MLP, and SNN if built. Report TabPFN calls, tokens/usage, quoted cost, and actual usage where available. Count MLP MACs and SNN spikes/synaptic operations/time steps. Energy is an estimate only; verify and cite the 45 nm per-operation figures before using them.
+Measure median and p95 decision latency over 1,000 decisions on the demo laptop. Include teacher network time, per-skill SNN, and shared SNN. Report TabPFN calls, tokens/usage, quoted cost, and actual usage where available. Count SNN spikes, synaptic operations, and time steps, and as the energy reference the MACs of a non-spiking network with the same layer sizes. Energy is an estimate only; verify and cite the 45 nm per-operation figures before using them.
 
 Report results for every world preset and the DODGE ball-throw condition. Include simulator and policy versions, config ID, seeds, and raw artifact paths.
 
@@ -56,6 +55,8 @@ Report results for every world preset and the DODGE ball-throw condition. Includ
 - H5: After a world change, each tested skill recovers within 15 new actual attempts.
 - H6: Teacher 80% intervals cover 70–90% of actual outcomes.
 - H7: After a new skill is added, the shared student keeps earlier skills within 10% of their prior error.
+
+The hypothesis wording above is the original preregistration and is unchanged. Under the dated amendment in PREREGISTRATION.md (2026-11-21, before any data), the student in H3, H4, and H7 is the SNN.
 
 For each hypothesis report supported, not supported, or inconclusive with measured values, interval, sample count, and artifacts. Unsupported hypotheses remain visible.
 

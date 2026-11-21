@@ -40,7 +40,9 @@ The 02_ENVIRONMENT.md acceptance run is mandatory. If the selected policy falls,
 
 **E10: Dream fidelity.** Check teacher-selected actions in the actual Go2 simulator. Measure error vs teacher uncertainty and distance to actual attempts. Try 100/1,000/2,000/10,000 dream counts as budget permits.
 
-**E11: Per-skill MLP.** Compare widths 16/32/64, one/two layers, and actual dream counts. Measure each on fixed dev episodes; select by preregistered criteria only.
+**E15: SNN student contract.** Before coding the student, verify snnTorch and PyTorch CPU installation, APIs, neuron dynamics, input encoding, output decoding, operation counting, and licenses with an executed proof. Verify and cite the per-operation energy figures. Energy stays an estimate.
+
+**E11: Per-skill SNN.** Compare hidden widths 16/32/64, one/two spiking layers, time steps, and actual dream counts. Measure each on fixed dev episodes; select by preregistered criteria only. Report spikes, synaptic operations, and decision latency.
 
 **E12: Shared-student retention.** Train DODGE, then add BRAKE, TURN, and RAMP dream sets. After each addition evaluate earlier skills on their fixed dev sets. Do not claim no forgetting without these runs.
 
@@ -49,8 +51,6 @@ The 02_ENVIRONMENT.md acceptance run is mandatory. If the selected policy falls,
 **E14: Novelty and prior work.** Research TabPFN residual physics models/control, decision-policy distillation, shared student rehearsal, and robot-dodge learning. Save sources/dates and state the supported distinction. Do not claim “first” from a quick search.
 
 ### Stretch only after all required gates pass
-
-**E15: SNN.** Six-hour maximum. Verify snnTorch APIs, CPU support, encoding, output regression/classification, and license before coding. Measure actual quality and operations. Energy stays an estimate.
 
 **E16: Quantization.** Only after SNN quality is stable; measure actual quality change.
 
