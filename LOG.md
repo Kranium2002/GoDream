@@ -6,3 +6,10 @@
 - Rewrote the four numbered work prompts and both A/B ownership prompts to share the Go2 command/observation contract.
 - Added MISSION.md and CLAUDE.md with the no-fallback, real-test, and no-fabricated-results rules.
 - This change updates project instructions only. No Go2 policy, MuJoCo integration, learned skill, TabPFN call, or test result is claimed as implemented.
+
+## 2026-11-21 — Person A: environment work started
+
+- Local branch `person-a/go2-env`. Python 3.13.18 installed with uv; the declared packages resolve (`uv sync`, exit 0); `uv.lock` added; `pytest` declared as a dev dependency.
+- Execution plan: `docs/superpowers/plans/2026-11-21-person-a-go2-env.md`.
+- Added `learned_judgment/env/evidence.py`: runs a command and saves its command line, exit code, output and package versions under `artifacts/env/`. Its 3 utility tests pass (`uv run pytest tests/env/test_evidence.py`). This is tooling only, not simulator or policy evidence.
+- Research workflow W1 (Efferent, rl_sar, MuJoCo on Windows) launched; no result yet. No Go2 policy is selected or verified. Locomotion gate: NOT RUN.

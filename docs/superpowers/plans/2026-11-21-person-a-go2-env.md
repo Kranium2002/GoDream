@@ -15,7 +15,7 @@
 - The only robot is Unitree Go2 in MuJoCo with one verified borrowed walking policy, weights frozen. No alternate robot, controller, simulator, mock policy, hand-authored trace or kinematic animation.
 - Try locomotion paths in this order and stop at the first that truly passes: Efferent `examples/go2_walk` (1 h), rl_sar `policy/go2/robot_lab/policy.pt` or `policy/go2/himloco/himloco.pt` (3 h), Quadruped-PyMPC (2 h). A timebox ending is not a pass. All fail: stop and report the blocker.
 - Python `>=3.13,<3.14`, CPU only.
-- Person A edits only `learned_judgment/env/**`, `config.yaml`, `app/**`, `ENV_REPORT.md`, plus new `tests/env/**` and `artifacts/env/**`. `pyproject.toml`, `LOG.md`, `DECISIONS.md` and `experiments/EXPERIMENTS_LOG.md` are shared: touch them only as the steps below say, and only with integrator approval. **Approval is pending (2026-11-21): do everything else first and stop before the first edit of any of these four files.** Until then, research findings are saved under `artifacts/env/research/` and proofs install their packages with `uv run --with`, which leaves `pyproject.toml` untouched.
+- Person A edits only `learned_judgment/env/**`, `config.yaml`, `app/**`, `ENV_REPORT.md`, plus new `tests/env/**` and `artifacts/env/**`. `pyproject.toml`, `LOG.md`, `DECISIONS.md` and `experiments/EXPERIMENTS_LOG.md` are shared: touch them only as the steps below say, and only with integrator approval. The integrator approved these edits on 2026-11-21: append to the three logs and edit `pyproject.toml` as the steps say, without asking again.
 - Execution covers all 8 tasks and is subagent-driven: one implementer and one task reviewer per task, then one whole-branch review. Every subagent and workflow agent runs on Opus 5.5 at extra-high effort (`model: 'opus'`, `effort: 'xhigh'`). The session lead coordinates, rules on conflicts and talks to the integrator; it does not write the code.
 - Commits stay on the local branch `person-a/go2-env`. Nothing is pushed without asking.
 - Research agents read sources and may install well-known PyPI packages in a scratch environment. They do not run code from a cloned repository or load a policy checkpoint: the proof command runs in Task 1 Step 3, after the files it downloads and executes have been named to the integrator.
@@ -42,6 +42,16 @@ These go into `config.yaml` before any run and are not widened to make a run pas
 | `world.hidden_effects.payload_off_center_range_m` | x ±0.10, y ±0.04, shrunk to the trunk geometry if it does not fit | Task 6 |
 | Presets | `default`: 0 kg, `default` floor, 0°, 1.0, 0.05 s. `heavy_payload`: 3.0 kg. `slippery_floor`: `slippery` floor at 0.5 × the model's floor friction. `tired_motors`: 0.8. `downhill`: −5°. Each differs from `default` in that one field. | Task 6 |
 | Throw calibration target | 30–70% collisions against a Go2 holding its initial command, on dev throws | Task 5 |
+
+## Parallel lanes
+
+The critical path is serial because each task consumes the one before it: 1 → 2 → 3 → 4, then 5 and 6, then 7, then 8. Everything else overlaps it:
+
+- A task's reviewer runs while the next task's implementer starts. Review findings go back to the first implementer as a fix round.
+- Research runs ahead of the task that needs it: W3 (ball specification) alongside W1; W2 as soon as Task 1 selects the policy.
+- The report generator (Task 7 Steps 1–4, `report.py` only) does not need the simulator and runs alongside Task 1.
+- After Task 4: Task 5 (ball), Task 6 (hidden effects) and Task 8 Steps 1–4 (dashboard hook) run at once, each in its own git worktree. Tasks 5 and 6 both edit `scene.py`, `world.py`, `calibrate.py` and `config.yaml`; the lead merges them and re-runs both test files on the merge.
+- Never in parallel with anything that uses the CPU: the Task 2 acceptance run, because it measures the real-time factor.
 
 ## File Structure
 
@@ -135,7 +145,7 @@ def test_model_has_twelve_actuators(config):
 - Consumes: `config["robot"]["walking_policy"]`, `config["robot"]["model_asset"]`, the `config` fixture, `evidence`.
 - Produces: `WalkingPolicy(policy_cfg: dict)` with `control_dt: float`, `reset() -> None`, `act(model, data, command: np.ndarray) -> np.ndarray` (shape `(12,)`, joint torques in N·m in model actuator order, PD computed from the source config's gains) and `last_obs: np.ndarray` (the exact vector fed to the network).
 - Produces: `run_locomotion(config: dict, vx: float, yaw_rate: float, duration_s: float, seed: int) -> dict` with keys `fallen`, `mean_speed_m_s`, `mean_yaw_rate_rad_s`, `final_speed_m_s` (mean planar speed over the last 2 s), `rtf`, `cpu_fraction`, `trace_path`. Means exclude the first 5 s.
-- Produces: `python -m learned_judgment.env.acceptance --out <dir>` writing `locomotion.json` (one entry per condition) and one `.npz` trace per condition.
+- Produces: `python -m learned_judgment.env.acceptance --out <dir>` writing `locomotion.json` (one entry per condition) and one `.npz` trace per condition, and exiting non-zero if any condition falls or misses its tolerance.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -300,7 +310,7 @@ Fixtures in `conftest.py`: `world` (`Go2World(config, config["runtime"]["seed"])
 
 - [ ] **Step 4: Run again.** Same command — Expected: PASS
 
-- [ ] **Step 5: Handoff.** Tell Person B the import path `from learned_judgment.env import Go2World, CommandError, load_config, make_streams` and that ball and hidden effects follow.
+- [ ] **Step 5: Evidence and handoff.** `uv run python -m learned_judgment.env.evidence world -- uv run pytest tests/env/test_world_api.py tests/env/test_determinism.py -v`. Tell Person B the import path `from learned_judgment.env import Go2World, CommandError, load_config, make_streams` and that ball and hidden effects follow.
 
 - [ ] **Step 6: Commit.** `git commit -m "env: Go2World reset/step/finish_episode with reproducible streams"`
 
@@ -421,7 +431,7 @@ def test_dead_motors_fall_is_measured_not_raised(config, zero):
 
 - [ ] **Step 4: Run again.** Same command — Expected: PASS
 
-- [ ] **Step 5: Evidence.** `uv run python -m learned_judgment.env.evidence effects -- uv run python -c "from learned_judgment.env import load_config; from learned_judgment.env.calibrate import measure_effects; measure_effects(load_config(), 5, 'artifacts/env/effects')"`; log as E5.
+- [ ] **Step 5: Evidence.** `uv run python -m learned_judgment.env.evidence effects -- uv run pytest tests/env/test_effects.py -v`, then keep the sweep itself: `uv run python -m learned_judgment.env.evidence effects-data -- uv run python -c "from learned_judgment.env import load_config; from learned_judgment.env.calibrate import measure_effects; measure_effects(load_config(), 5, 'artifacts/env/effects-data')"`; log as E5.
 
 - [ ] **Step 6: Commit.** `git commit -m "env: switchable hidden effects and five world presets"`
 
@@ -434,7 +444,7 @@ def test_dead_motors_fall_is_measured_not_raised(config, zero):
 **Interfaces:**
 - Consumes: every `artifacts/env/*/run.json`, `locomotion.json`, `commands.json`, `throws.json`, `effects.json`; Person B's SkillSpec (`name`, `physics_guess(situation, action)`, `episode(world, situation, action)`, candidate actions).
 - Produces: `oracle(config, skill_spec, situations: list[dict], n_noise: int, out_dir) -> Path` saving `oracle_<skill>.json`: per situation, each candidate action's measured outcomes over `n_noise` noise keys, the best action, its remaining error (the noise floor), and the physics-only action's error. `n_noise` and the situation count come from `evaluation.oracle_situations_per_skill` and are sized from the measured `rtf`.
-- Produces: `python -m learned_judgment.env.report [--artifacts artifacts/env] [--out ENV_REPORT.md]` writing one row per acceptance criterion of `05_PERSON_A.md` with `PASS`/`FAIL` taken from a saved `exit_code`, or `NOT RUN` when no artifact exists, plus versions, seeds, commands, artifact paths, per-skill physics-only error, noise floor and their ratio.
+- Produces: `python -m learned_judgment.env.report [--artifacts artifacts/env] [--out ENV_REPORT.md]` writing one row per acceptance criterion of `05_PERSON_A.md` with `PASS`/`FAIL` taken from a saved `exit_code`, or `NOT RUN` when no artifact exists, plus versions, seeds, commands, artifact paths, per-skill physics-only error, noise floor and their ratio. Criterion to evidence label (the latest run of a label wins): locomotion conditions → `locomotion`; public API → `world`; unknown commands rejected → `commands`; fixed-seed reproduction → `world`; DODGE episode measurements → `dodge`; hidden effects switchable and measured → `effects`; presets load → `effects`; physics-only error and noise floor, one row per skill in `config.yaml` → `oracle-<skill>`; fresh Python 3.13 setup → `fresh`.
 
 - [ ] **Step 1: Write the failing tests** (pure utility: a hand-made `run.json` checks the generator only and never reaches the real report)
 

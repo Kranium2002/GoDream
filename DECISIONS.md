@@ -15,3 +15,15 @@ There is no alternate robot, controller, simulator, hand-coded behavior, fake pr
 ## 2026-11-21 — Evidence before implementation
 
 Verify each policy, package, API, config, version, and license with primary sources and a small executable proof before building dependent production code.
+
+## 2026-11-21 — Locomotion pass thresholds fixed before any run
+
+Measured speed within 20% of the commanded value, yaw rate within 30%, and "stopped" means mean planar speed under 0.05 m/s over the last 2 s. Set before any locomotion run. A miss is diagnosed; the threshold is not widened.
+
+## 2026-11-21 — Research and execution method for Person A
+
+The "UltraCode" research runs as multi-agent workflows: read-only researchers in parallel, then one verifier per researcher that re-opens every cited source. Research agents do not run repository code or load policy checkpoints. Implementation is done by Opus 5.5 subagents, one implementer and one reviewer per task.
+
+## 2026-11-21 — Evidence recording
+
+Every Person A acceptance claim is backed by a run recorded through `learned_judgment/env/evidence.py` under `artifacts/env/`. `ENV_REPORT.md` is generated from those files only.
