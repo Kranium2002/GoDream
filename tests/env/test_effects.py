@@ -123,20 +123,60 @@ def test_latency_jitter_is_drawn_per_attempt_and_repeats_with_the_attempt_seed(c
     assert all(abs(t - nominal) <= cfg["world"]["hidden_effects"]["command_latency_jitter_s"] + 1e-9 for t in latencies)
 
 
-def test_command_active_lags_commands_received_by_the_latency(cfg, zero, forward, period):
+def test_command_active_is_the_last_issued_and_the_delayed_command_is_hidden(cfg, zero, forward, period):
     w = Go2World(cfg, seed=5)
     w.reset({"settle_s": 0.0}); w.step(zero, 0.2); w.step(forward, 0.5)
     out = w.finish_episode()
     trace = np.load(out["trace_path"])
-    latency = json.loads(Path(out["trace_path"]).with_suffix(".hidden.json").read_text())["attempt_latency_s"]
+    hidden = json.loads(Path(out["trace_path"]).with_suffix(".hidden.json").read_text())
     issued = out["commands_received"][1][0]
     first_active = trace["t_s"][trace["command_active"][:, 0] == forward["vel_x"]][0]  # vel_x is column 0
-    assert latency > 0 and first_active - issued == pytest.approx(latency + period)
+    assert first_active - issued == pytest.approx(period)  # the first observation after it, whatever the latency
+    policy = np.array(hidden["policy_command"])  # what the policy received, per control period, hidden side only
+    assert policy.shape == trace["command_active"].shape
+    first_received = trace["t_s"][policy[:, 0] == forward["vel_x"]][0]
+    assert hidden["attempt_latency_s"] > 0 and first_received - issued == pytest.approx(hidden["attempt_latency_s"] + period)
+
+
+def test_observations_are_the_same_whatever_the_attempt_latency(cfg, zero, forward, period):
+    # Attempts 0-5 of seed 5 draw different latencies (test above); command_active must not tell them apart.
+    seen = {}
+    w = Go2World(cfg, seed=5)
+    for k in range(6):
+        w.reset({"settle_s": 0.0}, attempt_seed=k)
+        obs = w.step(forward, period)  # one period: the delay line has not delivered it under any latency
+        latency = json.loads(Path(w.finish_episode()["trace_path"]).with_suffix(".hidden.json").read_text())[
+            "attempt_latency_s"]
+        seen[latency] = obs["command_active"]
+    assert len(seen) > 1 and all(c == forward for c in seen.values())
+
+
+def scalars(value):
+    """Every number inside an observation or an outcome (nested dicts, lists, tuples, arrays)."""
+    if isinstance(value, dict):
+        return [x for v in value.values() for x in scalars(v)]
+    if isinstance(value, (list, tuple, np.ndarray)):
+        return [x for v in value for x in scalars(v)]
+    return [float(value)] if isinstance(value, (int, float, np.number)) and not isinstance(value, bool) else []
+
+
+@pytest.mark.parametrize("preset", PRESETS)
+def test_no_observation_or_outcome_number_reads_out_a_hidden_value(cfg, forward, preset):
+    w = Go2World(cfg, seed=5, preset=preset)
+    seen = [w.reset({"settle_s": 0.5}), w.step(forward, 0.3)]
+    out = w.finish_episode()
+    hidden = json.loads(Path(out["trace_path"]).with_suffix(".hidden.json").read_text())
+    secrets = [*scalars(hidden["hidden_effects"]), hidden["attempt_latency_s"],
+               np.radians(hidden["hidden_effects"]["slope"])]
+    secrets = [s for s in secrets if s not in (0.0, 1.0)]  # values every preset's zeros and unit gains share
+    numbers = scalars(seen + [{k: v for k, v in out.items() if k != "trace_path"}])
+    assert not [s for s in secrets if any(abs(n - s) < 1e-9 for n in numbers)]
 
 
 def test_on_a_slope_the_policy_senses_true_gravity(config):
     # Gravity is tilted instead of the floor, so the trunk's orientation is relative to the floor; the policy must
-    # still sense "down" as an IMU on a real slope would. Its projected_gravity is policy_obs[3:6].
+    # still sense "down" as an IMU on a real slope would. Its projected_gravity is last_obs[3:6], kept off the
+    # observation because it would read out the slope.
     w = Go2World(config, seed=5, preset="downhill")
     obs = w.reset({"settle_s": 0.1})
     g = w.model.opt.gravity / np.linalg.norm(w.model.opt.gravity)
@@ -144,5 +184,5 @@ def test_on_a_slope_the_policy_senses_true_gravity(config):
     mujoco.mju_negQuat(inverse, obs["base_quat_wxyz"])
     mujoco.mju_rotVecQuat(true_down, g, inverse)
     assert abs(g[0]) > 0.08  # 5 degrees of slope
-    # policy_obs is read one control period before base_quat_wxyz; the trunk turns by far less than 0.01 rad in it
-    assert np.allclose(obs["policy_obs"][3:6], true_down, atol=0.01)
+    # last_obs is read one control period before base_quat_wxyz; the trunk turns by far less than 0.01 rad in it
+    assert "policy_obs" not in obs and np.allclose(w.policy.last_obs[3:6], true_down, atol=0.01)

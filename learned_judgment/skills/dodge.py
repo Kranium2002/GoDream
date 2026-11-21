@@ -172,11 +172,11 @@ def _levels(config: Mapping[str, Any], key: str) -> tuple[str, ...]:
     value = require(config, key)
     if (
         not isinstance(value, (list, tuple))
-        or len(value) < 2
+        or len(value) < 1
         or not all(isinstance(item, str) and item for item in value)
         or len(set(value)) != len(value)
     ):
-        raise ConfigError(f"config.yaml key {key!r} must list >= 2 unique non-empty level names; got {value!r}")
+        raise ConfigError(f"config.yaml key {key!r} must list >= 1 unique non-empty level names; got {value!r}")
     return tuple(value)
 
 
