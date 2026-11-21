@@ -7,7 +7,7 @@ const FRESH_MS = 1500; // a pose newer than this counts as "live"
 export function initRobotStage({ api }) {
   const $ = (id) => document.getElementById(id);
   const canvas = $("scene"), fallback = $("scene-fallback"), statusEl = $("scene-status");
-  let viewer = null, lastPoseAt = 0, problem = null, loading = false, visible = true, poseCount = 0, shift = [0, 0];
+  let viewer = null, lastPoseAt = 0, problem = null, loading = false, visible = true, poseCount = 0, shift = [0, 0, 1];
 
   const say = (text) => { if (statusEl.textContent !== text) statusEl.textContent = text; };
 
@@ -51,7 +51,7 @@ export function initRobotStage({ api }) {
     if (problem || !viewer) return;
     if (!poseCount) return say("Waiting for the simulator's first pose.");
     say(performance.now() - lastPoseAt < FRESH_MS
-      ? "Live: the real MuJoCo simulation of the Go2. Drag to look around, scroll or pinch to zoom."
+      ? "Live from the MuJoCo simulation. Drag to look around; zoom with the buttons, Ctrl and the wheel, or a pinch."
       : "The simulator has stopped sending poses; the dog is shown where it last was.");
   }, 500);
 
@@ -68,7 +68,8 @@ export function initRobotStage({ api }) {
     onPose,
     onRobotChanged: loadRobot,
     setVisible,
-    setShift: (x, y) => { shift = [x, y]; viewer?.setShift(x, y); },
+    setShift: (x, y, k) => { shift = [x, y, k]; viewer?.setShift(x, y, k); },
     resetView: () => viewer?.resetView(),
+    zoomBy: (f) => viewer?.zoomBy(f),
   };
 }

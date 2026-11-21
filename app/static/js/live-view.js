@@ -31,6 +31,7 @@ export function initLiveView({ api, el }) {
     $("window-note").textContent = r.ok ? "" : `The window settings are unavailable: ${r.problems.join(" ")} The preview works; nothing is sent to the model.`;
     $("window-text").hidden = !r.ok;
     if (r.ok) $("window-text").textContent = `Window: ${settings.frames} frames of ${settings.height} x ${settings.width} grey cells at ${settings.hz} Hz, oldest first.`;
+    if (!run && (r.ok ? $("cam-strip").children.length !== settings.frames : true)) r.ok ? buildStrip(settings) : $("cam-strip").replaceChildren(); // empty squares until the camera runs
     headCapability = capabilities.find((c) => c.name === "head_camera") ?? null;
     stage.setAspect(state?.frame?.width, state?.frame?.height);
     updateStage();
@@ -64,6 +65,7 @@ export function initLiveView({ api, el }) {
     video.srcObject = stream;
     try { await video.play(); } catch { /* muted inline video plays; a refusal shows as no frames */ }
     run = settings ? newRun(settings) : null;
+    document.body.classList.add("cam-on");
     $("cam-stop").disabled = false;
     $("cam-stop").focus();
     status(settings ? "Camera on. Frames are taken, turned into grey cells and sent to the model." : "Camera on, preview only: the window settings are unavailable.");
@@ -99,8 +101,9 @@ export function initLiveView({ api, el }) {
     clearDecision("Camera off: no decision.");
     grey.width = grey.height = 1;
     $("cam-greyfull").width = $("cam-greyfull").height = 1;
-    $("cam-strip").replaceChildren();
+    if (settings) buildStrip(settings); else $("cam-strip").replaceChildren();
     $("cam-crop").hidden = true;
+    document.body.classList.remove("cam-on");
     $("grey-text").textContent = "Nothing yet.";
     $("st-fps").textContent = "not measured";
     $("st-fill").textContent = "not started";

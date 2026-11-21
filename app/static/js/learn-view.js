@@ -2,28 +2,28 @@
 // recorded run), the learnt-skill cards, the training curve, the results and the step details. Every value comes from a
 // response or a recorded event; a replay is always labelled as one; nothing is stored.
 import { applyLine, emptyTimeline, flatRows, fromRunResponse, groupRows, inferLine, lossCurve, rampMode, resultView, runIds, timelineRows, trainSeries } from "./learn.js";
-import { cardsFrom, replayPlan, trackStages } from "./flow.js";
+import { cardsFrom, replayPlan, skillLabel, trackStages } from "./flow.js";
 
 const SVG = "http://www.w3.org/2000/svg"; // the SVG namespace name (an identifier, never fetched)
 const FINAL = ["done", "failed", "refused", "stopped"];
-const BOX = { width: 640, height: 240, pad: 28 };
+const BOX = { width: 640, height: 260, pad: 52 };
+const fmt = (v) => (typeof v === "number" && Number.isFinite(v) ? String(Number(v.toPrecision(4))) : String(v)); // display rounding only
 
-export function initLearnView({ api, el }) {
+export function initLearnView({ api, el, catalogue = () => null }) {
   const $ = (id) => document.getElementById(id);
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const runs = new Map(); // run id -> SSE lines received this session (memory only)
   let selected = null, tl = emptyTimeline(), mode = null, gateKey = null, visible = false;
   let replay = null; // {id, speed, timers, finished}
+  let lastCards = [];
 
   const status = (text) => { $("learn-status").textContent = text; };
   const kv = (rows) => el("dl", { class: "kv" }, ...rows.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)]));
 
   // ---- server state ---------------------------------------------------------------------------------------------
-  function setState(state, capabilities) {
-    const down = capabilities.filter((c) => (c.name === "runs" || c.name === "results") && !c.available);
-    $("learn-cap").hidden = !down.length;
-    $("learn-cap").textContent = down.map((c) => `${c.name === "runs" ? "Learning runs" : "Results"} unavailable: ${c.reason}`).join(" ");
-  }
+  // Listing and replaying saved runs work without the runs capability; only starting one needs it, and the chat
+  // says so where a run is started.
+  function setState() {}
 
   function setVisible(v) {
     const entering = v && !visible;
@@ -41,16 +41,25 @@ export function initLearnView({ api, el }) {
     }
     $("cards-note").hidden = r.ok && cards.length > 0;
     $("cards-note").textContent = !r.ok ? `Saved runs cannot be listed: ${r.message}` : "No learning run is saved on this computer yet.";
+    lastCards = cards;
     $("cards").replaceChildren(...cards.map(card));
     for (const c of cards) addRun(c.runId);
   }
 
+  const localTime = (iso) => {
+    const d = typeof iso === "string" ? new Date(iso) : null;
+    return d && !Number.isNaN(d.getTime()) ? d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : null;
+  };
+
   function card(c) {
-    const facts = [c.state && `state ${c.state}`, c.stepsDone !== null && `${c.stepsDone} ${c.stepsDone === 1 ? "step" : "steps"} done`, c.updated && `updated ${c.updated}`].filter(Boolean);
+    const label = c.skill ? skillLabel(catalogue(), c.skill) : null;
+    const when = localTime(c.updated);
+    const facts = [c.state && `state ${c.state}`, c.stepsDone !== null && `${c.stepsDone} ${c.stepsDone === 1 ? "step" : "steps"} done`, when && `updated ${when}`].filter(Boolean);
     const badges = [c.hasResult === true && "result saved", c.hasStudent === true && "student trained"].filter(Boolean);
     const b = el("button", { class: "card", type: "button", "aria-describedby": `card-${c.runId}` },
-      el("span", { class: "card__skill" }, c.skill ?? `Run ${c.runId}`),
-      el("span", { class: "card__id" }, `Run ${c.runId}`),
+      el("span", { class: "card__skill" }, label?.name ?? c.skill ?? `Run ${c.runId}`),
+      label?.description ? el("span", { class: "card__desc" }, label.description) : null,
+      el("span", { class: "card__id" }, el("code", {}, c.skill && label ? `${c.skill} · run ${c.runId}` : `run ${c.runId}`)),
       el("span", { class: "card__facts", id: `card-${c.runId}` }, facts.join(" · ") || "No summary from the server."),
       badges.length ? el("span", { class: "card__badges" }, ...badges.map((t) => el("span", { class: "badge" }, t))) : null,
       el("span", { class: "card__go" }, "Replay on the robot"));
@@ -148,7 +157,7 @@ export function initLearnView({ api, el }) {
   }
 
   function showStage() {
-    $("robot").scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth", block: "start" });
+    scrollTo({ top: 0, behavior: reduceMotion.matches ? "auto" : "smooth" }); // the stage, with the header
   }
 
   // ---- stage indicators: only what an event actually carries -----------------------------------------------------
@@ -157,6 +166,8 @@ export function initLearnView({ api, el }) {
     if (m === null || m === mode) return;
     mode = m;
     $("l-mode").textContent = m === "SLOPE" ? "SLOPE, the learned correction may act" : "NORMAL, the nominal command passes through";
+    $("l-mode-wrap").hidden = false;
+    $("track-meta").hidden = false;
   }
 
   function onInfer(data) {
@@ -164,6 +175,8 @@ export function initLearnView({ api, el }) {
     if (text === null || text === gateKey) return;
     gateKey = text;
     $("l-gate").textContent = text;
+    $("l-gate-wrap").hidden = false;
+    $("track-meta").hidden = false;
   }
 
   // ---- rendering ------------------------------------------------------------------------------------------------
@@ -184,9 +197,10 @@ export function initLearnView({ api, el }) {
     document.body.classList.toggle("track-open", Boolean(selected));
     if (!selected) return;
     $("replay-stop").hidden = !replay || replay.finished;
+    const skill = tl.skill ? skillLabel(catalogue(), tl.skill)?.name ?? tl.skill : null;
     $("track-title").textContent = replay
-      ? `Replay of recorded run ${replay.id} at ${replay.speed}x${replay.finished ? ", finished" : ""}${tl.skill ? ` · ${tl.skill}` : ""}`
-      : `Run ${selected}${tl.skill ? ` · ${tl.skill}` : ""}${tl.state ? ` · ${tl.state}` : ""}`;
+      ? `Replay of recorded run ${replay.id} at ${replay.speed}x${replay.finished ? ", finished" : ""}${skill ? ` · ${skill}` : ""}`
+      : `Run ${selected}${skill ? ` · ${skill}` : ""}${tl.state ? ` · ${tl.state}` : ""}`;
     $("track-steps").replaceChildren(...trackStages(rows).map((s) => {
       const cls = s.state === "done" ? "is-done" : ["failed", "refused", "stopped"].includes(s.state) ? "is-bad" : s.running ? "is-running" : "";
       const mark = s.state === "done" ? "✓" : cls === "is-bad" ? "✕" : s.running ? "●" : "○";
@@ -222,7 +236,7 @@ export function initLearnView({ api, el }) {
       ["Step", typeof last.max_steps === "number" ? `${last.step} of ${last.max_steps}` : String(last.step)],
       ["Training loss", last.train_loss], ["Validation loss", last.validation_loss],
       ["Best validation loss", last.best_validation_loss], ["Best step", last.best_step],
-    ].filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => [k, typeof v === "number" ? String(v) : v]);
+    ].filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => [k, typeof v === "number" ? fmt(v) : v]);
     const rateRows = flatRows(last.firing_rate_per_layer).map(([k, v]) => [`Firing rate, layer ${k === "value" ? "" : k}`.trim(), v]);
     const headRows = flatRows(last.validation_loss_per_head).map(([k, v]) => [`Validation loss, ${k}`, v]);
     body.replaceChildren(chart(series),
@@ -235,7 +249,7 @@ export function initLearnView({ api, el }) {
     svg.setAttribute("viewBox", `0 0 ${BOX.width} ${BOX.height}`);
     svg.setAttribute("class", "curve");
     svg.setAttribute("role", "img");
-    svg.setAttribute("aria-label", `Loss over training steps ${c.x[0]} to ${c.x[1]}, loss from ${c.y[0]} to ${c.y[1]}. Solid line: training loss; dashed line: validation loss.`);
+    svg.setAttribute("aria-label", `Loss over training steps ${c.x[0]} to ${c.x[1]}, loss from ${fmt(c.y[0])} to ${fmt(c.y[1])}. Solid line: training loss; dashed line: validation loss.`);
     const add = (tag, attrs, text) => {
       const n = document.createElementNS(SVG, tag);
       for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
@@ -247,10 +261,11 @@ export function initLearnView({ api, el }) {
     add("line", { x1: p, y1: p, x2: p, y2: h - p, class: "curve__axis" });
     if (c.train) add("polyline", { points: c.train, class: "curve__train" });
     if (c.validation) add("polyline", { points: c.validation, class: "curve__val" });
-    add("text", { x: p, y: h - 6, class: "curve__label" }, `step ${c.x[0]}`);
-    add("text", { x: w - p, y: h - 6, class: "curve__label", "text-anchor": "end" }, `step ${c.x[1]}`);
-    add("text", { x: p + 6, y: p - 10, class: "curve__label" }, `loss ${c.y[1]}`);
-    add("text", { x: p + 6, y: h - p - 6, class: "curve__label" }, `loss ${c.y[0]}`);
+    add("text", { x: p, y: h - p + 22, class: "curve__label" }, `step ${c.x[0]}`);
+    add("text", { x: w - p, y: h - p + 22, class: "curve__label", "text-anchor": "end" }, `step ${c.x[1]}`);
+    add("text", { x: p - 8, y: p + 5, class: "curve__label", "text-anchor": "end" }, fmt(c.y[1]));
+    add("text", { x: p - 8, y: h - p + 5, class: "curve__label", "text-anchor": "end" }, fmt(c.y[0]));
+    add("text", { x: p - 8, y: p - 16, class: "curve__label", "text-anchor": "end" }, "loss");
     return el("figure", { class: "curve-wrap" }, svg, el("p", { class: "hint" }, "Solid: training loss. Dashed: validation loss."));
   }
 
@@ -288,6 +303,9 @@ export function initLearnView({ api, el }) {
   $("replay-stop").addEventListener("click", () => stopReplay(true));
   $("track-close").addEventListener("click", () => { stopReplay(false); selected = null; render(); status("No run open."); });
   render();
+  loadCards(); // once at start too, so the cards never wait for the section to scroll into view
 
-  return { setState, setVisible, addRun, onRunEvent, onObservation, onInfer };
+  // The catalogue arrived or changed: the cards name their skills from it.
+  const catalogueChanged = () => $("cards").replaceChildren(...lastCards.map(card));
+  return { setState, setVisible, addRun, onRunEvent, onObservation, onInfer, catalogueChanged };
 }

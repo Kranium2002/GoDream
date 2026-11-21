@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardsFrom, replayPlan, trackStages } from "../../app/static/js/flow.js";
+import { cardsFrom, replayPlan, skillLabel, trackStages } from "../../app/static/js/flow.js";
 
 const L = (s, step = "dream", state = "running") => ({ run_id: "v0", step, state, time_utc: `2026-11-21T21:25:${String(s).padStart(2, "0")}Z`, data: null });
 
@@ -42,4 +42,12 @@ test("cardsFrom reads the summary list, or makes a bare card per id of the plain
     { runId: "b", skill: null, state: null, updated: null, stepsDone: null, hasResult: null, hasStudent: null },
   ]);
   assert.deepEqual(cardsFrom({ nope: 1 }), []);
+});
+
+test("skillLabel names a run's skill from the catalogue by its name or its SkillSpec module", () => {
+  const catalogue = [{ skill: "DODGE", spec: "dodge_vision", description: "Dodge an object." }, { skill: "RAMP", spec: "ramp", description: "Cross an incline." }];
+  assert.deepEqual(skillLabel(catalogue, "dodge_vision"), { name: "DODGE", description: "Dodge an object." });
+  assert.deepEqual(skillLabel(catalogue, "RAMP"), { name: "RAMP", description: "Cross an incline." });
+  assert.equal(skillLabel(catalogue, "kick"), null);
+  assert.equal(skillLabel(null, "ramp"), null);
 });

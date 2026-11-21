@@ -28,20 +28,120 @@
     <section class="stage-hero" id="robot" aria-labelledby="hero-h">
       <canvas id="scene" tabindex="0" role="img" aria-label="The simulated Go2 robot in 3D. Arrow keys turn the view, plus and minus zoom, 0 resets it." hidden></canvas>
       <img id="scene-fallback" alt="The simulator's tracking camera" hidden>
+      <div class="stage-main">
+        <div class="hero-copy" id="hero-copy">
+          <p class="eyebrow">Unitree Go2 · live MuJoCo simulation</p>
+          <h1 id="hero-h">A robot dog that learns a new skill from a few tries</h1>
+          <p class="hero-lead">Tell it what to learn. A physics guess proposes each move, a PFN teacher corrects it from a few real simulator attempts, and a small spiking network learns inside the teacher's dreams. Every number here is measured in simulation.</p>
+          <button class="btn btn--primary btn--hero" type="button" id="teach-open" aria-controls="dock" aria-expanded="false">Teach it anything</button>
+        </div>
+        <div class="stage-bar">
+          <div class="zoom" role="group" aria-label="Zoom the 3D view">
+            <button class="zoom__btn" type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
+            <button class="zoom__btn" type="button" id="zoom-in" aria-label="Zoom in">+</button>
+            <button class="zoom__btn zoom__btn--text" type="button" id="view-reset">Reset view</button>
+          </div>
+          <p class="scene-status" id="scene-status" role="status" aria-live="polite">Loading the robot.</p>
+        </div>
+        <p class="notice notice--stage" id="notice" role="status" aria-live="polite" hidden></p>
+        <div class="drive" id="drive" aria-labelledby="drive-h" hidden>
+          <div class="drive__head">
+            <h2 id="drive-h">Drive the simulated dog</h2>
+            <button class="btn btn--secondary btn--small" type="button" id="drive-close">Close</button>
+          </div>
+          <p class="cap-note" id="drive-cap" hidden></p>
+          <div class="drive__pad" role="group" aria-label="Direction">
+            <button class="pad" type="button" data-dir="turn_left" aria-keyshortcuts="Q">Turn left <kbd>Q</kbd></button>
+            <button class="pad" type="button" data-dir="forward" aria-keyshortcuts="W">Forward <kbd>W</kbd></button>
+            <button class="pad" type="button" data-dir="turn_right" aria-keyshortcuts="E">Turn right <kbd>E</kbd></button>
+            <button class="pad" type="button" data-dir="left" aria-keyshortcuts="A">Left <kbd>A</kbd></button>
+            <button class="pad pad--stop" type="button" data-dir="stop" aria-keyshortcuts="Space">Stop <kbd>Space</kbd></button>
+            <button class="pad" type="button" data-dir="right" aria-keyshortcuts="D">Right <kbd>D</kbd></button>
+            <span></span>
+            <button class="pad" type="button" data-dir="back" aria-keyshortcuts="S">Back <kbd>S</kbd></button>
+            <span></span>
+          </div>
+          <div class="drive__row">
+            <label for="drive-speed">Speed</label>
+            <select id="drive-speed">
+              <option value="0.25">A quarter of the supported range</option>
+              <option value="0.5" selected>Half of the supported range</option>
+              <option value="1">The full supported range</option>
+            </select>
+          </div>
+          <div class="drive__row">
+            <label for="drive-preset">World</label>
+            <select id="drive-preset"></select>
+            <button class="btn btn--secondary btn--small" type="button" id="drive-reset">Reset the episode</button>
+          </div>
+          <p class="drive__status" id="drive-status" role="status" aria-live="polite">The dog is roaming on the zero command until you press a direction.</p>
+          <p class="hint">Scenario episodes, such as throwing a punch or crossing the ramp, arrive with the next server task.</p>
+        </div>
+        <aside class="dock" id="dock" aria-labelledby="dock-h" hidden>
+          <div class="dock__head">
+            <h2 id="dock-h">Teach a skill</h2>
+            <button class="btn btn--secondary btn--small" type="button" id="teach-close">Close</button>
+          </div>
+          <div class="dock__scroll" id="dock-scroll">
 
-      <div class="hero-copy" id="hero-copy">
-        <p class="eyebrow">Unitree Go2 · live MuJoCo simulation</p>
-        <h1 id="hero-h">A robot dog that learns a new skill from a few tries</h1>
-        <p class="hero-lead">Tell it what to learn. A physics guess proposes each move, a PFN teacher corrects it from a few real simulator attempts, and a small spiking network learns inside the teacher's dreams. Every number here is measured in simulation.</p>
-        <button class="btn btn--primary btn--hero" type="button" id="teach-open" aria-controls="dock" aria-expanded="false">Teach it anything</button>
+              <section class="dock__part" aria-labelledby="skills-h">
+              <h3 id="skills-h">What it can learn</h3>
+              <p class="empty" id="skills-empty">Not known yet: the skill catalogue has not arrived.</p>
+              <ul class="skills" id="skills" aria-labelledby="skills-h"></ul>
+              <p class="hint">Try asking:</p>
+              <div class="examples">
+                <button class="chip" type="button" data-example="Teach it to cross this slope safely.">Teach it to cross this slope safely.</button>
+                <button class="chip" type="button" data-example="Teach it to dodge an incoming punch or ball, but stay quiet when it is safe.">Teach it to dodge an incoming punch or ball, but stay quiet when it is safe.</button>
+              </div>
+            </section>
+            <section class="dock__part" aria-labelledby="chat-h">
+              <h3 id="chat-h">Chat</h3>
+              <ol class="log" id="log" tabindex="0" aria-label="Conversation" aria-live="polite">
+                <li class="log__empty" id="log-empty">Describe what the dog should learn, for example crossing a slope or dodging an incoming ball.</li>
+              </ol>
+            </section>
+
+            <section class="dock__part intent" aria-labelledby="spec-h">
+              <h3 id="spec-h">What it understood</h3>
+              <p class="verdict" id="verdict" role="status" aria-live="polite"><span class="mark" aria-hidden="true">&#9675;</span> <span>No skill declared yet</span></p>
+              <p class="cap-note" id="catalogue-note" hidden></p>
+              <div id="spec-body">
+                <p class="empty">The server turns your request into a declared skill and checks it; it appears here.</p>
+              </div>
+              <div class="run" aria-labelledby="run-h">
+                <h4 id="run-h">Learning run</h4>
+                <p class="cap-note" id="runs-cap" hidden></p>
+                <div class="confirm" id="confirm" hidden>
+                  <h4 id="confirm-h" tabindex="-1">Confirm the quoted usage</h4>
+                  <p id="confirm-msg"></p>
+                  <dl class="quote" id="confirm-quote"></dl>
+                  <div class="btn-row">
+                    <button class="btn btn--primary" type="button" id="confirm-yes">Confirm and start the run</button>
+                    <button class="btn btn--secondary" type="button" id="confirm-no">Cancel</button>
+                  </div>
+                </div>
+                <div class="btn-row" id="start-row">
+                  <button class="btn btn--primary" type="button" id="start" disabled aria-describedby="run-status">Start learning run</button>
+                </div>
+                <p class="run__status" id="run-status" tabindex="-1" role="status" aria-live="polite">Available once the declared skill is valid.</p>
+              </div>
+            </section>
+          </div>
+          <div class="dock__foot">
+              <form class="ask ask--dock" id="ask">
+                <label class="sr-only" for="msg">Your message</label>
+                <textarea id="msg" name="msg" rows="2" required aria-describedby="msg-hint" placeholder="Describe a skill for the dog"></textarea>
+                <button class="btn btn--primary" type="submit" id="send">Send</button>
+                <p class="sr-only" id="msg-hint">Enter sends. Shift and Enter adds a line.</p>
+              </form>
+              <p class="cap-note cap-note--quiet" id="chat-cap" hidden></p>
+          </div>
+        </aside>
       </div>
-      <p class="scene-status" id="scene-status" role="status" aria-live="polite">Loading the robot.</p>
-      <p class="notice notice--stage" id="notice" role="status" aria-live="polite" hidden></p>
-
       <div class="track" id="track" aria-labelledby="track-title" hidden>
         <div class="track__head">
           <p class="track__title" id="track-title" role="status" aria-live="polite"></p>
-          <p class="track__meta">RAMP mode: <span id="l-mode">not reported by the backend yet</span> · DODGE: <span id="l-gate">not reported by the backend yet</span></p>
+          <p class="track__meta" id="track-meta" hidden><span id="l-mode-wrap" hidden>RAMP mode: <span id="l-mode"></span></span> <span id="l-gate-wrap" hidden>DODGE: <span id="l-gate"></span></span></p>
           <div class="track__actions">
             <button class="btn btn--secondary btn--small" type="button" id="replay-stop" hidden>Stop replay</button>
             <button class="btn btn--secondary btn--small" type="button" id="track-close">Hide</button>
@@ -50,98 +150,6 @@
         <ol class="track__steps" id="track-steps"></ol>
       </div>
 
-      <div class="drive" id="drive" aria-labelledby="drive-h" hidden>
-        <div class="drive__head">
-          <h2 id="drive-h">Drive the simulated dog</h2>
-          <button class="btn btn--secondary btn--small" type="button" id="drive-close">Close</button>
-        </div>
-        <p class="cap-note" id="drive-cap" hidden></p>
-        <div class="drive__pad" role="group" aria-label="Direction">
-          <button class="pad" type="button" data-dir="turn_left" aria-keyshortcuts="Q">Turn left <kbd>Q</kbd></button>
-          <button class="pad" type="button" data-dir="forward" aria-keyshortcuts="W">Forward <kbd>W</kbd></button>
-          <button class="pad" type="button" data-dir="turn_right" aria-keyshortcuts="E">Turn right <kbd>E</kbd></button>
-          <button class="pad" type="button" data-dir="left" aria-keyshortcuts="A">Left <kbd>A</kbd></button>
-          <button class="pad pad--stop" type="button" data-dir="stop" aria-keyshortcuts="Space">Stop <kbd>Space</kbd></button>
-          <button class="pad" type="button" data-dir="right" aria-keyshortcuts="D">Right <kbd>D</kbd></button>
-          <span></span>
-          <button class="pad" type="button" data-dir="back" aria-keyshortcuts="S">Back <kbd>S</kbd></button>
-          <span></span>
-        </div>
-        <div class="drive__row">
-          <label for="drive-speed">Speed</label>
-          <select id="drive-speed">
-            <option value="0.25">A quarter of the supported range</option>
-            <option value="0.5" selected>Half of the supported range</option>
-            <option value="1">The full supported range</option>
-          </select>
-        </div>
-        <div class="drive__row">
-          <label for="drive-preset">World</label>
-          <select id="drive-preset"></select>
-          <button class="btn btn--secondary btn--small" type="button" id="drive-reset">Reset the episode</button>
-        </div>
-        <p class="drive__status" id="drive-status" role="status" aria-live="polite">The dog is roaming on the zero command until you press a direction.</p>
-        <p class="hint">Scenario episodes, such as throwing a punch or crossing the ramp, arrive with the next server task.</p>
-      </div>
-
-      <aside class="dock" id="dock" aria-labelledby="dock-h" hidden>
-        <div class="dock__head">
-          <h2 id="dock-h">Teach a skill</h2>
-          <button class="btn btn--secondary btn--small" type="button" id="teach-close">Close</button>
-        </div>
-
-        <section class="dock__part" aria-labelledby="skills-h">
-          <h3 id="skills-h">What it can learn</h3>
-          <p class="empty" id="skills-empty">Not known yet: the skill catalogue has not arrived.</p>
-          <ul class="skills" id="skills" aria-labelledby="skills-h"></ul>
-          <p class="hint">Try asking:</p>
-          <div class="examples">
-            <button class="chip" type="button" data-example="Teach it to cross this slope safely.">Teach it to cross this slope safely.</button>
-            <button class="chip" type="button" data-example="Teach it to dodge an incoming punch or ball, but stay quiet when it is safe.">Teach it to dodge an incoming punch or ball, but stay quiet when it is safe.</button>
-          </div>
-        </section>
-        <section class="dock__part" aria-labelledby="chat-h">
-          <h3 id="chat-h">Chat</h3>
-          <ol class="log" id="log" tabindex="0" aria-label="Conversation" aria-live="polite">
-            <li class="log__empty" id="log-empty">Describe what the dog should learn, for example crossing a slope or dodging an incoming ball.</li>
-          </ol>
-          <form class="ask" id="ask">
-            <label for="msg">Your message</label>
-            <textarea id="msg" name="msg" rows="2" required></textarea>
-            <div class="ask__row">
-              <p class="hint" id="msg-hint">Enter sends. Shift and Enter adds a line.</p>
-              <button class="btn btn--primary" type="submit" id="send">Send message</button>
-            </div>
-          </form>
-          <p class="cap-note cap-note--quiet" id="chat-cap" hidden></p>
-        </section>
-
-        <section class="dock__part intent" aria-labelledby="spec-h">
-          <h3 id="spec-h">What it understood</h3>
-          <p class="verdict" id="verdict" role="status" aria-live="polite"><span class="mark" aria-hidden="true">&#9675;</span> <span>No skill declared yet</span></p>
-          <p class="cap-note" id="catalogue-note" hidden></p>
-          <div id="spec-body">
-            <p class="empty">The server turns your request into a declared skill and checks it; it appears here.</p>
-          </div>
-          <div class="run" aria-labelledby="run-h">
-            <h4 id="run-h">Learning run</h4>
-            <p class="cap-note" id="runs-cap" hidden></p>
-            <div class="confirm" id="confirm" hidden>
-              <h4 id="confirm-h" tabindex="-1">Confirm the quoted usage</h4>
-              <p id="confirm-msg"></p>
-              <dl class="quote" id="confirm-quote"></dl>
-              <div class="btn-row">
-                <button class="btn btn--primary" type="button" id="confirm-yes">Confirm and start the run</button>
-                <button class="btn btn--secondary" type="button" id="confirm-no">Cancel</button>
-              </div>
-            </div>
-            <div class="btn-row" id="start-row">
-              <button class="btn btn--primary" type="button" id="start" disabled aria-describedby="run-status">Start learning run</button>
-            </div>
-            <p class="run__status" id="run-status" tabindex="-1" role="status" aria-live="polite">Available once the declared skill is valid.</p>
-          </div>
-        </section>
-      </aside>
     </section>
 
     <div class="wrap below">
@@ -149,7 +157,6 @@
     <section class="area" id="learn" aria-labelledby="learn-h">
       <h2 id="learn-h">Learnt skills</h2>
       <p class="lead">Every learning run saved on this computer. Open one to replay its recorded progress on the robot stage and read what it measured.</p>
-      <p class="cap-note" id="learn-cap" hidden></p>
       <div class="replay-bar">
         <label for="replay-speed">Replay speed</label>
         <select id="replay-speed">
@@ -201,18 +208,11 @@
     <section class="area" id="try" aria-labelledby="try-h">
       <h2 id="try-h">Try what it learned</h2>
       <p class="lead">Validate a skill two ways: walk the simulated dog around yourself, or stand in front of the laptop camera and see the world the way the robot's network sees it.</p>
-      <ul class="cards cards--two">
-        <li><button class="card" type="button" id="try-sim">
-          <span class="card__skill">Try it in the simulation</span>
-          <span class="card__facts">Drive the real simulated Go2 and look at it from any angle on the stage above.</span>
-          <span class="card__go">Open the drive controls</span>
-        </button></li>
-        <li><a class="card" href="#live">
-          <span class="card__skill">Try it on the camera</span>
-          <span class="card__facts">Your camera turned into the robot's view, step by step, with the frozen model's decision.</span>
-          <span class="card__go">Go to the camera test</span>
-        </a></li>
-      </ul>
+      <button class="card card--wide" type="button" id="try-sim">
+        <span class="card__skill">Try it in the simulation</span>
+        <span class="card__facts">Drive the real simulated Go2 on the stage above and look at it from any angle. The camera test is below.</span>
+        <span class="card__go">Open the drive controls</span>
+      </button>
     </section>
 
     <section class="area" id="live" aria-labelledby="live-h">
@@ -232,6 +232,7 @@
           <h3 id="cam-label">Your camera, not mirrored</h3>
           <div class="eye__video">
             <video id="cam-video" muted playsinline aria-labelledby="cam-label"></video>
+            <p class="eye__empty when-off">Camera off</p>
             <span class="eye__crop" id="cam-crop" aria-hidden="true" hidden></span>
           </div>
           <p class="hint">The outlined square is the part the robot uses.</p>
@@ -247,11 +248,11 @@
           <ol class="eye__steps">
             <li>
               <span class="eye__step">1 · Centre square in grey</span>
-              <canvas id="cam-greyfull" width="1" height="1" role="img" aria-label="The centre square of the newest frame in grey"></canvas>
+              <span class="eye__box"><canvas id="cam-greyfull" width="1" height="1" role="img" aria-label="The centre square of the newest frame in grey"></canvas><span class="eye__empty when-off">Appears when the camera is on</span></span>
             </li>
             <li>
               <span class="eye__step" id="grey-label">2 · The cells the network reads</span>
-              <canvas id="cam-grey" width="1" height="1" role="img" aria-labelledby="grey-label grey-text"></canvas>
+              <span class="eye__box"><canvas id="cam-grey" width="1" height="1" role="img" aria-labelledby="grey-label grey-text"></canvas><span class="eye__empty when-off">Appears when the camera is on</span></span>
             </li>
           </ol>
           <p class="hint" id="grey-text">Nothing yet.</p>
@@ -260,13 +261,13 @@
         </section>
       </div>
 
-      <div class="split">
+      <div class="split split--even">
         <section class="panel instruments" aria-labelledby="dec-h">
           <h3 id="dec-h">Decision</h3>
           <p class="action" id="dec-action" role="status" aria-live="polite">No decision yet.</p>
           <p id="dec-issued"></p>
           <div class="decision">
-            <dl class="stats" id="dec-rows"></dl>
+            <dl class="stats" id="dec-rows"><dt>Readouts</dt><dd>appear when the model answers a window</dd></dl>
             <div>
               <h4>Persistence gate</h4>
               <ul class="gate" id="dec-gate"><li class="empty">No gate state yet.</li></ul>
@@ -300,11 +301,11 @@
       </div>
     </section>
 
-    <section class="panel caps" aria-labelledby="caps-h">
-      <h2 id="caps-h">What the server can do now</h2>
+    <details class="panel caps">
+      <summary><h2 id="caps-h">What the server can do now</h2> <span class="hint" id="caps-count"></span></summary>
       <p class="empty" id="caps-empty">Not known yet: the server's state has not arrived.</p>
       <ul class="caps__list" id="caps"></ul>
-    </section>
+    </details>
     </div>
   </main>
 </body>

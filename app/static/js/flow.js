@@ -58,3 +58,9 @@ export function cardsFrom(data) {
   }
   return cards;
 }
+
+// A run's skill id (a catalogue name or a SkillSpec module such as dodge_vision) -> the catalogue's name and description.
+export function skillLabel(catalogue, id) {
+  const entry = Array.isArray(catalogue) ? catalogue.find((s) => s && (s.skill === id || s.spec === id)) : null;
+  return entry ? { name: entry.skill, description: typeof entry.description === "string" ? entry.description : "" } : null;
+}

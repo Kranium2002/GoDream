@@ -25,13 +25,15 @@ const CAP_LABELS = { drive: "Drive the dog", head_camera: "Head camera", scenari
   runs: "Learning runs", results: "Results", infer: "Live inference" };
 
 const live = initLiveView({ api, el });
-const learn = initLearnView({ api, el });
+const learn = initLearnView({ api, el, catalogue: () => catalogue });
 
 // ---- the robot stage and the sections below it --------------------------------------------------------------
 const stage = initRobotStage({ api });
-const wide = matchMedia("(min-width: 1000px)");
+const wide = matchMedia("(min-width: 760px)"); // copy beside the dog; below this the dog sits above the copy
+// The stage fills the screen under the header, whatever height the header wraps to.
+new ResizeObserver(() => document.documentElement.style.setProperty("--bar-h", `${document.querySelector(".bar").offsetHeight}px`)).observe(document.querySelector(".bar"));
 const drive = initDriveView({ api, onOpen: () => {
-  $("robot").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  scrollTo({ top: 0, behavior: "auto" }); // instant: a smooth scroll is cancelled by the focus that follows
   placeDog();
 }, onClose: () => placeDog() });
 
@@ -58,24 +60,35 @@ function setDock(open) {
   }
   placeDog();
 }
-// The dog is centred in the part of the stage nothing covers: right of the introduction, left of the open dock,
-// or, on narrow screens where the introduction sits at the bottom, above it. Measured from the layout, as a lens shift.
+// The dog is centred in the part of the stage nothing covers: between the copy (or the drive pad, or the dock) and the
+// edge, above the bottom bar and the track; on narrow screens below the copy. Measured from the layout, as a lens shift.
 function placeDog() {
-  const s = $("robot").getBoundingClientRect();
+  const s = $("robot").getBoundingClientRect(); // the canvas covers the whole stage
   if (!s.width || !s.height) return;
-  const open = !$("dock").hidden;
-  let left = s.left, right = s.right, top = s.top, bottom = s.bottom;
-  if (open && wide.matches) right = $("dock").getBoundingClientRect().left;
-  else if (!open && wide.matches) left = $(document.body.classList.contains("drive-open") ? "drive" : "hero-copy").getBoundingClientRect().right;
-  else if (!open) bottom = $("hero-copy").getBoundingClientRect().top; // narrow with the dock open: it covers the stage
-  const x = 2 * ((left + right) / 2 - s.left) / s.width - 1;
-  const y = 1 - 2 * ((top + bottom) / 2 - s.top) / s.height;
-  stage.setShift(x, y);
+  const main = document.querySelector(".stage-main").getBoundingClientRect();
+  const bar = document.querySelector(".stage-bar").getBoundingClientRect();
+  const dockOpen = !$("dock").hidden, side = $(document.body.classList.contains("drive-open") ? "drive" : "hero-copy").getBoundingClientRect();
+  let left = s.left, right = s.right, top = main.top, bottom = bar.top;
+  if (wide.matches) {
+    if (dockOpen) right = $("dock").getBoundingClientRect().left;
+    else left = side.right;
+  } else if (!dockOpen) {
+    if (document.body.classList.contains("drive-open")) top = side.bottom;
+    else bottom = side.top; // the copy sits at the bottom on narrow screens
+  }
+  // At full scale the dog spans about 0.68 x 0.57 of the stage's height (measured at 1440 x 900); a smaller free region
+  // scales it down so it fits with a margin, in width and in height.
+  const k = Math.max(0.3, Math.min(1, 0.85 * (right - left) / (0.68 * s.height), 0.85 * (bottom - top) / (0.57 * s.height)));
+  stage.setShift(2 * ((left + right) / 2 - s.left) / s.width - 1, 1 - 2 * ((top + bottom) / 2 - s.top) / s.height, k);
 }
 addEventListener("resize", placeDog);
 wide.addEventListener("change", placeDog);
+new ResizeObserver(placeDog).observe(document.querySelector(".stage-main")); // the track opening, the copy collapsing
 placeDog();
 $("teach-open").addEventListener("click", () => setDock(true));
+$("zoom-in").addEventListener("click", () => stage.zoomBy(0.85));
+$("zoom-out").addEventListener("click", () => stage.zoomBy(1 / 0.85));
+$("view-reset").addEventListener("click", () => stage.resetView());
 $("teach-close").addEventListener("click", () => setDock(false));
 $("dock").addEventListener("keydown", (e) => { if (e.key === "Escape") setDock(false); });
 
@@ -109,6 +122,7 @@ async function loadState() {
 
 function renderCapabilities() {
   $("caps-empty").hidden = true;
+  $("caps-count").textContent = `${capabilities.filter((c) => c.available).length} of ${capabilities.length} available`;
   $("caps").replaceChildren(...capabilities.map((c) => el("li", { class: c.available ? "is-good" : "is-bad" },
     el("span", { class: "mark", "aria-hidden": "true" }, c.available ? "✓" : "✕"),
     el("span", {}, el("span", { class: "caps__name" }, CAP_LABELS[c.name] ?? c.name), " ",
@@ -117,7 +131,7 @@ function renderCapabilities() {
   for (const [name, id] of [["chat", "chat-cap"], ["runs", "runs-cap"]]) {
     const c = capabilities.find((x) => x.name === name);
     $(id).hidden = !c || c.available;
-    if (c && !c.available) $(id).textContent = `${CAP_LABELS[name]} unavailable: ${c.reason}`;
+    if (c && !c.available) $(id).textContent = name === "runs" ? `Starting a new run is not available yet: ${c.reason}` : `${CAP_LABELS[name]} unavailable: ${c.reason}`;
   }
 }
 
@@ -169,6 +183,7 @@ async function loadCatalogue() {
   $("catalogue-note").textContent = problem
     ? `${r.unavailable ? "The skill catalogue is unavailable" : "The skill catalogue could not be read"}: ${problem} Supported ranges cannot be shown.`
     : "";
+  learn.catalogueChanged();
   const rows = catalogueRows(catalogue);
   $("skills-empty").hidden = rows.length > 0;
   $("skills-empty").textContent = catalogue ? "The catalogue lists no skills." : "Not known: the skill catalogue could not be read.";
@@ -188,7 +203,7 @@ function logEntry(who, text, cls) {
   $("log-empty").hidden = true;
   const item = el("li", { class: cls }, el("span", { class: "log__who" }, who), el("span", { class: "log__text" }, text));
   $("log").append(item);
-  $("log").scrollTop = $("log").scrollHeight;
+  $("dock-scroll").scrollTop = item.offsetTop - 8; // the newest message at the top of the dock's scrolling part
 }
 
 async function send() {
@@ -219,7 +234,7 @@ async function send() {
 function setBusy(busy) {
   $("send").disabled = busy;
   $("ask").setAttribute("aria-busy", String(busy));
-  $("send").textContent = busy ? "Waiting for the reply" : "Send message";
+  $("send").textContent = busy ? "Sending" : "Send";
 }
 
 $("ask").addEventListener("submit", (e) => { e.preventDefault(); send(); });
