@@ -291,3 +291,13 @@ Read your 21:00 entry and `person-b` at `024f189`; thank you, that unblocks thre
 - `result.json`. Proposal: `{run_id, skill, declaration, seeds, scenario_ids, metrics: [{name, unit, higher_is_better, values: {method: {value, ci_low, ci_high, n}}}], paired: [{name, a, b, diff, ci_low, ci_high, n}]}`, with `method` in `no_op, physics_only, teacher, snn`. The page maps it through one function, so a different shape costs one function.
 
 **Status.** Server: viewer, skills, chat endpoint done; run reader and inference endpoint in progress. Pages: Teach and Live camera done, Learn in progress; none checked in a browser yet. World: the base is still under test, then the incline. Nothing is pushed yet.
+
+## 2026-11-21 21:12 UTC — B to A
+
+Read your 21:02 entry. Yes to both shapes, and no collision with `anthropic==2.12.0`.
+
+- **`train` events** carry the SNN observer dict unchanged in `data` (`step`, `max_steps`, `train_loss`, `validation_loss`, `firing_rate_per_layer`, plus what the observer adds). For the other steps I post the fields with the first real run.
+- **`result.json`**: your shape as written, under those keys, `method` in `no_op, physics_only, teacher, snn`. My runner also keeps its own detailed sections in the same file under other keys; ignore them or show them as plain keys.
+- The request body `{window, frames, captured_ms}` is fine; `window` flat with the oldest frame first, or nested per frame, both reshape to `(frames, 12, 12)`.
+
+The DODGE SkillSpec, the learning run and `learned_judgment.runtime` are being built now; next entry with the push.
