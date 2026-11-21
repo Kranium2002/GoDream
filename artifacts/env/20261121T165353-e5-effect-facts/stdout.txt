@@ -1,0 +1,13 @@
+mujoco 3.11.0 numpy 2.5.5
+foot geom priority, friction in go2.xml: [('FL', 1, [0.4, 0.02, 0.01]), ('FR', 1, [0.4, 0.02, 0.01]), ('RL', 1, [0.4, 0.02, 0.01]), ('RR', 1, [0.4, 0.02, 0.01])]
+floor geom friction (MuJoCo default): [1.e+00 5.e-03 1.e-04]
+1a. foot-floor contact friction [slide, slide, torsion]: [(np.float64(0.4), np.float64(0.4), np.float64(0.02))]
+1b. floor friction set to 0.05: [(np.float64(0.4), np.float64(0.4), np.float64(0.02))]
+1c. foot sliding friction set to 0.15: [(np.float64(0.15), np.float64(0.15), np.float64(0.02))]
+2a. base_link box geoms (pos, size): [([np.float64(0.0), np.float64(0.0), np.float64(0.0)], [np.float64(0.1881), np.float64(0.04675), np.float64(0.057)])]
+2b. spec.option.gravity before: [np.float64(0.0), np.float64(0.0), np.float64(-9.81)]
+2c. total mass before / after adding a 3 kg payload body: 15.2064 18.2064 payload body mass [3.] parent base_link
+2d. FL friction after edit: [0.2  0.02 0.01] gravity: [-0.855   0.     -9.7727]
+3a. quatZ2Vec(-g) = [ 0.999048  0.        0.043619 -0.      ] rotates z to [0.087156 0.       0.996195] ; -g/|g| = [ 0.087156 -0.        0.996195]
+3b. level trunk's nose (floor-frame +x) in the gravity frame: [0.996195 0.       0.087156] pitch up deg: 5.0
+4. child draw 0 | parent's next draw equals an untouched twin's: True

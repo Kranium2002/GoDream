@@ -2,6 +2,7 @@
 import itertools
 import json
 import math
+from collections import deque
 from pathlib import Path
 
 import mujoco
@@ -34,8 +35,16 @@ class Go2World:
 
     Seeds. `seed` and `preset` fix the hidden world for the life of the object. reset(attempt_seed=k) fixes one
     episode's noise: `attempt_streams` is make_streams(seed, k), so two worlds with the same seed reset with the same
-    k face the same noise whatever ran before; k=None is the episode index (0 for this object's first reset). Nothing
-    draws random numbers yet: the simulator and the policy are deterministic, and repeated runs are bit-identical.
+    k face the same noise whatever ran before; k=None is the episode index (0 for this object's first reset). The
+    hidden values and the declared payload are drawn at construction from make_streams(seed)["world"]; each reset draws
+    its latency jitter from a child of attempt_streams["noise"] (Generator.spawn), so attempt_streams reach their user
+    untouched. The simulator and the policy are deterministic: repeated runs are bit-identical.
+
+    Hidden effects (config.yaml world.hidden_effects; each applied only if switched on in its `enabled`): a payload box
+    on the trunk; the feet's sliding friction on the floor, by the preset's floor_type with a per-world variation; a
+    slope, as tilted gravity (the policy senses true gravity, as an IMU would); motor strength, scaling every joint
+    torque and its limit; command latency, a delay line of whole control periods with a per-attempt jitter. A preset
+    that makes the dog fall is a measurement: the fall is reported, nothing raises.
 
     Episode. reset(situation) spawns the dog, runs the policy's settle and soft start, trots at
     dog_forward_speed_m_s (default 0.0, a vel_x command) for settle_s (default world.settle_s) and returns the
@@ -44,8 +53,8 @@ class Go2World:
     finish_episode() ends the episode and returns the outcome; reset may follow for a new episode. A reset during an
     episode abandons it without a trace.
 
-    Observation, one per control period (0.02 s). World frame: x, y on the floor, z up, origin on the floor under the
-    spawn point (the dog starts facing +x).
+    Observation, one per control period (0.02 s). World frame: x, y on the floor, z up (normal to the floor; a slope
+    tilts gravity instead), origin on the floor under the spawn point (the dog starts facing +x).
         t_s                 float, s. Episode time, 0.0 at the decision instant.
         base_pos_m          (3,) m. Trunk (base_link) origin, world frame.
         base_quat_wxyz      (4,) Trunk orientation, body to world, w x y z.
@@ -59,8 +68,12 @@ class Go2World:
         foot_contact        (4,) bool, FL, FR, RL, RR: that foot geom has a contact with the floor.
         fallen              bool. A fall (below) has happened this episode; once true it stays true.
         ball                None until the ball is added (Task 5).
-        command_active      {field: float}. The command the policy is receiving now.
-        declared_payload_kg float, kg, and declared_surface str: what the preset declares.
+        command_active      {field: float}. The command the policy is receiving now: the one issued the latency
+                            earlier (the reset's trot until then).
+        declared_payload_kg float, kg, and declared_surface str: what the judge declares, fixed for the world's life
+                            and also its read-only attributes of the same names. The payload is the true mass times
+                            (1 + an error drawn per world in declared_mass_error_fraction); the surface is the
+                            preset's floor_type.
 
     Outcome of finish_episode():
         elapsed_s           float, s. t_s at the end.
@@ -69,13 +82,15 @@ class Go2World:
         fall_time_s         t_s of the first such physics step (negative: before the decision instant), or None.
         sim_unstable        0 or 1. 1 if MuJoCo flagged a bad state this episode (warning mjWARN_BADQPOS, BADQVEL or
                             BADQACC: it then resets the state itself) or the final state is not finite.
-        commands_received   [(t_s, command)], one per step() call, at the t_s it took effect.
+        commands_received   [(t_s, command)], one per step() call, at the t_s it was issued. Re-sending the same
+                            command in shorter steps gives the same episode: the delay line is not restarted.
         final_base_pos_m    [x, y, z], m, world frame.
         declared_payload_kg, declared_surface as in the observation.
         trace_path          The episode's .npz (world.trace_dir), or None if world.save_traces is false. It holds
                             each TRACE_KEYS array stacked per control period from the decision instant on, and
-                            command_active as (N, 3) in command_schema field order. The hidden values are only in
-                            <trace>.hidden.json beside it, never in an observation or outcome.
+                            command_active as (N, 3) in command_schema field order. The hidden values (the effects
+                            switched on and this attempt's latency) are only in <trace>.hidden.json beside it, never
+                            in an observation or outcome.
     """
 
     def __init__(self, config: dict, seed: int, preset: str = "default"):
@@ -85,10 +100,9 @@ class Go2World:
         self.config, self.seed, self.preset = config, seed, preset
         self.command_schema = config["robot"]["walking_policy"]["command_schema"]
         self._streams = make_streams(seed)
-        self._hidden = self._hidden_effects()
+        self._hidden, self._declared = self._hidden_effects()
         self.model = build_model(config, self._hidden)
-        self.policy = WalkingPolicy(config, self.model)
-        self._declared = {k: presets[preset][k] for k in ("declared_payload_kg", "declared_surface")}
+        self.policy = WalkingPolicy(config, self.model, self._hidden.get("motor_strength", 1.0))
         self._base = self.model.body("base_link").id
         self._floor = self.model.geom("floor").id
         self._feet = [self.model.geom(name).id for name in FEET]
@@ -97,10 +111,31 @@ class Go2World:
         self._active = False
         self._renderer = None
 
-    def _hidden_effects(self) -> dict:
-        """The true hidden values of this world, drawn once from the preset and self._streams["world"]. Payload,
-        friction, slope, motor strength and latency are added here by Task 6; until then there are none."""
-        return {}
+    def _hidden_effects(self) -> tuple[dict, dict]:
+        """The true hidden values of this world, for each effect switched on in world.hidden_effects.enabled, and the
+        declared values, both fixed by the preset and self._streams["world"]. The draws are made whatever is switched
+        on, so switching one effect never changes another's value."""
+        he, p = self.config["world"]["hidden_effects"], self.config["world"]["presets"][self.preset]
+        variation = self._streams["world"].uniform(-1.0, 1.0) * he["friction_per_run_variation"]
+        mass_error = self._streams["world"].uniform(*he["declared_mass_error_fraction"])
+        hidden = {
+            "payload": {"mass_kg": p["payload_mass_kg"], "offset_m": p["payload_offset_m"]},
+            "friction": he["surface_friction_by_type"][p["floor_type"]] * (1.0 + variation),
+            "slope": p["slope_deg"],
+            "motor_strength": p["motor_strength_fraction"],
+            "latency": p["command_latency_s"],  # nominal; each attempt adds its jitter (reset)
+        }
+        declared = {"declared_payload_kg": p["payload_mass_kg"] * (1.0 + mass_error),
+                    "declared_surface": p["floor_type"]}
+        return {k: v for k, v in hidden.items() if he["enabled"][k]}, declared
+
+    @property
+    def declared_payload_kg(self) -> float:
+        return self._declared["declared_payload_kg"]
+
+    @property
+    def declared_surface(self) -> str:
+        return self._declared["declared_surface"]
 
     def reset(self, situation: dict | None = None, attempt_seed: int | None = None) -> dict:
         situation = situation or {}
@@ -118,12 +153,19 @@ class Go2World:
         self._attempt_seed = self._episodes if attempt_seed is None else attempt_seed
         self.attempt_streams = make_streams(self.seed, self._attempt_seed)
         self._episodes += 1
+        dt, self._delay = self.policy.control_dt, 0  # control periods from issuing a command to the policy receiving it
+        if "latency" in self._hidden:
+            # From a child of the attempt's noise stream (Generator.spawn), so that stream reaches its user untouched.
+            jitter = round(self.config["world"]["hidden_effects"]["command_latency_jitter_s"] / dt)
+            draw = self.attempt_streams["noise"].spawn(1)[0].integers(-jitter, jitter + 1)
+            self._delay = max(0, round(self._hidden["latency"] / dt) + int(draw))
         self._n, self._fall_n = 0, None  # physics steps since the spawn; the step of the first fall
         self.policy.reset(on_substep=self._watch)
         for _ in range(round(settle_s / self.policy.control_dt)):
             self.policy.step(native, on_substep=self._watch)
         self._n0 = self._n  # the decision instant
         self._command = {name: float(v) for name, v in trot.items()}
+        self._queue = deque([(native, self._command)] * self._delay)  # the trot, issued long enough ago
         self._received, self._trace = [], []
         self._active = True
         return self._observe()
@@ -134,10 +176,12 @@ class Go2World:
         native = validate_command(command, self.command_schema)
         if not 0.0 < duration_s < math.inf:
             raise ValueError(f"duration_s must be finite and > 0, got {duration_s}")
-        self._command = {name: float(command[name]) for name in self.command_schema["fields"]}
-        self._received.append((self._t(), dict(self._command)))
+        issued = {name: float(command[name]) for name in self.command_schema["fields"]}
+        self._received.append((self._t(), dict(issued)))
         for _ in range(max(1, round(duration_s / self.policy.control_dt))):
-            self.policy.step(native, on_substep=self._watch)
+            self._queue.append((native, issued))
+            active, self._command = self._queue.popleft()  # the command issued self._delay control periods ago
+            self.policy.step(active, on_substep=self._watch)
             obs = self._observe()
         return obs
 
@@ -222,6 +266,6 @@ class Go2World:
                 np.savez_compressed(f, **arrays)
             break
         hidden = {"preset": self.preset, "seed": self.seed, "attempt_seed": self._attempt_seed,
-                  "hidden_effects": self._hidden}
-        path.with_suffix(".hidden.json").write_text(json.dumps(hidden, indent=2, default=int))
+                  "hidden_effects": self._hidden, "attempt_latency_s": self._delay * self.policy.control_dt}
+        path.with_suffix(".hidden.json").write_text(json.dumps(hidden, indent=2, default=lambda o: o.tolist()))
         return path.as_posix()

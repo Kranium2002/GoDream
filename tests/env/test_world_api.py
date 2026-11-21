@@ -113,7 +113,10 @@ def test_finish_episode_reports_outcome_and_saves_trace(config, world, forward):
     assert trace["t_s"].shape == (51,) and trace["joint_pos_rad"].shape == (51, 12)  # decision instant + 50 periods
     assert np.array_equal(trace["base_pos_m"][-1], out["final_base_pos_m"])
     hidden = json.loads(Path(out["trace_path"]).with_suffix(".hidden.json").read_text())
-    assert hidden == {"preset": "default", "seed": config["runtime"]["seed"], "attempt_seed": 0, "hidden_effects": {}}
+    assert {k: hidden[k] for k in ("preset", "seed", "attempt_seed")} == {
+        "preset": "default", "seed": config["runtime"]["seed"], "attempt_seed": 0}
+    # config.yaml switches all five effects on; their values are tested in test_effects.py
+    assert set(hidden["hidden_effects"]) == {"payload", "friction", "slope", "motor_strength", "latency"}
 
 
 def test_trace_files_are_unique_and_optional(config, tmp_path, zero, period):

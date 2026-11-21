@@ -1,0 +1,105 @@
+{
+  "seed": 5,
+  "attempt_seed": 0,
+  "trot_duration_s": 20.0,
+  "measure": {
+    "duration_s": 6.0,
+    "steady_speed_m_s": 0.6,
+    "steady_window_s": 4.0,
+    "stop_from_m_s": 0.9,
+    "start_to_m_s": 0.6
+  },
+  "rows": [
+    {
+      "friction": 0.4,
+      "trot_0.6_speed_m_s": 0.5448421614150709,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.14283940927377525,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.3,
+      "trot_0.6_speed_m_s": 0.5558144846627191,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.1555661007835441,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.25,
+      "trot_0.6_speed_m_s": 0.5597722856683707,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.18857029731020308,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.2,
+      "trot_0.6_speed_m_s": 0.5947153110491379,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.23324106858397603,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.15,
+      "trot_0.6_speed_m_s": 0.5618630586948049,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.273878619980416,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.12,
+      "trot_0.6_speed_m_s": 0.5602813238952647,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.28461654346342924,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.1,
+      "trot_0.6_speed_m_s": 0.5404976765637852,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.29573048817468095,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.08,
+      "trot_0.6_speed_m_s": 0.5291467900129447,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.2951148856542404,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.06,
+      "trot_0.6_speed_m_s": 0.4995489440276852,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.2760875246322158,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.05,
+      "trot_0.6_speed_m_s": 0.47262868187104173,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.2838170897284119,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.04,
+      "trot_0.6_speed_m_s": 0.42851288944717536,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.2814095754516696,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.03,
+      "trot_0.6_speed_m_s": 0.3649286614333434,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.2500961416637692,
+      "stop_fall": 0
+    },
+    {
+      "friction": 0.02,
+      "trot_0.6_speed_m_s": 0.26117194450359976,
+      "trot_fall": 0,
+      "stop_0.9_distance_m": 0.21000715132104314,
+      "stop_fall": 0
+    }
+  ]
+}

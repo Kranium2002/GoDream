@@ -161,51 +161,86 @@ world:
   render:
     width: 640
     height: 480
+  # The hidden world (Go2World._hidden_effects). A preset's values are applied only for the effects switched on in
+  # `enabled`; with all five off an episode is bit-identical to one without hidden effects. The ranges bound the
+  # experiments (MISSION.md); presets are not range-checked, so a test can build a world outside them.
+  # Fixed per world by (seed, preset): every value below except the latency jitter, which is drawn per attempt.
   hidden_effects:
+    enabled: {payload: true, friction: true, slope: true, motor_strength: true, latency: true}
     payload_mass_kg: [0.0, 3.0]
-    payload_off_center_range_m: null  # Requires an explicit experimental range.
-    declared_mass_error_fraction: [-0.2, 0.2]
-    surface_friction_by_type: null  # Copy values from the verified MuJoCo model/config.
-    friction_per_run_variation: null
-    slope_deg: [-5.0, 5.0]
-    motor_strength_fraction: [0.8, 1.0]
-    command_latency_s: [0.05, 0.3]
-    command_latency_jitter_s: null  # Measure/verify before setting.
+    # [[x min, x max], [y min, y max]] of the payload's centre, trunk frame, from base_link's origin: the top face of
+    # the trunk's collision box (go2.xml line 74, half sizes 0.1881 x 0.04675 m, centred on the origin).
+    payload_off_center_range_m: [[-0.1881, 0.1881], [-0.04675, 0.04675]]
+    # The payload is a box this size resting on that face; it adds mass and touches nothing. 15 x 9 x 8 cm, about as
+    # wide as the trunk's collision box (9.35 cm); 3 kg in it is 2.8 kg/L, like a battery pack.
+    payload_box_half_size_m: [0.075, 0.045, 0.04]
+    declared_mass_error_fraction: [-0.2, 0.2]  # declared payload = true mass x (1 + uniform draw in this range)
+    # Sliding friction of every foot-floor contact, by floor type; the foot geoms' torsional and rolling friction stay
+    # go2.xml's (0.02, 0.01). default: go2.xml's own foot friction (class "foot", lines 31-34: priority 1, which
+    # overrides the floor plane's friction; proof in EXPERIMENTS_LOG E5). slippery: from the dev sweep
+    # artifacts/env/friction-sweep/sweep.json (0.4 down to 0.02, no fall anywhere): the lowest friction whose 0.6 m/s
+    # trot stays within Gate 1's 20% speed tolerance is 0.06 (0.4995 m/s; 0.05 gives 0.4726). 0.1 keeps every run's
+    # friction (0.09-0.11 with the variation below) at least 1.5 x that; it doubles the stop from 0.9 m/s.
+    surface_friction_by_type: {default: 0.4, slippery: 0.1}
+    # Fraction: each world's friction is its type's x (1 + uniform draw in +-this). Keeps the two types' ranges apart
+    # (0.36-0.44 and 0.09-0.11) and slippery above the sweep's lowest trotting friction (DECISIONS.md).
+    friction_per_run_variation: 0.1
+    slope_deg: [-5.0, 5.0]  # positive is uphill along +x, the dog's heading at the spawn
+    motor_strength_fraction: [0.8, 1.0]  # scales every joint torque and the torque limit
+    command_latency_s: [0.05, 0.3]  # nominal; whole 0.02 s control periods
+    # One control period: each attempt's latency is the nominal one plus -1, 0 or +1 period, uniformly.
+    command_latency_jitter_s: 0.02
+    # measure_effects (learned_judgment/env/effects.py): one episode per quantity through Go2World, duration_s after
+    # the decision instant, each effect at the demanding end of its range above.
+    measure:
+      duration_s: 6.0
+      steady_speed_m_s: 0.6  # trot at it from the reset on; mean speed along the heading over the last window
+      steady_window_s: 4.0
+      stop_from_m_s: 0.9  # trot at it until the decision instant, then zero; distance along that heading
+      start_to_m_s: 0.6  # from standing; time until the speed along the heading first reaches half of it
+  # Each preset holds the hidden world's true values. declared_payload_kg (observation and outcome) is payload_mass_kg
+  # x (1 + an error drawn per world) and declared_surface is floor_type. Every preset has the same latency, 0.08 s
+  # (4 control periods): the shortest whole number of periods whose jitter stays inside the 0.05-0.3 s range.
+  # The last four each move one effect of `default` to the demanding end of its range.
   presets:
     default:
-      # What the judge declares for this world (HANDOFF_PERSON_B.md item 5), reported in every observation and
-      # outcome: no payload on the default floor.
-      declared_payload_kg: 0.0
-      declared_surface: default
-      payload_mass_kg: null
-      floor_type: null
-      slope_deg: null
-      motor_strength_fraction: null
-      command_latency_s: null
+      payload_mass_kg: 0.0
+      payload_offset_m: [0.0, 0.0]
+      floor_type: default
+      slope_deg: 0.0
+      motor_strength_fraction: 1.0
+      command_latency_s: 0.08
     heavy_payload:
-      payload_mass_kg: null
-      floor_type: null
-      slope_deg: null
-      motor_strength_fraction: null
-      command_latency_s: null
+      payload_mass_kg: 3.0
+      # Rear-left corner of payload_off_center_range_m: the payload's demanding end in mass and in offset. Dev check
+      # artifacts/env/20261121T170552-payload-offset-check: 10 s trots at 0.6 and 0.9 m/s with 3 kg there, centred and
+      # at each end of x, no fall (0.5457 m/s at 0.6 here, 0.5612 centred).
+      payload_offset_m: [-0.1881, 0.04675]
+      floor_type: default
+      slope_deg: 0.0
+      motor_strength_fraction: 1.0
+      command_latency_s: 0.08
     slippery_floor:
-      payload_mass_kg: null
-      floor_type: null
-      slope_deg: null
-      motor_strength_fraction: null
-      command_latency_s: null
+      payload_mass_kg: 0.0
+      payload_offset_m: [0.0, 0.0]
+      floor_type: slippery
+      slope_deg: 0.0
+      motor_strength_fraction: 1.0
+      command_latency_s: 0.08
     tired_motors:
-      payload_mass_kg: null
-      floor_type: null
-      slope_deg: null
-      motor_strength_fraction: null
-      command_latency_s: null
+      payload_mass_kg: 0.0
+      payload_offset_m: [0.0, 0.0]
+      floor_type: default
+      slope_deg: 0.0
+      motor_strength_fraction: 0.8
+      command_latency_s: 0.08
     downhill:
-      payload_mass_kg: null
-      floor_type: null
-      slope_deg: null
-      motor_strength_fraction: null
-      command_latency_s: null
+      payload_mass_kg: 0.0
+      payload_offset_m: [0.0, 0.0]
+      floor_type: default
+      slope_deg: -5.0
+      motor_strength_fraction: 1.0
+      command_latency_s: 0.08
 
 ball:
   enabled: true
