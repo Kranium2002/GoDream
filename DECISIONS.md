@@ -35,3 +35,7 @@ Mass 0.450 kg and radius 0.0939 m, the mid-range of IHF Rule 3:2 (425–475 g, c
 ## 2026-11-21 — Walking stack: Efferent go2_walk on Unitree's Go2 model
 
 Efferent is the first path in the mandated order and its proof passed (experiment E1 proof run, `artifacts/env/20261121T144656-e1-proof`). Selected: the `go2_walk.app` policy and `go2.robot.yaml` from `Eximius-Labs/efferent` at `f51e1af953afe1016dae9ceeff2b5328fa51781d` (Apache-2.0; the ONNX is converted from rl_sar `policy/go2/robot_lab/policy.pt` at `376d42c9`), on Unitree's `go2.xml` from `unitreerobotics/unitree_mujoco` at `1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d` (BSD-3-Clause). Pinned packages: `efferent==0.5.0`, `mujoco==3.11.0`, `onnxruntime==1.32.0`. The Efferent files are vendored under `learned_judgment/env/assets/`; the model comes from the git submodule `third_party/unitree_mujoco` at that commit. Both are pinned by sha256 in `config.yaml`. rl_sar (E2) stays the fallback; its proof is not run.
+
+## 2026-11-21 — Command schema `verified` means proven fields and ranges, not tracking
+
+The integrator's rule for Task 3: `robot.walking_policy.status` becomes `verified` once every command field is proven at both ends of its range by a recorded run (no fall, response with the commanded sign); it makes no claim about speed-tracking accuracy, which stays with Gate 1 (still failing at 0.3 m/s). Applied on E4 (`artifacts/env/commands/commands.json`): `vel_x`, `vel_y` and `yaw_rate` all proven at −1 and 1, nothing narrowed.

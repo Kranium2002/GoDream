@@ -25,7 +25,9 @@ robot:
     revision: 1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d
     sha256: 2014a3d76e30f17ab9447d8a67bd015291f74fa4d71ae30d005f1a32bd693d4b
   walking_policy:
-    status: not_verified
+    # verified: the command fields and ranges in command_schema below were each proven by a recorded run (E4). It says
+    # nothing about speed-tracking accuracy: see experiments/EXPERIMENTS_LOG.md, "Gate 1 — locomotion acceptance".
+    status: verified
     # Efferent examples/go2_walk at f51e1af, vendored byte-for-byte. The ONNX inside go2_walk.app is a conversion of
     # rl_sar policy/go2/robot_lab/policy.pt (rl_sar 376d42c9, Apache-2.0). E1 proof: artifacts/env/20261121T144656-e1-proof.
     source: https://github.com/Eximius-Labs/efferent/tree/f51e1af953afe1016dae9ceeff2b5328fa51781d/examples/go2_walk
@@ -64,7 +66,57 @@ robot:
       kd: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
       torque_limit: [23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5]
     control_rate_hz: 50.0  # manifest.yaml control.rate_hz
-    command_schema: null
+    command_schema:
+      update_period_s: 0.02  # 1 / control_rate_hz: the policy reads one command per 50 Hz control step
+      source: >-
+        Names and native order: manifest.yaml inside go2_walk.app (efferent@f51e1af), observation term "command",
+        names [vel_x, vel_y, yaw_rate], scale 1.0 (lines 95-104); rate_hz 50.0 (line 11). Candidate range -1 to 1 for
+        each field: robot_lab's current Go2 training range (experiments/EXPERIMENTS_LOG.md, "E1 (research half)"; the
+        robot_lab commit this checkpoint was trained at is unknown). Each range end proven by a recorded run:
+        experiments/EXPERIMENTS_LOG.md, "E4 — command inventory".
+      # Per field: proven_by is the proof run's output; measured_at_min / measured_at_max are its signed responses
+      # (m/s or rad/s, mean over the 10 s run after the first 5 s), rounded to 4 decimals.
+      fields:
+        vel_x:
+          unit: m/s
+          min: -1.0
+          max: 1.0
+          native_index: 0
+          proven_by: artifacts/env/commands/commands.json
+          measured_at_min: -0.8880
+          measured_at_max: 0.9243
+          description: >-
+            Forward velocity in the dog's own heading frame (x forward): positive walks forward, negative walks
+            backward. Tracking on a flat floor (Gate 1, experiments/EXPERIMENTS_LOG.md): commanded 0.3 / 0.6 / 0.9
+            m/s gave 0.2256 / 0.5430 / 0.8596 m/s, so 0.3 m/s runs 0.0744 m/s slow, outside the gate's 20%
+            tolerance (the one condition of Gate 1 that failed). In
+            robot_lab training (HEAD; this checkpoint's training commit is unknown) planar commands with norm up to
+            0.2 m/s were zeroed, so small commands may not move the dog as asked.
+        vel_y:
+          unit: m/s
+          min: -1.0
+          max: 1.0
+          native_index: 1
+          proven_by: artifacts/env/commands/commands.json
+          measured_at_min: -1.0349
+          measured_at_max: 0.8939
+          description: >-
+            Sideways velocity in the dog's own heading frame (y left): positive steps left, negative steps right.
+            Tracking is measured only by the two proof runs (measured_at_min, measured_at_max). The same training
+            note as vel_x applies to planar commands with norm up to 0.2 m/s.
+        yaw_rate:
+          unit: rad/s
+          min: -1.0
+          max: 1.0
+          native_index: 2
+          proven_by: artifacts/env/commands/commands.json
+          measured_at_min: -0.9555
+          measured_at_max: 0.9687
+          description: >-
+            Turning rate about the vertical axis: positive turns anticlockwise (to the left) seen from above. Gate 1
+            measured +0.4976 / -0.5066 rad/s for +0.5 / -0.5 commanded at 0.3 m/s forward. With zero commanded the
+            dog still turns anticlockwise at 0.05-0.14 rad/s (Gate 1). In robot_lab training yaw commands came from
+            heading control.
   acceptance:
     trot_duration_s: 30
     commanded_speeds_m_s: [0.3, 0.6, 0.9]

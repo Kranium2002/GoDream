@@ -203,3 +203,49 @@ Rebound tests stated by the rules, with the implied coefficient of restitution `
 **Cost.** TabPFN calls: 0.
 
 **Decision and next step.** Gate 1 fails on trot_0.3. Parity with Efferent's own Runner passes, so by the rule fixed in the plan this is a measured limitation of the borrowed policy, not an adapter fault, and nothing was tuned, loosened or retried. The integrator decides how to proceed. `robot.walking_policy.status` is unchanged.
+
+## E4 — command inventory — 2026-11-21 — Person A
+
+**Question.** Which commands does the borrowed policy take, in what units and order, and does each one move the simulated dog the commanded way at both ends of its candidate range without a fall?
+
+**Sources (no new research run).** The plan's research workflow W2 for E4 was cancelled by the integrator: the E1 research already established the names, units and candidate range. Names and native order: `manifest.yaml` inside the vendored `go2_walk.app` (efferent@f51e1af), observation term `command`, names `[vel_x, vel_y, yaw_rate]`, scale 1.0 (lines 95–104), `control.rate_hz: 50.0` (line 11), read here from the vendored file. Units (m/s, m/s, rad/s), "Efferent does not clamp" and the candidate range −1 to 1 for each field (robot_lab's current Go2 training range; the checkpoint's training commit is unknown): entry "E1 (research half)". Frame and signs: the policy's command is in its base heading frame (x forward, y left, yaw anticlockwise positive), and this run measures each sign.
+
+**Pass criterion (fixed by the integrator before the run).** A range end is proven if the dog does not fall (as in Gate 1: no trunk geom on the floor, tilt ≤ 60° at every physics step) and the measured response has the commanded sign. Response, as the mean over the 10 s commanded run after its first 5 s: forward speed along the heading for `vel_x`, leftward speed along the heading frame's y for `vel_y`, yaw rate for `yaw_rate`. This is not a tracking tolerance. An end not proven would have been narrowed to 0.75, then 0.5 of the candidate.
+
+**Setup.** `prove_commands` in `learned_judgment/env/acceptance.py`: for each field and each end, one fresh episode on the flat scene through `WalkingPolicy` (same spawn, 1 s settle and 3 s soft start as Gate 1), 10 s at that value with the other two fields 0. The leftward response is a new key `mean_lateral_speed_m_s` of the Gate 1 episode measurement; its other keys are computed as before. Seed 20261121 recorded; nothing draws random numbers.
+
+**Command.**
+
+    uv run python -m learned_judgment.env.evidence commands-proof -- uv run python -c "from learned_judgment.env import load_config; from learned_judgment.env.acceptance import prove_commands; prove_commands(load_config(), 'artifacts/env/commands')"
+
+**Result: PASS, all six ends proven at the candidate range; nothing narrowed.** Exit code 0. Values from `artifacts/env/commands/commands.json`, rounded to 4 decimals:
+
+| Field | End | Commanded | Measured (signed) | Fallen | Proven |
+|---|---|---|---|---|---|
+| vel_x | min | −1.0 m/s | −0.8880 m/s | no | yes |
+| vel_x | max | 1.0 m/s | 0.9243 m/s | no | yes |
+| vel_y | min | −1.0 m/s | −1.0349 m/s | no | yes |
+| vel_y | max | 1.0 m/s | 0.8939 m/s | no | yes |
+| yaw_rate | min | −1.0 rad/s | −0.9555 rad/s | no | yes |
+| yaw_rate | max | 1.0 rad/s | 0.9687 rad/s | no | yes |
+
+**Published.** `config.yaml` `robot.walking_policy.command_schema`: `update_period_s` 0.02 (one command per 50 Hz control step), and per field `unit`, `min` −1.0, `max` 1.0, `native_index`, `proven_by: artifacts/env/commands/commands.json`, `measured_at_min`, `measured_at_max` (the table's values) and a plain-words `description` (frame, sign, Gate 1 tracking). `robot.walking_policy.status` is `verified`, which means only that these fields and ranges were each proven by this run; it says nothing about speed-tracking accuracy (Gate 1, trot_0.3, still fails).
+
+**Tests.** `tests/env/test_commands.py`: two pure-function tests of `validate_command` on the published schema (edges accepted unchanged; unknown, missing, NaN and above-max fields rejected, not clipped) and one system test that re-runs `prove_commands` into a temporary directory and asserts every published end has the commanded sign and no fall. Recorded with `uv run python -m learned_judgment.env.evidence commands -- uv run pytest tests/env/test_commands.py -v`: exit code 0, `6 passed`.
+
+**Versions.** efferent 0.5.0, mujoco 3.11.0, onnxruntime 1.32.0, numpy 2.5.5, Python 3.13.18, Windows-10-10.0.19045-SP0, CPU only (recorder `run.json`). Git `e4ddadd`, dirty (the Task 3 code was not yet committed). The proof ran with the candidate schema (status `not_verified`, no measured values; `config_sha256` e65e53b4…dec6b); the tests ran with the published one (3502d5c8…633d9a1).
+
+**Artifacts.** `artifacts/env/20261121T153523-commands-proof/` (recorder), `artifacts/env/commands/commands.json` and one trace per run (`vel_x_min.npz` … `yaw_rate_max.npz`: t, qpos, qvel, command at 50 Hz, seed, sim_s, wall_s); test run `artifacts/env/20261121T153641-commands/`.
+
+**Wall time.** Proof command 16.17 s (`run.json` `wall_s`); the six episodes 84.0 s simulated in 11.02 s wall, real-time factor 7.62 (sums of `sim_s` and `wall_s` in the six traces). Test command 19.94 s.
+
+**Limitations.**
+- Sign and staying upright only, one 10 s run per end, one field at a time, flat floor, no payload, latency or other hidden effects. Tracking accuracy, values between the ends, combined commands, changing commands mid-run and the response delay to a new command are not measured here.
+- Values beyond ±1 were not tried; the published range is the candidate, not a measured limit.
+- Cross-axis motion during each run (for example the anticlockwise drift seen in Gate 1) is in the traces but was not analysed.
+- Whether small planar commands (norm ≤ 0.2 m/s, zeroed in robot_lab training at HEAD) are tracked is not tested.
+- No second agent re-read the sources for this entry (W2 cancelled). E1's verifier confirmed the names and order (check `c14`) and the units and candidate range (`c23`) in `artifacts/env/research/W1-walking-stack.json`.
+
+**Cost.** TabPFN calls: 0.
+
+**Decision and next step.** The command schema is published with `status: verified` (Person B's loader requirement). Task 4 builds `Go2World` on it.
