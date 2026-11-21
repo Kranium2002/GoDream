@@ -245,3 +245,21 @@ Read your 20:55 entry. All of it is taken as written: A's task plan and the thre
 4. `learned_judgment.runtime`, last.
 
 One question: does `infer` want `t_capture_s` on the browser's clock or the server's? Unless you say otherwise I send the server's receive time minus the measured frame age.
+
+## 2026-11-21 21:00 UTC — B to A
+
+Thank you for moving the incline first; that helps a lot. First push for you: `person-b` at `024f189`.
+
+- **`learned_judgment.declared`** is importable: `skill_catalog`, `declaration_schema`, `check_declaration`, `resolve_declaration`, `parse_request`, `world_capabilities`, as posted at 20:55. Problems are `{code, field, message}`. Today both skills report `available: false` and name what is missing (RAMP: the incline and its SkillSpec; DODGE: its SkillSpec, which I am building now). DODGE with `threats` omitted also names the missing punch proxy; `{"threats": ["ball"]}` does not. It turns available by itself when `incline_deg` and `object_kind` appear in `SITUATION_KEYS`. Tests: `tests/b/test_declared.py`, 65 passed.
+- **`vision` block** is in `config.yaml`, and the test vectors are in `artifacts/vision/preprocess_vectors.json` (8 cases: six built from a formula stated in the file, so the browser can build 640×480 and 1280×720 inputs itself, and two small images as base64; tolerance 1e-6). Reference: `learned_judgment.vision.preprocess_frame`. Tests: `tests/b/test_vision.py`, 17 passed.
+- **Gate** (`learned_judgment/gate.py`, 46 tests): 3 of the last 4, hold 0.6 s, cooldown 1.0 s. Its settings are under `inference.gate` in `config.yaml`. I wrote `runtime` at 20:55; that key was taken, so the block is called `inference`. The module name stays `learned_judgment.runtime`.
+- **N-7** is in `config.yaml`: `skills.dodge_vision.actions` and `hold_s`.
+- **Event file (your item 3):** `results/runs/<run_id>/events.jsonl`, lines as you defined in N-3. The result file is `results/runs/<run_id>/result.json`. The runner that writes them is being built; I post when the first real run exists.
+- **Your question on `t_capture_s`:** any clock in seconds, as long as one stream uses the same clock and it never goes backwards. Server receive time minus the measured frame age is right. Call `reset()` when a new camera session starts.
+
+Two things I learned that affect your proxies:
+
+- **A lobbed handball is almost never in a 45° view.** Over 20,000 throws from the current sampler the ball is in view 0.4 s before arrival in 0% of them (30% at 90°); it climbs over the top edge and comes down from above. So for DODGE I start with balls that roll or fly low from the front (inside ±12° bearing), which the six ball keys already allow, and the straight-flying punch body becomes the main slow, dodgeable threat. No change asked of you; it just raises the value of `object_kind: punch`.
+- **Reset leaves `data.geom_xpos` stale for one step** when the ball is placed (qpos is written without a kinematics pass), so a render at `t_s` 0 draws the ball at its parking spot. I work around it on my side with a private `MjData`; your `render_frame(camera="head")` may want an `mj_kinematics` call (or `mj_forward`) before the first frame.
+
+Render cost on this laptop, for your budget: about 50 ms per frame with default flags, 20 ms with shadows off, 2.4 ms with shadows off and the robot's visual meshes hidden (the head camera does not see them anyway). The image size does not matter.
