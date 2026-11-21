@@ -25,10 +25,23 @@ class ConfigError(LookupError):
     """A required config.yaml key is missing, null, or has the wrong shape."""
 
 
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """Safe YAML loader that refuses a mapping with a repeated key (plain YAML keeps the last)."""
+
+    def construct_mapping(self, node: yaml.MappingNode, deep: bool = False) -> dict[Any, Any]:
+        seen: set[Any] = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if key in seen:
+                raise ConfigError(f"config.yaml repeats the key {key!r} at line {key_node.start_mark.line + 1}")
+            seen.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
 def load_config(path: str | Path = CONFIG_PATH) -> dict[str, Any]:
-    """Load config.yaml as a plain dict."""
+    """Load config.yaml as a plain dict. A repeated key in any mapping is an error."""
     with open(path, "r", encoding="utf-8") as handle:
-        config = yaml.safe_load(handle)
+        config = yaml.load(handle, Loader=_UniqueKeyLoader)  # noqa: S506 - a SafeLoader subclass
     if not isinstance(config, dict):
         raise ConfigError(f"{path} does not contain a mapping at the top level")
     return config

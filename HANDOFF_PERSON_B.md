@@ -23,8 +23,9 @@ These block every measured result. Items marked "proposed" are not frozen; chang
 5. **Declared world values.** The declared payload mass and the declared surface type of the current world, as the judge would state them, available from the world or from every observation. Proposed keys: `declared_payload_kg`, `declared_surface`. They are model features. The true hidden values must not appear under any key Person B reads.
 6. **DODGE measured outcome, proposed.** Keys in `finish_episode()`: `min_separation_m` (smallest distance between ball surface and robot, 0 on contact), `collision` (0 or 1), `fall` (0 or 1), `recovery_time_s`. Traces and anything else can sit under other keys; the SkillSpec reads only its outcome fields and rejects nothing extra from the world.
 7. **Episode timing.** When the ball is released relative to `reset`, how long an episode lasts, and whether `step` may be called several times with different commands before `finish_episode` (Person B plans: nominal command for a delay, dodge command for a hold time, nominal command until the end).
-8. **One saved real episode** with its raw artifact, and the measured real-time factor, so run times can be planned.
-9. **mujoco in pyproject.toml.** It is installed in the venv but not declared, so a plain `uv sync` uninstalls it together with glfw and pyopengl. Declare it, or use `uv sync --inexact`.
+8. **Two levels of seed.** Evaluation needs the hidden world (payload offset, friction draw, label error) held fixed across a run while per-attempt noise varies, and needs every method to face the same noise on the same episode. A single `Go2World(config, seed)` that reseeds everything cannot do both. Proposed: the constructor seed fixes the hidden world, and each episode takes its own seed, `reset(situation, attempt_seed)`. If Person A prefers another form (for example a noise stream indexed by episode number), say which, and Person B will adapt.
+9. **One saved real episode** with its raw artifact, and the measured real-time factor, so run times can be planned.
+10. **mujoco in pyproject.toml.** It is installed in the venv but not declared, so a plain `uv sync` uninstalls it together with glfw and pyopengl. Declare it, or use `uv sync --inexact`.
 
 ## Look-ahead findings that concern Person A (unverified)
 
@@ -64,5 +65,5 @@ Attempt rows are JSON Lines, one file per run under `results/attempts/`. The row
 ## Limitations
 
 - Every executed check uses fixtures and tests mechanics only. None is evidence about the robot, the simulator, TabPFN, or the SNN student.
-- The DODGE SkillSpec is not written; it needs items 3 to 7.
+- The DODGE SkillSpec is not written; it needs items 3 to 8.
 - The teacher's real-response handling (shape and order of the returned quantiles, actual charge against quote) is written from the client's source and is unverified until the first real request.

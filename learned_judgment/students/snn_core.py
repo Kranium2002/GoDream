@@ -1,9 +1,15 @@
 """The deployed spiking student: inference and operation counting in plain numpy.
 
 Training uses PyTorch + snnTorch (``snn_train.py``); decisions never import them. The
-dynamics below reproduce snnTorch 1.0.0 ``Leaky`` exactly. In float64 the numpy forward
-pass matched the trained torch model with zero logit difference and zero spike mismatches
-(experiments/proofs/E15_snn_contract/p05b_parity_numpy_side.out.txt).
+dynamics below reproduce snnTorch 1.0.0 ``Leaky``. This numpy network is the student: every
+reported decision, spike count and latency comes from it, not from the torch model.
+
+Agreement with the trained torch model in float64, as observed: spike counts and decisions
+were identical in every run (experiments/proofs/E15_snn_contract/p05b and
+experiments/proofs/B_snn_offline). Readout logits were bitwise equal in the E15 proof and
+differed by about 2e-15 in a later run, because the two libraries sum a matrix product in a
+different order. Training checks spike counts and decisions after export and stops with an
+error if either differs.
 
 Network (fully connected, T time steps, encoded input x of width D):
 

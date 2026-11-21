@@ -86,6 +86,8 @@ def decide_batch(
     physics_scores = np.asarray(
         spec.objective(OutcomeDistribution.point(spec.outcome_names, physics, levels)), dtype=np.float64
     )
+    if physics_scores.shape != (total,) or not np.all(np.isfinite(physics_scores)):
+        raise ValueError(f"objective must return finite physics-only scores of shape ({total},)")
 
     request_hash = None
     if model is None:
@@ -105,6 +107,11 @@ def decide_batch(
             )
         if not np.array_equal(residual.quantile_levels, levels):
             raise ValueError("the residual model returned different quantile levels than were requested")
+        if tuple(residual.spread_levels) != (float(spread_levels[0]), float(spread_levels[1])):
+            raise ValueError(
+                f"the residual model computed its spread from levels {tuple(residual.spread_levels)}, "
+                f"not the requested {tuple(spread_levels)}"
+            )
         request_hash = getattr(model, "last_request_hash", None)
 
     predicted = OutcomeDistribution.from_physics_and_residual(

@@ -135,6 +135,18 @@ evaluation:
   bootstrap_confidence_level: 0.95
   bootstrap_method: BCa  # Falls back to percentile, and records it, when BCa is degenerate.
   latency_decisions: 1000
+  reliability_bins: 10  # Probability bins of the reliability table for binary outcomes.
+  methods:  # Every method of 03_METRICS.md; the final table shows NOT RUN for each one without a saved result.
+    - oracle
+    - physics_only
+    - constant_bias
+    - gaussian_process
+    - gradient_boosting
+    - mlp_on_attempts
+    - direct_tabpfn
+    - teacher
+    - snn_per_skill
+    - snn_shared
 
 tabpfn:
   client_version: "0.10.1"
@@ -157,6 +169,8 @@ tabpfn:
   cache_dir: .cache/tabpfn  # Git-ignored. One entry per request hash: request, response, quote, usage.
   call_log: results/tabpfn_calls.jsonl  # One line per call or cache hit; never contains credentials.
   max_tokens_per_request: 10000  # Refuse an uncached request quoted above this (10000 = minimum charge, E7).
+  max_query_rows_per_request: 32000  # Larger query sets are split into requests of at most this many rows. 32000 rows at 40 training rows still quoted the minimum charge (E7 proof p3b_cost_scaling.txt).
+  lock_timeout_s: 120  # How long a process waits for another process using the same cache before giving up.
   project_token_budget: 35000000  # Total tokens this project may spend. Set by the lead on 2026-11-21: the allowance Prior Labs gave for the track.
 
 persistence:  # Retry of the atomic file move on Windows, where an open reader blocks os.replace (proof p10_persist).
@@ -176,11 +190,13 @@ baselines:  # Starting settings from the B-contract proofs; change only from dev
     max_leaf_nodes: 4
     min_samples_leaf: 2  # The library default of 20 gives a constant model below 40 rows (proof p05_gb).
     min_attempts: 5
+    interval_folds: 5  # Predictive quantiles come from out-of-fold errors (review finding: in-sample intervals were far too narrow).
   mlp_on_attempts:
     hidden_layer_sizes: [64, 64]
     alpha: 0.0001
     max_iter: 2000
     min_attempts: 5
+    interval_folds: 5  # Predictive quantiles come from out-of-fold errors (review finding: in-sample intervals collapsed to a point).
 
 students:
   kind: snn  # The only student is a spiking neural network (decision 2026-11-21).
