@@ -172,11 +172,11 @@ SKILL_KEYS = {"skill", "description", "params", "actions", "outcomes", "availabl
 
 def test_skills_lists_the_catalogue_and_what_each_unavailable_skill_lacks(server):
     status, body = request(server, "GET", "/api/skills")
-    assert status == 200 and body["skills"]
-    for entry in body["skills"]:
+    assert status == 200 and isinstance(body, list) and body  # the bare list, in skill_catalog's shape
+    for entry in body:
         assert set(entry) >= SKILL_KEYS, entry
         assert entry["available"] or entry["missing"], entry  # never unavailable without saying why
-    assert request(server, "GET", "/api/state")[1]["skills"] == body["skills"]
+    assert request(server, "GET", "/api/state")[1]["skills"] == body
 
 
 def test_chat_without_its_pieces_is_unavailable_and_says_what_to_add(server, monkeypatch):

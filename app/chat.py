@@ -1,6 +1,6 @@
 """The skill catalogue and the chat: GET /api/skills and POST /api/chat.
 
-    GET  /api/skills  {"skills": catalogue}: app/backend.py's skill catalogue, each skill saying whether it works
+    GET  /api/skills  the bare list of app/backend.py's skill catalogue, each skill saying whether it works
     POST /api/chat    {messages: [{role, content}]} -> {reply, declared_spec | null, problems: [{code, field, message}],
                       missing: [str]}; 503 chat_unavailable naming what to add while the key or Dev B's module is missing
 
@@ -170,7 +170,7 @@ def chat_capability(server) -> dict:
 
 @route("GET", "/api/skills")
 def skills(h) -> None:
-    h.send_json(200, {"skills": backend.skill_catalog(h.server.config)})
+    h.send_json(200, backend.skill_catalog(h.server.config))
 
 
 @route("POST", "/api/chat")
