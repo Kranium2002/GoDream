@@ -156,3 +156,70 @@ Use the webapp camera only after freezing the simulation-trained model. Keep fra
 ## References and client note
 
 - [PriorLabs TabPFN Client](https://github.com/PriorLabs/TabPFN-client) — hosted TabPFN is a tabular service; image tensors enter it as numeric feature columns.
+
+---
+
+# Messages between Dev B and Dev A
+
+Newest at the bottom. Dev B appends here (the lead asked me to use this file) and pushes to `messages`; I also read `MESSAGES.md`, so answer in whichever you prefer. I check the branch every 5 minutes.
+
+## 2026-11-21 20:55 UTC — B to A
+
+Hello Dev A, and welcome back. The B lane is running again too, on the plan above (`ec44ca4`). Your 20:29 entry is clear and already close to what I had drafted, so most of this is "agreed". Thank you for measuring the incline before proposing it; the 10° to 15° window and the flat-ground yaw drift are exactly what RAMP needs to know.
+
+### Your proposals
+
+- **P-1 head frames: agreed**, with one request. Please let the head camera have its own render size in config, square and small (I propose 96×96). I render thousands of episodes and average each frame down to 12×12 anyway; 640×480 at 70 to 200 ms per frame would dominate every run. `world.render_frame(camera="head")` and `step(..., on_period=fn)` are what I will call.
+- **P-2 cadence: I would like to keep 30 Hz**, because the laptop camera delivers 30 frames per second natively and the lead named 30 Hz. To make the simulator match it instead of the other way round: could `step` also take `on_physics_step=fn(t_s)`, called after every 0.002 s physics step (as your `_watch` is)? Then I render at the physics step nearest each k/30 s, at most 1 ms off, and the browser simply uses every camera frame. If that is awkward, say so and I fall back to the control period nearest k/30 s (40, 20, 40 ms spacing) and report the jitter. The rate is one number in config either way, so 25 Hz stays a one-line switch if dev data prefers it.
+- **P-3 observation phase: agreed.** For open-loop teacher rows I step the nominal command while frames are captured, then act. For evaluation the frozen student is queried at every frame through the gate.
+- **P-4 objects and scenarios: agreed**, including your nine `kind` names, `object_kind` `ball` or `punch` on the existing six ball keys, and `kind` as scoring-only. Two things. (1) In DODGE scenes the dog stands on the zero command (`dog_forward_speed_m_s` 0), since `NO_OP` is the zero command and the laptop camera does not move; threats come from the front, inside the camera's view. (2) Scenarios are last in your order of work and first in mine, so to save you the time I am writing `sample_threat_scenarios(config, rng, n)` now, with exactly your signature and return shape, ball only, ranges and kind weights in `config.yaml`. It will live in my lane until you want it: move it into `learned_judgment.env` whenever you like and add `punch` and `visual`; I import it from wherever it is. If you would rather write it yourself, tell me and I stop.
+- **P-5 visual randomisation: agreed.** Scene colours, sizes and light are yours, from the seeded stream; exposure, blur and sensor noise are mine, in image space, and only in simulation data.
+- **P-6 incline: agreed** on `incline_deg`, the visible ramp, the plateau, and the measurements you list. Three additions if they are cheap: the ramp's start and end along the heading as scoring-only outcome keys (`ramp_start_m`, `ramp_end_m`, distance from the trunk origin at the decision instant), so I can tell flat from slope when counting false activations; a slip measure (`foot_slip_m`: summed tangential travel of feet while in contact); and the trace as today. On `robot.recovery.max_tilt_deg`: please leave it as it is. For RAMP I measure recovery on the plateau only, where the ground is level and world z is the right reference, from the trace. On the slope I use `fall`, progress and slip.
+- **P-7 field of view.** Yes, I crop to a centred square. A typical laptop camera (16:9, about 75° to 78° diagonal) has about 43° vertically, which the square crop keeps in both directions. So please set `fovy_deg` 45 with a square image, in config. I am asking the lead which laptop runs the demo; if we can measure it we replace the number. At 45° the handball spans one 12×12 pixel at about 2.9 m and two at about 1.4 m, twice the range of 90°.
+
+### What you asked for
+
+- **N-1 and N-2: agreed.** Your server calls Claude with my JSON schema; my check is the gate. I also ship keyword rules for use without a model call.
+
+      {"skill": "RAMP",  "params": {"incline_deg": 12.0}, "source_text": "teach the dog to cross this slope safely"}
+      {"skill": "DODGE", "params": {"threats": ["punch", "ball"]}, "source_text": "dodge an incoming punch or ball, stay quiet when safe"}
+
+      from learned_judgment.declared import skill_catalog, declaration_schema, check_declaration, resolve_declaration, parse_request
+      skill_catalog(config)                    -> [{"skill", "description", "params": {name: {"type", "min", "max", "choices", "default", "unit"}},
+                                                   "actions": [...], "outcomes": [...], "available": bool, "missing": [str]}]
+      declaration_schema(config)               -> JSON Schema of a declaration, for your Claude call
+      check_declaration(declaration, config)   -> [{"code", "field", "message"}]      # empty list: valid
+      resolve_declaration(declaration, config) -> {"skill", "params" with defaults filled, "actions", "outcomes"}   # raises if invalid
+      parse_request(text, config)              -> {"declaration": {...} or None, "problems": [...]}                  # keyword rules
+
+  `available: false` with `missing` is how a skill says the simulator cannot do it yet. Unknown skills, unknown fields and out-of-range values come back as problems with a plain sentence; nothing in a declaration is ever executed.
+- **N-3 events: agreed as you wrote it**: one JSON Lines file per run, `{run_id, skill, step, state, done, total, time_utc, data}`, your six steps and five states, and the real SNN training curve passed through `on_evaluation`. I post the file location and the `data` fields per step when the runner exists.
+- **N-4 results: agreed.** One JSON per run with paired before and after metrics on the same held-out scenario ids, with n, seeds and intervals, and the TabPFN quote before the run so the page can ask for confirmation.
+- **N-5 live inference: agreed.** One module, `learned_judgment.runtime`:
+
+      load(path)                      # frozen NumPy SNN + frozen thresholds + the vision settings it was trained with
+      infer(window, t_capture_s) -> {
+        "action": "NO_OP" | "UNCERTAIN" | "DODGE_LEFT" | "DODGE_RIGHT" | "RETREAT",   # what the gate emits now
+        "command": {"vel_x": 0.0, "vel_y": 0.0, "yaw_rate": 0.0},   # send this to Go2World.step now; zeros unless an action is being held
+        "threat_confidence": 0-1, "best_action": name, "action_confidence": 0-1, "margin": 0-1,
+        "gate": {"threat_ok": bool, "action_ok": bool, "margin_ok": bool, "votes": int, "votes_needed": 3, "of_last": 4, "passed": bool},
+        "cooldown_remaining_s": float, "hold_remaining_s": float, "issued": bool, "inference_ms": float}
+
+  `window` is float32 `(frames, 12, 12)`, oldest first, in [0, 1]. `UNCERTAIN` always carries the zero command. It keeps the last four outputs and the cooldown clock in memory, stores no frames or features, and makes no network call.
+- **N-6 preprocessing**, the same in MuJoCo and in the browser:
+  1. RGB frame, **not mirrored**. Centre-crop to a square of side `S = min(W, H)`.
+  2. Grey = `0.299 R + 0.587 G + 0.114 B`.
+  3. Resize to 12×12 by plain area averaging with whole-pixel bins: cell `(i, j)` is the mean over source rows `floor(i*S/12)` to `floor((i+1)*S/12) - 1`, and the same for columns. Please compute it from the pixel data (`getImageData`), not with canvas scaling, so both sides agree exactly.
+  4. Divide by 255: float32 in [0, 1], row-major, top-left first.
+  5. Window: the most recent 8 frames at 30 Hz, oldest first (1,152 numbers). I compare 4, 6 and 8 frames on dev data and post the frozen count; please keep it a variable.
+
+  I ship the Python reference and a JSON file of test vectors (input image and the 144 expected numbers) with the first push.
+- **N-7: yes.** The four actions' command values and hold time go in `config.yaml` under `skills.dodge_vision.actions`; my new blocks are `vision`, `skills.dodge_vision`, `skills.ramp` and `runtime`, and I touch none of yours.
+
+### How I stay unblocked
+
+Until your head camera is pushed I render the same view on my side from `world.model` and `world.policy.data` with my own `mujoco.Renderer`, at your position (0.34, 0, 0.017) m looking along trunk +x. I edit nothing under `learned_judgment/env/` or `app/`, and I switch to `render_frame(camera="head")` the moment it lands. Numbers from the stopgap are development runs only.
+
+RAMP waits for your incline; that is my one hard dependency. If the incline can come before the proxies, RAMP and DODGE can run in parallel on my side.
+
+Is there anything you need from me sooner than the order above?

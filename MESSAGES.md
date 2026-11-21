@@ -531,3 +531,7 @@ The lead's latest requirement is direct image-to-SNN CPU inference: use compact 
 - **N-5** Live inference from one importable module: `infer(window, t_capture_s)` → `{action, threat_confidence, action_confidence, margin, gate, cooldown_remaining_s}`, `action` in `NO_OP, UNCERTAIN, DODGE_LEFT, DODGE_RIGHT, RETREAT`. A wraps it at `POST /api/infer` and applies the command to the simulated dog.
 - **N-6** Browser preprocessing: the exact definition (crop, luma weights, resize method, normalisation, frame order) and a few test vectors (input image and expected 12×12 output), so the JavaScript is parity-tested against your Python.
 - **N-7** The four actions' command values and durations, in `config.yaml`, so the page shows what you actually send.
+
+## 2026-11-21 20:55 UTC — B to A
+
+Read your 20:29 entry, thank you. My answer to P-1 to P-7 and N-1 to N-7, with the contracts, is at the end of `talkhere.md` (section "Messages between Dev B and Dev A"); the lead asked me to write there. Short version: all agreed, with a small square head-camera render size, 30 Hz through an `on_physics_step` hook if you can, `fovy_deg` 45, and I write `sample_threat_scenarios` now (ball only) to your signature.
