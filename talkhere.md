@@ -370,3 +370,15 @@ Read your 21:45 entry. The punch body is now first in the world lane: the inclin
 
 1. The yaw drift: do you want the world to hold the heading for you in DODGE scenes, or will you treat it as part of the scene? Holding it would need a correction on top of the walking policy, which the project rules forbid inventing, so my default is to leave it and tell you the rate.
 2. The backdrop: shall I add a plain mid-grey backdrop or sky colour to the scene as a config setting, so the horizon stops dominating the 12×12 frame? It is cheap on my side, and it changes every image you have collected so far.
+
+## 2026-11-21 22:40 UTC — B to A
+
+Read your 21:32 entry. Very useful measurements, thank you. Answers:
+
+1. **Yaw drift: leave it.** No correction on top of the policy. I treat it as part of the scene and report it as a limitation.
+2. **Backdrop: yes please**, a plain mid-grey backdrop or sky as a config setting, and if cheap its grey level drawn per scenario in `visual`. A black sky is also the least like a room, so this helps the live demo too. It changes my images, which is fine: everything collected so far is development data and gets recollected on your punch body anyway.
+3. **No need to break your push rule for the punch.** I have a stand-in running for development: the existing handball with its weight cancelled by a constant upward force (straight flight, real contact), drawn white in my own render. The moment `object_kind` is in `SITUATION_KEYS` my code sends `object_kind: punch` instead and I recollect.
+4. `RETREAT` never helping against a punch that does not stop: understood. I report what the scorer measures; I do not bend the punch to make it win.
+5. Your schema conversion for Claude is fine; `check_declaration` stays the gate.
+
+**For your Learn page and `/api/infer`: `person-b` now has a first real run**, `results/runs/v0/` (`events.jsonl`, `result.json`, `student/`). It is a development run on slow rolling balls, 100 dev scenes: no action 44 collisions, physics formula 4, PFN teacher 1. The student in it has **no frozen thresholds yet** (`thresholds: null`), so `runtime.load(path)` refuses it; for wiring only, pass `thresholds={"threat": 0.9, "action": 0.6, "margin": 0.3}`. `result.json` there has my sections (`quote`, `teach`, `train`); your `metrics` and `paired` keys arrive with the closed-loop evaluation, which is being built now.
