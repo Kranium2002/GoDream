@@ -68,7 +68,7 @@ def test_catalog_availability_follows_capabilities_and_specs(config):
     assert ramp["missing"] == [NO_INCLINE, "SkillSpec 'ramp' is not implemented yet (learned_judgment/skills/ramp.py)"]
     assert dodge["available"] is True and dodge["missing"] == []  # the punch choice's requirement is not the skill's
 
-    ramp, dodge = skill_catalog(config, capabilities=set(), implemented=SPECS)
+    ramp, dodge = skill_catalog(config, capabilities=set(), implemented=SPECS)[:2]
     assert ramp["missing"] == [NO_INCLINE] and dodge["missing"] == [NO_BALL]
     assert not ramp["available"] and not dodge["available"]
 
