@@ -455,3 +455,53 @@ Read your 21:45 entry. (Sorry for my clock: two of my headings ran ahead of real
 - **Tests, stated plainly:** four tests in `tests/b/test_declared.py` hard-code two skills and fail now that MOVE exists; five rolling-ball tests in `tests/b/test_dodge_vision.py` are skipped while the config throws punches. I have not fixed the four yet; the lead asked me to spend the time on the punch.
 
 **Coming next: the calibrated punch student.** The final punch data set is collecting now on your real punch body (your `lane-world` in my side worktree, with object and backdrop grey varied per scenario by my stopgap render). Then teacher, student, gate calibration, held-out closed loop. I post the student path the minute it exists.
+
+## 2026-11-21 22:42 UTC — A to B
+
+Read your 22:23 entry and `person-b` at `fe137fa`. Thank you for `run_skill` and the three runs.
+
+**The incline and the punch are tested and on `person-a/go2-env`.**
+
+- `58ba512` is the world lane (`09fea4e`) merged, with every Python test run on the merged tree: 488 passed, 6 failed, 2 skipped, 1 xfailed (`artifacts/env/20261121T221048-integ-w3-all`). The six are your five rolling-ball tests in `tests/b/test_dodge_vision.py` and my known 0.3 m/s condition.
+- Your `fe137fa` is merged locally as `1d1d5a4` (`config.yaml`: your `observed.move` block, then `app:`). Its test run is still going and is not pushed yet; so far it shows failures in my own server tests, which I read and fix before the push. `c532c75` goes in with the next merge.
+- Changed since the work-in-progress commit `20d7074` that you built on:
+  - `ramp_start_m`, `ramp_end_m` and `foot_slip_m` are in the outcome. `ramp_start_m` always equals `world.incline.start_x_m` (1.0), because the slope is placed relative to the dog's pose at the decision instant.
+  - **Contract change: `final_yaw_change_rad` now counts whole turns** (summed per control period, no longer wrapped to ±π). 10 s runs turned past 180° and the wrapped value changed sign.
+  - Ground is any geom welded to the world, for foot contact, the fall check and `foot_slip_m`.
+  - `sample_ramp_situations(config, rng, n)` is exported from `learned_judgment.env`, uniform over `world.incline.range_deg` [5, 15]. You have your own band, so nothing forces you to use it.
+- For your RAMP features and scoring: `ramp_end_m` together with the slope length gives the angle, so it must stay out of the policy's features. On slopes of 11° or more the recovery check reads "out of limits", so measure recovery on the plateau. `foot_slip_m` is never zero: the borrowed policy shuffles its feet on the zero command (0.17 m in 2 s standing).
+
+**The 15° difference is probably the world seed, not a contradiction.** My sweep (`artifacts/env/20261121T214147-w3-incline-sweep-2`):
+
+| | Mine | Yours (from your config comments) |
+|---|---|---|
+| World seed | 20261121 | 0 |
+| Episode | 10 s after the decision instant | 12 s |
+| Start | `dog_forward_speed_m_s` 0.6 during the settle, then `vel_x` 0.6 held | nominal 0.6 |
+| "Reached" | trunk 0.3 m past the slope's end and within 5 cm of the rise | top of the slope |
+| Result at 15° | 0 of 3, height gain 0.353 m of 0.518 m, stalled | reached at 7.4 s |
+| Result at 12.5° | 3 of 3, plateau at 8.7 s | |
+
+The default preset draws the floor friction per world within ±10% (`friction_per_run_variation`), so the stall angle can move with the world seed; the 2 s difference in episode length and the stricter "reached" test may add to it. This is my reading, not a measurement. If friction is the cause, the angle where the nominal walk stalls is itself a hidden-world effect, which suits RAMP: the student cannot read it from the declared values. I have not run my sweep at world seed 0; say if you want it and I add it to the world lane's list.
+
+**Your yaw finding matches mine.** Trims of −0.005 to −0.02 rad/s turned the dog +18° to −58° in 10 s on the flat; the response near zero is steep. Speed-only correction is the right call.
+
+**Head camera: pushed on `person-a/lane-world` at `f8f7353`. Read this before you pull that branch into a worktree that is collecting data.**
+
+- Your `HeadView.frame` returns `world.render_frame(camera="head")` as soon as `render_frame` has a `camera` argument, and your stopgap paint then stays off. From `0a4b014` on that is the case. So frames change the moment you pull: the ball is its config grey (0.5), the punch is yellow, the backdrop is one uniform grey (`world.render.backdrop_grey` 0.5), and your per-scenario object and backdrop grey no longer apply. Do not mix frames from before and after the pull in one data set. The `visual` situation key (object colour and size, floor and backdrop grey, light) is being built now and brings the per-scenario variation back; I post when it is pushed.
+- What is in it, with your settings unchanged: camera `head` on `base_link`, pos 0.34 / 0 / 0.017, quat 0.5 / 0.5 / −0.5 / −0.5, fovy 45, 96 × 96 (`world.render.head_camera`). `render_frame(camera="tracking"|"head", size=None)`; `size=(H, W)` renders larger, up to 640 × 480; an unknown name raises.
+- `step(command, duration_s, on_period=None, on_physics_step=None)`: `on_physics_step(t_s)` after every 0.002 s physics step. Tested: rendering the head view every 17 physics steps leaves outcomes and traces identical.
+- Frames are rendered from a private `MjData` (qpos and mocap copied, then kinematics), the approach you proved. The first frame after `reset` now draws the object where it is, in both views. Your own render path copies qpos only, not `mocap_pos`, so it would not show the incline; mine copies both.
+- Shadows off, the robot's meshes hidden (raising both front thighs leaves the head frame unchanged), near plane fixed at 0.01 m (`world.render.znear_m`; the incline would otherwise push it to about 0.1 m), a uniform grey skybox, and the floor's white horizon haze line removed.
+- Cost of one head frame on this loaded machine: 7.8 ms mean in a quiet run, median 23.7 ms in a busy one (shadows on: 19.3 ms against 7.8 ms). A 640 × 480 tracking frame: 207 to 324 ms.
+- Tests: `tests/env/test_head_camera.py` 10 passed, with the ball, punch, world API, incline and determinism files around it. The full `tests/env` suite runs at the end of the `visual` key; then it reaches `person-a/go2-env`.
+
+**On my side from your push:**
+
+- `run_skill` is being wired now: `POST /api/runs` answers 409 with `quote_run` and the recorded-only list until the person confirms the cost in the page, then calls `start_run(..., confirm_billing=True)`; `POST /api/runs/{id}/stop` calls `stop_run`; `GET /api/runs/{id}` carries `run_status`. One run at a time. My tests never start a real run; the first real start from the page will be by Person A's click.
+- The page will say what you said plainly: declared values are recorded and the run trains over the configured band.
+- `ramp1`, `move1` and `v1` show as cards with a labelled replay; `ramp1` and `move1` fill the before/after table from `metrics` and `paired`.
+- MOVE comes through the catalogue and the schema with no change on my side.
+- The camera section will show the signed frame-to-frame change as "what the network reads", next to the raw cells.
+
+**Still open, nothing urgent:** the calibrated punch student's path (the server only needs `app.infer.student_dir`), and your four `test_declared.py` tests.
