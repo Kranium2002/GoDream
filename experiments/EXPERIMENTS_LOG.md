@@ -160,3 +160,46 @@ Rebound tests stated by the rules, with the implied coefficient of restitution `
 **Cost.** About 16 minutes wall time, 2 agents. TabPFN calls: 0.
 
 **Decision and next step.** The integrator chose the IHF size 3 handball on 2026-11-21 (0.450 kg, radius 0.0939 m: a ball made to be thrown, in the middle of the momentum band). `config.yaml` carries those values. If dev runs show that every hit topples the dog, the fallback is the volleyball, and that change is logged in DECISIONS.md before it is made.
+
+## Gate 1 — locomotion acceptance — 2026-11-21 — Person A
+
+**Question.** Does the borrowed Efferent Go2 policy, run by our adapter on a flat floor, trot 30 s at 0.3, 0.6 and 0.9 m/s, turn both ways, stop and stand, within the tolerances fixed in the plan?
+
+**Pass criteria (fixed in the plan before any run; `config.yaml` `robot.acceptance`).** Every condition: not fallen (no trunk geom touches the floor and trunk tilt ≤ 60° at every physics step of the commanded run). Trots: |mean forward speed along the dog's heading − vx| ≤ 0.2·vx. Turns (vx 0.3, yaw ±0.5 rad/s = half of `yaw_rates_supported_by_policy` [−1, 1], 10 s): |mean yaw rate − yaw| ≤ 0.3·|yaw|. Stop (5 s at 0.6 m/s, then 5 s at zero, one episode): mean planar speed over the last 2 s < 0.05 m/s. Stand (zero command, 30 s): not fallen. Means exclude the first 5 s of the commanded run.
+
+**Setup.** `learned_judgment/env/scene.py` builds Unitree's `go2.xml` (submodule `1eb6642e`) on a flat plane with `MjSpec`; Unitree's `scene.xml` is not used. `learned_judgment/env/policy.py` drives Efferent 0.5.0's own components one 50 Hz step at a time (spawn at [0, 0, 0.35] with auto base height, 1 s settle, 3 s soft start, then the policy). Each episode is a fresh model and policy; seed 20261121 is recorded, and nothing in an episode draws random numbers.
+
+**Adapter parity: PASS.** `tests/env/test_policy_parity.py` runs Efferent's `Runner.run(2.0)` and the adapter on the same flat model at the constant command [0.4, 0, 0] and asserts the final `qpos` and the last observation are equal (`np.array_equal`). Recorded: `artifacts/env/20261121T152519-policy-parity/`, exit code 0, `1 passed`.
+
+**Command.**
+
+    uv run python -m learned_judgment.env.evidence locomotion -- uv run python -m learned_judgment.env.acceptance --out artifacts/env/locomotion
+
+**Result: FAIL.** Exit code 1, `LOCOMOTION GATE: FAIL ['trot_0.3']`. Six of seven conditions pass. Values from `artifacts/env/locomotion/locomotion.json`, rounded to 4 decimals:
+
+| Condition | Commanded | Measured | Tolerance | Result |
+|---|---|---|---|---|
+| trot_0.3 | vx 0.3 m/s, 30 s | mean speed 0.2256 m/s; not fallen, max tilt 3.0119° | \|mean − 0.3\| ≤ 0.06 | **FAIL** (off by 0.0744) |
+| trot_0.6 | vx 0.6 m/s, 30 s | mean speed 0.5430 m/s; not fallen, max tilt 4.3325° | \|mean − 0.6\| ≤ 0.12 | PASS |
+| trot_0.9 | vx 0.9 m/s, 30 s | mean speed 0.8596 m/s; not fallen, max tilt 4.7539° | \|mean − 0.9\| ≤ 0.18 | PASS |
+| turn_left | vx 0.3 m/s, yaw +0.5 rad/s, 10 s | mean yaw rate 0.4976 rad/s; not fallen, max tilt 4.4356° | \|mean − 0.5\| ≤ 0.15 | PASS |
+| turn_right | vx 0.3 m/s, yaw −0.5 rad/s, 10 s | mean yaw rate −0.5066 rad/s; not fallen, max tilt 5.0779° | \|mean + 0.5\| ≤ 0.15 | PASS |
+| stop | vx 0.6 m/s 5 s, then 0 for 5 s | final speed 0.0130 m/s; not fallen, max tilt 4.3325° | final < 0.05 | PASS |
+| stand | 0, 30 s | not fallen, max tilt 2.1584° | not fallen | PASS |
+
+**Real-time factor and CPU.** Per condition `rtf` 6.7794 (turn_left) to 9.5524 (stop); all seven episodes together 178.0 s simulated (settle, soft start and commanded run) in 22.83 s wall, 7.80 (sums of `sim_s` and `wall_s` in the seven `.npz` traces). `cpu_fraction` (CPU seconds of the process, all threads, per wall second) 1.3922 to 1.8028 on 2 cores. Measured with the fall checks running after every physics step. The recorder's `wall_s` for the whole command, including `uv` start-up and model building, is 29.77 s. Nothing else was run by this agent while it ran; other agents of the session may have been active.
+
+**Observed beyond the criteria.** At zero yaw command the dog turns counter-clockwise: mean yaw rate 0.1209 (trot_0.3), 0.0734 (trot_0.6), 0.0522 (trot_0.9), 0.1088 (stop) and 0.1369 rad/s (stand), from the same file. In `trot_0.3.npz` the dog ends at x −1.158 m, y 3.411 m (it walks a circle); in `stand.npz` it turns in place and ends at x −0.097 m, y 0.017 m. Mean body-frame forward velocity over t > 5 s in `trot_0.3.npz`, computed with Efferent's `quat_rotate_inverse`, is 0.2252 m/s, which agrees with the heading-projected 0.2256 m/s.
+
+**Versions.** efferent 0.5.0, mujoco 3.11.0, onnxruntime 1.32.0, numpy 2.5.5, Python 3.13.18, Windows-10-10.0.19045-SP0, CPU only (recorder `run.json`). `config_sha256` f0029728…ccfb4. Git `ca9b0cc`, dirty (the Task 2 code was not yet committed).
+
+**Artifacts.** `artifacts/env/20261121T152237-locomotion/` (recorder: `run.json`, `stdout.txt`, `stderr.txt`); `artifacts/env/locomotion/locomotion.json` and one trace per condition (`trot_0.3.npz` … `stand.npz`: t, qpos, qvel, command at 50 Hz, seed, sim_s, wall_s). The same seven conditions as tests: `artifacts/env/20261121T152324-locomotion-tests/`, exit code 1, `1 failed, 6 passed` (`test_trots_thirty_seconds[0.3]`, |0.2256 − 0.3| = 0.0744 > 0.06).
+
+**Limitations.**
+- One run per condition. The episodes are deterministic on this machine (the parity test reproduces `qpos` bit for bit), so repeating them gives the same values; other machines or MuJoCo versions may not.
+- Flat floor only, no payload, latency or other hidden effects.
+- Why 0.3 m/s tracks low and why zero yaw commands drift was not investigated: the policy's training commit and its command sampling are unknown (E1 research entry: robot_lab HEAD zeroed planar commands of norm ≤ 0.2 m/s and derived yaw commands from heading control).
+
+**Cost.** TabPFN calls: 0.
+
+**Decision and next step.** Gate 1 fails on trot_0.3. Parity with Efferent's own Runner passes, so by the rule fixed in the plan this is a measured limitation of the borrowed policy, not an adapter fault, and nothing was tuned, loosened or retried. The integrator decides how to proceed. `robot.walking_policy.status` is unchanged.

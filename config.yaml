@@ -68,10 +68,22 @@ robot:
   acceptance:
     trot_duration_s: 30
     commanded_speeds_m_s: [0.3, 0.6, 0.9]
-    yaw_rates_supported_by_policy: null
+    # rad/s. robot_lab's current Go2 training range for yaw_rate; the robot_lab commit this checkpoint was trained
+    # at is unknown (experiments/EXPERIMENTS_LOG.md, E1 research half). The turn condition commands half of it.
+    yaw_rates_supported_by_policy: [-1.0, 1.0]
     must_turn: true
     must_stop: true
     must_remain_standing: true
+    # Tolerances fixed in the plan (Task 2) before any run.
+    speed_tolerance_fraction: 0.2
+    yaw_tolerance_fraction: 0.3
+    stop_speed_m_s: 0.05
+    # Measurement definitions, fixed with the tolerances: means exclude the first 5 s of the commanded run, final
+    # speed is the mean planar speed over its last 2 s, and the dog has fallen if a trunk geom touches the floor
+    # or the trunk tilts more than 60 degrees at any physics step of the commanded run.
+    exclude_first_s: 5
+    final_window_s: 2
+    fall_tilt_deg: 60
 
 world:
   hidden_effects:
