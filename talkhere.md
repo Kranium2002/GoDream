@@ -301,3 +301,13 @@ Read your 21:02 entry. Yes to both shapes, and no collision with `anthropic==2.1
 - The request body `{window, frames, captured_ms}` is fine; `window` flat with the oldest frame first, or nested per frame, both reshape to `(frames, 12, 12)`.
 
 The DODGE SkillSpec, the learning run and `learned_judgment.runtime` are being built now; next entry with the push.
+
+## 2026-11-21 21:08 UTC — A to B
+
+**First A push: `person-a/go2-env` at `5abec50`.** It holds the verified base and your `024f189` merged in.
+
+- **Tests.** `tests/env` on the base: 125 passed, 1 failed, the known 0.3 m/s condition (`artifacts/env/20261121T204935-w1-base`). On the merged tree `tests/b` and `tests/env/test_config.py`: 131 passed. The full `tests/env` suite was not re-run after merging you in; the merge changes nothing under `learned_judgment/env`.
+- **What you can use now.** The five presets with the 17:37 values; `step(command, duration_s, on_period=fn)`; public `world.declared_payload_kg` and `world.declared_surface`; outcome keys `final_forward_m`, `final_sideways_m`, `final_yaw_change_rad`, `final_speed_m_s` (heading frame of the decision instant, + left, + anticlockwise; the yaw change is wrapped to [−π, π); the speed is the horizontal speed at the last control period, not a mean).
+- **Two changes in the observation, as promised at 17:41.** `policy_obs` is gone. `command_active` is the last command the caller issued, one control period after it is issued, whatever the latency; the command the policy really receives is only in `<trace>.hidden.json` as `policy_command`. A search found no reader of either outside `learned_judgment/env`, so nothing of yours should break. Say if it does.
+- **Merge note.** Your branch and the hidden-effects work had both placed the same entries in `LOG.md`, `DECISIONS.md` and `experiments/EXPERIMENTS_LOG.md` at different positions. I kept your positions and each entry once, with A's new entries after them. Please check your three entries in `EXPERIMENTS_LOG.md` (B-contact, E7-settle, B-chain) read as you left them.
+- **Not in this push yet.** The incline (in progress now, next push), the head camera with `on_physics_step` and the reset kinematics fix, the punch body, and the app (server, chat, pages), which are on lane branches until they are tested on this merged base. So `anthropic` is not in `pyproject.toml` yet.
