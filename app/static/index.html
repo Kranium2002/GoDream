@@ -96,33 +96,38 @@
         </div>
         <button class="btn btn--secondary" type="submit">Open run</button>
       </form>
+      <p class="hint" id="run-list-note" hidden></p>
       <p id="learn-status" role="status" aria-live="polite">No run open. Start one from Teach, or open a run by its id.</p>
 
-      <div class="live">
-        <section class="panel" aria-labelledby="tl-h">
-          <h2 id="tl-h">Steps</h2>
-          <p class="hint" id="tl-meta"></p>
-          <ol class="timeline" id="timeline"></ol>
-        </section>
-
+      <div class="split">
         <section class="panel" aria-labelledby="lstage-h">
           <h2 id="lstage-h">Simulated dog</h2>
-          <div class="stage">
-            <div>
+          <div class="stage" id="l-stage">
+            <div class="stage__view">
               <h3>Tracking view</h3>
-              <img id="l-tracking" alt="Live simulator frames from the tracking camera" hidden>
-              <p class="cap-note" id="l-trk-note" hidden></p>
+              <div class="stage__frame stage__frame--track">
+                <img id="l-tracking" alt="Live simulator frames from the tracking camera" hidden>
+                <p class="stage__note" id="l-trk-note" hidden></p>
+              </div>
             </div>
-            <div>
+            <div class="stage__view">
               <h3>Head camera</h3>
-              <img id="l-head" alt="Live simulator frames from the dog's head camera" hidden>
-              <p class="cap-note" id="l-head-note" hidden></p>
+              <div class="stage__frame stage__frame--head">
+                <img id="l-head" alt="Live simulator frames from the dog's head camera" hidden>
+                <p class="stage__note" id="l-head-note" hidden></p>
+              </div>
             </div>
           </div>
           <dl class="stats">
             <dt>RAMP mode</dt><dd id="l-mode">The backend does not report it yet.</dd>
             <dt>DODGE gate</dt><dd id="l-gate">The backend does not report it yet.</dd>
           </dl>
+        </section>
+
+        <section class="panel" aria-labelledby="tl-h">
+          <h2 id="tl-h">Steps</h2>
+          <p class="hint" id="tl-meta"></p>
+          <ol class="timeline" id="timeline"></ol>
         </section>
       </div>
 
@@ -151,7 +156,27 @@
       </div>
       <p id="cam-status" role="status" aria-live="polite">The camera is off. Nothing is requested until you press Start camera.</p>
 
-      <div class="live">
+      <div class="split">
+        <section class="panel" aria-labelledby="stage-h">
+          <h2 id="stage-h">Simulated dog</h2>
+          <div class="stage" id="stage">
+            <div class="stage__view">
+              <h3 id="trk-label">Tracking view</h3>
+              <div class="stage__frame stage__frame--track">
+                <img id="stage-tracking" alt="Live simulator frames from the tracking camera" hidden>
+                <p class="stage__note" id="trk-note" hidden></p>
+              </div>
+            </div>
+            <div class="stage__view">
+              <h3 id="head-label">Head camera</h3>
+              <div class="stage__frame stage__frame--head">
+                <img id="stage-head" alt="Live simulator frames from the dog's head camera" hidden>
+                <p class="stage__note" id="head-note" hidden></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="panel" aria-labelledby="cam-h">
           <h2 id="cam-h">Camera</h2>
           <div class="cam">
@@ -172,22 +197,6 @@
             <dt>Decisions this session</dt><dd id="st-decisions">0</dd>
             <dt>Active commands issued</dt><dd id="st-issued">0</dd>
           </dl>
-        </section>
-
-        <section class="panel" aria-labelledby="stage-h">
-          <h2 id="stage-h">Simulated dog</h2>
-          <div class="stage">
-            <div>
-              <h3 id="trk-label">Tracking view</h3>
-              <img id="stage-tracking" alt="Live simulator frames from the tracking camera" hidden>
-              <p class="cap-note" id="trk-note" hidden></p>
-            </div>
-            <div>
-              <h3 id="head-label">Head camera</h3>
-              <img id="stage-head" alt="Live simulator frames from the dog's head camera" hidden>
-              <p class="cap-note" id="head-note" hidden></p>
-            </div>
-          </div>
         </section>
       </div>
 

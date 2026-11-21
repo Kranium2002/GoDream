@@ -1,7 +1,6 @@
 // The Learn area: a run picker, the six-step timeline from GET /api/runs/{id} and SSE run lines, the training curve,
 // the before/after tables and the simulator stage. Every value shown comes from a response; nothing is stored.
-import { applyLine, emptyTimeline, flatRows, fromRunResponse, lossCurve, rampMode, resultView, timelineRows, trainSeries } from "./learn.js";
-import { readout } from "./readout.js";
+import { applyLine, emptyTimeline, flatRows, fromRunResponse, inferLine, lossCurve, rampMode, resultView, runIds, timelineRows, trainSeries } from "./learn.js";
 import { createStage } from "./stage.js";
 
 const SVG = "http://www.w3.org/2000/svg"; // the SVG namespace name (an identifier, never fetched)
@@ -10,7 +9,7 @@ const BOX = { width: 640, height: 240, pad: 28 };
 
 export function initLearnView({ api, el }) {
   const $ = (id) => document.getElementById(id);
-  const stage = createStage({ trackingImg: $("l-tracking"), trackingNote: $("l-trk-note"), headImg: $("l-head"), headNote: $("l-head-note") });
+  const stage = createStage({ root: $("l-stage"), trackingImg: $("l-tracking"), trackingNote: $("l-trk-note"), headImg: $("l-head"), headNote: $("l-head-note") });
   let visible = false, headCapability = null;
   const runs = new Map(); // run id -> SSE lines received this session (memory only)
   let selected = null, tl = emptyTimeline(), mode = null, gateKey = null;
@@ -20,6 +19,7 @@ export function initLearnView({ api, el }) {
   // ---- server state ---------------------------------------------------------------------------------------------
   function setState(state, capabilities) {
     headCapability = capabilities.find((c) => c.name === "head_camera") ?? null;
+    stage.setAspect(state?.frame?.width, state?.frame?.height);
     const down = capabilities.filter((c) => (c.name === "runs" || c.name === "results") && !c.available);
     $("learn-cap").hidden = !down.length;
     $("learn-cap").textContent = down.map((c) => `${c.name === "runs" ? "Learning runs" : "Results"} unavailable: ${c.reason}`).join(" ");
@@ -27,8 +27,19 @@ export function initLearnView({ api, el }) {
   }
 
   function setVisible(v) {
+    const entering = v && !visible;
     visible = v;
     stage.update(visible, headCapability);
+    if (entering) loadRunList();
+  }
+
+  // The runs found on disk (GET /api/runs), added to the ones seen in this session.
+  async function loadRunList() {
+    const r = await api.runs();
+    const note = $("run-list-note");
+    note.hidden = r.ok;
+    if (!r.ok) note.textContent = `Runs saved on disk cannot be listed: ${r.message} Runs from this session and a typed id still work.`;
+    for (const id of r.ok ? runIds(r.data) : []) addRun(id);
   }
 
   // ---- runs -----------------------------------------------------------------------------------------------------
@@ -39,7 +50,7 @@ export function initLearnView({ api, el }) {
       if (select.options.length === 1 && !select.options[0].value) select.options[0].textContent = "Choose a run";
       select.append(el("option", { value: id }, id));
     }
-    if (open) openRun(id);
+    if (open) { openRun(id); loadRunList(); } // open is used when a run has just started
   }
 
   async function openRun(id) {
@@ -82,13 +93,10 @@ export function initLearnView({ api, el }) {
   }
 
   function onInfer(data) {
-    const view = readout({ ok: true, data });
-    if (!view.gate.length) return;
-    const passed = view.gate[view.gate.length - 1];
-    const key = `${view.action.code}|${passed.label}`;
-    if (key === gateKey) return;
-    gateKey = key;
-    $("l-gate").textContent = `${passed.label}; action ${view.action.label} (${view.action.code})`;
+    const text = inferLine(data);
+    if (text === null || text === gateKey) return;
+    gateKey = text;
+    $("l-gate").textContent = text;
   }
 
   // ---- rendering ------------------------------------------------------------------------------------------------
@@ -174,7 +182,9 @@ export function initLearnView({ api, el }) {
       el("caption", {}, "Paired differences on the same scenarios"),
       el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Metric"), el("th", { scope: "col" }, "Comparison"), el("th", { scope: "col" }, "Difference"))),
       el("tbody", {}, ...v.paired.map((p) => el("tr", {}, el("th", { scope: "row" }, p.name), el("td", {}, p.comparison), el("td", {}, p.diff))))) : null;
-    body.replaceChildren(table, ...(paired ? [paired] : []));
+    const extra = v.extra.length ? el("div", {}, el("p", { class: "block-title" }, "Other sections of the result, as sent"),
+      el("dl", { class: "kv" }, ...v.extra.flatMap(([k, val]) => [el("dt", {}, k), el("dd", {}, val)]))) : null;
+    body.replaceChildren(table, ...[paired, extra].filter(Boolean));
   }
 
   // ---- controls -------------------------------------------------------------------------------------------------

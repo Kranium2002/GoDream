@@ -31,6 +31,7 @@ export function initLiveView({ api, el }) {
     $("window-text").hidden = !r.ok;
     if (r.ok) $("window-text").textContent = `Window: ${settings.frames} frames of ${settings.height} x ${settings.width} grey cells at ${settings.hz} Hz, oldest first.`;
     headCapability = capabilities.find((c) => c.name === "head_camera") ?? null;
+    stage.setAspect(state?.frame?.width, state?.frame?.height);
     updateStage();
   }
 
@@ -41,7 +42,7 @@ export function initLiveView({ api, el }) {
   }
 
   // ---- simulator stage: streams load only while this view is shown --------------------------------------------
-  const stage = createStage({ trackingImg: $("stage-tracking"), trackingNote: $("trk-note"), headImg: $("stage-head"), headNote: $("head-note") });
+  const stage = createStage({ root: $("stage"), trackingImg: $("stage-tracking"), trackingNote: $("trk-note"), headImg: $("stage-head"), headNote: $("head-note") });
   const updateStage = () => stage.update(visible, headCapability);
 
   // ---- camera ----------------------------------------------------------------------------------------------------
@@ -72,10 +73,12 @@ export function initLiveView({ api, el }) {
 
   function newRun(s) {
     const r = { settings: s, frameWindow: createFrameWindow(s.frames, s.height * s.width), sampler: createSampler(s.hz),
-      decisions: 0, issued: 0, retryAt: 0, lastAction: null };
+      decisions: 0, issued: 0, retryAt: 0, lastAction: null, sessionStart: true };
     r.sender = createSender(async (snap) => {
       const sentAt = performance.now();
-      const result = await api.infer(snap.window, s.frames, performance.timeOrigin + snap.capturedAt);
+      const first = r.sessionStart; // until the server has answered one window of this session
+      const result = await api.infer(snap.window, s.frames, performance.timeOrigin + snap.capturedAt, first);
+      if (first && result.ok) r.sessionStart = false;
       const now = performance.now();
       return { result, rttMs: now - sentAt, ageMs: now - snap.capturedAt };
     }, (snap, answer) => showDecision(r, answer));
