@@ -67,7 +67,7 @@ h4 { font-size: var(--t-body); font-weight: 620; }
 .is-good .mark, .mark.is-good { color: var(--good); }
 .is-bad .mark, .mark.is-bad { color: var(--bad); }
 
-main { padding-block: var(--s-6) var(--s-8); display: grid; gap: var(--s-6); }
+.below { padding-block: var(--s-8); display: grid; gap: var(--s-8); }
 .notice { border: 1px solid var(--line-strong); border-left: 4px solid var(--ink); background: var(--surface); border-radius: var(--r-sm); padding: var(--s-3) var(--s-4); }
 .area { display: grid; gap: var(--s-5); }
 .area h1:focus { outline: none; }
@@ -219,3 +219,59 @@ select:focus-visible, input:focus-visible { outline: none; animation: none; bord
   .stats dd, .kv dd, .quote dd { margin-bottom: var(--s-2); }
 }
 .stats dt, .kv dt, .quote dt { overflow-wrap: anywhere; }
+
+/* ---- The robot stage: the real simulated Go2, full screen under the header ---------------------------------- */
+:root {
+  --stage-bg: #101215;       /* the scene's sky; viewer.js uses the same value */
+  --stage-ink: #f3f2ee;      /* 16:1 on --stage-bg */
+  --stage-muted: #b4b8be;    /* 8.9:1 on --stage-bg */
+  --stage-line: rgba(243, 242, 238, .16);
+  --stage-panel: rgba(22, 25, 30, .92);
+  --bar-h: 80px;
+}
+.stage-hero { position: relative; height: calc(100svh - var(--bar-h)); min-height: 560px; background: var(--stage-bg); color: var(--stage-ink); overflow: hidden; }
+#scene, #scene-fallback { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#scene { cursor: grab; }
+#scene:active { cursor: grabbing; }
+#scene:focus-visible { outline: 2px solid var(--stage-ink); outline-offset: -6px; }
+#scene-fallback { object-fit: contain; }
+
+.hero-copy {
+  position: absolute; left: var(--gut); top: 50%; transform: translateY(-50%); width: min(560px, 42vw);
+  display: grid; gap: var(--s-5); pointer-events: none; transition: opacity var(--m-out) var(--m-ease);
+}
+.hero-copy > * { pointer-events: auto; }
+.eyebrow { font-size: var(--t-label); font-weight: 600; color: var(--stage-muted); }
+.hero-copy h1 { font-size: clamp(40px, 3.6vw, 60px); line-height: 1.05; letter-spacing: -.025em; font-weight: 680; }
+.hero-lead { color: var(--stage-muted); font-size: var(--t-body); line-height: 1.55; max-width: 46ch; }
+.btn--hero { justify-self: start; min-height: 60px; padding: 0 var(--s-6); font-size: 22px; }
+.stage-hero .btn--primary:focus-visible { outline-color: var(--stage-ink); }
+.scene-status { position: absolute; left: var(--gut); bottom: var(--s-5); max-width: min(720px, 60vw); font-size: var(--t-small); color: var(--stage-muted); }
+.notice--stage { position: absolute; left: var(--gut); bottom: calc(var(--s-5) + 40px); max-width: min(640px, 60vw); background: var(--stage-panel); color: var(--stage-ink); border-color: var(--stage-line); border-left-color: var(--stage-ink); }
+
+/* The chat dock fades in over the right of the scene; the dog moves to the left (viewer lens shift). */
+.dock {
+  position: absolute; top: var(--s-4); right: var(--s-4); bottom: var(--s-4); width: min(520px, calc(100% - 2 * var(--s-4)));
+  display: flex; flex-direction: column; gap: var(--s-4); overflow-y: auto; padding: var(--s-5);
+  background: var(--surface); color: var(--ink); border-radius: var(--r-lg); box-shadow: 0 24px 64px rgba(0, 0, 0, .35);
+  opacity: 0; transform: translateY(8px); transition: opacity 260ms var(--m-ease), transform 260ms var(--m-ease);
+}
+.dock.is-in { opacity: 1; transform: none; }
+.dock__head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.dock__part { display: grid; gap: var(--s-3); }
+.dock__part + .dock__part { border-top: 1px solid var(--line); padding-top: var(--s-4); }
+.dock .log { height: clamp(140px, 24vh, 300px); }
+.dock .run { padding-top: var(--s-4); }
+.btn--small { min-height: 44px; padding: 0 var(--s-4); font-size: var(--t-small); }
+.known summary { cursor: pointer; font-weight: 600; color: var(--muted); min-height: 44px; display: flex; align-items: center; }
+body.dock-open .hero-copy { opacity: 0; pointer-events: none; }
+body.dock-open .hero-copy > * { pointer-events: none; }
+
+@media (max-width: 999px) {
+  .hero-copy { top: auto; bottom: calc(var(--s-5) + 40px); transform: none; width: auto; right: var(--gut); }
+  .hero-copy h1 { font-size: 34px; }
+  .hero-lead { font-size: var(--t-small); }
+  .scene-status { max-width: none; right: var(--gut); }
+}
+@media (max-width: 640px) { :root { --bar-h: 120px; } .btn--hero { justify-self: stretch; } }
+@media (prefers-reduced-motion: reduce) { .dock { transition: none; transform: none; } }

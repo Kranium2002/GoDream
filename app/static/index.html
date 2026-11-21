@@ -12,10 +12,10 @@
     <div class="wrap bar__in">
       <a class="skip" href="#main">Skip to content</a>
       <p class="brand">Go2 skill teacher <span class="brand__sub">simulated Unitree Go2</span></p>
-      <nav class="areas" aria-label="Areas">
-        <a href="#teach" data-area="teach">Teach</a>
-        <a href="#learn" data-area="learn">Learn</a>
-        <a href="#live" data-area="live">Live</a>
+      <nav class="areas" aria-label="Sections">
+        <a href="#robot">Robot</a>
+        <a href="#learn">Learning</a>
+        <a href="#live">Camera test</a>
       </nav>
       <div class="conn" role="status" aria-live="polite">
         <p><span class="mark" id="conn-mark" aria-hidden="true">&#9675;</span> <span id="conn-text">Connecting to the server</span></p>
@@ -24,21 +24,35 @@
     </div>
   </header>
 
-  <main id="main" class="wrap">
-    <p class="notice" id="notice" role="status" aria-live="polite" hidden></p>
+  <main id="main">
+    <section class="stage-hero" id="robot" aria-labelledby="hero-h">
+      <canvas id="scene" tabindex="0" role="img" aria-label="The simulated Go2 robot in 3D. Arrow keys turn the view, plus and minus zoom, 0 resets it." hidden></canvas>
+      <img id="scene-fallback" alt="The simulator's tracking camera" hidden>
 
-    <section class="area" id="teach" aria-labelledby="teach-h">
-      <h1 id="teach-h" tabindex="-1">Teach a skill</h1>
-      <div class="teach">
-        <section class="panel chat" aria-labelledby="chat-h">
-          <h2 id="chat-h">Chat</h2>
+      <div class="hero-copy" id="hero-copy">
+        <p class="eyebrow">Unitree Go2 · live MuJoCo simulation</p>
+        <h1 id="hero-h">A robot dog that learns a new skill from a few tries</h1>
+        <p class="hero-lead">Tell it what to learn. A physics guess proposes each move, a PFN teacher corrects it from a few real simulator attempts, and a small spiking network learns inside the teacher's dreams. Every number here is measured in simulation.</p>
+        <button class="btn btn--primary btn--hero" type="button" id="teach-open" aria-controls="dock" aria-expanded="false">Teach it anything</button>
+      </div>
+      <p class="scene-status" id="scene-status" role="status" aria-live="polite">Loading the robot.</p>
+      <p class="notice notice--stage" id="notice" role="status" aria-live="polite" hidden></p>
+
+      <aside class="dock" id="dock" aria-labelledby="dock-h" hidden>
+        <div class="dock__head">
+          <h2 id="dock-h">Teach a skill</h2>
+          <button class="btn btn--secondary btn--small" type="button" id="teach-close">Close</button>
+        </div>
+
+        <section class="dock__part" aria-labelledby="chat-h">
+          <h3 id="chat-h">Chat</h3>
           <p class="cap-note" id="chat-cap" hidden></p>
           <ol class="log" id="log" tabindex="0" aria-label="Conversation" aria-live="polite">
-            <li class="log__empty" id="log-empty">No messages yet. Describe what the dog should learn, for example crossing a slope or dodging an incoming ball.</li>
+            <li class="log__empty" id="log-empty">Describe what the dog should learn, for example crossing a slope or dodging an incoming ball.</li>
           </ol>
           <form class="ask" id="ask">
             <label for="msg">Your message</label>
-            <textarea id="msg" name="msg" rows="3" required></textarea>
+            <textarea id="msg" name="msg" rows="2" required></textarea>
             <div class="ask__row">
               <p class="hint" id="msg-hint">Enter sends. Shift and Enter adds a line.</p>
               <button class="btn btn--primary" type="submit" id="send">Send message</button>
@@ -46,22 +60,15 @@
           </form>
         </section>
 
-        <section class="panel spec" aria-labelledby="spec-h">
-          <h2 id="spec-h">Declared skill</h2>
+        <section class="dock__part intent" aria-labelledby="spec-h">
+          <h3 id="spec-h">What it understood</h3>
           <p class="verdict" id="verdict" role="status" aria-live="polite"><span class="mark" aria-hidden="true">&#9675;</span> <span>No skill declared yet</span></p>
           <p class="cap-note" id="catalogue-note" hidden></p>
           <div id="spec-body">
-            <p class="empty">Nothing to show. The server turns a chat request into a declared skill and checks it; the result appears here.</p>
+            <p class="empty">The server turns your request into a declared skill and checks it; it appears here.</p>
           </div>
-
-          <div class="known">
-            <h3 id="skills-h">Skills the server knows</h3>
-            <p class="empty" id="skills-empty">Not known yet: the skill catalogue has not arrived.</p>
-            <ul class="skills" id="skills" aria-labelledby="skills-h"></ul>
-          </div>
-
           <div class="run" aria-labelledby="run-h">
-            <h3 id="run-h">Learning run</h3>
+            <h4 id="run-h">Learning run</h4>
             <p class="cap-note" id="runs-cap" hidden></p>
             <div class="confirm" id="confirm" hidden>
               <h4 id="confirm-h" tabindex="-1">Confirm the quoted usage</h4>
@@ -77,12 +84,19 @@
             </div>
             <p class="run__status" id="run-status" tabindex="-1" role="status" aria-live="polite">Available once the declared skill is valid.</p>
           </div>
+          <details class="known">
+            <summary id="skills-h">Skills the server knows</summary>
+            <p class="empty" id="skills-empty">Not known yet: the skill catalogue has not arrived.</p>
+            <ul class="skills" id="skills" aria-labelledby="skills-h"></ul>
+          </details>
         </section>
-      </div>
+      </aside>
     </section>
 
-    <section class="area" id="learn" aria-labelledby="learn-h" hidden>
-      <h1 id="learn-h" tabindex="-1">Learn</h1>
+    <div class="wrap below">
+
+    <section class="area" id="learn" aria-labelledby="learn-h">
+      <h2 id="learn-h">Learning</h2>
       <p class="lead">Measured simulation data from the server: the baseline before learning, each step of the run, and the results on the same held-out scenarios.</p>
       <p class="cap-note" id="learn-cap" hidden></p>
       <form class="pick" id="run-pick">
@@ -145,8 +159,8 @@
       </section>
     </section>
 
-    <section class="area" id="live" aria-labelledby="live-h" hidden>
-      <h1 id="live-h" tabindex="-1">Live camera test</h1>
+    <section class="area" id="live" aria-labelledby="live-h">
+      <h2 id="live-h">Camera test</h2>
       <p class="lead">A separate test of the frozen model: it never learns from the camera. Frames stay in this page's memory; only the grey cells of the window go to the server on this computer.</p>
       <p class="cap-note" id="window-note" hidden></p>
       <p id="window-text" hidden></p>
@@ -219,6 +233,7 @@
       <p class="empty" id="caps-empty">Not known yet: the server's state has not arrived.</p>
       <ul class="caps__list" id="caps"></ul>
     </section>
+    </div>
   </main>
 </body>
 </html>

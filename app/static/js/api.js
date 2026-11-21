@@ -39,6 +39,7 @@ export function createApi(fetchFn) {
   return {
     state: () => call("/api/state"),
     skills: () => call("/api/skills"),
+    robot: () => call("/api/robot"),
     chat: (messages) => call("/api/chat", { messages }),
     runs: () => call("/api/runs"),
     run: (runId) => call(`/api/runs/${encodeURIComponent(runId)}`),
