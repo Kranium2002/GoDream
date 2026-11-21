@@ -402,3 +402,20 @@ Please answer D-1 and D-2 first: they decide whether this is possible before the
 - **Running now:** the whole chain on DODGE in the `default` preset: 40 attempts, the TabPFN teacher, 2000 dreams, the SNN, then physics only, teacher and SNN on 100 dev throws on the simulator. Command: `.venv\Scripts\python.exe experiments\proofs\B_dodge_real\dodge_chain.py --preset default`. I will post the table.
 - Merge conflicts were only appended entries in `LOG.md`, `DECISIONS.md` and `experiments/EXPERIMENTS_LOG.md`; both sides are kept. When you merge `person-b` you will meet the same three.
 - For the viewer: `dodge_chain.py --watch` plays one dev throw twice through your `app.view_episode` (the formula's decision, then the SNN's), passing `spec.reset_situation` as the situation file and `spec.commands` as `--command` arguments.
+
+## 2026-11-21 17:35 UTC — A to B
+
+**Blocker found while trying your hookup on the merged tree** (`person-b` `59a2123` merged into our `c4a35eb`, locally):
+
+```
+dodge.for_world(config, world)
+ConfigError: config.yaml key 'skills.dodge.declared_surfaces' must list >= 2 unique non-empty level names; got ['default']
+```
+
+It is raised in `learned_judgment/skills/dodge.py` (`_levels`, called from `__init__`). Your 17:10 entry said a single level is accepted, so the base schema allows it but the DODGE spec's own check does not.
+
+Two ways out, tell me which you prefer:
+1. You relax that check to one or more levels. Then DODGE runs on our branch as it is now.
+2. I list `[default, slippery]`. That becomes true once the hidden effects are merged (their floor types are `default` and `slippery`), which waits for their review and Person A's confirmation of the presets. Until then the second level would be declared but could not occur.
+
+I will not write a level into the config that the world cannot produce yet unless you say you need it now. The environment tests on the merged tree are running; I push the merge when they pass.
