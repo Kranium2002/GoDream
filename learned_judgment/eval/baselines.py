@@ -9,10 +9,23 @@ and answers with a :class:`~learned_judgment.engine.types.ResidualDistribution`,
 
     ConstantBiasResidual      B2  physics + constant residual (works from 1 attempt)
     GaussianProcessResidual   B3  one GaussianProcessRegressor per outcome
-    GradientBoostingResidual  B4  HistGradientBoostingRegressor mean + one quantile model per level
-    MLPAttemptsResidual       B5  MLPRegressor (lbfgs) on the actual attempts -- a baseline, not a student
+    GradientBoostingResidual  B4  HistGradientBoostingRegressor (squared error) per outcome, with
+                                  homoscedastic out-of-fold error quantiles
+    MLPAttemptsResidual       B5  MLPRegressor (lbfgs) on the actual attempts, with homoscedastic
+                                  out-of-fold error quantiles -- a baseline, not a student
     DirectTargetAdapter       B6  wraps any ResidualModel on a layout WITHOUT the physics block and
                                   makes it predict the outcome directly
+
+Predictive quantiles of B4 and B5 (review finding: in-sample errors of a flexible model gave
+an interval that collapsed to a point): the point model is fitted on all attempts; the
+predictive distribution is that point prediction plus the empirical distribution of
+OUT-OF-FOLD errors from a K-fold refit of the same model with the same settings
+(K = min(interval_folds, number of attempts); fold assignment from the named stream
+``baselines/<method>/interval_folds`` of the baseline's seed). The spread is computed once
+per outcome and broadcast, so it is exactly the same value for every query row. Each fitted
+B4/B5 also exposes ``oof_interval_coverage``: the cross-validated coverage of its
+``coverage_intervals`` on the training attempts (an honesty indicator, not a result).
+``describe()`` of every baseline states how its quantiles are produced.
 
 Array conventions (see :mod:`learned_judgment.engine.types`)
     features    float64 (n, F)    columns in the model's FeatureLayout order
@@ -20,12 +33,15 @@ Array conventions (see :mod:`learned_judgment.engine.types`)
     quantiles   float64 (n, K, Q) at the configured quantile levels (exact members, no interpolation)
 
 Settings: every tunable is a constructor argument; ``from_config`` reads them with
-:func:`learned_judgment.config.require` from ``engine.quantile_levels``, ``engine.spread_levels``
-and ``baselines.<name>.*``. Seeds are passed in by the caller (engine.streams.stream_seed).
-Every scikit-learn fit and prediction runs under
+:func:`learned_judgment.config.require` from ``engine.quantile_levels``, ``engine.spread_levels``,
+``evaluation.coverage_intervals`` and ``baselines.<name>.*``. Seeds are passed in by the caller
+(engine.streams.stream_seed). Every scikit-learn fit and prediction runs under
 ``threadpoolctl.threadpool_limits(limits=1, user_api="blas")`` because proof p01b/p01d showed
 fitted weights change with the BLAS thread count. Settings not listed in config.yaml are
 left at the scikit-learn defaults of the installed version; ``describe()`` records them.
+
+``fit`` is all-or-nothing: everything is fitted into local variables and installed on the
+object only after every fit succeeded, so a refit that raises leaves the previous fit intact.
 
 Nothing in this module calls a provider or a simulator, and nothing here produces a metric.
 """
@@ -34,6 +50,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Any, Callable, ClassVar, Mapping, Sequence
 
 import numpy as np
@@ -47,6 +64,7 @@ from threadpoolctl import threadpool_limits
 
 from learned_judgment.config import require
 from learned_judgment.engine.features import FeatureLayout
+from learned_judgment.engine.streams import stream_rng
 from learned_judgment.engine.types import ResidualDistribution, ResidualModel
 from learned_judgment.skills.base import SkillSpec
 
@@ -65,6 +83,8 @@ _EMPIRICAL_QUANTILE_METHOD = "linear"
 _MEDIAN_LEVEL = 0.5
 # scikit-learn random_state must fit in an unsigned 32-bit integer.
 _MAX_SEED = 2**32 - 1
+# Out-of-fold errors need at least two folds (structural).
+_MIN_FOLDS = 2
 
 
 def _blas_single_thread() -> Any:
@@ -120,6 +140,17 @@ def _check_spread_levels(spread_levels: Sequence[float], levels: np.ndarray) -> 
     return values
 
 
+def _check_intervals(intervals: Sequence[Sequence[float]], levels: np.ndarray) -> tuple[tuple[float, float], ...]:
+    """Central intervals [(low, high), ...] whose ends are exact members of ``levels``."""
+    pairs: list[tuple[float, float]] = []
+    for interval in intervals:
+        pair = _check_spread_levels(interval, levels)
+        pairs.append(pair)
+    if not pairs:
+        raise ValueError("coverage_intervals must list at least one (low, high) interval")
+    return tuple(pairs)
+
+
 def _config_levels(config: Mapping[str, Any]) -> tuple[np.ndarray, tuple[float, float]]:
     levels = _check_levels(require(config, "engine.quantile_levels"))
     spread = require(config, "engine.spread_levels")
@@ -137,10 +168,83 @@ def _record_warnings(label: str, action: Callable[[], Any]) -> list[str]:
     return [f"{label}: {item.category.__name__}: {item.message}" for item in caught]
 
 
+@dataclass(frozen=True, eq=False)
+class _ErrorSummary:
+    """Summary of residual errors per outcome, added to a point prediction.
+
+    mean (K,), median (K,), quantiles (K, Q) at the quantile levels, spread (K,) = half the
+    width between the spread levels -- computed once, broadcast to every query row.
+    """
+
+    mean: np.ndarray
+    median: np.ndarray
+    quantiles: np.ndarray
+    spread: np.ndarray
+
+
+def _summarize_errors(errors: np.ndarray, levels: np.ndarray, spread_levels: tuple[float, float]) -> _ErrorSummary:
+    """errors (n, K) -> per-outcome empirical mean, median, quantiles (type 7) and spread."""
+    quantiles = np.quantile(errors, levels, axis=0, method=_EMPIRICAL_QUANTILE_METHOD).T
+    low = int(np.flatnonzero(levels == spread_levels[0])[0])
+    high = int(np.flatnonzero(levels == spread_levels[1])[0])
+    return _ErrorSummary(
+        mean=errors.mean(axis=0),
+        median=np.quantile(errors, _MEDIAN_LEVEL, axis=0, method=_EMPIRICAL_QUANTILE_METHOD),
+        quantiles=quantiles,
+        spread=0.5 * (quantiles[:, high] - quantiles[:, low]),
+    )
+
+
+def _fold_assignment(n: int, folds: int, seed: int, stream_name: str) -> np.ndarray:
+    """int64 (n,) fold index per attempt: a seeded permutation dealt round-robin into ``folds``."""
+    order = stream_rng(seed, stream_name, 0).permutation(n)
+    assignment = np.empty(n, dtype=np.int64)
+    assignment[order] = np.arange(n) % folds
+    return assignment
+
+
+def _cross_validated_coverage(
+    errors: np.ndarray,
+    assignment: np.ndarray,
+    folds: int,
+    intervals: Sequence[tuple[float, float]],
+    outcome_names: Sequence[str],
+) -> tuple[dict[str, Any], ...]:
+    """Out-of-fold coverage of each interval on the training attempts.
+
+    Row i of fold f is covered when its out-of-fold error lies inside the empirical
+    [low, high] quantiles of the out-of-fold errors of the OTHER folds -- i.e. inside the
+    interval the procedure would have given it without seeing it. errors (n, K).
+    """
+    n = errors.shape[0]
+    records: list[dict[str, Any]] = []
+    for column, outcome in enumerate(outcome_names):
+        for low, high in intervals:
+            covered = 0
+            for fold in range(folds):
+                held = assignment == fold
+                bounds = np.quantile(errors[~held, column], [low, high], method=_EMPIRICAL_QUANTILE_METHOD)
+                values = errors[held, column]
+                covered += int(np.count_nonzero((values >= bounds[0]) & (values <= bounds[1])))
+            records.append(
+                {
+                    "outcome": outcome,
+                    "low_level": float(low),
+                    "high_level": float(high),
+                    "nominal": float(high - low),
+                    "count": covered,
+                    "n": int(n),
+                    "coverage": covered / n,
+                }
+            )
+    return tuple(records)
+
+
 class _ResidualBaseline(ABC):
     """Shared input checks and output assembly. Not a model by itself."""
 
     method: ClassVar[str]
+    quantile_method: ClassVar[str]
 
     def __init__(
         self,
@@ -204,6 +308,18 @@ class _ResidualBaseline(ABC):
             spread_levels=self.spread_levels,
         )
 
+    def _homoscedastic_distribution(self, point: np.ndarray, summary: _ErrorSummary) -> ResidualDistribution:
+        """point (n, K) + one error summary per outcome; the (K,) spread is broadcast exactly."""
+        n, k = point.shape
+        return ResidualDistribution(
+            mean=point + summary.mean[None, :],
+            median=point + summary.median[None, :],
+            quantile_levels=self.quantile_levels,
+            quantiles=point[:, :, None] + summary.quantiles[None, :, :],
+            spread=np.broadcast_to(summary.spread, (n, k)).copy(),
+            spread_levels=self.spread_levels,
+        )
+
     # ----- ResidualModel surface ------------------------------------------------------
 
     @abstractmethod
@@ -222,10 +338,15 @@ class _ResidualBaseline(ABC):
     def _settings(self) -> dict[str, Any]:
         return {}
 
+    def _fit_details(self) -> dict[str, Any]:
+        return {}
+
     def describe(self) -> dict[str, Any]:
-        """JSON-serializable record of the method, its settings and the last fit."""
+        """JSON-serializable record of the method, its settings, how its quantiles are
+        produced, and the last fit."""
         return {
             "method": self.method,
+            "quantile_method": self.quantile_method,
             "layout": self.layout.describe(),
             "quantile_levels": self.quantile_levels.tolist(),
             "spread_levels": list(self.spread_levels),
@@ -234,6 +355,7 @@ class _ResidualBaseline(ABC):
             "settings": self._settings(),
             "n_train": self.n_train,
             "fit_warnings": list(self.fit_warnings),
+            "fit_details": self._fit_details(),
         }
 
 
@@ -253,6 +375,10 @@ class ConstantBiasResidual(_ResidualBaseline):
     """
 
     method = "constant_bias"
+    quantile_method = (
+        "in-sample empirical quantiles (numpy 'linear', type 7) of the training residuals of each outcome; "
+        "the same quantiles, median and spread for every query row; features are ignored"
+    )
 
     def __init__(
         self,
@@ -272,9 +398,10 @@ class ConstantBiasResidual(_ResidualBaseline):
     def fit(self, features: np.ndarray, residuals: np.ndarray) -> "ConstantBiasResidual":
         """features (n, F), residuals (n, K) with n >= 1."""
         _, y = self._check_training(features, residuals)
-        self._mean = y.mean(axis=0)
-        self._median = np.quantile(y, _MEDIAN_LEVEL, axis=0, method=_EMPIRICAL_QUANTILE_METHOD)
-        self._quantiles = np.quantile(y, self.quantile_levels, axis=0, method=_EMPIRICAL_QUANTILE_METHOD).T
+        mean = y.mean(axis=0)
+        median = np.quantile(y, _MEDIAN_LEVEL, axis=0, method=_EMPIRICAL_QUANTILE_METHOD)
+        quantiles = np.quantile(y, self.quantile_levels, axis=0, method=_EMPIRICAL_QUANTILE_METHOD).T
+        self._mean, self._median, self._quantiles = mean, median, quantiles
         self._finish_fit(y.shape[0], ())
         return self
 
@@ -311,6 +438,10 @@ class GaussianProcessResidual(_ResidualBaseline):
     """
 
     method = "gaussian_process"
+    quantile_method = (
+        "Normal(mean, std) of each outcome's Gaussian process (predict with return_std=True, std includes the "
+        "fitted WhiteKernel noise); quantile = mean + std * Phi^-1(level); heteroscedastic per query row"
+    )
 
     def __init__(
         self,
@@ -353,11 +484,11 @@ class GaussianProcessResidual(_ResidualBaseline):
         ) + WhiteKernel(noise_level_bounds=self.noise_level_bounds)
 
     def fit(self, features: np.ndarray, residuals: np.ndarray) -> "GaussianProcessResidual":
-        """features (n, F), residuals (n, K) with n >= min_attempts."""
+        """features (n, F), residuals (n, K) with n >= min_attempts. All-or-nothing."""
         x, y = self._check_training(features, residuals)
         with _blas_single_thread():
-            self._scaler = StandardScaler().fit(x)
-            x_scaled = self._scaler.transform(x)
+            scaler = StandardScaler().fit(x)
+            x_scaled = scaler.transform(x)
         models: list[GaussianProcessRegressor] = []
         recorded: list[str] = []
         for column, outcome in enumerate(self.layout.outcome_names):
@@ -369,7 +500,7 @@ class GaussianProcessResidual(_ResidualBaseline):
             )
             recorded += _record_warnings(outcome, lambda: model.fit(x_scaled, y[:, column]))
             models.append(model)
-        self._models = models
+        self._scaler, self._models = scaler, models
         self._finish_fit(x.shape[0], recorded)
         return self
 
@@ -405,17 +536,124 @@ class GaussianProcessResidual(_ResidualBaseline):
 
 
 # --------------------------------------------------------------------------------------
+# Out-of-fold homoscedastic baselines (B4, B5)
+# --------------------------------------------------------------------------------------
+
+
+class _OutOfFoldBaseline(_ResidualBaseline):
+    """Point model fitted on all attempts plus a homoscedastic error distribution from
+    out-of-fold errors of a K-fold refit of the same model.
+
+    With p(x) the point prediction (n, K) and e (n_train, K) the out-of-fold errors
+    y_i - p_(-fold(i))(x_i):
+        mean     = p(x) + mean(e)
+        median   = p(x) + empirical 0.5 quantile of e
+        quantile = p(x) + empirical quantile of e at each level (numpy "linear", type 7)
+        spread   = half the width between the spread levels of e, one value per outcome,
+                   broadcast to every query row (exactly constant)
+    K = min(interval_folds, n_train) >= 2; folds from the stream
+    ``baselines/<method>/interval_folds`` of ``seed``; every fold model uses the same settings
+    and seed as the point model.
+    """
+
+    quantile_method_template: ClassVar[str] = (
+        "homoscedastic, out-of-fold: point prediction of the {point} fitted on all attempts, plus the empirical "
+        "quantiles (numpy 'linear', type 7) of OUT-OF-FOLD errors from a K-fold refit of the same model with the "
+        "same settings (K = min(interval_folds, number of attempts), folds from the stream "
+        "'baselines/{method}/interval_folds' of the seed); the spread is one value per outcome, identical for "
+        "every query row"
+    )
+
+    def __init__(
+        self,
+        layout: FeatureLayout,
+        quantile_levels: Sequence[float],
+        spread_levels: Sequence[float],
+        *,
+        interval_folds: int,
+        coverage_intervals: Sequence[Sequence[float]],
+        min_attempts: int,
+        seed: int,
+    ) -> None:
+        super().__init__(layout, quantile_levels, spread_levels, min_attempts=min_attempts, seed=seed)
+        if self.min_attempts < _MIN_FOLDS:
+            raise ValueError(f"{self.method}: out-of-fold errors need min_attempts >= {_MIN_FOLDS}; got {min_attempts}")
+        self.interval_folds = _check_count("interval_folds", interval_folds, _MIN_FOLDS)
+        self.coverage_intervals = _check_intervals(coverage_intervals, self.quantile_levels)
+        self.folds_used = 0
+        self.oof_interval_coverage: tuple[dict[str, Any], ...] = ()
+
+    @property
+    def fold_stream(self) -> str:
+        """Name of the stream (under ``seed``) that assigns attempts to folds."""
+        return f"baselines/{self.method}/interval_folds"
+
+    @abstractmethod
+    def _fit_point(self, x: np.ndarray, y: np.ndarray) -> tuple[Any, list[str]]:
+        """Fit the point model on x (m, F), y (m, K) -> (fitted state, warning texts). No side effects."""
+
+    @abstractmethod
+    def _predict_point_with(self, state: Any, x: np.ndarray) -> np.ndarray:
+        """Point prediction (m, K) of a fitted state for x (m, F)."""
+
+    def fit(self, features: np.ndarray, residuals: np.ndarray) -> "_OutOfFoldBaseline":
+        """features (n, F), residuals (n, K) with n >= min_attempts. All-or-nothing."""
+        x, y = self._check_training(features, residuals)
+        n = x.shape[0]
+        folds = min(self.interval_folds, n)
+        assignment = _fold_assignment(n, folds, self.seed, self.fold_stream)
+        state, point_warnings = self._fit_point(x, y)
+        recorded = [f"all_attempts/{text}" for text in point_warnings]
+        out_of_fold = np.empty_like(y)
+        for fold in range(folds):
+            held = assignment == fold
+            fold_state, fold_warnings = self._fit_point(x[~held], y[~held])
+            recorded += [f"fold{fold}/{text}" for text in fold_warnings]
+            out_of_fold[held] = self._predict_point_with(fold_state, x[held])
+        errors = y - out_of_fold
+        summary = _summarize_errors(errors, self.quantile_levels, self.spread_levels)
+        coverage = _cross_validated_coverage(
+            errors, assignment, folds, self.coverage_intervals, self.layout.outcome_names
+        )
+        self._point_state, self._error_summary = state, summary
+        self.folds_used, self.oof_interval_coverage = folds, coverage
+        self._finish_fit(n, recorded)
+        return self
+
+    def predict_residual_distribution(self, query_features: np.ndarray) -> ResidualDistribution:
+        """query_features (n, F) -> point prediction (n, K) plus the out-of-fold error summary."""
+        x = self._check_query(query_features)
+        return self._homoscedastic_distribution(self._predict_point_with(self._point_state, x), self._error_summary)
+
+    def _fit_details(self) -> dict[str, Any]:
+        if not self._fitted:
+            return {}
+        return {
+            "folds_used": self.folds_used,
+            "fold_stream": self.fold_stream,
+            "out_of_fold_interval_coverage": [dict(record) for record in self.oof_interval_coverage],
+            "out_of_fold_note": "cross-validated coverage on the training attempts: an honesty indicator, not a result",
+        }
+
+    def _oof_settings(self) -> dict[str, Any]:
+        return {
+            "interval_folds": self.interval_folds,
+            "coverage_intervals": [list(pair) for pair in self.coverage_intervals],
+        }
+
+
+# --------------------------------------------------------------------------------------
 # B4 gradient boosting
 # --------------------------------------------------------------------------------------
 
 
-class GradientBoostingResidual(_ResidualBaseline):
-    """B4: ``HistGradientBoostingRegressor`` per outcome.
+class GradientBoostingResidual(_OutOfFoldBaseline):
+    """B4: one ``HistGradientBoostingRegressor(loss="squared_error")`` per outcome.
 
-    Per outcome k: one ``loss="squared_error"`` model gives the mean, and one
-    ``loss="quantile"`` model per level of ``quantile_levels`` plus 0.5 gives the quantiles
-    and the median. Per row the fitted quantiles are sorted (crossing quantiles are possible
-    with independent models), then the requested levels and the 0.5 level are read out.
+    Its predictive spread is HOMOSCEDASTIC and OUT-OF-FOLD: the quantiles are the point
+    prediction plus the empirical quantiles of out-of-fold errors (see
+    :class:`_OutOfFoldBaseline`); no per-level quantile models are fitted (review finding:
+    in-sample quantile models covered 20-60% at a nominal 80%).
 
     ``early_stopping=False`` always (the library's "auto" mode would switch on above 10 000
     rows) and the small-sample settings come from config: the library default
@@ -424,6 +662,9 @@ class GradientBoostingResidual(_ResidualBaseline):
     """
 
     method = "gradient_boosting"
+    quantile_method = _OutOfFoldBaseline.quantile_method_template.format(
+        point="squared-error HistGradientBoostingRegressor of each outcome", method="gradient_boosting"
+    )
 
     def __init__(
         self,
@@ -435,19 +676,24 @@ class GradientBoostingResidual(_ResidualBaseline):
         learning_rate: float,
         max_leaf_nodes: int,
         min_samples_leaf: int,
+        interval_folds: int,
+        coverage_intervals: Sequence[Sequence[float]],
         min_attempts: int,
         seed: int,
     ) -> None:
-        super().__init__(layout, quantile_levels, spread_levels, min_attempts=min_attempts, seed=seed)
+        super().__init__(
+            layout,
+            quantile_levels,
+            spread_levels,
+            interval_folds=interval_folds,
+            coverage_intervals=coverage_intervals,
+            min_attempts=min_attempts,
+            seed=seed,
+        )
         self.max_iter = _check_count("max_iter", max_iter, 1)
         self.learning_rate = _check_positive("learning_rate", learning_rate)
         self.max_leaf_nodes = _check_count("max_leaf_nodes", max_leaf_nodes, 2)
         self.min_samples_leaf = _check_count("min_samples_leaf", min_samples_leaf, 1)
-        self._fit_levels = np.union1d(self.quantile_levels, [_MEDIAN_LEVEL])
-        self._level_positions = np.array(
-            [int(np.flatnonzero(self._fit_levels == level)[0]) for level in self.quantile_levels]
-        )
-        self._median_position = int(np.flatnonzero(self._fit_levels == _MEDIAN_LEVEL)[0])
 
     @classmethod
     def from_config(cls, config: Mapping[str, Any], layout: FeatureLayout, *, seed: int) -> "GradientBoostingResidual":
@@ -461,14 +707,16 @@ class GradientBoostingResidual(_ResidualBaseline):
             learning_rate=require(config, key + "learning_rate"),
             max_leaf_nodes=require(config, key + "max_leaf_nodes"),
             min_samples_leaf=require(config, key + "min_samples_leaf"),
+            interval_folds=require(config, key + "interval_folds"),
+            coverage_intervals=require(config, "evaluation.coverage_intervals"),
             min_attempts=require(config, key + "min_attempts"),
             seed=seed,
         )
 
-    def _estimator(self, **loss: Any) -> HistGradientBoostingRegressor:
+    def _estimator(self) -> HistGradientBoostingRegressor:
         categorical = list(self.layout.categorical_indices)
         return HistGradientBoostingRegressor(
-            **loss,
+            loss="squared_error",
             max_iter=self.max_iter,
             learning_rate=self.learning_rate,
             max_leaf_nodes=self.max_leaf_nodes,
@@ -478,50 +726,25 @@ class GradientBoostingResidual(_ResidualBaseline):
             random_state=self.seed,
         )
 
-    def fit(self, features: np.ndarray, residuals: np.ndarray) -> "GradientBoostingResidual":
-        """features (n, F), residuals (n, K) with n >= min_attempts."""
-        x, y = self._check_training(features, residuals)
-        mean_models: list[HistGradientBoostingRegressor] = []
-        quantile_models: list[list[HistGradientBoostingRegressor]] = []
+    def _fit_point(self, x: np.ndarray, y: np.ndarray) -> tuple[list[HistGradientBoostingRegressor], list[str]]:
+        models: list[HistGradientBoostingRegressor] = []
         recorded: list[str] = []
         for column, outcome in enumerate(self.layout.outcome_names):
             target = y[:, column]
-            mean_model = self._estimator(loss="squared_error")
-            recorded += _record_warnings(f"{outcome}/mean", lambda: mean_model.fit(x, target))
-            mean_models.append(mean_model)
-            per_level: list[HistGradientBoostingRegressor] = []
-            for level in self._fit_levels:
-                model = self._estimator(loss="quantile", quantile=float(level))
-                recorded += _record_warnings(f"{outcome}/q{float(level)}", lambda: model.fit(x, target))
-                per_level.append(model)
-            quantile_models.append(per_level)
-        self._mean_models = mean_models
-        self._quantile_models = quantile_models
-        self._finish_fit(x.shape[0], recorded)
-        return self
+            model = self._estimator()
+            recorded += _record_warnings(f"{outcome}/mean", lambda: model.fit(x, target))
+            models.append(model)
+        return models, recorded
 
-    def predict_residual_distribution(self, query_features: np.ndarray) -> ResidualDistribution:
-        """query_features (n, F) -> mean/median (n, K), quantiles (n, K, Q), sorted per row."""
-        x = self._check_query(query_features)
-        n, k = x.shape[0], self.layout.n_outcomes
-        mean = np.empty((n, k))
-        fitted = np.empty((n, k, self._fit_levels.size))
+    def _predict_point_with(self, state: list[HistGradientBoostingRegressor], x: np.ndarray) -> np.ndarray:
         with _blas_single_thread():
-            for column in range(k):
-                mean[:, column] = self._mean_models[column].predict(x)
-                for position, model in enumerate(self._quantile_models[column]):
-                    fitted[:, column, position] = model.predict(x)
-        fitted = np.sort(fitted, axis=-1)
-        return self._distribution(
-            mean=mean,
-            median=fitted[:, :, self._median_position].copy(),
-            quantiles=fitted[:, :, self._level_positions],
-        )
+            return np.column_stack([model.predict(x) for model in state]).astype(np.float64, copy=False)
 
     def _settings(self) -> dict[str, Any]:
-        params = self._estimator(loss="squared_error").get_params()
-        params.pop("loss")
-        return {key: (list(value) if isinstance(value, tuple) else value) for key, value in params.items()}
+        params = self._estimator().get_params()
+        settings = {key: (list(value) if isinstance(value, tuple) else value) for key, value in params.items()}
+        settings.update(self._oof_settings())
+        return settings
 
 
 # --------------------------------------------------------------------------------------
@@ -529,20 +752,29 @@ class GradientBoostingResidual(_ResidualBaseline):
 # --------------------------------------------------------------------------------------
 
 
-class MLPAttemptsResidual(_ResidualBaseline):
+@dataclass(frozen=True, eq=False)
+class _MLPState:
+    """A fitted network with the feature and target scalers it was trained with."""
+
+    x_scaler: StandardScaler
+    y_scaler: StandardScaler
+    network: MLPRegressor
+
+
+class MLPAttemptsResidual(_OutOfFoldBaseline):
     """B5: an ``MLPRegressor`` (solver "lbfgs", proof p01) on standardized features and
     standardized residual targets, trained on the ACTUAL attempts. A baseline, not a student.
 
-    Predictive distribution, HOMOSCEDASTIC by construction: with p(x) the network prediction
-    and e = y - p(x_train) its in-sample training errors per outcome,
-        mean     = p(x) + mean(e)
-        median   = p(x) + empirical 0.5 quantile of e
-        quantile = p(x) + empirical quantile of e at each level (numpy "linear", type 7)
-    The same error quantiles are added to every query row. In-sample errors of a flexible
-    network are optimistic, so the spread is expected to be too narrow at small n.
+    Predictive distribution, HOMOSCEDASTIC and OUT-OF-FOLD (see :class:`_OutOfFoldBaseline`):
+    the network fitted on all attempts gives p(x); the error quantiles come from out-of-fold
+    refits of the same network, because the in-sample errors of a network that interpolates
+    its attempts are about 0 (review finding: the in-sample 80% interval covered 0-0.2%).
     """
 
     method = "mlp_on_attempts"
+    quantile_method = _OutOfFoldBaseline.quantile_method_template.format(
+        point="lbfgs MLPRegressor (standardized features and targets)", method="mlp_on_attempts"
+    )
 
     def __init__(
         self,
@@ -553,10 +785,20 @@ class MLPAttemptsResidual(_ResidualBaseline):
         hidden_layer_sizes: Sequence[int],
         alpha: float,
         max_iter: int,
+        interval_folds: int,
+        coverage_intervals: Sequence[Sequence[float]],
         min_attempts: int,
         seed: int,
     ) -> None:
-        super().__init__(layout, quantile_levels, spread_levels, min_attempts=min_attempts, seed=seed)
+        super().__init__(
+            layout,
+            quantile_levels,
+            spread_levels,
+            interval_folds=interval_folds,
+            coverage_intervals=coverage_intervals,
+            min_attempts=min_attempts,
+            seed=seed,
+        )
         sizes = tuple(hidden_layer_sizes)
         if not sizes:
             raise ValueError("hidden_layer_sizes must list at least one layer")
@@ -578,6 +820,8 @@ class MLPAttemptsResidual(_ResidualBaseline):
             hidden_layer_sizes=require(config, key + "hidden_layer_sizes"),
             alpha=require(config, key + "alpha"),
             max_iter=require(config, key + "max_iter"),
+            interval_folds=require(config, key + "interval_folds"),
+            coverage_intervals=require(config, "evaluation.coverage_intervals"),
             min_attempts=require(config, key + "min_attempts"),
             seed=seed,
         )
@@ -591,45 +835,28 @@ class MLPAttemptsResidual(_ResidualBaseline):
             random_state=self.seed,
         )
 
-    def _predict_point(self, x: np.ndarray) -> np.ndarray:
-        """x (n, F) -> network prediction in residual units, (n, K)."""
+    def _fit_point(self, x: np.ndarray, y: np.ndarray) -> tuple[_MLPState, list[str]]:
         with _blas_single_thread():
-            scaled = self._network_fitted.predict(self._x_scaler.transform(x))
-            return self._y_scaler.inverse_transform(np.asarray(scaled).reshape(x.shape[0], self.layout.n_outcomes))
-
-    def fit(self, features: np.ndarray, residuals: np.ndarray) -> "MLPAttemptsResidual":
-        """features (n, F), residuals (n, K) with n >= min_attempts."""
-        x, y = self._check_training(features, residuals)
-        with _blas_single_thread():
-            self._x_scaler = StandardScaler().fit(x)
-            self._y_scaler = StandardScaler().fit(y)
-            x_scaled = self._x_scaler.transform(x)
-            y_scaled = self._y_scaler.transform(y)
+            x_scaler = StandardScaler().fit(x)
+            y_scaler = StandardScaler().fit(y)
+            x_scaled = x_scaler.transform(x)
+            y_scaled = y_scaler.transform(y)
         target = y_scaled[:, 0] if y_scaled.shape[1] == 1 else y_scaled
         network = self._network()
         recorded = _record_warnings("all_outcomes", lambda: network.fit(x_scaled, target))
-        self._network_fitted = network
-        errors = y - self._predict_point(x)
-        self._error_mean = errors.mean(axis=0)
-        self._error_median = np.quantile(errors, _MEDIAN_LEVEL, axis=0, method=_EMPIRICAL_QUANTILE_METHOD)
-        self._error_quantiles = np.quantile(
-            errors, self.quantile_levels, axis=0, method=_EMPIRICAL_QUANTILE_METHOD
-        ).T
-        self._finish_fit(x.shape[0], recorded)
-        return self
+        return _MLPState(x_scaler=x_scaler, y_scaler=y_scaler, network=network), recorded
 
-    def predict_residual_distribution(self, query_features: np.ndarray) -> ResidualDistribution:
-        """query_features (n, F) -> prediction (n, K) shifted by the training-error summary."""
-        point = self._predict_point(self._check_query(query_features))
-        return self._distribution(
-            mean=point + self._error_mean[None, :],
-            median=point + self._error_median[None, :],
-            quantiles=point[:, :, None] + self._error_quantiles[None, :, :],
-        )
+    def _predict_point_with(self, state: _MLPState, x: np.ndarray) -> np.ndarray:
+        """x (m, F) -> network prediction in residual units, (m, K)."""
+        with _blas_single_thread():
+            scaled = state.network.predict(state.x_scaler.transform(x))
+            return state.y_scaler.inverse_transform(np.asarray(scaled).reshape(x.shape[0], self.layout.n_outcomes))
 
     def _settings(self) -> dict[str, Any]:
         params = self._network().get_params()
-        return {key: (list(value) if isinstance(value, tuple) else value) for key, value in params.items()}
+        settings = {key: (list(value) if isinstance(value, tuple) else value) for key, value in params.items()}
+        settings.update(self._oof_settings())
+        return settings
 
 
 # --------------------------------------------------------------------------------------
@@ -650,8 +877,11 @@ class DirectTargetAdapter:
     so the shared decide step (physics + residual) scores the directly predicted outcome.
     The situation and action blocks are read from the first ``n_situation + n_action``
     columns of the layout. ``last_request_hash`` is forwarded from the inner model so a
-    provider-backed inner model keeps its cache key on each Decision.
+    provider-backed inner model keeps its cache key on each Decision. The quantiles are the
+    inner model's (see its ``describe()["quantile_method"]``) shifted by -physics.
     """
+
+    quantile_method = "the inner model's predictive quantiles of the outcome, shifted by minus the physics guess"
 
     def __init__(self, inner: ResidualModel, *, spec: SkillSpec, layout: FeatureLayout) -> None:
         if not isinstance(inner, ResidualModel):
@@ -733,6 +963,7 @@ class DirectTargetAdapter:
         inner_describe = getattr(self.inner, "describe", None)
         return {
             "method": self.method,
+            "quantile_method": self.quantile_method,
             "layout": self.layout.describe(),
             "inner": inner_describe() if callable(inner_describe) else type(self.inner).__name__,
         }

@@ -1,4 +1,4 @@
-FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
 fixture spec passes validate_spec against a FIXTURE command schema (not the Go2 schema)
 
 == constant_bias ==
@@ -43,7 +43,7 @@ OK   decision.method == 'gaussian_process'
 OK   4 decisions for 4 situations
 OK   physics action [-0.5, 0.0] is one of the 15 candidates
 OK   same candidate grid and physics index as the physics-only decision
-OK   predicted (15, K, Q), scores (15,), chosen index 12
+OK   predicted (15, K, Q), scores (15,), chosen index 3
 OK   decision.method == 'gradient_boosting'
 OK   physics action [0.5, 0.0] is one of the 15 candidates
 OK   same candidate grid and physics index as the physics-only decision
@@ -89,12 +89,11 @@ OK   predicted (15, K, Q), scores (15,), chosen index 2
 OK   decision.method == 'direct_gradient_boosting'
 OK   physics action [0.5, 0.0] is one of the 15 candidates
 OK   same candidate grid and physics index as the physics-only decision
-OK   predicted (15, K, Q), scores (15,), chosen index 7
+OK   predicted (15, K, Q), scores (15,), chosen index 1
 OK   decision.method == 'direct_gradient_boosting'
 OK   physics action [0.5, 0.0] is one of the 15 candidates
 OK   same candidate grid and physics index as the physics-only decision
-OK   predicted (15, K, Q), scores (15,), chosen index 7
+OK   predicted (15, K, Q), scores (15,), chosen index 1
 OK   decision.method == 'direct_gradient_boosting'
 
 CHECK RESULT: 85 assertions held, 0 failed 
-exit=0

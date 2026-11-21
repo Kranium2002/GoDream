@@ -1,0 +1,11 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+OK   refuses student_teacher_ratio with negative losses: student_errors must be non-negative for a ratio; 4 values are negative
+OK   refuses student_teacher_ratio with a negative student loss only: student_errors must be non-negative for a ratio; 1 values are negative
+OK   refuses paired_ratio_ci with negative losses: loss_a must be non-negative for a ratio; 12 values are negative
+OK   refuses paired_ratio_ci with a sign-changing denominator: loss_a must be non-negative for a ratio; 38 values are negative
+OK   non-negative errors still give the ratio: 2.0
+OK   a zero teacher mean is still 'undefined'
+OK   non-negative losses still give a ratio CI: 1.7858 (1.4391, 2.0979)
+OK   the paired DIFFERENCE still accepts negative losses (no ratio involved)
+
+CHECK RESULT: 8 assertions held, 0 failed 

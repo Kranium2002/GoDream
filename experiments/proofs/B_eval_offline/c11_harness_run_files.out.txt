@@ -1,0 +1,24 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+== crash, then the same command again ==
+OK   the throwaway run crashed at episode 7: throwaway crash at call 7 (file-mechanics check)
+OK   rows on disk after the crash: 6
+OK   the crashed run's manifest exists, lists 12 planned episodes and says completed: false
+OK   a rerun into the same attempt file is refused: C:\Users\vidhu\AppData\Local\Temp\tmp3azvyizb\dev_run__physics_only.jsonl already exists: a run never appends to or replaces an earlier run'
+OK   the attempt file still holds the 6 crashed rows (nothing appended)
+OK   another split with the same run_id is refused (FileExistsError)
+OK   an existing manifest alone also refuses the run
+OK   no policy was asked for actions before the refusal (a billed teacher would not be called)
+
+== a complete run: manifest before the first episode, completed after the last ==
+OK   the manifest existed (completed: false) before the first episode
+OK   after the last episode: completed true, finished_utc set
+OK   manifest fields {'run_id': 'dev_run', 'row_run_id': 'dev_run/physics_only', 'method': 'physics_only', 'skill': 'fixture', 'split': 'dev', 'world_preset': 'default', 'base_seed': 7, 'n_situations': 4, 'n_repeats': 3, 'config_digest': 'e5218e2101c562245c71cfef69bb8578f6ce7e70e6531fff5f2000139f9ba146', 'started_utc': '2026-11-21T00:00:00+00:00', 'attempt_file': 'dev_run__physics_only.jsonl'}
+OK   episodes list (situation index, repeat, seed) in run order == the row order of the attempt file
+OK   returned shapes (n, R) and (n, R, K)
+
+== evaluate_actions ==
+OK   evaluate_actions writes a completed manifest recording repeat 2 for every episode
+OK   evaluate_actions refuses an existing attempt file
+OK   the refused rerun appended nothing
+
+CHECK RESULT: 16 assertions held, 0 failed 

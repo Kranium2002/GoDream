@@ -91,8 +91,8 @@ gb5 = GradientBoostingResidual.from_config(config, layout, seed=seed).fit(X[:5],
 d5 = gb5.predict_residual_distribution(Xq)
 unique_mean = [int(np.unique(d5.mean[:, k]).size) for k in range(K)]
 expect(unique_mean[0] > 1, f"GB at 5 rows with config settings is NOT constant (unique mean predictions per outcome: {unique_mean})")
-leaves = max(predictor[0].get_n_leaf_nodes() for predictor in gb5._mean_models[0]._predictors)
-print(f"     GB at 5 rows: max leaves in any iteration of the first mean model = {leaves}")
+leaves = max(predictor[0].get_n_leaf_nodes() for predictor in gb5._point_state[0]._predictors)
+print(f"     GB at 5 rows: max leaves in any iteration of the first point model = {leaves}")
 
 mlp_min = int(require(config, "baselines.mlp_on_attempts.min_attempts"))
 mlp = MLPAttemptsResidual.from_config(config, layout, seed=seed).fit(X[:mlp_min], r[:mlp_min])
@@ -106,6 +106,9 @@ expect(
     f"MLP quantile - median offsets equal for every query row up to float rounding (homoscedastic): "
     f"max deviation {row_spread:.3g} <= {rounding:.3g}",
 )
+expect(bool(np.all(dm.spread == dm.spread[:1, :])), "MLP spread is exactly the same value for every query row (broadcast)")
+expect(mlp.folds_used == min(int(require(config, "baselines.mlp_on_attempts.interval_folds")), mlp_min),
+       f"MLP used K = min(interval_folds, n) = {mlp.folds_used} folds for its out-of-fold errors")
 
 print("\n== constructor checks ==")
 for label, build in (

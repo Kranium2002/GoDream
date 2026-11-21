@@ -19,8 +19,9 @@ identical methods; scipy emits DegenerateDataWarning), the interval is recompute
 ``method="percentile"`` from the same seed and the fallback is recorded in the result.
 
 Resample count, confidence level, method and seed are arguments (config.yaml
-``evaluation.bootstrap_*``); nothing is defaulted here. A ratio whose denominator mean is 0
-(on the data or in any resample) is reported as the literal ``"undefined"``.
+``evaluation.bootstrap_*``); nothing is defaulted here. A ratio needs non-negative losses
+(a negative loss raises ValueError); a ratio whose denominator mean is 0 (on the data or in
+any resample) is reported as the literal ``"undefined"``.
 """
 
 from __future__ import annotations
@@ -200,7 +201,11 @@ def paired_ratio_ci(
     seed: int,
 ) -> dict[str, Any]:
     """Paired cluster-bootstrap CI of mean(loss_b) / mean(loss_a) (ratio of means), e.g.
-    student error / teacher error with a = teacher. Intended for non-negative losses.
+    student error / teacher error with a = teacher.
+
+    Both loss arrays must be non-negative: a negative loss raises ValueError (a ratio of
+    negative or sign-changing means has no "relative error" reading). With non-negative
+    losses every resampled denominator is >= 0, and a zero denominator is handled below.
 
     Same arguments and result keys as :func:`paired_difference_ci`. ``estimate``, ``low`` and
     ``high`` are the literal ``"undefined"`` (with ``undefined_reason``) when mean(loss_a) is 0
@@ -211,6 +216,9 @@ def paired_ratio_ci(
     a_s, b_s, n_situations, n_repeats = _cluster_means(loss_a, loss_b)
     a = np.asarray(loss_a, dtype=np.float64)
     b = np.asarray(loss_b, dtype=np.float64)
+    for label, values in (("loss_a", a), ("loss_b", b)):
+        if np.any(values < 0.0):
+            raise ValueError(f"{label} must be non-negative for a ratio; {int(np.sum(values < 0.0))} values are negative")
     result = _common("mean(b) / mean(a)", n_situations, n_repeats, n_resamples, confidence_level, method, seed)
     per_repeat: list[float | str] = []
     for repeat in range(n_repeats):

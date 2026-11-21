@@ -1,0 +1,30 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+== the open-split functions refuse the test split and its aliases ==
+OK   split_situations refuses split 'test' (SealedSplitError)
+OK   noise_seed refuses split 'test' (SealedSplitError)
+OK   noise_seeds refuses split 'test' (SealedSplitError)
+OK   split_situations refuses split 'TEST' (SealedSplitError)
+OK   noise_seed refuses split 'TEST' (SealedSplitError)
+OK   noise_seeds refuses split 'TEST' (SealedSplitError)
+OK   split_situations refuses split ' test' (SealedSplitError)
+OK   noise_seed refuses split ' test' (SealedSplitError)
+OK   noise_seeds refuses split ' test' (SealedSplitError)
+OK   split_situations refuses split 'Test\n' (SealedSplitError)
+OK   noise_seed refuses split 'Test\n' (SealedSplitError)
+OK   noise_seeds refuses split 'Test\n' (SealedSplitError)
+OK   split_situations refuses split np.str_('test') (SealedSplitError)
+OK   noise_seed refuses split np.str_('test') (SealedSplitError)
+OK   noise_seeds refuses split np.str_('test') (SealedSplitError)
+   public functions of eval.splits: ['check_disjoint', 'noise_seed', 'noise_seeds', 'split_situations', 'test_situations']
+OK   no other public function in eval.splits could build a test stream name
+
+== test_situations takes the config and always logs to its test_access_log ==
+OK   test_situations parameters: ['spec', 'config', 'base_seed', 'n', 'n_repeats', 'world_preset', 'final_evaluation', 'clock']
+OK   a caller-chosen log path is not accepted: test_situations() got an unexpected keyword argument 'access_log_path'
+OK   two final accesses -> two lines in the config's log: {"base_seed":20261121,"event":"test_split_access","n":5,"n_repeats":2,"skill":"fixture","timestamp_utc":"2026-11-21T00:00:00+00:00","world_preset":"default"}
+OK   the test noise seeds come only with the logged access (TestSplit.noise_seeds)
+OK   nothing was written to the caller-chosen path
+   NOTE (open issue, not fixed here): typing the stream name into engine.streams.stream_rng still reproduces the test situations: True -- only a secret salt outside the repository would prevent that
+OK   the project log D:\BerlinPrior\results\test_access_log.jsonl was not touched by this check
+
+CHECK RESULT: 22 assertions held, 0 failed 

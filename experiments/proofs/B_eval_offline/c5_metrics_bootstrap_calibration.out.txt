@@ -1,4 +1,4 @@
-FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
 == metrics ==
 OK   regression_summary {'mean': 2.0, 'median': 2.0, 'p90': 3.6, 'n': 5}
 OK   rate_with_count {'rate': 0.75, 'count': 3, 'n': 4}
@@ -26,22 +26,25 @@ OK   zero denominator in some resamples -> undefined: mean(loss_a) is 0 in 3467 
 OK   rejects {'method': 'bca'}: method must be one of ('BCa', 'percentile', 'basic'); got 'bca'
 OK   rejects {'seed': -1}: seed must be a non-negative integer; got -1
 
-== calibration (known Gaussian truth) ==
+== calibration (known Gaussian truth, unbounded regression outcome) ==
+OK   unbounded outcome: every interval is interior
 OK   calibrated coverage [0.25, 0.75] = 0.4945 within 0.0141 of 0.5
 OK   too-narrow coverage 0.2646 is below 0.5
+OK   unbounded outcome: every interval is interior
 OK   calibrated coverage [0.1, 0.9] = 0.8010 within 0.0113 of 0.8
 OK   too-narrow coverage 0.4795 is below 0.8
      chi-square calibrated p=0.116, too narrow p=0; counts [1996, 3042, 5049, 4841, 3088, 1984]
 OK   PIT bin chi-square separates calibrated from too narrow
+OK   continuous outcome: no tied and no merged rows
 OK   bin counts sum to n
      randomized-PIT KS calibrated p=0.713, too narrow p=0
 OK   randomized-PIT KS separates calibrated from too narrow
 OK   randomized PIT is seeded
+OK   without ties the randomized PIT equals the plain per-bin draw bitwise
 OK   level 0.2 is not an exact member -> rejected (no interpolation): level 0.2 is not exactly one of [0.1, 0.25, 0.5, 0.75, 0.9] (no interpolation)
 OK   level 0.10000000000100001 is not an exact member -> rejected (no interpolation): level 0.10000000000100001 is not exactly one of [0.1, 0.25, 0.5, 0.75, 0.9] (no interpolation)
 OK   calibration module source contains no interpolation call
-OK   constant spread -> {'n': 20, 'rho': 'undefined', 'pvalue': 'undefined', 'reason': 'constant input: spread'}
+OK   constant spread -> {'n': 20, 'rho': 'undefined', 'pvalue': 'undefined', 'reason': 'zero range: spread'}
 OK   monotone relation -> rho 1.0
 
-CHECK RESULT: 33 assertions held, 0 failed 
-exit=0
+CHECK RESULT: 37 assertions held, 0 failed 

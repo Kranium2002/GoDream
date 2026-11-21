@@ -4,6 +4,10 @@ Not a project skill, not the Go2, not DODGE: a tiny made-up spec whose pure func
 (physics_guess, objective, loss, success) exercise array shapes in the eval lane. It has no
 world and its episode() refuses to run. Nothing computed with it is evidence about the
 robot, the simulator, TabPFN or any model, and none of it may enter a report.
+
+FileMechanicsSpec (THROWAWAY) returns a constant "outcome" from episode() so the harness's
+file handling (manifests, attempt files, run-result files) can be exercised inside a
+temporary directory; it is not an episode and its rows are not measurements.
 """
 
 from __future__ import annotations
@@ -28,7 +32,7 @@ from learned_judgment.skills.base import (  # noqa: E402
     Variable,
 )
 
-FIXTURE_BANNER = "FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model"
+FIXTURE_BANNER = "FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model"
 
 # Fixture command schema for validate_spec only (NOT the Go2 walking policy's schema).
 FIXTURE_COMMAND_SCHEMA = CommandSchema(
@@ -83,6 +87,71 @@ class FixtureSpec(SkillSpec):
     def success(self, measured: np.ndarray) -> np.ndarray:
         measured = np.asarray(measured, dtype=np.float64)
         return (measured[:, 0] >= 0.3) & (measured[:, 1] == 0.0)
+
+
+class FileMechanicsSpec(FixtureSpec):
+    """THROWAWAY for run-file mechanics only (harness manifests, attempt files, run results).
+
+    ``episode`` is NOT an episode: it ignores the world and returns the same constant mapping
+    every time, so the harness has something to write. Nothing it produces is a measurement,
+    and it may only be used with ``throwaway_world_factory`` inside a temporary directory.
+    ``crash_at`` makes the given call (1-based, counted per instance) raise, to mimic a crash.
+    """
+
+    def __init__(self, crash_at: int | None = None) -> None:
+        super().__init__()
+        self.crash_at = crash_at
+        self.calls = 0
+
+    def episode(self, world: Any, situation: Mapping[str, Any], action: Mapping[str, Any]) -> Mapping[str, float]:
+        self.calls += 1
+        if self.crash_at is not None and self.calls == self.crash_at:
+            raise RuntimeError(f"throwaway crash at call {self.calls} (file-mechanics check)")
+        return {"separation": 1.0, "contact": 0.0}
+
+
+def throwaway_world_factory(seed: int) -> None:
+    """THROWAWAY: returns None. Not a world; only FileMechanicsSpec.episode accepts it."""
+    return None
+
+
+def fixed_clock() -> str:
+    """A fixed UTC timestamp for fixture files (the checks never claim a real run time)."""
+    return "2026-11-21T00:00:00+00:00"
+
+
+def throwaway_compare_run(
+    out_dir: Path,
+    *,
+    run_id: str,
+    methods: tuple[str, ...],
+    split: str = "dev",
+    world_preset: str = "default",
+    n_situations: int = 4,
+    n_repeats: int = 3,
+    spec: "FileMechanicsSpec | None" = None,
+) -> dict[str, Any]:
+    """Run harness.compare_methods with the THROWAWAY FileMechanicsSpec in ``out_dir``.
+
+    Every method plays the action (0, 0) on situations of the (open) ``split`` of the fixture
+    spec. Returns {method: MethodEvaluation}. File mechanics only: the rows are constants, not
+    measurements.
+    """
+    from learned_judgment.config import config_digest, load_config
+    from learned_judgment.eval.harness import compare_methods
+    from learned_judgment.eval.splits import noise_seeds, split_situations
+
+    spec = spec if spec is not None else FileMechanicsSpec()
+    base_seed = 7
+    situations = split_situations(spec, base_seed=base_seed, split=split, n=n_situations, world_preset=world_preset)
+    seeds = noise_seeds(spec, base_seed=base_seed, split=split, world_preset=world_preset,
+                        n_situations=n_situations, n_repeats=n_repeats)
+    policies = {method: (lambda s: np.zeros((s.shape[0], 2))) for method in methods}
+    return compare_methods(
+        spec, policies, world_factory=throwaway_world_factory, situations=situations, noise_seeds=seeds,
+        run_id=run_id, world_preset=world_preset, split=split, base_seed=base_seed,
+        config_digest=config_digest(load_config()), out_dir=out_dir, clock=fixed_clock,
+    )
 
 
 class Checks:

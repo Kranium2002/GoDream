@@ -2,7 +2,9 @@
 
 The cross-process part re-runs this script as a child with a different PYTHONHASHSEED in
 "--digest" mode and compares sha256 digests of every split and of the noise seeds.
-The test-access log is written only inside a temporary directory. Fixture spec only.
+The test-access log is written only inside a temporary directory: the check passes a COPY of
+config.yaml whose evaluation.test_access_log points there (config.yaml itself is not changed
+and results/test_access_log.jsonl is never touched). Fixture spec only.
 """
 
 import sys
@@ -12,6 +14,7 @@ from fixture_spec import FIXTURE_BANNER
 if "--digest" not in sys.argv:
     print(FIXTURE_BANNER)
 
+import copy  # noqa: E402
 import hashlib  # noqa: E402
 import json  # noqa: E402
 import os  # noqa: E402
@@ -46,15 +49,24 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def config_with_log(log_path: Path) -> dict:
+    """A copy of config.yaml whose test access log is a temporary file (check only)."""
+    local = copy.deepcopy(config)
+    local["evaluation"]["test_access_log"] = str(log_path)
+    return local
+
+
 def draw_all(log_path: Path) -> dict[str, np.ndarray]:
+    test = test_situations(
+        spec, config_with_log(log_path), base_seed=BASE_SEED, n=N_TEST, n_repeats=N_REPEATS,
+        world_preset="default", final_evaluation=True, clock=utc_now,
+    )
     return {
         "dev": split_situations(spec, base_seed=BASE_SEED, split="dev", n=N_DEV, world_preset="default"),
         "context": split_situations(spec, base_seed=BASE_SEED, split="context", n=N_DEV, world_preset="default"),
         "shift": split_situations(spec, base_seed=BASE_SEED, split="shift", n=N_DEV, world_preset=SHIFT_PRESET),
-        "test": test_situations(
-            spec, base_seed=BASE_SEED, n=N_TEST, world_preset="default",
-            final_evaluation=True, access_log_path=log_path, clock=utc_now,
-        ),
+        "test": test.situations,
+        "test_noise": test.noise_seeds,
         "dev_noise": noise_seeds(spec, base_seed=BASE_SEED, split="dev", world_preset="default", n_situations=N_DEV, n_repeats=N_REPEATS),
     }
 
@@ -80,27 +92,30 @@ with tempfile.TemporaryDirectory() as directory:
     except SealedSplitError as error:
         expect(True, f"split_situations refuses split='test': {error}")
     try:
-        test_situations(spec, base_seed=BASE_SEED, n=N_TEST, world_preset="default",
-                        final_evaluation=False, access_log_path=log_path, clock=utc_now)
+        test_situations(spec, config_with_log(log_path), base_seed=BASE_SEED, n=N_TEST, n_repeats=N_REPEATS,
+                        world_preset="default", final_evaluation=False, clock=utc_now)
         expect(False, "test_situations refuses final_evaluation=False")
     except SealedSplitError as error:
         expect(True, f"test_situations refuses final_evaluation=False: {error}")
     expect(not log_path.exists(), "a refused access writes no log line")
     try:
-        test_situations(spec, base_seed=BASE_SEED, n=N_TEST, world_preset="default",
-                        final_evaluation=True, access_log_path=log_path, clock=lambda: "2026-11-21T12:00:00")
+        test_situations(spec, config_with_log(log_path), base_seed=BASE_SEED, n=N_TEST, n_repeats=N_REPEATS,
+                        world_preset="default", final_evaluation=True, clock=lambda: "2026-11-21T12:00:00")
         expect(False, "test_situations refuses a clock without a UTC offset")
     except ValueError as error:
         expect(True, f"test_situations refuses a clock without a UTC offset: {error}")
+    expect(not log_path.exists(), "a refused clock writes no log line")
 
     print("\n== draw all splits ==")
     arrays = draw_all(log_path)
     for name in ("dev", "context", "shift", "test"):
         expect(arrays[name].shape[1] == spec.n_situation, f"{name}: shape {arrays[name].shape}")
+    expect(arrays["test_noise"].shape == (N_TEST, N_REPEATS) and arrays["test_noise"].dtype == np.int64,
+           f"test noise seeds come with the sealed access: shape {arrays['test_noise'].shape}")
     lines = log_path.read_text(encoding="utf-8").splitlines()
     record = json.loads(lines[-1])
-    expect(len(lines) == 1 and record["skill"] == spec.name and record["n"] == N_TEST,
-           f"one access-log line written: {lines[-1]}")
+    expect(len(lines) == 1 and record["skill"] == spec.name and record["n"] == N_TEST and record["n_repeats"] == N_REPEATS,
+           f"one access-log line written to the config's log path: {lines[-1]}")
 
     print("\n== disjoint ==")
     situations = {name: arrays[name] for name in ("dev", "context", "shift", "test")}
@@ -124,6 +139,7 @@ with tempfile.TemporaryDirectory() as directory:
     expect(int(seeds[7, 1]) == noise_seed(spec, base_seed=BASE_SEED, split="dev", world_preset="default", situation_index=7, repeat=1),
            "noise_seeds[i, r] == noise_seed(i, r) (no method argument: shared by all methods)")
     expect(np.unique(seeds).size == seeds.size, f"{seeds.size} distinct per-episode seeds")
+    expect(len(np.intersect1d(seeds, arrays["test_noise"])) == 0, "dev and test noise seeds share no value")
 
     print("\n== same process: repeated draw ==")
     again = draw_all(Path(directory) / "second_log.jsonl")

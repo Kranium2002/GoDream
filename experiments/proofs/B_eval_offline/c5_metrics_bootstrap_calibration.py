@@ -108,7 +108,7 @@ for bad in (dict(method="bca"), dict(seed=-1)):
     except ValueError as error:
         expect(True, f"rejects {bad}: {error}")
 
-print("\n== calibration (known Gaussian truth) ==")
+print("\n== calibration (known Gaussian truth, unbounded regression outcome) ==")
 n = 20000
 mu = rng.normal(size=n)
 sigma = np.exp(rng.normal(-0.5, 0.3, size=n))
@@ -117,28 +117,38 @@ truth = {
     "calibrated": mu + sigma * rng.normal(size=n),
     "too narrow": mu + 2.0 * sigma * rng.normal(size=n),
 }
+REG = {"kind": "regression", "bounds": (-np.inf, np.inf)}
 for low_level, high_level in require(config, "evaluation.coverage_intervals"):
     nominal = high_level - low_level
-    result = calibration.interval_coverage(quantiles, levels, truth["calibrated"], low_level, high_level)
+    result = calibration.interval_coverage(quantiles, levels, truth["calibrated"], low_level, high_level, **REG)
     band = 4 * np.sqrt(nominal * (1 - nominal) / n)  # 4 binomial standard errors
-    expect(abs(result["coverage"] - nominal) <= band,
-           f"calibrated coverage [{low_level}, {high_level}] = {result['coverage']:.4f} within {band:.4f} of {nominal}")
-    narrow = calibration.interval_coverage(quantiles, levels, truth["too narrow"], low_level, high_level)
-    expect(narrow["coverage"] < nominal - band, f"too-narrow coverage {narrow['coverage']:.4f} is below {nominal}")
-chi_ok = calibration.pit_chisquare(quantiles, levels, truth["calibrated"])
-chi_bad = calibration.pit_chisquare(quantiles, levels, truth["too narrow"])
+    expect(result["at_bound_n"] == 0 and result["interior_n"] == n, "unbounded outcome: every interval is interior")
+    expect(abs(result["interior_coverage"] - nominal) <= band,
+           f"calibrated coverage [{low_level}, {high_level}] = {result['interior_coverage']:.4f} within {band:.4f} of {nominal}")
+    narrow = calibration.interval_coverage(quantiles, levels, truth["too narrow"], low_level, high_level, **REG)
+    expect(narrow["interior_coverage"] < nominal - band, f"too-narrow coverage {narrow['interior_coverage']:.4f} is below {nominal}")
+chi_ok = calibration.pit_chisquare(quantiles, levels, truth["calibrated"], seed=7, **REG)
+chi_bad = calibration.pit_chisquare(quantiles, levels, truth["too narrow"], seed=7, **REG)
 print(f"     chi-square calibrated p={chi_ok['pvalue']:.3g}, too narrow p={chi_bad['pvalue']:.3g}; counts {chi_ok['counts']}")
 expect(chi_ok["pvalue"] > 1e-3 and chi_bad["pvalue"] < 1e-6, "PIT bin chi-square separates calibrated from too narrow")
-expect(int(calibration.pit_bin_counts(quantiles, levels, truth["calibrated"]).sum()) == n, "bin counts sum to n")
-ks_ok = calibration.randomized_pit_ks(quantiles, levels, truth["calibrated"], seed=7)
-ks_bad = calibration.randomized_pit_ks(quantiles, levels, truth["too narrow"], seed=7)
+expect(chi_ok["tied_rows"] == 0 and chi_ok["merged_rows"] == 0, "continuous outcome: no tied and no merged rows")
+expect(int(calibration.pit_bin_counts(quantiles, levels, truth["calibrated"], seed=7, **REG).sum()) == n, "bin counts sum to n")
+ks_ok = calibration.randomized_pit_ks(quantiles, levels, truth["calibrated"], seed=7, **REG)
+ks_bad = calibration.randomized_pit_ks(quantiles, levels, truth["too narrow"], seed=7, **REG)
 print(f"     randomized-PIT KS calibrated p={ks_ok['pvalue']:.3g}, too narrow p={ks_bad['pvalue']:.3g}")
 expect(ks_ok["pvalue"] > 1e-3 and ks_bad["pvalue"] < 1e-6, "randomized-PIT KS separates calibrated from too narrow")
-expect(np.array_equal(calibration.randomized_pit(quantiles, levels, truth["calibrated"], seed=7),
-                      calibration.randomized_pit(quantiles, levels, truth["calibrated"], seed=7)), "randomized PIT is seeded")
+expect(np.array_equal(calibration.randomized_pit(quantiles, levels, truth["calibrated"], seed=7, **REG),
+                      calibration.randomized_pit(quantiles, levels, truth["calibrated"], seed=7, **REG)), "randomized PIT is seeded")
+# Without ties the randomized PIT is the plain per-bin draw of proof p07 (same seed, same values).
+q_sorted = np.sort(quantiles, axis=1)
+edges = np.concatenate(([0.0], levels, [1.0]))
+plain_bins = (truth["calibrated"][:, None] > q_sorted).sum(axis=1)
+plain = np.random.default_rng(7).uniform(edges[plain_bins], edges[plain_bins + 1])
+expect(np.array_equal(plain, calibration.randomized_pit(quantiles, levels, truth["calibrated"], seed=7, **REG)),
+       "without ties the randomized PIT equals the plain per-bin draw bitwise")
 for level in (0.2, 0.1 + 1e-12):
     try:
-        calibration.interval_coverage(quantiles, levels, truth["calibrated"], level, 0.9)
+        calibration.interval_coverage(quantiles, levels, truth["calibrated"], level, 0.9, **REG)
         expect(False, f"level {level!r} rejected")
     except ValueError as error:
         expect(True, f"level {level!r} is not an exact member -> rejected (no interpolation): {error}")

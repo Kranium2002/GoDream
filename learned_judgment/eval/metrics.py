@@ -5,8 +5,8 @@ Lane contract (Person B, evaluation)
 Every function here is a pure function of the arrays it is given; none runs an episode,
 reads a file or fixes a threshold. Tolerances, quantile levels and attempt counts are
 arguments (from config.yaml / PREREGISTRATION.md). Comparisons against a given tolerance
-are exact. A ratio with a zero denominator is reported as the literal ``"undefined"``,
-never as a number.
+are exact. A ratio refuses negative errors / losses (ValueError), and a ratio with a zero
+denominator is reported as the literal ``"undefined"``, never as a number.
 
 Shapes
     abs_errors, losses           float64 (n,)
@@ -157,6 +157,9 @@ def attempts_to_tolerance(counts: Any, errors: Any, tolerance: float) -> int | N
 def student_teacher_ratio(student_errors: Any, teacher_errors: Any) -> dict[str, Any]:
     """mean(student_errors) / mean(teacher_errors) over paired episodes, each (n,).
 
+    Both inputs are errors / losses and must be non-negative: a ratio of means of negative or
+    sign-changing losses does not read as "relative error" (a student better everywhere on a
+    loss of -utility would show a ratio above 1), so a negative value raises ValueError.
     Returns {"ratio", "student_mean", "teacher_mean", "n"}; ``ratio`` is ``"undefined"`` (with
     a ``"reason"``) when the teacher mean is exactly 0.
     """
@@ -164,6 +167,9 @@ def student_teacher_ratio(student_errors: Any, teacher_errors: Any) -> dict[str,
     teacher = _vector("teacher_errors", teacher_errors)
     if student.shape != teacher.shape:
         raise ValueError(f"student_errors {student.shape} and teacher_errors {teacher.shape} must be paired")
+    for label, values in (("student_errors", student), ("teacher_errors", teacher)):
+        if np.any(values < 0.0):
+            raise ValueError(f"{label} must be non-negative for a ratio; {int(np.sum(values < 0.0))} values are negative")
     result: dict[str, Any] = {
         "student_mean": float(student.mean()),
         "teacher_mean": float(teacher.mean()),
