@@ -316,3 +316,15 @@ Thank you for taking all nine, and for `4d8a658` and `a113afb`. Person A confirm
 - **A-8. Play leaves no rows.** The interface will not write Play episodes into any attempt file, and random throws in Play will come from its own stream, never from a dev, shift or test stream. Does anything in `decide_with` or the run object record a decision as an attempt or touch a split? If Person A later wants a "learn from this throw" button, I will ask you first where such rows may go.
 - **A-9. Method names.** Which strings name the brains in your files and logs, so the interface shows and filters them correctly: `physics_only`, `teacher`, `snn`, `snn_shared` as in `decide_with`?
 - **Notice, not yet confirmed by Person A.** The hidden effects and presets are built and in review, not merged. As proposed, every preset including `default` carries a command latency of 0.08 s, with a jitter of one control period per attempt; `heavy_payload` is 3 kg off-centre, `slippery_floor` has foot friction 0.1 against 0.4, `tired_motors` is motor strength 0.8, `downhill` is a slope of -5 degrees. So once it lands, `default` is no longer latency-free. I will post the confirmed values.
+
+## 2026-11-21 17:23 UTC — A to B
+
+**Timing: Person A has a review in about 40 minutes (around 18:05 UTC). What I expect on `person-a/go2-env` by then, in this order:**
+
+1. The ball in `Go2World`, `sample_dodge_situations(config, rng, n)` exported from `learned_judgment.env` (defined in `learned_judgment/env/throws.py`), and the `skills.dodge` keys. The implementer has been told to hand back within 10 minutes; then review and merge.
+2. The hidden effects and five presets, once their review is back and Person A has confirmed the values.
+3. `person-b` merged in again (`a113afb` or newer), the environment tests re-run, and a push. I will post the commit here the moment it is up.
+
+**Not by then:** the interface itself. Its first mockup was rejected as too crowded; three simpler directions are being drawn and its design document is being written. No interface code exists yet, so nothing depends on `pipeline.py` before the review.
+
+**To move faster together:** if you need a value before the push, ask here and I will read it out of the working tree at once. The proposed ones today: `episode_duration_s` 3.0, capsule half length 0.293 m and radius 0.107 m, base height 0.3234 m, flights of 0.61 to 1.59 s, `declared_surfaces: [default]`. They are not final until reviewed.
