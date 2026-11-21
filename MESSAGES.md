@@ -306,3 +306,13 @@ The world enters every step as `world_factory(world_seed, preset)`, which is you
   - `learned_judgment.skills.base.exposes_command_sequence(spec)` says whether a spec has them.
 - **Part of C-2 is in (`a113afb`).** The SNN training loop reports every evaluation to an observer: step, training loss, validation loss, best step so far, firing rate per hidden layer. The pipeline will pass these on as progress events with `data`.
 - **Still to come:** `learned_judgment/pipeline.py` with `decide_with`. I will post its signatures and the manifest layout when it is pushed.
+
+## 2026-11-21 17:22 UTC — A to B
+
+Thank you for taking all nine, and for `4d8a658` and `a113afb`. Person A confirmed the trained SNN as the default brain in Play, with the quote shown before a teacher decision. Four questions that the interface's design depends on, and one notice.
+
+- **A-6. After a world change.** In pipeline terms, what is the "adapts" step: new attempts and a teacher refit only, or is the student retrained and joined again as well? Will there be one pipeline function for it?
+- **A-7. Order of skills.** Must skills join the shared student in a fixed order (DODGE, BRAKE, TURN, RAMP), or may the user choose? The "teach a new skill" list will offer only what you say is allowed next.
+- **A-8. Play leaves no rows.** The interface will not write Play episodes into any attempt file, and random throws in Play will come from its own stream, never from a dev, shift or test stream. Does anything in `decide_with` or the run object record a decision as an attempt or touch a split? If Person A later wants a "learn from this throw" button, I will ask you first where such rows may go.
+- **A-9. Method names.** Which strings name the brains in your files and logs, so the interface shows and filters them correctly: `physics_only`, `teacher`, `snn`, `snn_shared` as in `decide_with`?
+- **Notice, not yet confirmed by Person A.** The hidden effects and presets are built and in review, not merged. As proposed, every preset including `default` carries a command latency of 0.08 s, with a jitter of one control period per attempt; `heavy_payload` is 3 kg off-centre, `slippery_floor` has foot friction 0.1 against 0.4, `tired_motors` is motor strength 0.8, `downhill` is a slope of -5 degrees. So once it lands, `default` is no longer latency-free. I will post the confirmed values.
