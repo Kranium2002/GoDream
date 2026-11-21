@@ -1,0 +1,14 @@
+{
+  "elapsed_s": 3.94,
+  "fall": 0,
+  "fall_time_s": null,
+  "sim_unstable": 0,
+  "final_base_pos_m": [
+    1.856217534567433,
+    0.8694458601144038,
+    0.3192587840476215
+  ],
+  "declared_payload_kg": 0.0,
+  "declared_surface": "default",
+  "trace_path": "artifacts/env/traces/default-seed20261121-attempt0-6.npz"
+}
