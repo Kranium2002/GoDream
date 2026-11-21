@@ -78,3 +78,14 @@
 - Tests: `tests/env/test_world_api.py` (13) and `tests/env/test_determinism.py` (4), on the real simulator and policy: `artifacts/env/20261121T161057-world`, exit code 0, 17 passed. Each test written for a decision was also run against a version of `world.py` with the bug it guards and failed. Full suite: 67 passed, 1 failed (`test_trots_thirty_seconds[0.3]`, the accepted Gate 1 result).
 - Simulator facts re-checked on mujoco 3.11.0 with Unitree's model (velocity frames; bad-state warnings survive MuJoCo's auto-reset): `artifacts/env/20261121T155604-m2-world-facts`, `experiments/EXPERIMENTS_LOG.md` entry M2.
 - Cost on this machine (`artifacts/env/20261121T160704-world-cost`, medians): building a `Go2World` 0.12 s (0.70 s the first in a process); `reset()` 0.58 s for 6 s simulated; `step()` real-time factor 7.96 (one 10 s call) and 7.79 (0.02 s calls); `finish_episode()` 0.03 s writing a 20 s trace.
+
+## 2026-11-21 — Person B: review fixes, DODGE SkillSpec, first run on the real Go2World
+
+- Independent reviews: teacher, engine and evaluation (three reviewers) and the SNN code (two reviewers); every finding reproduced by execution. Fixed with regression checks: teacher (never pay twice after a failure, cache lock, ledger, chunked requests), evaluation (calibration for binary and clipped outcomes, honest baseline intervals, reports only from saved run files, sealed test split), engine (command check before any simulator step, stale physics, request provenance, unique attempts), per-skill SNN (refuses a changed command grid, a silent network, parity on spike trains).
+- Contracts changed with Person A's agreement: `reset(situation, attempt_seed)` and `SkillSpec.episode(world, situation, action, attempt_seed)`; the hidden world is fixed by the world's constructor seed.
+- DODGE SkillSpec written (`learned_judgment/skills/dodge.py`) against Person A's verified command schema. It refuses to build until Person A fills the `skills.dodge` keys that are still null.
+- Person A's `Go2World`, live viewer and recorder hook are merged into `person-b`. `tests/env` in the merged tree: 67 passed, 1 failed (the known 0.3 m/s condition).
+- First run of Person B's command sequence on the real simulator (dev run, no ball, 13 episodes, no falls): experiment B-contact in experiments/EXPERIMENTS_LOG.md.
+- Communication with Person A's session runs through the `messages` branch (one Markdown file).
+- In progress: shared SNN on reserved skill slots and the measurement code, being adapted to the new contracts.
+- NOT RUN: any DODGE episode with the ball, any TabPFN prediction request, any SNN training on real dreams.

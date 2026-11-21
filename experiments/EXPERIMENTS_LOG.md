@@ -396,3 +396,22 @@ Rebound tests stated by the rules, with the implied coefficient of restitution `
 **Limitations.** This machine only (2 cores). Equal results here do not show that multi-threaded inference would be bit-identical on a machine with another core count; single-threading removes that dependence.
 
 **Cost.** TabPFN calls: 0.
+
+## B-contact — first run of Person B's command sequence on the real Go2World (dev, no ball) — 2026-11-21 — Person B
+
+- Question: does the command sequence the DODGE SkillSpec sends run on Person A's `Go2World`, and how far is the dog-motion part of the DODGE physics guess from the dog's measured sideways travel?
+- Status: DEV RUN on the real simulator. It informs the formula's constants and checks the interface. It is not an evaluation result and enters no report or table.
+- Versions: `person-b` at `3c55be3` with `person-a/go2-env` merged at `8084642`; mujoco 3.11.0, efferent 0.5.0, onnxruntime 1.32.0, Python 3.13.16. Walking policy and model as pinned in `config.yaml`.
+- Config and seeds: config digest `dc09cf80bcc6`; preset `default`; world seed 3157987105 (stream `dodge/dev/sidestep_contact/world` under `runtime.seed` 20261121); attempt seeds 0 to 12; one world reused for all episodes.
+- Command: `.venv\Scripts\python.exe experiments\proofs\B_go2world_contact\sidestep_dev_run.py`, exit code 0. Output: `experiments/proofs/B_go2world_contact/sidestep_dev_run.out.txt`. Traces went to a temporary directory and were not kept.
+- Protocol: 13 episodes. Each: `reset({"dog_forward_speed_m_s": v}, attempt_seed)`, trot 0.20 s, sideways command for 0.60 s, trot 1.00 s, `finish_episode()`. Forward 0.3, 0.6 and 0.9 m/s; sideways +1, -1, +0.5 and -0.5 m/s; one episode with no sideways command at 0.6 m/s.
+- Measured (sideways travel of the trunk in the dog's heading frame at the decision instant, + is left):
+  - Interface: every episode accepted the three commands and stayed stable; no falls in 13 episodes; the world reported declared payload 0.0 kg and surface `default`. About 0.8 s of wall time per episode.
+  - At the end of the hold, full command: 0.30 to 0.34 m left and 0.29 to 0.32 m right, against 0.298 m from the formula.
+  - At the end of the hold, half command: 0.20 to 0.23 m, against 0.149 m from the formula. The dog moves more than half as far at half the command.
+  - At the end of the episode, full command: 0.45 to 0.63 m left and 0.36 to 0.47 m right, against 0.589 m from the formula. Right dodges fall short of left ones.
+  - Heading change over the episode: 11 to 17 degrees for left dodges, 2 to 6 degrees for right dodges, 6.8 degrees with no sideways command (which also drifted 0.09 m left).
+  - Measured over formula at the end of the episode: 0.61 to 1.39, median 0.80.
+- TabPFN calls: 0.
+- Limitations: one world, one seed, one delay and hold; single episodes per case; no ball; the formula constants (delay 0.05 s, time constant 0.3 s) were starting values taken from Person A's standstill traces and were not changed here.
+- Decision: the interface works as agreed. The formula is the right size for full commands during the hold and misses the half-command response, the left/right difference and the turning. Those are left to the residual model, as designed; the constants stay as they are until Person A's step-response traces exist.
