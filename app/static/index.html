@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go2 skill teacher</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="bar">
+    <div class="wrap bar__in">
+      <a class="skip" href="#main">Skip to content</a>
+      <p class="brand">Go2 skill teacher <span class="brand__sub">simulated Unitree Go2</span></p>
+      <nav class="areas" aria-label="Areas">
+        <a href="#teach" data-area="teach">Teach</a>
+        <a href="#learn" data-area="learn">Learn</a>
+        <a href="#live" data-area="live">Live</a>
+      </nav>
+      <div class="conn" role="status" aria-live="polite">
+        <p><span class="mark" id="conn-mark" aria-hidden="true">&#9675;</span> <span id="conn-text">Connecting to the server</span></p>
+        <p class="conn__sim" id="sim-text"></p>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <p class="notice" id="notice" role="status" aria-live="polite" hidden></p>
+
+    <section class="area" id="teach" aria-labelledby="teach-h">
+      <h1 id="teach-h" tabindex="-1">Teach a skill</h1>
+      <div class="teach">
+        <section class="panel chat" aria-labelledby="chat-h">
+          <h2 id="chat-h">Chat</h2>
+          <p class="cap-note" id="chat-cap" hidden></p>
+          <ol class="log" id="log" tabindex="0" aria-label="Conversation" aria-live="polite">
+            <li class="log__empty" id="log-empty">No messages yet. Describe what the dog should learn, for example crossing a slope or dodging an incoming ball.</li>
+          </ol>
+          <form class="ask" id="ask">
+            <label for="msg">Your message</label>
+            <textarea id="msg" name="msg" rows="3" required></textarea>
+            <div class="ask__row">
+              <p class="hint" id="msg-hint">Enter sends. Shift and Enter adds a line.</p>
+              <button class="btn btn--primary" type="submit" id="send">Send message</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel spec" aria-labelledby="spec-h">
+          <h2 id="spec-h">Declared skill</h2>
+          <p class="verdict" id="verdict" role="status" aria-live="polite"><span class="mark" aria-hidden="true">&#9675;</span> <span>No skill declared yet</span></p>
+          <p class="cap-note" id="catalogue-note" hidden></p>
+          <div id="spec-body">
+            <p class="empty">Nothing to show. The server turns a chat request into a declared skill and checks it; the result appears here.</p>
+          </div>
+
+          <div class="known">
+            <h3 id="skills-h">Skills the server knows</h3>
+            <p class="empty" id="skills-empty">Not known yet: the skill catalogue has not arrived.</p>
+            <ul class="skills" id="skills" aria-labelledby="skills-h"></ul>
+          </div>
+
+          <div class="run" aria-labelledby="run-h">
+            <h3 id="run-h">Learning run</h3>
+            <p class="cap-note" id="runs-cap" hidden></p>
+            <div class="confirm" id="confirm" hidden>
+              <h4 id="confirm-h" tabindex="-1">Confirm the quoted usage</h4>
+              <p id="confirm-msg"></p>
+              <dl class="quote" id="confirm-quote"></dl>
+              <div class="btn-row">
+                <button class="btn btn--primary" type="button" id="confirm-yes">Confirm and start the run</button>
+                <button class="btn btn--secondary" type="button" id="confirm-no">Cancel</button>
+              </div>
+            </div>
+            <div class="btn-row" id="start-row">
+              <button class="btn btn--primary" type="button" id="start" disabled aria-describedby="run-status">Start learning run</button>
+            </div>
+            <p class="run__status" id="run-status" tabindex="-1" role="status" aria-live="polite">Available once the declared skill is valid.</p>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="area" id="learn" aria-labelledby="learn-h" hidden>
+      <h1 id="learn-h" tabindex="-1">Learn</h1>
+      <p class="lead">Measured simulation data from the server: the baseline before learning, each step of the run, and the results on the same held-out scenarios.</p>
+      <p class="cap-note" id="learn-cap" hidden></p>
+      <form class="pick" id="run-pick">
+        <div class="pick__field">
+          <label for="run-select">Run</label>
+          <select id="run-select"><option value="">No run in this session yet</option></select>
+        </div>
+        <div class="pick__field">
+          <label for="run-id">Or open a run by its id</label>
+          <input id="run-id" name="run-id" autocomplete="off" spellcheck="false">
+        </div>
+        <button class="btn btn--secondary" type="submit">Open run</button>
+      </form>
+      <p id="learn-status" role="status" aria-live="polite">No run open. Start one from Teach, or open a run by its id.</p>
+
+      <div class="live">
+        <section class="panel" aria-labelledby="tl-h">
+          <h2 id="tl-h">Steps</h2>
+          <p class="hint" id="tl-meta"></p>
+          <ol class="timeline" id="timeline"></ol>
+        </section>
+
+        <section class="panel" aria-labelledby="lstage-h">
+          <h2 id="lstage-h">Simulated dog</h2>
+          <div class="stage">
+            <div>
+              <h3>Tracking view</h3>
+              <img id="l-tracking" alt="Live simulator frames from the tracking camera" hidden>
+              <p class="cap-note" id="l-trk-note" hidden></p>
+            </div>
+            <div>
+              <h3>Head camera</h3>
+              <img id="l-head" alt="Live simulator frames from the dog's head camera" hidden>
+              <p class="cap-note" id="l-head-note" hidden></p>
+            </div>
+          </div>
+          <dl class="stats">
+            <dt>RAMP mode</dt><dd id="l-mode">The backend does not report it yet.</dd>
+            <dt>DODGE gate</dt><dd id="l-gate">The backend does not report it yet.</dd>
+          </dl>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="train-h">
+        <h2 id="train-h">SNN training</h2>
+        <div id="train-body"><p class="empty">No training observations in this run yet.</p></div>
+      </section>
+
+      <section class="panel" aria-labelledby="res-h">
+        <h2 id="res-h">Before and after</h2>
+        <h3>Baseline before learning</h3>
+        <div id="baseline-body"><p class="empty">Not reported yet.</p></div>
+        <h3>Results on the held-out scenarios</h3>
+        <div id="results-body"><p class="empty">Not reported yet.</p></div>
+      </section>
+    </section>
+
+    <section class="area" id="live" aria-labelledby="live-h" hidden>
+      <h1 id="live-h" tabindex="-1">Live camera test</h1>
+      <p class="lead">A separate test of the frozen model: it never learns from the camera. Frames stay in this page's memory; only the grey cells of the window go to the server on this computer.</p>
+      <p class="cap-note" id="window-note" hidden></p>
+      <p id="window-text" hidden></p>
+      <div class="btn-row">
+        <button class="btn btn--primary" type="button" id="cam-start">Start camera</button>
+        <button class="btn btn--secondary" type="button" id="cam-stop" disabled>Stop camera</button>
+      </div>
+      <p id="cam-status" role="status" aria-live="polite">The camera is off. Nothing is requested until you press Start camera.</p>
+
+      <div class="live">
+        <section class="panel" aria-labelledby="cam-h">
+          <h2 id="cam-h">Camera</h2>
+          <div class="cam">
+            <div class="cam__view">
+              <h3 id="cam-label">Not mirrored: what the dog's camera would see</h3>
+              <video id="cam-video" muted playsinline aria-labelledby="cam-label"></video>
+            </div>
+            <div class="cam__model">
+              <h3 id="grey-label">What the network sees</h3>
+              <canvas id="cam-grey" width="1" height="1" role="img" aria-labelledby="grey-label grey-text"></canvas>
+              <p class="hint" id="grey-text">Nothing yet.</p>
+            </div>
+          </div>
+          <dl class="stats">
+            <dt>Camera frames per second</dt><dd id="st-fps">not measured</dd>
+            <dt>Window filled</dt><dd id="st-fill">not started</dd>
+            <dt>Windows dropped while waiting</dt><dd id="st-dropped">0</dd>
+            <dt>Decisions this session</dt><dd id="st-decisions">0</dd>
+            <dt>Active commands issued</dt><dd id="st-issued">0</dd>
+          </dl>
+        </section>
+
+        <section class="panel" aria-labelledby="stage-h">
+          <h2 id="stage-h">Simulated dog</h2>
+          <div class="stage">
+            <div>
+              <h3 id="trk-label">Tracking view</h3>
+              <img id="stage-tracking" alt="Live simulator frames from the tracking camera" hidden>
+              <p class="cap-note" id="trk-note" hidden></p>
+            </div>
+            <div>
+              <h3 id="head-label">Head camera</h3>
+              <img id="stage-head" alt="Live simulator frames from the dog's head camera" hidden>
+              <p class="cap-note" id="head-note" hidden></p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="dec-h">
+        <h2 id="dec-h">Decision</h2>
+        <p class="action" id="dec-action" role="status" aria-live="polite">No decision yet.</p>
+        <p id="dec-issued"></p>
+        <div class="decision">
+          <dl class="stats" id="dec-rows"></dl>
+          <div>
+            <h3>Persistence gate</h3>
+            <ul class="gate" id="dec-gate"><li class="empty">No gate state yet.</li></ul>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel caps" aria-labelledby="caps-h">
+      <h2 id="caps-h">What the server can do now</h2>
+      <p class="empty" id="caps-empty">Not known yet: the server's state has not arrived.</p>
+      <ul class="caps__list" id="caps"></ul>
+    </section>
+  </main>
+</body>
+</html>
