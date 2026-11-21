@@ -22,7 +22,9 @@ test("no storage, export or recording API appears anywhere in app/static", () =>
 });
 
 test("no absolute or protocol-relative URL appears in app/static", () => {
-  for (const { p, text } of sources) {
+  const SVG_NAMESPACE = "http://www.w3.org/2000/svg"; // an XML namespace name for createElementNS, never requested
+  for (const { p, text: raw } of sources) {
+    const text = raw.split(SVG_NAMESPACE).join("");
     assert.ok(!/[a-z]+:\/\//i.test(text), `${p} holds an absolute URL`);
     assert.ok(!/["'`(]\/\//.test(text), `${p} holds a protocol-relative URL`);
   }

@@ -181,3 +181,31 @@ textarea:focus-visible { outline: none; animation: none; border-color: var(--act
 .decision h3 { margin-bottom: var(--s-2); }
 .gate { list-style: none; padding: 0; display: grid; gap: var(--s-2); }
 .gate li { padding-block: var(--s-1); border-bottom: 1px solid var(--line); }
+
+/* Learn */
+.link { color: var(--action); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.link:hover { text-decoration-thickness: 2px; }
+.pick { display: flex; flex-wrap: wrap; gap: var(--s-4); align-items: end; }
+.pick__field { display: grid; gap: var(--s-1); }
+.pick label { font-size: var(--t-label); font-weight: 600; }
+select, input {
+  font: inherit; color: var(--ink); background: var(--surface); min-height: 52px; min-width: 260px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 0 var(--s-4);
+  transition: border-color var(--m-in) var(--m-ease), box-shadow var(--m-in) var(--m-ease);
+}
+select:focus-visible, input:focus-visible { outline: none; animation: none; border-color: var(--action); box-shadow: 0 0 0 3px rgba(29, 91, 184, .25); }
+@media (max-width: 640px) { select, input { min-width: 0; width: 100%; } .pick__field { width: 100%; } }
+.timeline { list-style: none; padding: 0; display: grid; gap: 0; }
+.timeline > li { display: grid; grid-template-columns: auto 1fr; gap: var(--s-3); padding-block: var(--s-3); border-bottom: 1px solid var(--line); }
+.timeline__label { font-weight: 600; }
+.timeline__facts { color: var(--muted); font-size: var(--t-small); font-variant-numeric: tabular-nums; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: var(--s-1) var(--s-4); margin-top: var(--s-2); font-size: var(--t-small); }
+.kv dt { font-family: var(--mono); color: var(--muted); }
+.kv dd { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.curve-wrap { margin: 0; display: grid; gap: var(--s-2); }
+.curve { width: 100%; max-width: 900px; height: auto; display: block; }
+.curve__axis { stroke: var(--line-strong); stroke-width: 1; }
+.curve__train, .curve__val { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.curve__val { stroke: var(--action); stroke-dasharray: 8 6; }
+.curve__label { fill: var(--muted); font: 500 14px var(--font); }
+#train-body { display: grid; gap: var(--s-5); }

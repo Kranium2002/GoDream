@@ -83,9 +83,61 @@
 
     <section class="area" id="learn" aria-labelledby="learn-h" hidden>
       <h1 id="learn-h" tabindex="-1">Learn</h1>
-      <div class="panel">
-        <p class="unbuilt"><strong>Not built yet.</strong> This view will show the measured baseline, the real simulator attempts, the learning progress and the before and after results, all read from the server.</p>
+      <p class="lead">Measured simulation data from the server: the baseline before learning, each step of the run, and the results on the same held-out scenarios.</p>
+      <p class="cap-note" id="learn-cap" hidden></p>
+      <form class="pick" id="run-pick">
+        <div class="pick__field">
+          <label for="run-select">Run</label>
+          <select id="run-select"><option value="">No run in this session yet</option></select>
+        </div>
+        <div class="pick__field">
+          <label for="run-id">Or open a run by its id</label>
+          <input id="run-id" name="run-id" autocomplete="off" spellcheck="false">
+        </div>
+        <button class="btn btn--secondary" type="submit">Open run</button>
+      </form>
+      <p id="learn-status" role="status" aria-live="polite">No run open. Start one from Teach, or open a run by its id.</p>
+
+      <div class="live">
+        <section class="panel" aria-labelledby="tl-h">
+          <h2 id="tl-h">Steps</h2>
+          <p class="hint" id="tl-meta"></p>
+          <ol class="timeline" id="timeline"></ol>
+        </section>
+
+        <section class="panel" aria-labelledby="lstage-h">
+          <h2 id="lstage-h">Simulated dog</h2>
+          <div class="stage">
+            <div>
+              <h3>Tracking view</h3>
+              <img id="l-tracking" alt="Live simulator frames from the tracking camera" hidden>
+              <p class="cap-note" id="l-trk-note" hidden></p>
+            </div>
+            <div>
+              <h3>Head camera</h3>
+              <img id="l-head" alt="Live simulator frames from the dog's head camera" hidden>
+              <p class="cap-note" id="l-head-note" hidden></p>
+            </div>
+          </div>
+          <dl class="stats">
+            <dt>RAMP mode</dt><dd id="l-mode">The backend does not report it yet.</dd>
+            <dt>DODGE gate</dt><dd id="l-gate">The backend does not report it yet.</dd>
+          </dl>
+        </section>
       </div>
+
+      <section class="panel" aria-labelledby="train-h">
+        <h2 id="train-h">SNN training</h2>
+        <div id="train-body"><p class="empty">No training observations in this run yet.</p></div>
+      </section>
+
+      <section class="panel" aria-labelledby="res-h">
+        <h2 id="res-h">Before and after</h2>
+        <h3>Baseline before learning</h3>
+        <div id="baseline-body"><p class="empty">Not reported yet.</p></div>
+        <h3>Results on the held-out scenarios</h3>
+        <div id="results-body"><p class="empty">Not reported yet.</p></div>
+      </section>
     </section>
 
     <section class="area" id="live" aria-labelledby="live-h" hidden>

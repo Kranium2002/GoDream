@@ -4,6 +4,7 @@ import { normaliseCapabilities } from "./capabilities.js";
 import { attachProblems, catalogueRows, findSkill, isValid, specRows } from "./spec.js";
 import { canStart, INITIAL_RUN, runStep } from "./run.js";
 import { initLiveView } from "./live-view.js";
+import { initLearnView } from "./learn-view.js";
 
 const api = createApi((url, init) => fetch(url, init));
 const $ = (id) => document.getElementById(id);
@@ -22,6 +23,7 @@ const CAP_LABELS = { drive: "Drive the dog", head_camera: "Head camera", scenari
   runs: "Learning runs", results: "Results", infer: "Live inference" };
 
 const live = initLiveView({ api, el });
+const learn = initLearnView({ api, el });
 
 // ---- areas -------------------------------------------------------------------------------------------------------
 const AREAS = ["teach", "learn", "live"];
@@ -33,6 +35,7 @@ function showArea(moveFocus) {
     if (a === name) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
   }
   live.setVisible(name === "live");
+  learn.setVisible(name === "learn");
   if (moveFocus) $(`${name}-h`).focus();
 }
 addEventListener("hashchange", () => showArea(true));
@@ -62,6 +65,7 @@ async function loadState() {
   capabilities = normaliseCapabilities(s.capabilities);
   renderCapabilities();
   live.setState(s, capabilities);
+  learn.setState(s, capabilities);
 }
 
 function renderCapabilities() {
@@ -93,6 +97,14 @@ function connectEvents() {
     try { if (JSON.parse(e.data)?.phase === "start") $("notice").hidden = true; } catch { /* keep the notice */ }
     loadState();
   });
+  const forward = (name, handle) => source.addEventListener(name, (e) => {
+    let data;
+    try { data = JSON.parse(e.data); } catch { return; } // an unreadable event shows nothing
+    handle(data);
+  });
+  forward("run", (d) => learn.onRunEvent(d));
+  forward("observation", (d) => learn.onObservation(d));
+  forward("infer", (d) => learn.onInfer(d));
   source.addEventListener("notice", (e) => {
     let data = null;
     try { data = JSON.parse(e.data); } catch { /* not shown: nothing readable came */ }
@@ -261,7 +273,10 @@ function renderRun(before) {
       $("confirm-quote").replaceChildren(...run.quote.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)]));
       if (before.phase !== "confirm") $("confirm-h").focus();
       break;
-    case "started": status.textContent = `Run ${run.runId} started. The Learn view that follows it is not built yet.`; break;
+    case "started":
+      learn.addRun(run.runId, true);
+      status.replaceChildren(`Run ${run.runId} started. `, el("a", { href: "#learn", class: "link" }, "Follow it in Learn"), ".");
+      break;
     case "unavailable": status.textContent = `Learning runs are unavailable: ${run.message}`; break;
     case "failed": status.textContent = `The run did not start: ${run.message} (${run.code})`; break;
   }
