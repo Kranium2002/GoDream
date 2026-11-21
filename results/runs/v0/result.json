@@ -1,0 +1,1605 @@
+{
+ "run_id": "v0",
+ "skill": "dodge_vision",
+ "quote": {
+  "state": "done",
+  "started_utc": "2026-11-21T21:24:55.786557+00:00",
+  "argv": [
+   "quote",
+   "--run",
+   "v0",
+   "--skill",
+   "dodge_vision",
+   "--context",
+   "results/runs/v0/context",
+   "--dream",
+   "results/runs/v0/dream"
+  ],
+  "config_digest": "9ab479de6365f0370f169cb70af7e9ba4c4c567590b97e00faf2a1bf6241d5ee",
+  "context": "results/runs/v0/context",
+  "dream": "results/runs/v0/dream",
+  "feature_set": [
+   "window",
+   "action",
+   "physics"
+  ],
+  "quote": {
+   "dream": {
+    "mode": "stacked",
+    "n_query_rows": 4800,
+    "n_train_rows": 240,
+    "n_features": 1160,
+    "active_outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "constant_outcomes": [
+     "fall",
+     "command_travel_m"
+    ],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 0,
+      "n_chunks": 1,
+      "n_train": 720,
+      "n_query": 14400,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 20912,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 20912,
+    "usage": {
+     "current_usage": 260000,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 260000,
+     "daily_token_limit": 35000000,
+     "daily_usage": 260000,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-22 00:00:00 UTC",
+     "monthly_tokens_used": 260000,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 260000,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 34740000,
+    "tokens_quoted_for_billed_calls": 210000,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   }
+  }
+ },
+ "updated_utc": "2026-11-21T21:26:43.699572+00:00",
+ "teach": {
+  "state": "done",
+  "started_utc": "2026-11-21T21:25:28.746883+00:00",
+  "argv": [
+   "teach",
+   "--run",
+   "v0",
+   "--skill",
+   "dodge_vision",
+   "--context",
+   "results/runs/v0/context",
+   "--dream",
+   "results/runs/v0/dream",
+   "--dev",
+   "results/runs/v0/dev",
+   "--confirm-billing"
+  ],
+  "config_digest": "9ab479de6365f0370f169cb70af7e9ba4c4c567590b97e00faf2a1bf6241d5ee",
+  "context": "results/runs/v0/context",
+  "dream": "results/runs/v0/dream",
+  "dev": "results/runs/v0/dev",
+  "feature_set": [
+   "window",
+   "action",
+   "physics"
+  ],
+  "teacher": {
+   "n_context_rows": 240,
+   "n_features": 1160,
+   "call_log": "D:/BerlinPrior/results/tabpfn_calls.jsonl"
+  },
+  "dev_rules": {
+   "physics": {
+    "n": 100,
+    "outcomes": {
+     "min_separation_m": {
+      "mean": 0.7447994684126037,
+      "min": 0.0
+     },
+     "collision": {
+      "count": 4,
+      "rate": 0.04
+     },
+     "fall": {
+      "count": 0,
+      "rate": 0.0
+     },
+     "recovery_time_s": {
+      "mean": 0.0006000000000000005,
+      "min": 0.0
+     },
+     "command_travel_m": {
+      "mean": 0.30000000000000004,
+      "min": 0.0
+     }
+    },
+    "mean_measured_objective": -0.18014721448252888,
+    "mean_regret": 0.30062692829683274,
+    "max_regret": 9.932988004757386,
+    "action_counts": {
+     "NO_OP": 50,
+     "DODGE_LEFT": 18,
+     "DODGE_RIGHT": 32,
+     "RETREAT": 0
+    },
+    "by_kind": {
+     "ambiguous": {
+      "n": 8,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.5103053499248056,
+        "min": 0.3766087172009841
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.6,
+        "min": 0.6
+       }
+      },
+      "mean_measured_objective": 0.1810381028830238,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 0,
+       "DODGE_LEFT": 2,
+       "DODGE_RIGHT": 6,
+       "RETREAT": 0
+      }
+     },
+     "background_motion": {
+      "n": 3,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 2.0,
+        "min": 2.0
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 3,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "empty": {
+      "n": 12,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 2.0,
+        "min": 2.0
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 12,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "incoming_center": {
+      "n": 15,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.17961161595024783,
+        "min": 0.058141580686205424
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0013333333333333346,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.5999999999999999,
+        "min": 0.6
+       }
+      },
+      "mean_measured_objective": -0.12105505071641881,
+      "mean_regret": 0.02269428708981342,
+      "max_regret": 0.12042568796523329,
+      "action_counts": {
+       "NO_OP": 0,
+       "DODGE_LEFT": 6,
+       "DODGE_RIGHT": 9,
+       "RETREAT": 0
+      }
+     },
+     "incoming_left": {
+      "n": 18,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.29704669761868085,
+        "min": 0.0
+       },
+       "collision": {
+        "count": 1,
+        "rate": 0.05555555555555555
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0022222222222222244,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.5666666666666667,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": -0.5429533023813191,
+      "mean_regret": 0.5516059149877488,
+      "max_regret": 9.737654639893073,
+      "action_counts": {
+       "NO_OP": 1,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 17,
+       "RETREAT": 0
+      }
+     },
+     "incoming_right": {
+      "n": 13,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.20253819828997893,
+        "min": 0.0
+       },
+       "collision": {
+        "count": 3,
+        "rate": 0.23076923076923078
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.4615384615384614,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": -2.3359233401715596,
+      "mean_regret": 1.5225670810428151,
+      "max_regret": 9.932988004757386,
+      "action_counts": {
+       "NO_OP": 3,
+       "DODGE_LEFT": 10,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "off_path": {
+      "n": 17,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.6449151348511768,
+        "min": 0.30948512904482434
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.4701742561484248,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 17,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "receding": {
+      "n": 7,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.8962231117557746,
+        "min": 0.6169195954918046
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 7,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "static": {
+      "n": 7,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 1.783767656134542,
+        "min": 1.1986476310787033
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 7,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     }
+    }
+   },
+   "no_op": {
+    "n": 100,
+    "outcomes": {
+     "min_separation_m": {
+      "mean": 0.6045841950841822,
+      "min": 0.0
+     },
+     "collision": {
+      "count": 44,
+      "rate": 0.44
+     },
+     "fall": {
+      "count": 0,
+      "rate": 0.0
+     },
+     "recovery_time_s": {
+      "mean": 0.0,
+      "min": 0.0
+     },
+     "command_travel_m": {
+      "mean": 0.0,
+      "min": 0.0
+     }
+    },
+    "mean_measured_objective": -4.367721108047608,
+    "mean_regret": 4.488200821861912,
+    "max_regret": 10.110338777984012,
+    "action_counts": {
+     "NO_OP": 100,
+     "DODGE_LEFT": 0,
+     "DODGE_RIGHT": 0,
+     "RETREAT": 0
+    },
+    "by_kind": {
+     "ambiguous": {
+      "n": 8,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.06735474462244578,
+        "min": 0.0
+       },
+       "collision": {
+        "count": 1,
+        "rate": 0.125
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": -1.1826452553775542,
+      "mean_regret": 1.363683358260578,
+      "max_regret": 10.076608717200983,
+      "action_counts": {
+       "NO_OP": 8,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "background_motion": {
+      "n": 3,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 2.0,
+        "min": 2.0
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 3,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "empty": {
+      "n": 12,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 2.0,
+        "min": 2.0
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 12,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "incoming_center": {
+      "n": 15,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.000611588463114492,
+        "min": 0.0
+       },
+       "collision": {
+        "count": 14,
+        "rate": 0.9333333333333333
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": -9.999388411536886,
+      "mean_regret": 9.90102764791028,
+      "max_regret": 10.050323953811176,
+      "action_counts": {
+       "NO_OP": 15,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "incoming_left": {
+      "n": 18,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.010384169821650411,
+        "min": 0.0
+       },
+       "collision": {
+        "count": 16,
+        "rate": 0.8888888888888888
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": -9.434060274622794,
+      "mean_regret": 9.442712887229224,
+      "max_regret": 10.110338777984012,
+      "action_counts": {
+       "NO_OP": 18,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "incoming_right": {
+      "n": 13,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "collision": {
+        "count": 13,
+        "rate": 1.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": -10.0,
+      "mean_regret": 9.186643740871256,
+      "max_regret": 10.046791972154967,
+      "action_counts": {
+       "NO_OP": 13,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "off_path": {
+      "n": 17,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.6449151348511768,
+        "min": 0.30948512904482434
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.4701742561484248,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 17,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "receding": {
+      "n": 7,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.8962231117557746,
+        "min": 0.6169195954918046
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 7,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "static": {
+      "n": 7,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 1.783767656134542,
+        "min": 1.1986476310787033
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 7,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     }
+    }
+   }
+  },
+  "quote": {
+   "dream": {
+    "mode": "stacked",
+    "n_query_rows": 4800,
+    "n_train_rows": 240,
+    "n_features": 1160,
+    "active_outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "constant_outcomes": [
+     "fall",
+     "command_travel_m"
+    ],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 0,
+      "n_chunks": 1,
+      "n_train": 720,
+      "n_query": 14400,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 20912,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 20912,
+    "usage": {
+     "current_usage": 260000,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 260000,
+     "daily_token_limit": 35000000,
+     "daily_usage": 260000,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-22 00:00:00 UTC",
+     "monthly_tokens_used": 260000,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 260000,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 34740000,
+    "tokens_quoted_for_billed_calls": 210000,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   },
+   "dev": {
+    "mode": "stacked",
+    "n_query_rows": 400,
+    "n_train_rows": 240,
+    "n_features": 1160,
+    "active_outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "constant_outcomes": [
+     "fall",
+     "command_travel_m"
+    ],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 0,
+      "n_chunks": 1,
+      "n_train": 720,
+      "n_query": 1200,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 10000,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 10000,
+    "usage": {
+     "current_usage": 260000,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 260000,
+     "daily_token_limit": 35000000,
+     "daily_usage": 260000,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-22 00:00:00 UTC",
+     "monthly_tokens_used": 260000,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 260000,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 34740000,
+    "tokens_quoted_for_billed_calls": 210000,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   }
+  },
+  "scores": {
+   "path": "D:/BerlinPrior/results/runs/v0/scores.npz",
+   "sha256": "597b6212a6aded79ff6a33ab7749331230c0359e0706265bc713b86853c5b027",
+   "shape": [
+    1200,
+    4
+   ],
+   "request_keys": [
+    "1815d46f18be57d038ee26c49116fcb06a4353f9a901c70f89fe9780ae672b56"
+   ]
+  },
+  "dev_teacher": {
+   "residual_mae": {
+    "min_separation_m": {
+     "physics_only": 0.07725771036276254,
+     "teacher": 0.05844128134218753
+    },
+    "collision": {
+     "physics_only": 0.23354123175195685,
+     "teacher": 0.19131310677233748
+    },
+    "fall": {
+     "physics_only": 0.0,
+     "teacher": 0.0
+    },
+    "recovery_time_s": {
+     "physics_only": 0.0018500000000000005,
+     "teacher": 0.0018541476507797183
+    },
+    "command_travel_m": {
+     "physics_only": 0.0,
+     "teacher": 0.0
+    }
+   },
+   "residual_mae_note": "mean |measured - point| per outcome; physics only: the physics guess; teacher: the predicted mean for binary outcomes and the predicted median for regression outcomes, clipped to the outcome bounds",
+   "teacher": {
+    "n": 100,
+    "outcomes": {
+     "min_separation_m": {
+      "mean": 0.7537663641296665,
+      "min": 0.0
+     },
+     "collision": {
+      "count": 1,
+      "rate": 0.01
+     },
+     "fall": {
+      "count": 0,
+      "rate": 0.0
+     },
+     "recovery_time_s": {
+      "mean": 0.0006000000000000005,
+      "min": 0.0
+     },
+     "command_travel_m": {
+      "mean": 0.33,
+      "min": 0.0
+     }
+    },
+    "mean_measured_objective": 0.11106820116151955,
+    "mean_regret": 0.009411512652784322,
+    "max_regret": 0.3000000000000007,
+    "action_counts": {
+     "NO_OP": 45,
+     "DODGE_LEFT": 21,
+     "DODGE_RIGHT": 34,
+     "RETREAT": 0
+    },
+    "by_kind": {
+     "ambiguous": {
+      "n": 8,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.5103053499248056,
+        "min": 0.3766087172009841
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.6,
+        "min": 0.6
+       }
+      },
+      "mean_measured_objective": 0.1810381028830238,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 0,
+       "DODGE_LEFT": 2,
+       "DODGE_RIGHT": 6,
+       "RETREAT": 0
+      }
+     },
+     "background_motion": {
+      "n": 3,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 2.0,
+        "min": 2.0
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 3,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "empty": {
+      "n": 12,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 2.0,
+        "min": 2.0
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 12,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "incoming_center": {
+      "n": 15,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.17961161595024783,
+        "min": 0.058141580686205424
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0013333333333333346,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.5999999999999999,
+        "min": 0.6
+       }
+      },
+      "mean_measured_objective": -0.12105505071641881,
+      "mean_regret": 0.02269428708981342,
+      "max_regret": 0.12042568796523329,
+      "action_counts": {
+       "NO_OP": 0,
+       "DODGE_LEFT": 6,
+       "DODGE_RIGHT": 9,
+       "RETREAT": 0
+      }
+     },
+     "incoming_left": {
+      "n": 18,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.29913862205718483,
+        "min": 0.037654639893071946
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0022222222222222244,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.6,
+        "min": 0.6
+       }
+      },
+      "mean_measured_objective": -0.0019724890539261956,
+      "mean_regret": 0.010625101660355876,
+      "max_regret": 0.19125182988640577,
+      "action_counts": {
+       "NO_OP": 0,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 18,
+       "RETREAT": 0
+      }
+     },
+     "incoming_right": {
+      "n": 13,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.2327975870251017,
+        "min": 0.0
+       },
+       "collision": {
+        "count": 1,
+        "rate": 0.07692307692307693
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.5999999999999999,
+        "min": 0.6
+       }
+      },
+      "mean_measured_objective": -0.8364331822056675,
+      "mean_regret": 0.02307692307692313,
+      "max_regret": 0.3000000000000007,
+      "action_counts": {
+       "NO_OP": 0,
+       "DODGE_LEFT": 12,
+       "DODGE_RIGHT": 1,
+       "RETREAT": 0
+      }
+     },
+     "off_path": {
+      "n": 17,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.6723070688662718,
+        "min": 0.4082380163233327
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.03529411764705882,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.4637339544399057,
+      "mean_regret": 0.006440301708519078,
+      "max_regret": 0.10948512904482433,
+      "action_counts": {
+       "NO_OP": 16,
+       "DODGE_LEFT": 1,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "receding": {
+      "n": 7,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 0.8962231117557746,
+        "min": 0.6169195954918046
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 7,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     },
+     "static": {
+      "n": 7,
+      "outcomes": {
+       "min_separation_m": {
+        "mean": 1.783767656134542,
+        "min": 1.1986476310787033
+       },
+       "collision": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "fall": {
+        "count": 0,
+        "rate": 0.0
+       },
+       "recovery_time_s": {
+        "mean": 0.0,
+        "min": 0.0
+       },
+       "command_travel_m": {
+        "mean": 0.0,
+        "min": 0.0
+       }
+      },
+      "mean_measured_objective": 0.5,
+      "mean_regret": 0.0,
+      "max_regret": 0.0,
+      "action_counts": {
+       "NO_OP": 7,
+       "DODGE_LEFT": 0,
+       "DODGE_RIGHT": 0,
+       "RETREAT": 0
+      }
+     }
+    }
+   },
+   "request_keys": [
+    "adfbe696a52deb4bfa17ca89d5f69d68e5a8424e7d717eb1a4d564bb23e7c00d"
+   ]
+  }
+ },
+ "train": {
+  "state": "done",
+  "started_utc": "2026-11-21T21:26:25.448152+00:00",
+  "argv": [
+   "train",
+   "--run",
+   "v0",
+   "--skill",
+   "dodge_vision",
+   "--dream",
+   "results/runs/v0/dream",
+   "--scores",
+   "results/runs/v0/scores.npz",
+   "--steps",
+   "3000"
+  ],
+  "config_digest": "9ab479de6365f0370f169cb70af7e9ba4c4c567590b97e00faf2a1bf6241d5ee",
+  "dream": "results/runs/v0/dream",
+  "scores": "results/runs/v0/scores.npz",
+  "frames": 8,
+  "hidden_sizes": [
+   128
+  ],
+  "max_steps": 3000,
+  "student": "D:/BerlinPrior/results/runs/v0/student",
+  "network_sha256": "38d1e36fe70b858685af9c6f48c3433db25f878c101d2a51ea85e1b83b554b49",
+  "split": {
+   "by": "group",
+   "validation_fraction": 0.1,
+   "n_train_rows": 1080,
+   "n_validation_rows": 120,
+   "n_groups": 300
+  },
+  "parity": {
+   "threat": {
+    "n_inputs_checked": 1200,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 4.440892098500626e-16,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     1536000
+    ],
+    "total_spikes_per_layer_torch": [
+     456000
+    ],
+    "total_spikes_per_layer_numpy": [
+     456000
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "action": {
+    "n_inputs_checked": 1200,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 8.881784197001252e-16,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     1536000
+    ],
+    "total_spikes_per_layer_torch": [
+     456000
+    ],
+    "total_spikes_per_layer_numpy": [
+     456000
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "combined": {
+    "n_inputs_checked": 1200,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": {
+     "threat": 0.0,
+     "action": 0.0
+    },
+    "action_decisions_differing": 0
+   }
+  },
+  "training": {
+   "loss": "per head KL(target || softmax(logits)) averaged over that head's rows, weighted by the head's share of the batch, plus spike_rate_penalty x mean hidden firing rate; early stopping on the sampling-weighted validation KL",
+   "acceptance": "the restored weights must have a total validation KL below initialisation, a validation KL per head below that of the head's mean training target (the best constant prediction), and spikes in every hidden layer on the validation rows; otherwise fit raises TrainingError",
+   "heads": [
+    "threat",
+    "action"
+   ],
+   "sampling": {
+    "threat": 0.5,
+    "action": 0.5
+   },
+   "n_train_rows": {
+    "threat": 1080,
+    "action": 1080
+   },
+   "n_validation_rows": {
+    "threat": 120,
+    "action": 120
+   },
+   "steps_run": 700,
+   "best_step": 200,
+   "stopped_early": true,
+   "initial_validation_loss": 0.8403791145248358,
+   "best_validation_loss": 0.5593138564474398,
+   "best_validation_loss_per_head": {
+    "threat": 0.643920915429344,
+    "action": 0.4747067974655356
+   },
+   "constant_predictor_validation_loss": {
+    "threat": 0.6507717143962536,
+    "action": 0.49437567714244157
+   },
+   "constant_predictor_validation_loss_null_means": "infinite",
+   "train_loss_curve": [
+    [
+     100,
+     0.662579092727221
+    ],
+    [
+     200,
+     0.5823309569140744
+    ],
+    [
+     300,
+     0.5822197641873832
+    ],
+    [
+     400,
+     0.5854157840877285
+    ],
+    [
+     500,
+     0.5830026635423382
+    ],
+    [
+     600,
+     0.585942351137479
+    ],
+    [
+     700,
+     0.5854849528554575
+    ]
+   ],
+   "validation_loss_curve": [
+    [
+     0,
+     {
+      "threat": 0.675636568142675,
+      "action": 1.0051216609069966
+     }
+    ],
+    [
+     100,
+     {
+      "threat": 0.6445441267618838,
+      "action": 0.4888836279670109
+     }
+    ],
+    [
+     200,
+     {
+      "threat": 0.643920915429344,
+      "action": 0.4747067974655356
+     }
+    ],
+    [
+     300,
+     {
+      "threat": 0.6468449264153154,
+      "action": 0.4890433295076536
+     }
+    ],
+    [
+     400,
+     {
+      "threat": 0.6780631960663999,
+      "action": 0.514727856347262
+     }
+    ],
+    [
+     500,
+     {
+      "threat": 0.6564980564348488,
+      "action": 0.5705733314936865
+     }
+    ],
+    [
+     600,
+     {
+      "threat": 0.688841996546634,
+      "action": 0.5067136477175522
+     }
+    ],
+    [
+     700,
+     {
+      "threat": 0.6665290853549702,
+      "action": 0.5124114695602545
+     }
+    ]
+   ],
+   "validation_total_curve": [
+    [
+     0,
+     0.8403791145248358
+    ],
+    [
+     100,
+     0.5667138773644473
+    ],
+    [
+     200,
+     0.5593138564474398
+    ],
+    [
+     300,
+     0.5679441279614845
+    ],
+    [
+     400,
+     0.596395526206831
+    ],
+    [
+     500,
+     0.6135356939642677
+    ],
+    [
+     600,
+     0.5977778221320931
+    ],
+    [
+     700,
+     0.5894702774576124
+    ]
+   ],
+   "initial_firing_rate_per_layer": [
+    0.18074869791666667
+   ],
+   "firing_rate_per_layer": [
+    0.296875
+   ],
+   "dead_fraction_per_layer": [
+    0.703125
+   ],
+   "saturated_fraction_per_layer": [
+    0.296875
+   ],
+   "silent_layers": [],
+   "wall_seconds": 15.256892299978063,
+   "seed": 549658744,
+   "torch_threads": 1,
+   "versions": {
+    "torch": "2.15.0+cpu",
+    "snntorch": "1.0.0",
+    "numpy": "2.5.5",
+    "python": "3.13.16"
+   },
+   "optimizer": {
+    "name": "Adam",
+    "lr": 0.002,
+    "betas": [
+     0.9,
+     0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0
+   }
+  },
+  "wall_s": 18.12496350001311
+ }
+}

@@ -4,7 +4,9 @@ Lane contract (Person B, observed-input skills such as dodge_vision and ramp)
 -----------------------------------------------------------------------------
 Inputs are the files of the shared array contract (C candidates in the spec's action order, K
 outcomes in the spec's outcome order, D = frames x N x N window features in [0, 1], oldest
-frame first as learned_judgment.vision.flatten_window):
+frame first as learned_judgment.vision.flatten_window; a skill whose features are not image
+windows, such as ramp, writes "frames": null and any D features in [0, 1], which train uses as
+stored and save_student records as "input": {"features": D, "encoding"}):
 
     rows file   <dir>/rows.npz   scenario_index (n,) int64, decision_time_s (n,) float64,
                                  action (n,) int64, features (n, D) float32,
@@ -962,7 +964,7 @@ def save_student(
     network: SpikingNetwork,
     spec: Any,
     *,
-    frames: int,
+    frames: int | None,
     config: Mapping[str, Any],
     thresholds: Mapping[str, float] | None = None,
     provenance: Mapping[str, Any],
@@ -974,16 +976,19 @@ def save_student(
     "action": [2, 2 + C]} (only "action": [0, C] without a NO_OP), "no_op_index", "input":
     {"frames", "frame_size", "encoding"}, "vision": the VisionSettings for ``frames``,
     "thresholds": thresholds or null, "provenance", "network": {"files", "sha256"}}.
+    frames None (features that are not image windows): "input": {"features": D (the network's
+    input width), "encoding"} and "vision": null.
 
     Raises ValueError when the network's input or output width does not fit the spec and frames.
     """
     checked = _check_spec(spec)
-    vision = VisionSettings.from_config(config, frames=frames)
+    vision = None if frames is None else VisionSettings.from_config(config, frames=frames)
     heads = _heads(checked)
     outputs = max(stop for _, stop in heads.values())
-    if not isinstance(network, SpikingNetwork) or network.n_inputs != vision.n_features or network.n_outputs != outputs:
+    inputs = getattr(network, "n_inputs", None) if vision is None else vision.n_features
+    if not isinstance(network, SpikingNetwork) or network.n_inputs != inputs or network.n_outputs != outputs:
         raise ValueError(
-            f"the network must take {vision.n_features} inputs and give {outputs} outputs; "
+            f"the network must take {inputs} inputs and give {outputs} outputs; "
             f"got {getattr(network, 'layer_sizes', type(network).__name__)}"
         )
     if thresholds is not None and not isinstance(thresholds, Mapping):
@@ -992,7 +997,10 @@ def save_student(
         raise TypeError(f"provenance must be a mapping; got {type(provenance).__name__}")
     folder = Path(directory)
     folder.mkdir(parents=True, exist_ok=True)
-    input_block = {"frames": vision.frames, "frame_size": vision.frame_size, "encoding": INPUT_ENCODING}
+    if vision is None:
+        input_block = {"features": network.n_inputs, "encoding": INPUT_ENCODING}
+    else:
+        input_block = {"frames": vision.frames, "frame_size": vision.frame_size, "encoding": INPUT_ENCODING}
     digest = save_network(
         folder / "network",
         network,
@@ -1005,7 +1013,7 @@ def save_student(
         "heads": heads,
         "no_op_index": checked.no_op_index,
         "input": input_block,
-        "vision": dataclasses.asdict(vision),
+        "vision": None if vision is None else dataclasses.asdict(vision),
         "thresholds": None if thresholds is None else dict(thresholds),
         "provenance": dict(provenance),
         "network": {"files": ["network.npz", "network.json"], "sha256": digest},
@@ -1369,9 +1377,14 @@ def _train_command(args: argparse.Namespace, config: Mapping[str, Any], spec: An
             if not np.array_equal(archive[name], dream[name]):
                 raise ValueError(f"{scores_path} {name} differs from the dream's: the scores belong to another dream")
         request_keys = [str(key) for key in archive["request_keys"]]
-    stored = int(dream["meta"]["frames"])
-    frames = stored if args.frames is None else int(args.frames)
-    features = _newest_frames(dream["features"], config, stored, frames)
+    if dream["meta"]["frames"] is None:  # features that are not image windows (e.g. ramp): used as stored
+        if args.frames is not None:
+            raise ValueError("--frames applies to image windows only; this dream's meta has frames null")
+        frames, features = None, np.asarray(dream["features"])
+    else:
+        stored = int(dream["meta"]["frames"])
+        frames = stored if args.frames is None else int(args.frames)
+        features = _newest_frames(dream["features"], config, stored, frames)
     hidden = list(args.hidden) if args.hidden else list(require(config, f"observed.{checked.name}.snn_hidden_sizes"))
     steps = int(args.steps) if args.steps is not None else int(require(config, f"observed.{checked.name}.snn_max_steps"))
     seed = int(require(config, "runtime.seed"))
