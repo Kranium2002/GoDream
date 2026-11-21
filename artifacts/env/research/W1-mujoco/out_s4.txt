@@ -1,0 +1,13 @@
+MUJOCO_GL env: None
+mujoco 4.0.1
+GLContext class: mujoco.glfw GLContext
+offscreen buffer (offwidth x offheight): 640 480
+frame: ndarray (240, 320, 3) uint8 min 0 max 255 std 41.89 sha256 387f969662f37bc8
+GL_VENDOR: Intel
+GL_RENDERER: Intel(R) HD Graphics 620
+GL_VERSION: 4.5.0 - Build 24.20.100.6344
+glfw lib version: 3.4.0 Win32 WGL Null EGL OSMesa VisualC DLL
+window visible attrib: 0
+depth: (240, 320) float32 min 1.011 max 41.069
+wrote ~/AppData/Local/Temp/claude/b5a20353bdb366d1/69c7996f-bc6a-4bc2-bb52-6077272ed315/scratchpad/w1/m/frame.ppm
+RENDER_OK

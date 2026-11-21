@@ -1,0 +1,11 @@
+mujoco 4.0.1
+default gravity [ 0.    0.   -9.81] default floor friction [1.e+00 5.e-03 1.e-04]
+upright gravity, mu=1.0   -> x after 1 s: 0.00000
+tilted 20 deg,  mu=1.0   -> x after 1 s: 0.00194  (contact.friction[0]=1.0, tan20=0.364 so it sticks)
+tilted 20 deg,  mu=0.1   -> x after 1 s: 1.21911  (contact.friction[0]=0.1, Coulomb estimate 1.217)
+go2 floor: friction [1.e+00 5.e-03 1.e-04] priority 0 condim 3
+go2 FL foot: friction [0.8  0.02 0.01] priority 1 condim 6
+FL-floor contact friction (as loaded):       (array([0.8 , 0.8 , 0.02, 0.01, 0.01]), 6)
+after floor friction -> 0.2 (foot priority):  (array([0.8 , 0.8 , 0.02, 0.01, 0.01]), 6)
+after floor priority -> 2:                    (array([2.e-01, 2.e-01, 5.e-03, 1.e-04, 1.e-04]), 3)
+floor priority back 0, foot friction -> 0.3:  (array([0.3 , 0.3 , 0.02, 0.01, 0.01]), 6)

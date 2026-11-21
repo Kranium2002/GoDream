@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "~\AppData\Local\Temp\claude\b5a20353bdb366d1\69c7996f-bc6a-4bc2-bb52-6077272ed315\scratchpad\w1\m\.venv_core\Lib\site-packages\mujoco\rendering\classic\gl_context.py", line 53, in <module>
+    from mujoco.glfw import GLContext as _GLContext
+  File "~\AppData\Local\Temp\claude\b5a20353bdb366d1\69c7996f-bc6a-4bc2-bb52-6077272ed315\scratchpad\w1\m\.venv_core\Lib\site-packages\mujoco\glfw\__init__.py", line 19, in <module>
+    import glfw
+ModuleNotFoundError: No module named 'glfw'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "~\AppData\Local\Temp\claude\b5a20353bdb366d1\69c7996f-bc6a-4bc2-bb52-6077272ed315\scratchpad\w1\m\scripts\s4_renderer.py", line 14, in <module>
+    r = mujoco.Renderer(m, height=240, width=320)
+  File "~\AppData\Local\Temp\claude\b5a20353bdb366d1\69c7996f-bc6a-4bc2-bb52-6077272ed315\scratchpad\w1\m\.venv_core\Lib\site-packages\mujoco\rendering\classic\renderer.py", line 102, in __init__
+    self._gl_context = gl_context_cls(width, height)
+                       ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "~\AppData\Local\Temp\claude\b5a20353bdb366d1\69c7996f-bc6a-4bc2-bb52-6077272ed315\scratchpad\w1\m\.venv_core\Lib\site-packages\mujoco\rendering\classic\gl_context.py", line 62, in __init__
+    raise ImportError(
+    ...<3 lines>...
+    ) from _import_error
+ImportError: Failed to import OpenGL backend (MUJOCO_GL=''): No module named 'glfw'. Ensure that 'glfw' and 'pyopengl' are installed.
+MUJOCO_GL env: None
+mujoco 4.0.1
+GLContext class: mujoco.rendering.classic.gl_context _MissingGLContext
+offscreen buffer (offwidth x offheight): 640 480
+RENDER_FAILED

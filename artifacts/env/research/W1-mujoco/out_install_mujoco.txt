@@ -1,0 +1,19 @@
+Resolved 8 packages in 14ms
+Downloading pyopengl (3.0MiB)
+Downloading mujoco-studio (7.6MiB)
+Downloading mujoco-studio-wasm (2.3MiB)
+Downloading mujoco-core (7.8MiB)
+ Downloaded mujoco-studio-wasm
+ Downloaded mujoco-studio
+ Downloaded mujoco-core
+ Downloaded pyopengl
+Prepared 7 packages in 18.63s
+Installed 8 packages in 13.14s
+ + glfw==2.11.0
+ + mujoco==4.0.1
+ + mujoco-core==4.0.1
+ + mujoco-studio==4.0.1
+ + mujoco-studio-wasm==4.0.1
+ + numpy==2.5.5
+ + pyopengl==3.1.10
+ + websockets==17.4

@@ -1,0 +1,4 @@
+GLContext class: mujoco.glfw GLContext
+frame: ndarray (240, 320, 3) uint8 min 0 max 255 std 41.89 sha256 387f969662f37bc8
+GL_RENDERER: Intel(R) HD Graphics 620
+RENDER_OK

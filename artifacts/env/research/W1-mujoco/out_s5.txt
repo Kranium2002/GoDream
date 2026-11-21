@@ -1,0 +1,12 @@
+### process 1
+mujoco 4.0.1 numpy 2.5.5
+[zero ctrl] A 5e9794b7d03cc2c49673a22505617b56  B 5e9794b7d03cc2c49673a22505617b56  C 5e9794b7d03cc2c49673a22505617b56  A==B bytes: True  A==C bytes: True
+[zero ctrl] final base z 0.077230 time 4.000s
+[seeded random ctrl] A 6bde5c587bd3e8fb6926e13c2e0af153  B 6bde5c587bd3e8fb6926e13c2e0af153  C 6bde5c587bd3e8fb6926e13c2e0af153  A==B bytes: True  A==C bytes: True
+[seeded random ctrl] final base z 0.076960 time 4.000s
+### process 2
+mujoco 4.0.1 numpy 2.5.5
+[zero ctrl] A 5e9794b7d03cc2c49673a22505617b56  B 5e9794b7d03cc2c49673a22505617b56  C 5e9794b7d03cc2c49673a22505617b56  A==B bytes: True  A==C bytes: True
+[zero ctrl] final base z 0.077230 time 4.000s
+[seeded random ctrl] A 6bde5c587bd3e8fb6926e13c2e0af153  B 6bde5c587bd3e8fb6926e13c2e0af153  C 6bde5c587bd3e8fb6926e13c2e0af153  A==B bytes: True  A==C bytes: True
+[seeded random ctrl] final base z 0.076960 time 4.000s
