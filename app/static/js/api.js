@@ -40,6 +40,7 @@ export function createApi(fetchFn) {
     state: () => call("/api/state"),
     skills: () => call("/api/skills"),
     chat: (messages) => call("/api/chat", { messages }),
+    run: (runId) => call(`/api/runs/${encodeURIComponent(runId)}`),
     startRun: (declaredSpec, confirmCost) => call("/api/runs", { declared_spec: declaredSpec, confirm_cost: confirmCost }),
     // The camera window goes here and nowhere else. captured_ms: the newest frame's capture time, ms since the epoch.
     infer: (window, frames, capturedMs) => call("/api/infer", { window: Array.from(window), frames, captured_ms: capturedMs }),

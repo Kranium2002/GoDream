@@ -57,6 +57,13 @@ test("infer() POSTs the window as a plain list with its frame count and capture 
   assert.equal(r.data.action, "NO_OP");
 });
 
+test("run() GETs /api/runs/{run_id} with the id escaped", async () => {
+  const { calls, fetchFn } = recorder(() => json(200, { state: "running", steps: [] }));
+  const r = await createApi(fetchFn).run("run 7/x");
+  assert.equal(calls[0].url, "/api/runs/run%207%2Fx");
+  assert.equal(r.data.state, "running");
+});
+
 test("an error answer carries the server's code, message and body", async () => {
   const body = { code: "cost_confirmation_required", message: "Confirm the cost.", usage: { requests: 3 } };
   const { fetchFn } = recorder(() => json(409, body));
