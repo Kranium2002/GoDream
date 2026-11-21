@@ -1,0 +1,110 @@
+== 0. registry and CLI ==
+available_skills(): ('dodge',)
+python -m learned_judgment.pipeline --help -> exit 0
+  usage: python -m learned_judgment.pipeline [-h] [--config CONFIG]
+                                             {run,status,cost,decide} ...
+  
+  End-to-end run of one skill in one world: collect, residual model, dream,
+  train, evaluate.
+  
+  positional arguments:
+    {run,status,cost,decide}
+      run                 run steps of one skill run
+      status              registered skills and run manifests
+      cost                cost preview of the dream step (no prediction is sent)
+      decide              one decision for one situation
+  
+  options:
+    -h, --help            show this help message and exit
+    --config CONFIG       config.yaml to use (default: the repository's
+                          config.yaml)
+python -m learned_judgment.pipeline run --help -> exit 0
+  usage: python -m learned_judgment.pipeline run [-h] --skill SKILL
+                                                 --preset PRESET --run-id RUN_ID
+                                                 [--base-seed BASE_SEED]
+                                                 --steps STEPS [--method METHOD]
+                                                 [--attempts ATTEMPTS]
+                                                 [--context CONTEXT]
+                                                 [--dreams DREAMS]
+                                                 [--split {dev,shift}]
+                                                 [--eval-situations EVAL_SITUATIONS]
+                                                 [--eval-repeats EVAL_REPEATS]
+                                                 [--eval-methods EVAL_METHODS]
+  
+  options:
+    -h, --help            show this help message and exit
+    --skill SKILL         registered skill name
+    --preset PRESET       world preset (config.yaml world.presets)
+    --run-id RUN_ID       run id (letters, digits, '_' and '-')
+    --base-seed BASE_SEED
+                          base seed (default: config.yaml runtime.seed)
+    --steps STEPS         comma list from collect,teacher,dream,train,evaluate
+    --method METHOD       residual method of the teacher and dream steps
+    --attempts ATTEMPTS   context attempts (default: pipeline.default_attempts)
+    --context CONTEXT     attempts the residual model uses (default: all)
+    --dreams DREAMS       dreams (default: engine.dreams_per_skill_initial)
+    --split {dev,shift}   evaluation split
+    --eval-situations EVAL_SITUATIONS
+                          evaluation situations (default:
+                          evaluation.dev_situations_per_skill or
+                          evaluation.shift_situations_per_preset)
+    --eval-repeats EVAL_REPEATS
+                          noise repeats (default: pipeline.evaluation_repeats)
+    --eval-methods EVAL_METHODS
+                          comma list of methods to evaluate (default:
+                          physics_only, --method, and snn_per_skill when the run
+                          has a student)
+python -m learned_judgment.pipeline status -> exit 0
+  {
+   "skill_states": {
+    "config_digest": "958ae47edad876d48808bb4fa85eca460b286f289b42d1540bf6f39da787b7bf",
+    "other_manifests": [],
+    "skills": [
+     {
+      "buildable_without_world": false,
+      "has_for_world": true,
+      "manifests": [],
+      "reason": "RuntimeError: DodgeSpec.sample_situations needs a throw_sampler (Person A's throw model, (rng, n) -> (n, 7)) and the world's declared values: an independent box over the ball values would mostly miss the dog, so DODGE has no default sampler",
+      "skill": "dodge"
+     }
+    ],
+    "unreadable_manifests": []
+   }
+  }
+
+== 1. real DODGE spec (Person A's throw model; no world, no episode) ==
+load_skill('dodge', config) without a world -> RuntimeError: DodgeSpec.sample_situations needs a throw_sampler (Person A's throw model, (rng, n) -> (n, 7)) and the world's declared values: an independent box over the ball
+S=9 A=3 K=5 outcome_type=both
+situation: ('ball_rel_x_m', 'ball_rel_y_m', 'ball_rel_z_m', 'ball_vel_x_m_s', 'ball_vel_y_m_s', 'ball_vel_z_m_s', 'dog_forward_speed_m_s', 'declared_payload_kg', 'declared_surface')
+actions: ('side_velocity_m_s', 'start_delay_s', 'hold_duration_s') outcomes: ('min_separation_m', 'collision', 'fall', 'recovery_time_s', 'lateral_command_m') primary: min_separation_m
+layout F=17 blocks={'situation': 9, 'action': 3, 'physics': 5, 'extra': 0} categorical=((8, ('default',)),)
+layout names: ('ball_rel_x_m', 'ball_rel_y_m', 'ball_rel_z_m', 'ball_vel_x_m_s', 'ball_vel_y_m_s', 'ball_vel_z_m_s', 'dog_forward_speed_m_s', 'declared_payload_kg', 'declared_surface', 'side_velocity_m_s', 'start_delay_s', 'hold_duration_s', 'physics_min_separation_m', 'physics_collision', 'physics_fall', 'physics_recovery_time_s', 'physics_lateral_command_m')
+decide_batch physics_only: candidates (108, 3), scores (108,), chosen 96, physics_index 96
+encode_situation with an extra non-feature key -> ValueError: row keys do not match the schema; missing=[] extra=['scenario_truth']
+
+== 2. FIXTURE vision spec (pure-function probe; placeholder physics; not evidence) ==
+validate_spec(VisionProbeSpec) passed in 0.02 s (S=1152, A=1, K=2)
+validate_spec(VisionProbeWithCommands) passed in 0.07 s (S=1152, A=1, K=2)
+candidate_actions(points_per_dim=[1]) -> [[0.0], [1.0], [2.0], [3.0]] (categorical: every level, points ignored)
+candidate_actions(points_per_dim=[7]) shape -> (4, 1)
+vision layout F=1155 blocks={'situation': 1152, 'action': 1, 'physics': 2, 'extra': 0} categorical=((1152, ('NO_OP', 'DODGE_LEFT', 'DODGE_RIGHT', 'RETREAT')),)
+decide_batch physics_only x100: 0.013 s; candidates (4, 1)
+query features for one situation: (4, 1155)
+dream physics_only n=2000 in 0.27 s: situations (2000, 1152), candidates (2000, 4, 1), scores (2000, 4), chosen (2000,); npz 18.8 MB
+soft_targets shape: (2000, 4)
+InputEncoder width: 1152
+one real AttemptRow JSON line: 39066 bytes (in memory, not written)
+commands() sending vel_x=-1.5 -> SkillSpecError: commands({'px_t0_r0_c0': 0.6370685215495258, 'px_t0_r0_c1': 0.9658724830513885, 'px_t0_r0_c2': 0.7775726611690644, 'px_t0_r0_c3': 0.9619823354074251, 'px_t0_r0_c4': 0.542586140731988, 'px_t0_r0_c5': 0
+
+== 3. TabPFN free get_settings (no predict) ==
+default_model_version: ModelVersion.V3_5
+max_model_limit: {'train_set_max_rows': 1100000, 'train_set_max_cells': 200000000, 'train_set_max_upload_cells': 500000000, 'test_set_max_rows': 1100000, 'max_cols': 23000, 'test_set_max_cells': 200000000, 'test_set_max_rows_w_full_regression_output': 300000}
+model_limits[v2]: {'train_set_max_rows': 50000, 'train_set_max_cells': 20000000, 'train_set_max_upload_cells': 20000000, 'test_set_max_rows': 50000, 'max_cols': 2000, 'test_set_max_cells': 20000000, 'test_set_max_rows_w_full_regression_output': 300000}
+model_limits[v2.5]: {'train_set_max_rows': 50000, 'train_set_max_cells': 20000000, 'train_set_max_upload_cells': 20000000, 'test_set_max_rows': 50000, 'max_cols': 2000, 'test_set_max_cells': 20000000, 'test_set_max_rows_w_full_regression_output': 300000}
+model_limits[v2.6]: {'train_set_max_rows': 100000, 'train_set_max_cells': 20000000, 'train_set_max_upload_cells': 20000000, 'test_set_max_rows': 100000, 'max_cols': 2000, 'test_set_max_cells': 20000000, 'test_set_max_rows_w_full_regression_output': 300000}
+model_limits[v3]: {'train_set_max_rows': 1000000, 'train_set_max_cells': 200000000, 'train_set_max_upload_cells': 200000000, 'test_set_max_rows': 1000000, 'max_cols': 2000, 'test_set_max_cells': 200000000, 'test_set_max_rows_w_full_regression_output': 300000}
+model_limits[v3.5]: {'train_set_max_rows': 1100000, 'train_set_max_cells': 200000000, 'train_set_max_upload_cells': 500000000, 'test_set_max_rows': 1100000, 'max_cols': 23000, 'test_set_max_cells': 200000000, 'test_set_max_rows_w_full_regression_output': 300000}
+model_limits[v3.5-fast]: {'train_set_max_rows': 1100000, 'train_set_max_cells': 200000000, 'train_set_max_upload_cells': 500000000, 'test_set_max_rows': 1100000, 'max_cols': 23000, 'test_set_max_cells': 200000000, 'test_set_max_rows_w_full_regression_output': 300000}
+
+exit 0
+process exit code 0

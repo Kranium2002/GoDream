@@ -1,0 +1,622 @@
+
+=== mujoco: "3.11.0"
+
+=== MUJOCO_GL: null
+
+=== platform: "Windows-11-10.0.26300-SP0"
+
+=== processor: "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel"
+
+=== python: "3.13.16"
+
+=== world_init_wall_s: 0.319
+
+=== gl_context_class: "mujoco.glfw.GLContext"
+
+=== timing_A: [
+ {
+  "size": 96,
+  "reset_wall_s": 0.647,
+  "step_wall_s_1.0s_(50_control_periods)": 0.1292,
+  "step_ms_per_control_period": {
+   "median_ms": 2.212,
+   "p95_ms": 4.067,
+   "n": 50
+  },
+  "scratch_sync_plus_camera_ms": {
+   "median_ms": 0.061,
+   "p95_ms": 0.101,
+   "n": 51
+  },
+  "update_scene_ms": {
+   "median_ms": 0.017,
+   "p95_ms": 0.023,
+   "n": 51
+  },
+  "render_ms": {
+   "median_ms": 44.968,
+   "p95_ms": 57.474,
+   "n": 51
+  },
+  "update_scene_plus_render_ms": {
+   "median_ms": 44.987,
+   "p95_ms": 57.493,
+   "n": 51
+  },
+  "render_only_same_state_x50_ms": {
+   "median_ms": 45.691,
+   "p95_ms": 56.044,
+   "n": 50
+  }
+ },
+ {
+  "size": 64,
+  "reset_wall_s": 0.336,
+  "step_wall_s_1.0s_(50_control_periods)": 0.1858,
+  "step_ms_per_control_period": {
+   "median_ms": 3.725,
+   "p95_ms": 4.758,
+   "n": 50
+  },
+  "scratch_sync_plus_camera_ms": {
+   "median_ms": 0.09,
+   "p95_ms": 0.135,
+   "n": 51
+  },
+  "update_scene_ms": {
+   "median_ms": 0.022,
+   "p95_ms": 0.028,
+   "n": 51
+  },
+  "render_ms": {
+   "median_ms": 65.785,
+   "p95_ms": 76.552,
+   "n": 51
+  },
+  "update_scene_plus_render_ms": {
+   "median_ms": 65.807,
+   "p95_ms": 76.578,
+   "n": 51
+  },
+  "render_only_same_state_x50_ms": {
+   "median_ms": 67.628,
+   "p95_ms": 77.566,
+   "n": 50
+  }
+ },
+ {
+  "size": 12,
+  "reset_wall_s": 0.543,
+  "step_wall_s_1.0s_(50_control_periods)": 0.2407,
+  "step_ms_per_control_period": {
+   "median_ms": 4.953,
+   "p95_ms": 6.029,
+   "n": 50
+  },
+  "scratch_sync_plus_camera_ms": {
+   "median_ms": 0.109,
+   "p95_ms": 0.155,
+   "n": 51
+  },
+  "update_scene_ms": {
+   "median_ms": 0.025,
+   "p95_ms": 0.031,
+   "n": 51
+  },
+  "render_ms": {
+   "median_ms": 74.952,
+   "p95_ms": 100.735,
+   "n": 51
+  },
+  "update_scene_plus_render_ms": {
+   "median_ms": 74.977,
+   "p95_ms": 100.762,
+   "n": 51
+  },
+  "render_only_same_state_x50_ms": {
+   "median_ms": 56.471,
+   "p95_ms": 59.769,
+   "n": 50
+  }
+ }
+]
+
+=== model: {
+ "ncam": 0,
+ "camera_names": [],
+ "sites": [
+  [
+   "imu",
+   "base_link",
+   [
+    -0.0256,
+    0.0,
+    0.0423
+   ]
+  ]
+ ],
+ "vis.global_.fovy_deg": 45.0,
+ "vis.global_.ipd": 0.06800000369548798,
+ "offwidth_x_offheight": [
+  640,
+  480
+ ],
+ "near_clip_m_(znear*extent)": 0.0229,
+ "headlight_active_ambient_diffuse": [
+  1,
+  [
+   0.10000000149011612,
+   0.10000000149011612,
+   0.10000000149011612
+  ],
+  [
+   0.4000000059604645,
+   0.4000000059604645,
+   0.4000000059604645
+  ]
+ ],
+ "ntex": 0,
+ "nmat": 4,
+ "nlight": 1,
+ "floor_rgba_matid_group": [
+  [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  -1,
+  0
+ ],
+ "ball_rgba_matid_group": [
+  [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  -1,
+  0
+ ],
+ "default_visible_geomgroups": [
+  1,
+  1,
+  1,
+  0,
+  0,
+  0
+ ],
+ "trunk_visual_mesh_front_x_near_eye_line_m": 0.332
+}
+
+=== A_fovy45
+situation: {"ball_rel_x_m": 3.5161, "ball_rel_y_m": 0.8841, "ball_rel_z_m": 1.0217, "ball_vel_x_m_s": -3.4992, "ball_vel_y_m_s": -1.104, "ball_vel_z_m_s": 2.7587, "dog_forward_speed_m_s": 0.803}
+fovy_deg: 45.0
+pitch_up_deg: 0.0
+ball_rgba: null
+flight_s: 0.817
+n_frames: 51
+frames_with_ball_visible: 5
+visible_t_range_s: [0.0, 0.08]
+render_eye_vs_requested_max_abs_m: 1.535489686510516e-07
+gray_levels_96: {"floor": {"n": 226848, "min": 0.2, "max": 0.4039, "mean": 0.3993}, "sky": {"n": 242970, "min": 0.0, "max": 0.2235, "mean": 0.0009}, "ball": {"n": 198, "min": 0.0118, "max": 0.4745, "mean": 0.2071}, "robot": {"n": 0}}
+footprint_at_distance: {"3.0": {"t_s": 0.08, "eye_ball_dist_m": 3.176, "ball_px_96": 32, "ball_equiv_diam_px_12": 0.798, "expected_diam_px_12_at_centre": 0.856, "cells_touched_12": 2, "max_cell_cover_12": 0.266, "ball_px_gray_mean": 0.148, "max_cell_gray_12": 0.032, "ring_gray_12": 0.0, "contrast_12": 0.032, "max_cell_other_px_sky_floor_robot": [47, 0, 0], "bearing_deg": 15.4, "elev_deg_vs_trunk_x": 21.5}, "2.0": {"in_view": false, "closest_frame": {"t_s": 0.4, "eye_ball_dist_m": 2.02, "bearing_deg": 14.3, "elev_deg_vs_trunk_x": 39.7}, "expected_diam_px_12_if_at_centre": 1.36}, "1.0": {"in_view": false, "closest_frame": {"t_s": 0.98, "eye_ball_dist_m": 0.993, "bearing_deg": -171.0, "elev_deg_vs_trunk_x": 30.5}, "expected_diam_px_12_if_at_centre": 2.72}, "0.5": {"in_view": false, "closest_frame": {"t_s": 0.86, "eye_ball_dist_m": 0.517, "bearing_deg": -172.2, "elev_deg_vs_trunk_x": 31.9}, "expected_diam_px_12_if_at_centre": 5.441}}
+saved_pngs_[stem,dist_m,ball_px_96]: [["A_fovy45_f00_t0.00", 3.445, 36], ["A_fovy45_f01_t0.02", 3.375, 40], ["A_fovy45_f02_t0.04", 3.307, 44], ["A_fovy45_f03_t0.06", 3.24, 46], ["A_fovy45_f04_t0.08", 3.176, 32]]
+per_frame:
+  {"i": 0, "t_s": 0.0, "eye_ball_dist_m": 3.445, "bearing_deg": 15.5, "elev_deg_vs_trunk_x": 14.3, "ball_px_96": 36, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.79, "ball_equiv_diam_px_12": 0.846, "cells_touched_12": 4, "max_cell_cover_12": 0.234, "ball_px_gray_mean": 0.223, "max_cell_gray_12": 0.034, "ring_gray_12": 0.0, "contrast_12": 0.034, "max_cell_other_px_sky_floor_robot": [49, 0, 0]}
+  {"i": 1, "t_s": 0.02, "eye_ball_dist_m": 3.375, "bearing_deg": 15.3, "elev_deg_vs_trunk_x": 15.3, "ball_px_96": 40, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.806, "ball_equiv_diam_px_12": 0.892, "cells_touched_12": 4, "max_cell_cover_12": 0.266, "ball_px_gray_mean": 0.221, "max_cell_gray_12": 0.065, "ring_gray_12": 0.0, "contrast_12": 0.065, "max_cell_other_px_sky_floor_robot": [47, 0, 0]}
+  {"i": 2, "t_s": 0.04, "eye_ball_dist_m": 3.307, "bearing_deg": 15.3, "elev_deg_vs_trunk_x": 16.5, "ball_px_96": 44, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.823, "ball_equiv_diam_px_12": 0.936, "cells_touched_12": 2, "max_cell_cover_12": 0.438, "ball_px_gray_mean": 0.212, "max_cell_gray_12": 0.097, "ring_gray_12": 0.0, "contrast_12": 0.097, "max_cell_other_px_sky_floor_robot": [36, 0, 0]}
+  {"i": 3, "t_s": 0.06, "eye_ball_dist_m": 3.24, "bearing_deg": 15.3, "elev_deg_vs_trunk_x": 18.7, "ball_px_96": 46, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.839, "ball_equiv_diam_px_12": 0.957, "cells_touched_12": 4, "max_cell_cover_12": 0.266, "ball_px_gray_mean": 0.219, "max_cell_gray_12": 0.074, "ring_gray_12": 0.0, "contrast_12": 0.074, "max_cell_other_px_sky_floor_robot": [47, 0, 0]}
+  {"i": 4, "t_s": 0.08, "eye_ball_dist_m": 3.176, "bearing_deg": 15.4, "elev_deg_vs_trunk_x": 21.5, "ball_px_96": 32, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.856, "ball_equiv_diam_px_12": 0.798, "cells_touched_12": 2, "max_cell_cover_12": 0.266, "ball_px_gray_mean": 0.148, "max_cell_gray_12": 0.032, "ring_gray_12": 0.0, "contrast_12": 0.032, "max_cell_other_px_sky_floor_robot": [47, 0, 0]}
+  {"i": 5, "t_s": 0.1, "eye_ball_dist_m": 3.111, "bearing_deg": 15.7, "elev_deg_vs_trunk_x": 23.4, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.874}
+  {"i": 6, "t_s": 0.12, "eye_ball_dist_m": 3.045, "bearing_deg": 16.1, "elev_deg_vs_trunk_x": 24.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.893}
+  {"i": 7, "t_s": 0.14, "eye_ball_dist_m": 2.976, "bearing_deg": 16.3, "elev_deg_vs_trunk_x": 25.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.914}
+  {"i": 8, "t_s": 0.16, "eye_ball_dist_m": 2.907, "bearing_deg": 16.3, "elev_deg_vs_trunk_x": 25.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.936}
+  {"i": 9, "t_s": 0.18, "eye_ball_dist_m": 2.837, "bearing_deg": 16.1, "elev_deg_vs_trunk_x": 26.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.959}
+  {"i": 10, "t_s": 0.2, "eye_ball_dist_m": 2.768, "bearing_deg": 16.0, "elev_deg_vs_trunk_x": 28.1, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.983}
+  {"i": 11, "t_s": 0.22, "eye_ball_dist_m": 2.7, "bearing_deg": 15.9, "elev_deg_vs_trunk_x": 29.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.008}
+  {"i": 12, "t_s": 0.24, "eye_ball_dist_m": 2.63, "bearing_deg": 16.0, "elev_deg_vs_trunk_x": 31.1, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.034}
+  {"i": 13, "t_s": 0.26, "eye_ball_dist_m": 2.558, "bearing_deg": 15.8, "elev_deg_vs_trunk_x": 32.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.063}
+  {"i": 14, "t_s": 0.28, "eye_ball_dist_m": 2.484, "bearing_deg": 15.5, "elev_deg_vs_trunk_x": 33.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.095}
+  {"i": 15, "t_s": 0.3, "eye_ball_dist_m": 2.407, "bearing_deg": 15.2, "elev_deg_vs_trunk_x": 34.1, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.13}
+  {"i": 16, "t_s": 0.32, "eye_ball_dist_m": 2.33, "bearing_deg": 14.9, "elev_deg_vs_trunk_x": 35.1, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.167}
+  {"i": 17, "t_s": 0.34, "eye_ball_dist_m": 2.253, "bearing_deg": 14.5, "elev_deg_vs_trunk_x": 36.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.208}
+  {"i": 18, "t_s": 0.36, "eye_ball_dist_m": 2.175, "bearing_deg": 14.2, "elev_deg_vs_trunk_x": 37.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.251}
+  {"i": 19, "t_s": 0.38, "eye_ball_dist_m": 2.098, "bearing_deg": 14.2, "elev_deg_vs_trunk_x": 38.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.296}
+  {"i": 20, "t_s": 0.4, "eye_ball_dist_m": 2.02, "bearing_deg": 14.3, "elev_deg_vs_trunk_x": 39.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.347}
+  {"i": 21, "t_s": 0.42, "eye_ball_dist_m": 1.938, "bearing_deg": 14.4, "elev_deg_vs_trunk_x": 40.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.404}
+  {"i": 22, "t_s": 0.44, "eye_ball_dist_m": 1.851, "bearing_deg": 14.4, "elev_deg_vs_trunk_x": 41.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.47}
+  {"i": 23, "t_s": 0.46, "eye_ball_dist_m": 1.759, "bearing_deg": 14.4, "elev_deg_vs_trunk_x": 41.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.547}
+  {"i": 24, "t_s": 0.48, "eye_ball_dist_m": 1.664, "bearing_deg": 14.4, "elev_deg_vs_trunk_x": 41.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.635}
+  {"i": 25, "t_s": 0.5, "eye_ball_dist_m": 1.57, "bearing_deg": 14.7, "elev_deg_vs_trunk_x": 42.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.733}
+  {"i": 26, "t_s": 0.52, "eye_ball_dist_m": 1.476, "bearing_deg": 16.1, "elev_deg_vs_trunk_x": 44.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.842}
+  {"i": 27, "t_s": 0.54, "eye_ball_dist_m": 1.38, "bearing_deg": 16.5, "elev_deg_vs_trunk_x": 46.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.971}
+  {"i": 28, "t_s": 0.56, "eye_ball_dist_m": 1.28, "bearing_deg": 16.0, "elev_deg_vs_trunk_x": 47.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.125}
+  {"i": 29, "t_s": 0.58, "eye_ball_dist_m": 1.177, "bearing_deg": 15.5, "elev_deg_vs_trunk_x": 48.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.312}
+  {"i": 30, "t_s": 0.6, "eye_ball_dist_m": 1.071, "bearing_deg": 15.3, "elev_deg_vs_trunk_x": 49.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.54}
+  {"i": 31, "t_s": 0.62, "eye_ball_dist_m": 0.965, "bearing_deg": 15.7, "elev_deg_vs_trunk_x": 51.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.82}
+  {"i": 32, "t_s": 0.64, "eye_ball_dist_m": 0.859, "bearing_deg": 16.5, "elev_deg_vs_trunk_x": 53.1, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.166}
+  {"i": 33, "t_s": 0.66, "eye_ball_dist_m": 0.758, "bearing_deg": 16.9, "elev_deg_vs_trunk_x": 57.1, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.59}
+  {"i": 34, "t_s": 0.68, "eye_ball_dist_m": 0.658, "bearing_deg": 17.9, "elev_deg_vs_trunk_x": 62.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 4.137}
+  {"i": 35, "t_s": 0.7, "eye_ball_dist_m": 0.552, "bearing_deg": 21.5, "elev_deg_vs_trunk_x": 67.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 4.925}
+  {"i": 36, "t_s": 0.72, "eye_ball_dist_m": 0.442, "bearing_deg": 28.5, "elev_deg_vs_trunk_x": 72.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 6.149}
+  {"i": 37, "t_s": 0.74, "eye_ball_dist_m": 0.333, "bearing_deg": 52.3, "elev_deg_vs_trunk_x": 80.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 8.168}
+  {"i": 38, "t_s": 0.76, "eye_ball_dist_m": 0.239, "bearing_deg": 158.2, "elev_deg_vs_trunk_x": 76.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 11.366}
+  {"i": 39, "t_s": 0.78, "eye_ball_dist_m": 0.194, "bearing_deg": -179.5, "elev_deg_vs_trunk_x": 44.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 14.033}
+  {"i": 40, "t_s": 0.8, "eye_ball_dist_m": 0.243, "bearing_deg": -175.0, "elev_deg_vs_trunk_x": 25.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 11.187}
+  {"i": 41, "t_s": 0.82, "eye_ball_dist_m": 0.338, "bearing_deg": -173.5, "elev_deg_vs_trunk_x": 29.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 8.038}
+  {"i": 42, "t_s": 0.84, "eye_ball_dist_m": 0.43, "bearing_deg": -172.7, "elev_deg_vs_trunk_x": 31.4, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 6.326}
+  {"i": 43, "t_s": 0.86, "eye_ball_dist_m": 0.517, "bearing_deg": -172.2, "elev_deg_vs_trunk_x": 31.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 5.26}
+  {"i": 44, "t_s": 0.88, "eye_ball_dist_m": 0.601, "bearing_deg": -172.0, "elev_deg_vs_trunk_x": 31.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 4.525}
+  {"i": 45, "t_s": 0.9, "eye_ball_dist_m": 0.683, "bearing_deg": -171.9, "elev_deg_vs_trunk_x": 31.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.982}
+  {"i": 46, "t_s": 0.92, "eye_ball_dist_m": 0.764, "bearing_deg": -171.8, "elev_deg_vs_trunk_x": 31.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.56}
+  {"i": 47, "t_s": 0.94, "eye_ball_dist_m": 0.843, "bearing_deg": -171.4, "elev_deg_vs_trunk_x": 30.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.225}
+  {"i": 48, "t_s": 0.96, "eye_ball_dist_m": 0.92, "bearing_deg": -170.9, "elev_deg_vs_trunk_x": 30.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.956}
+  {"i": 49, "t_s": 0.98, "eye_ball_dist_m": 0.993, "bearing_deg": -171.0, "elev_deg_vs_trunk_x": 30.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.741}
+  {"i": 50, "t_s": 1.0, "eye_ball_dist_m": 1.064, "bearing_deg": -170.8, "elev_deg_vs_trunk_x": 30.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.558}
+
+=== B_note: "draw #5 of Go2World(seed=0).sample_dodge_situation(): the first with |release bearing from the eye| < 12 deg, CHOSEN FOR VISIBILITY (a rendering probe, not a sample)"
+
+=== B_fovy45
+situation: {"ball_rel_x_m": 4.527, "ball_rel_y_m": 0.7072, "ball_rel_z_m": 0.9463, "ball_vel_x_m_s": -4.5332, "ball_vel_y_m_s": -0.0443, "ball_vel_z_m_s": 2.9924, "dog_forward_speed_m_s": 0.8574}
+fovy_deg: 45.0
+pitch_up_deg: 0.0
+ball_rgba: null
+flight_s: 0.84
+n_frames: 51
+frames_with_ball_visible: 12
+visible_t_range_s: [0.0, 0.22]
+render_eye_vs_requested_max_abs_m: 2.2851804626355943e-07
+gray_levels_96: {"floor": {"n": 224064, "min": 0.2, "max": 0.4, "mean": 0.3987}, "sky": {"n": 245621, "min": 0.0, "max": 0.2235, "mean": 0.0008}, "ball": {"n": 331, "min": 0.0196, "max": 0.5294, "mean": 0.2049}, "robot": {"n": 0}}
+footprint_at_distance: {"3.0": {"in_view": false, "closest_frame": {"t_s": 0.3, "eye_ball_dist_m": 3.006, "bearing_deg": 13.8, "elev_deg_vs_trunk_x": 25.6}, "expected_diam_px_12_if_at_centre": 0.907}, "2.0": {"in_view": false, "closest_frame": {"t_s": 0.5, "eye_ball_dist_m": 2.033, "bearing_deg": 23.3, "elev_deg_vs_trunk_x": 32.8}, "expected_diam_px_12_if_at_centre": 1.36}, "1.0": {"in_view": false, "closest_frame": {"t_s": 0.7, "eye_ball_dist_m": 0.998, "bearing_deg": 54.4, "elev_deg_vs_trunk_x": 35.2}, "expected_diam_px_12_if_at_centre": 2.72}, "0.5": {"in_view": false, "closest_frame": {"t_s": 0.8, "eye_ball_dist_m": 0.677, "bearing_deg": 94.4, "elev_deg_vs_trunk_x": 12.5}, "expected_diam_px_12_if_at_centre": 5.441}}
+saved_pngs_[stem,dist_m,ball_px_96]: [["B_fovy45_f00_t0.00", 4.349, 22], ["B_fovy45_f02_t0.04", 4.17, 26], ["B_fovy45_f04_t0.08", 3.995, 27], ["B_fovy45_f07_t0.14", 3.727, 32], ["B_fovy45_f09_t0.18", 3.55, 39], ["B_fovy45_f11_t0.22", 3.373, 11]]
+per_frame:
+  {"i": 0, "t_s": 0.0, "eye_ball_dist_m": 4.349, "bearing_deg": 9.7, "elev_deg_vs_trunk_x": 9.0, "ball_px_96": 22, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.625, "ball_equiv_diam_px_12": 0.662, "cells_touched_12": 1, "max_cell_cover_12": 0.344, "ball_px_gray_mean": 0.215, "max_cell_gray_12": 0.081, "ring_gray_12": 0.0, "contrast_12": 0.081, "max_cell_other_px_sky_floor_robot": [42, 0, 0]}
+  {"i": 1, "t_s": 0.02, "eye_ball_dist_m": 4.259, "bearing_deg": 10.0, "elev_deg_vs_trunk_x": 10.9, "ball_px_96": 24, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.639, "ball_equiv_diam_px_12": 0.691, "cells_touched_12": 2, "max_cell_cover_12": 0.281, "ball_px_gray_mean": 0.212, "max_cell_gray_12": 0.049, "ring_gray_12": 0.0, "contrast_12": 0.049, "max_cell_other_px_sky_floor_robot": [46, 0, 0]}
+  {"i": 2, "t_s": 0.04, "eye_ball_dist_m": 4.17, "bearing_deg": 10.3, "elev_deg_vs_trunk_x": 13.9, "ball_px_96": 26, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.652, "ball_equiv_diam_px_12": 0.719, "cells_touched_12": 1, "max_cell_cover_12": 0.406, "ball_px_gray_mean": 0.217, "max_cell_gray_12": 0.092, "ring_gray_12": 0.0, "contrast_12": 0.092, "max_cell_other_px_sky_floor_robot": [38, 0, 0]}
+  {"i": 3, "t_s": 0.06, "eye_ball_dist_m": 4.083, "bearing_deg": 10.7, "elev_deg_vs_trunk_x": 16.0, "ball_px_96": 29, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.666, "ball_equiv_diam_px_12": 0.76, "cells_touched_12": 3, "max_cell_cover_12": 0.328, "ball_px_gray_mean": 0.204, "max_cell_gray_12": 0.083, "ring_gray_12": 0.0, "contrast_12": 0.083, "max_cell_other_px_sky_floor_robot": [43, 0, 0]}
+  {"i": 4, "t_s": 0.08, "eye_ball_dist_m": 3.995, "bearing_deg": 11.4, "elev_deg_vs_trunk_x": 16.9, "ball_px_96": 27, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.681, "ball_equiv_diam_px_12": 0.733, "cells_touched_12": 2, "max_cell_cover_12": 0.297, "ball_px_gray_mean": 0.227, "max_cell_gray_12": 0.072, "ring_gray_12": 0.0, "contrast_12": 0.072, "max_cell_other_px_sky_floor_robot": [45, 0, 0]}
+  {"i": 5, "t_s": 0.1, "eye_ball_dist_m": 3.906, "bearing_deg": 12.1, "elev_deg_vs_trunk_x": 17.3, "ball_px_96": 29, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.697, "ball_equiv_diam_px_12": 0.76, "cells_touched_12": 2, "max_cell_cover_12": 0.25, "ball_px_gray_mean": 0.216, "max_cell_gray_12": 0.065, "ring_gray_12": 0.0, "contrast_12": 0.064, "max_cell_other_px_sky_floor_robot": [48, 0, 0]}
+  {"i": 6, "t_s": 0.12, "eye_ball_dist_m": 3.816, "bearing_deg": 12.4, "elev_deg_vs_trunk_x": 17.8, "ball_px_96": 31, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.713, "ball_equiv_diam_px_12": 0.785, "cells_touched_12": 4, "max_cell_cover_12": 0.281, "ball_px_gray_mean": 0.207, "max_cell_gray_12": 0.058, "ring_gray_12": 0.0, "contrast_12": 0.058, "max_cell_other_px_sky_floor_robot": [46, 0, 0]}
+  {"i": 7, "t_s": 0.14, "eye_ball_dist_m": 3.727, "bearing_deg": 12.6, "elev_deg_vs_trunk_x": 18.8, "ball_px_96": 32, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.73, "ball_equiv_diam_px_12": 0.798, "cells_touched_12": 4, "max_cell_cover_12": 0.25, "ball_px_gray_mean": 0.221, "max_cell_gray_12": 0.08, "ring_gray_12": 0.0, "contrast_12": 0.08, "max_cell_other_px_sky_floor_robot": [48, 0, 0]}
+  {"i": 8, "t_s": 0.16, "eye_ball_dist_m": 3.638, "bearing_deg": 12.5, "elev_deg_vs_trunk_x": 19.6, "ball_px_96": 34, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.748, "ball_equiv_diam_px_12": 0.822, "cells_touched_12": 3, "max_cell_cover_12": 0.406, "ball_px_gray_mean": 0.214, "max_cell_gray_12": 0.108, "ring_gray_12": 0.0, "contrast_12": 0.108, "max_cell_other_px_sky_floor_robot": [38, 0, 0]}
+  {"i": 9, "t_s": 0.18, "eye_ball_dist_m": 3.55, "bearing_deg": 12.7, "elev_deg_vs_trunk_x": 20.6, "ball_px_96": 39, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.766, "ball_equiv_diam_px_12": 0.881, "cells_touched_12": 2, "max_cell_cover_12": 0.547, "ball_px_gray_mean": 0.207, "max_cell_gray_12": 0.125, "ring_gray_12": 0.0, "contrast_12": 0.125, "max_cell_other_px_sky_floor_robot": [29, 0, 0]}
+  {"i": 10, "t_s": 0.2, "eye_ball_dist_m": 3.462, "bearing_deg": 13.0, "elev_deg_vs_trunk_x": 21.6, "ball_px_96": 27, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.786, "ball_equiv_diam_px_12": 0.733, "cells_touched_12": 2, "max_cell_cover_12": 0.375, "ball_px_gray_mean": 0.155, "max_cell_gray_12": 0.063, "ring_gray_12": 0.0, "contrast_12": 0.063, "max_cell_other_px_sky_floor_robot": [40, 0, 0]}
+  {"i": 11, "t_s": 0.22, "eye_ball_dist_m": 3.373, "bearing_deg": 13.2, "elev_deg_vs_trunk_x": 22.5, "ball_px_96": 11, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.807, "ball_equiv_diam_px_12": 0.468, "cells_touched_12": 1, "max_cell_cover_12": 0.172, "ball_px_gray_mean": 0.094, "max_cell_gray_12": 0.016, "ring_gray_12": 0.0, "contrast_12": 0.016, "max_cell_other_px_sky_floor_robot": [53, 0, 0]}
+  {"i": 12, "t_s": 0.24, "eye_ball_dist_m": 3.282, "bearing_deg": 13.3, "elev_deg_vs_trunk_x": 23.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.829}
+  {"i": 13, "t_s": 0.26, "eye_ball_dist_m": 3.19, "bearing_deg": 13.5, "elev_deg_vs_trunk_x": 24.1, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.853}
+  {"i": 14, "t_s": 0.28, "eye_ball_dist_m": 3.098, "bearing_deg": 13.7, "elev_deg_vs_trunk_x": 24.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.878}
+  {"i": 15, "t_s": 0.3, "eye_ball_dist_m": 3.006, "bearing_deg": 13.8, "elev_deg_vs_trunk_x": 25.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.905}
+  {"i": 16, "t_s": 0.32, "eye_ball_dist_m": 2.915, "bearing_deg": 14.1, "elev_deg_vs_trunk_x": 26.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.933}
+  {"i": 17, "t_s": 0.34, "eye_ball_dist_m": 2.824, "bearing_deg": 14.8, "elev_deg_vs_trunk_x": 27.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.963}
+  {"i": 18, "t_s": 0.36, "eye_ball_dist_m": 2.733, "bearing_deg": 15.6, "elev_deg_vs_trunk_x": 28.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.995}
+  {"i": 19, "t_s": 0.38, "eye_ball_dist_m": 2.639, "bearing_deg": 16.4, "elev_deg_vs_trunk_x": 29.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.031}
+  {"i": 20, "t_s": 0.4, "eye_ball_dist_m": 2.542, "bearing_deg": 17.3, "elev_deg_vs_trunk_x": 30.1, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.07}
+  {"i": 21, "t_s": 0.42, "eye_ball_dist_m": 2.441, "bearing_deg": 18.1, "elev_deg_vs_trunk_x": 30.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.114}
+  {"i": 22, "t_s": 0.44, "eye_ball_dist_m": 2.338, "bearing_deg": 18.9, "elev_deg_vs_trunk_x": 29.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.163}
+  {"i": 23, "t_s": 0.46, "eye_ball_dist_m": 2.237, "bearing_deg": 20.1, "elev_deg_vs_trunk_x": 30.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.216}
+  {"i": 24, "t_s": 0.48, "eye_ball_dist_m": 2.136, "bearing_deg": 22.0, "elev_deg_vs_trunk_x": 31.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.274}
+  {"i": 25, "t_s": 0.5, "eye_ball_dist_m": 2.033, "bearing_deg": 23.3, "elev_deg_vs_trunk_x": 32.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.338}
+  {"i": 26, "t_s": 0.52, "eye_ball_dist_m": 1.928, "bearing_deg": 24.3, "elev_deg_vs_trunk_x": 33.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.411}
+  {"i": 27, "t_s": 0.54, "eye_ball_dist_m": 1.821, "bearing_deg": 25.4, "elev_deg_vs_trunk_x": 33.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.494}
+  {"i": 28, "t_s": 0.56, "eye_ball_dist_m": 1.713, "bearing_deg": 26.9, "elev_deg_vs_trunk_x": 33.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.588}
+  {"i": 29, "t_s": 0.58, "eye_ball_dist_m": 1.606, "bearing_deg": 29.1, "elev_deg_vs_trunk_x": 34.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.694}
+  {"i": 30, "t_s": 0.6, "eye_ball_dist_m": 1.502, "bearing_deg": 31.7, "elev_deg_vs_trunk_x": 34.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.812}
+  {"i": 31, "t_s": 0.62, "eye_ball_dist_m": 1.401, "bearing_deg": 34.7, "elev_deg_vs_trunk_x": 36.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.942}
+  {"i": 32, "t_s": 0.64, "eye_ball_dist_m": 1.301, "bearing_deg": 38.8, "elev_deg_vs_trunk_x": 38.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.091}
+  {"i": 33, "t_s": 0.66, "eye_ball_dist_m": 1.199, "bearing_deg": 43.7, "elev_deg_vs_trunk_x": 37.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.268}
+  {"i": 34, "t_s": 0.68, "eye_ball_dist_m": 1.097, "bearing_deg": 48.8, "elev_deg_vs_trunk_x": 36.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.479}
+  {"i": 35, "t_s": 0.7, "eye_ball_dist_m": 0.998, "bearing_deg": 54.4, "elev_deg_vs_trunk_x": 35.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.726}
+  {"i": 36, "t_s": 0.72, "eye_ball_dist_m": 0.905, "bearing_deg": 60.8, "elev_deg_vs_trunk_x": 33.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.005}
+  {"i": 37, "t_s": 0.74, "eye_ball_dist_m": 0.822, "bearing_deg": 68.2, "elev_deg_vs_trunk_x": 30.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.308}
+  {"i": 38, "t_s": 0.76, "eye_ball_dist_m": 0.753, "bearing_deg": 76.4, "elev_deg_vs_trunk_x": 26.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.612}
+  {"i": 39, "t_s": 0.78, "eye_ball_dist_m": 0.703, "bearing_deg": 85.4, "elev_deg_vs_trunk_x": 20.4, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.868}
+  {"i": 40, "t_s": 0.8, "eye_ball_dist_m": 0.677, "bearing_deg": 94.4, "elev_deg_vs_trunk_x": 12.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 4.017}
+  {"i": 41, "t_s": 0.82, "eye_ball_dist_m": 0.68, "bearing_deg": 103.0, "elev_deg_vs_trunk_x": 3.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 4.003}
+  {"i": 42, "t_s": 0.84, "eye_ball_dist_m": 0.713, "bearing_deg": 111.1, "elev_deg_vs_trunk_x": -5.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.814}
+  {"i": 43, "t_s": 0.86, "eye_ball_dist_m": 0.777, "bearing_deg": 118.6, "elev_deg_vs_trunk_x": -12.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.501}
+  {"i": 44, "t_s": 0.88, "eye_ball_dist_m": 0.865, "bearing_deg": 125.1, "elev_deg_vs_trunk_x": -18.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.146}
+  {"i": 45, "t_s": 0.9, "eye_ball_dist_m": 0.922, "bearing_deg": 130.0, "elev_deg_vs_trunk_x": -16.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.949}
+  {"i": 46, "t_s": 0.92, "eye_ball_dist_m": 0.961, "bearing_deg": 133.8, "elev_deg_vs_trunk_x": -10.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.832}
+  {"i": 47, "t_s": 0.94, "eye_ball_dist_m": 1.013, "bearing_deg": 137.3, "elev_deg_vs_trunk_x": -5.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.686}
+  {"i": 48, "t_s": 0.96, "eye_ball_dist_m": 1.076, "bearing_deg": 140.4, "elev_deg_vs_trunk_x": -1.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.528}
+  {"i": 49, "t_s": 0.98, "eye_ball_dist_m": 1.146, "bearing_deg": 143.3, "elev_deg_vs_trunk_x": 2.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.373}
+  {"i": 50, "t_s": 1.0, "eye_ball_dist_m": 1.222, "bearing_deg": 145.9, "elev_deg_vs_trunk_x": 6.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.226}
+
+=== A_fovy90_pitch15
+situation: {"ball_rel_x_m": 3.5161, "ball_rel_y_m": 0.8841, "ball_rel_z_m": 1.0217, "ball_vel_x_m_s": -3.4992, "ball_vel_y_m_s": -1.104, "ball_vel_z_m_s": 2.7587, "dog_forward_speed_m_s": 0.803}
+fovy_deg: 90.0
+pitch_up_deg: 15.0
+ball_rgba: null
+flight_s: 0.817
+n_frames: 51
+frames_with_ball_visible: 36
+visible_t_range_s: [0.0, 0.7]
+render_eye_vs_requested_max_abs_m: 1.535489686510516e-07
+gray_levels_96: {"floor": {"n": 168192, "min": 0.2, "max": 0.4, "mean": 0.3988}, "sky": {"n": 300422, "min": 0.0, "max": 0.3333, "mean": 0.0009}, "ball": {"n": 1402, "min": 0.0157, "max": 0.4392, "mean": 0.1647}, "robot": {"n": 0}}
+footprint_at_distance: {"3.0": {"t_s": 0.14, "eye_ball_dist_m": 2.976, "ball_px_96": 9, "ball_equiv_diam_px_12": 0.423, "expected_diam_px_12_at_centre": 0.379, "cells_touched_12": 1, "max_cell_cover_12": 0.141, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.029, "ring_gray_12": 0.0, "contrast_12": 0.029, "max_cell_other_px_sky_floor_robot": [55, 0, 0], "bearing_deg": 16.3, "elev_deg_vs_trunk_x": 25.0}, "2.0": {"t_s": 0.4, "eye_ball_dist_m": 2.02, "ball_px_96": 24, "ball_equiv_diam_px_12": 0.691, "expected_diam_px_12_at_centre": 0.558, "cells_touched_12": 2, "max_cell_cover_12": 0.281, "ball_px_gray_mean": 0.169, "max_cell_gray_12": 0.043, "ring_gray_12": 0.0, "contrast_12": 0.043, "max_cell_other_px_sky_floor_robot": [46, 0, 0], "bearing_deg": 14.3, "elev_deg_vs_trunk_x": 39.7}, "1.0": {"t_s": 0.62, "eye_ball_dist_m": 0.965, "ball_px_96": 139, "ball_equiv_diam_px_12": 1.663, "expected_diam_px_12_at_centre": 1.168, "cells_touched_12": 6, "max_cell_cover_12": 0.938, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.186, "ring_gray_12": 0.0, "contrast_12": 0.186, "max_cell_other_px_sky_floor_robot": [4, 0, 0], "bearing_deg": 15.7, "elev_deg_vs_trunk_x": 51.0}, "0.5": {"t_s": 0.7, "eye_ball_dist_m": 0.552, "ball_px_96": 14, "ball_equiv_diam_px_12": 0.528, "expected_diam_px_12_at_centre": 2.04, "cells_touched_12": 2, "max_cell_cover_12": 0.156, "ball_px_gray_mean": 0.044, "max_cell_gray_12": 0.008, "ring_gray_12": 0.0, "contrast_12": 0.008, "max_cell_other_px_sky_floor_robot": [54, 0, 0], "bearing_deg": 21.5, "elev_deg_vs_trunk_x": 67.3}}
+saved_pngs_[stem,dist_m,ball_px_96]: [["A_fovy90_pitch15_f00_t0.00", 3.445, 6], ["A_fovy90_pitch15_f07_t0.14", 2.976, 9], ["A_fovy90_pitch15_f14_t0.28", 2.484, 13], ["A_fovy90_pitch15_f21_t0.42", 1.938, 26], ["A_fovy90_pitch15_f28_t0.56", 1.28, 72], ["A_fovy90_pitch15_f35_t0.70", 0.552, 14]]
+per_frame:
+  {"i": 0, "t_s": 0.0, "eye_ball_dist_m": 3.445, "bearing_deg": 15.5, "elev_deg_vs_trunk_x": 14.3, "ball_px_96": 6, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.327, "ball_equiv_diam_px_12": 0.345, "cells_touched_12": 2, "max_cell_cover_12": 0.047, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.01, "ring_gray_12": 0.0, "contrast_12": 0.01, "max_cell_other_px_sky_floor_robot": [61, 0, 0]}
+  {"i": 1, "t_s": 0.02, "eye_ball_dist_m": 3.375, "bearing_deg": 15.3, "elev_deg_vs_trunk_x": 15.3, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.334, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 2, "max_cell_cover_12": 0.094, "ball_px_gray_mean": 0.206, "max_cell_gray_12": 0.024, "ring_gray_12": 0.0, "contrast_12": 0.024, "max_cell_other_px_sky_floor_robot": [58, 0, 0]}
+  {"i": 2, "t_s": 0.04, "eye_ball_dist_m": 3.307, "bearing_deg": 15.3, "elev_deg_vs_trunk_x": 16.5, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.341, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 1, "max_cell_cover_12": 0.109, "ball_px_gray_mean": 0.176, "max_cell_gray_12": 0.021, "ring_gray_12": 0.0, "contrast_12": 0.021, "max_cell_other_px_sky_floor_robot": [57, 0, 0]}
+  {"i": 3, "t_s": 0.06, "eye_ball_dist_m": 3.24, "bearing_deg": 15.3, "elev_deg_vs_trunk_x": 18.7, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.348, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 1, "max_cell_cover_12": 0.109, "ball_px_gray_mean": 0.204, "max_cell_gray_12": 0.025, "ring_gray_12": 0.0, "contrast_12": 0.025, "max_cell_other_px_sky_floor_robot": [57, 0, 0]}
+  {"i": 4, "t_s": 0.08, "eye_ball_dist_m": 3.176, "bearing_deg": 15.4, "elev_deg_vs_trunk_x": 21.5, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.355, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 1, "max_cell_cover_12": 0.109, "ball_px_gray_mean": 0.194, "max_cell_gray_12": 0.024, "ring_gray_12": 0.0, "contrast_12": 0.024, "max_cell_other_px_sky_floor_robot": [57, 0, 0]}
+  {"i": 5, "t_s": 0.1, "eye_ball_dist_m": 3.111, "bearing_deg": 15.7, "elev_deg_vs_trunk_x": 23.4, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.362, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 2, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.189, "max_cell_gray_12": 0.014, "ring_gray_12": 0.0, "contrast_12": 0.014, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 6, "t_s": 0.12, "eye_ball_dist_m": 3.045, "bearing_deg": 16.1, "elev_deg_vs_trunk_x": 24.3, "ball_px_96": 8, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.37, "ball_equiv_diam_px_12": 0.399, "cells_touched_12": 2, "max_cell_cover_12": 0.094, "ball_px_gray_mean": 0.192, "max_cell_gray_12": 0.021, "ring_gray_12": 0.0, "contrast_12": 0.021, "max_cell_other_px_sky_floor_robot": [58, 0, 0]}
+  {"i": 7, "t_s": 0.14, "eye_ball_dist_m": 2.976, "bearing_deg": 16.3, "elev_deg_vs_trunk_x": 25.0, "ball_px_96": 9, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.379, "ball_equiv_diam_px_12": 0.423, "cells_touched_12": 1, "max_cell_cover_12": 0.141, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.029, "ring_gray_12": 0.0, "contrast_12": 0.029, "max_cell_other_px_sky_floor_robot": [55, 0, 0]}
+  {"i": 8, "t_s": 0.16, "eye_ball_dist_m": 2.907, "bearing_deg": 16.3, "elev_deg_vs_trunk_x": 25.8, "ball_px_96": 11, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.388, "ball_equiv_diam_px_12": 0.468, "cells_touched_12": 1, "max_cell_cover_12": 0.172, "ball_px_gray_mean": 0.149, "max_cell_gray_12": 0.028, "ring_gray_12": 0.0, "contrast_12": 0.028, "max_cell_other_px_sky_floor_robot": [53, 0, 0]}
+  {"i": 9, "t_s": 0.18, "eye_ball_dist_m": 2.837, "bearing_deg": 16.1, "elev_deg_vs_trunk_x": 26.8, "ball_px_96": 9, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.397, "ball_equiv_diam_px_12": 0.423, "cells_touched_12": 1, "max_cell_cover_12": 0.141, "ball_px_gray_mean": 0.189, "max_cell_gray_12": 0.03, "ring_gray_12": 0.0, "contrast_12": 0.03, "max_cell_other_px_sky_floor_robot": [55, 0, 0]}
+  {"i": 10, "t_s": 0.2, "eye_ball_dist_m": 2.768, "bearing_deg": 16.0, "elev_deg_vs_trunk_x": 28.1, "ball_px_96": 11, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.407, "ball_equiv_diam_px_12": 0.468, "cells_touched_12": 1, "max_cell_cover_12": 0.172, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.033, "ring_gray_12": 0.0, "contrast_12": 0.033, "max_cell_other_px_sky_floor_robot": [53, 0, 0]}
+  {"i": 11, "t_s": 0.22, "eye_ball_dist_m": 2.7, "bearing_deg": 15.9, "elev_deg_vs_trunk_x": 29.6, "ball_px_96": 10, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.417, "ball_equiv_diam_px_12": 0.446, "cells_touched_12": 1, "max_cell_cover_12": 0.156, "ball_px_gray_mean": 0.206, "max_cell_gray_12": 0.034, "ring_gray_12": 0.0, "contrast_12": 0.034, "max_cell_other_px_sky_floor_robot": [54, 0, 0]}
+  {"i": 12, "t_s": 0.24, "eye_ball_dist_m": 2.63, "bearing_deg": 16.0, "elev_deg_vs_trunk_x": 31.1, "ball_px_96": 12, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.428, "ball_equiv_diam_px_12": 0.489, "cells_touched_12": 2, "max_cell_cover_12": 0.156, "ball_px_gray_mean": 0.201, "max_cell_gray_12": 0.03, "ring_gray_12": 0.0, "contrast_12": 0.03, "max_cell_other_px_sky_floor_robot": [54, 0, 0]}
+  {"i": 13, "t_s": 0.26, "eye_ball_dist_m": 2.558, "bearing_deg": 15.8, "elev_deg_vs_trunk_x": 32.3, "ball_px_96": 13, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.44, "ball_equiv_diam_px_12": 0.509, "cells_touched_12": 2, "max_cell_cover_12": 0.109, "ball_px_gray_mean": 0.194, "max_cell_gray_12": 0.015, "ring_gray_12": 0.0, "contrast_12": 0.015, "max_cell_other_px_sky_floor_robot": [57, 0, 0]}
+  {"i": 14, "t_s": 0.28, "eye_ball_dist_m": 2.484, "bearing_deg": 15.5, "elev_deg_vs_trunk_x": 33.2, "ball_px_96": 13, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.454, "ball_equiv_diam_px_12": 0.509, "cells_touched_12": 2, "max_cell_cover_12": 0.156, "ball_px_gray_mean": 0.205, "max_cell_gray_12": 0.037, "ring_gray_12": 0.0, "contrast_12": 0.037, "max_cell_other_px_sky_floor_robot": [54, 0, 0]}
+  {"i": 15, "t_s": 0.3, "eye_ball_dist_m": 2.407, "bearing_deg": 15.2, "elev_deg_vs_trunk_x": 34.1, "ball_px_96": 14, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.468, "ball_equiv_diam_px_12": 0.528, "cells_touched_12": 1, "max_cell_cover_12": 0.219, "ball_px_gray_mean": 0.193, "max_cell_gray_12": 0.045, "ring_gray_12": 0.0, "contrast_12": 0.045, "max_cell_other_px_sky_floor_robot": [50, 0, 0]}
+  {"i": 16, "t_s": 0.32, "eye_ball_dist_m": 2.33, "bearing_deg": 14.9, "elev_deg_vs_trunk_x": 35.1, "ball_px_96": 16, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.484, "ball_equiv_diam_px_12": 0.564, "cells_touched_12": 1, "max_cell_cover_12": 0.25, "ball_px_gray_mean": 0.181, "max_cell_gray_12": 0.049, "ring_gray_12": 0.0, "contrast_12": 0.049, "max_cell_other_px_sky_floor_robot": [48, 0, 0]}
+  {"i": 17, "t_s": 0.34, "eye_ball_dist_m": 2.253, "bearing_deg": 14.5, "elev_deg_vs_trunk_x": 36.0, "ball_px_96": 19, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.5, "ball_equiv_diam_px_12": 0.615, "cells_touched_12": 1, "max_cell_cover_12": 0.297, "ball_px_gray_mean": 0.167, "max_cell_gray_12": 0.053, "ring_gray_12": 0.0, "contrast_12": 0.053, "max_cell_other_px_sky_floor_robot": [45, 0, 0]}
+  {"i": 18, "t_s": 0.36, "eye_ball_dist_m": 2.175, "bearing_deg": 14.2, "elev_deg_vs_trunk_x": 37.0, "ball_px_96": 19, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.518, "ball_equiv_diam_px_12": 0.615, "cells_touched_12": 1, "max_cell_cover_12": 0.297, "ball_px_gray_mean": 0.181, "max_cell_gray_12": 0.059, "ring_gray_12": 0.0, "contrast_12": 0.059, "max_cell_other_px_sky_floor_robot": [45, 0, 0]}
+  {"i": 19, "t_s": 0.38, "eye_ball_dist_m": 2.098, "bearing_deg": 14.2, "elev_deg_vs_trunk_x": 38.2, "ball_px_96": 21, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.537, "ball_equiv_diam_px_12": 0.646, "cells_touched_12": 1, "max_cell_cover_12": 0.328, "ball_px_gray_mean": 0.185, "max_cell_gray_12": 0.062, "ring_gray_12": 0.0, "contrast_12": 0.062, "max_cell_other_px_sky_floor_robot": [43, 0, 0]}
+  {"i": 20, "t_s": 0.4, "eye_ball_dist_m": 2.02, "bearing_deg": 14.3, "elev_deg_vs_trunk_x": 39.7, "ball_px_96": 24, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.558, "ball_equiv_diam_px_12": 0.691, "cells_touched_12": 2, "max_cell_cover_12": 0.281, "ball_px_gray_mean": 0.169, "max_cell_gray_12": 0.043, "ring_gray_12": 0.0, "contrast_12": 0.043, "max_cell_other_px_sky_floor_robot": [46, 0, 0]}
+  {"i": 21, "t_s": 0.42, "eye_ball_dist_m": 1.938, "bearing_deg": 14.4, "elev_deg_vs_trunk_x": 40.9, "ball_px_96": 26, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.581, "ball_equiv_diam_px_12": 0.719, "cells_touched_12": 2, "max_cell_cover_12": 0.203, "ball_px_gray_mean": 0.174, "max_cell_gray_12": 0.051, "ring_gray_12": 0.0, "contrast_12": 0.051, "max_cell_other_px_sky_floor_robot": [51, 0, 0]}
+  {"i": 22, "t_s": 0.44, "eye_ball_dist_m": 1.851, "bearing_deg": 14.4, "elev_deg_vs_trunk_x": 41.5, "ball_px_96": 30, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.609, "ball_equiv_diam_px_12": 0.773, "cells_touched_12": 2, "max_cell_cover_12": 0.312, "ball_px_gray_mean": 0.181, "max_cell_gray_12": 0.069, "ring_gray_12": 0.0, "contrast_12": 0.069, "max_cell_other_px_sky_floor_robot": [44, 0, 0]}
+  {"i": 23, "t_s": 0.46, "eye_ball_dist_m": 1.759, "bearing_deg": 14.4, "elev_deg_vs_trunk_x": 41.6, "ball_px_96": 30, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.641, "ball_equiv_diam_px_12": 0.773, "cells_touched_12": 2, "max_cell_cover_12": 0.312, "ball_px_gray_mean": 0.191, "max_cell_gray_12": 0.081, "ring_gray_12": 0.0, "contrast_12": 0.081, "max_cell_other_px_sky_floor_robot": [44, 0, 0]}
+  {"i": 24, "t_s": 0.48, "eye_ball_dist_m": 1.664, "bearing_deg": 14.4, "elev_deg_vs_trunk_x": 41.7, "ball_px_96": 34, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.677, "ball_equiv_diam_px_12": 0.822, "cells_touched_12": 2, "max_cell_cover_12": 0.375, "ball_px_gray_mean": 0.186, "max_cell_gray_12": 0.085, "ring_gray_12": 0.0, "contrast_12": 0.085, "max_cell_other_px_sky_floor_robot": [40, 0, 0]}
+  {"i": 25, "t_s": 0.5, "eye_ball_dist_m": 1.57, "bearing_deg": 14.7, "elev_deg_vs_trunk_x": 42.8, "ball_px_96": 41, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.718, "ball_equiv_diam_px_12": 0.903, "cells_touched_12": 3, "max_cell_cover_12": 0.531, "ball_px_gray_mean": 0.182, "max_cell_gray_12": 0.112, "ring_gray_12": 0.0, "contrast_12": 0.112, "max_cell_other_px_sky_floor_robot": [30, 0, 0]}
+  {"i": 26, "t_s": 0.52, "eye_ball_dist_m": 1.476, "bearing_deg": 16.1, "elev_deg_vs_trunk_x": 44.5, "ball_px_96": 49, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.763, "ball_equiv_diam_px_12": 0.987, "cells_touched_12": 3, "max_cell_cover_12": 0.625, "ball_px_gray_mean": 0.188, "max_cell_gray_12": 0.122, "ring_gray_12": 0.0, "contrast_12": 0.122, "max_cell_other_px_sky_floor_robot": [24, 0, 0]}
+  {"i": 27, "t_s": 0.54, "eye_ball_dist_m": 1.38, "bearing_deg": 16.5, "elev_deg_vs_trunk_x": 46.2, "ball_px_96": 59, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.816, "ball_equiv_diam_px_12": 1.083, "cells_touched_12": 4, "max_cell_cover_12": 0.484, "ball_px_gray_mean": 0.176, "max_cell_gray_12": 0.079, "ring_gray_12": 0.0, "contrast_12": 0.079, "max_cell_other_px_sky_floor_robot": [33, 0, 0]}
+  {"i": 28, "t_s": 0.56, "eye_ball_dist_m": 1.28, "bearing_deg": 16.0, "elev_deg_vs_trunk_x": 47.5, "ball_px_96": 72, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.88, "ball_equiv_diam_px_12": 1.197, "cells_touched_12": 4, "max_cell_cover_12": 0.5, "ball_px_gray_mean": 0.174, "max_cell_gray_12": 0.128, "ring_gray_12": 0.0, "contrast_12": 0.128, "max_cell_other_px_sky_floor_robot": [32, 0, 0]}
+  {"i": 29, "t_s": 0.58, "eye_ball_dist_m": 1.177, "bearing_deg": 15.5, "elev_deg_vs_trunk_x": 48.6, "ball_px_96": 88, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.958, "ball_equiv_diam_px_12": 1.323, "cells_touched_12": 4, "max_cell_cover_12": 0.719, "ball_px_gray_mean": 0.176, "max_cell_gray_12": 0.171, "ring_gray_12": 0.0, "contrast_12": 0.171, "max_cell_other_px_sky_floor_robot": [18, 0, 0]}
+  {"i": 30, "t_s": 0.6, "eye_ball_dist_m": 1.071, "bearing_deg": 15.3, "elev_deg_vs_trunk_x": 49.6, "ball_px_96": 105, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.052, "ball_equiv_diam_px_12": 1.445, "cells_touched_12": 5, "max_cell_cover_12": 0.859, "ball_px_gray_mean": 0.183, "max_cell_gray_12": 0.193, "ring_gray_12": 0.0, "contrast_12": 0.193, "max_cell_other_px_sky_floor_robot": [9, 0, 0]}
+  {"i": 31, "t_s": 0.62, "eye_ball_dist_m": 0.965, "bearing_deg": 15.7, "elev_deg_vs_trunk_x": 51.0, "ball_px_96": 139, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.168, "ball_equiv_diam_px_12": 1.663, "cells_touched_12": 6, "max_cell_cover_12": 0.938, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.186, "ring_gray_12": 0.0, "contrast_12": 0.186, "max_cell_other_px_sky_floor_robot": [4, 0, 0]}
+  {"i": 32, "t_s": 0.64, "eye_ball_dist_m": 0.859, "bearing_deg": 16.5, "elev_deg_vs_trunk_x": 53.1, "ball_px_96": 194, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.311, "ball_equiv_diam_px_12": 1.965, "cells_touched_12": 8, "max_cell_cover_12": 0.984, "ball_px_gray_mean": 0.174, "max_cell_gray_12": 0.247, "ring_gray_12": NaN, "contrast_12": NaN, "max_cell_other_px_sky_floor_robot": [1, 0, 0]}
+  {"i": 33, "t_s": 0.66, "eye_ball_dist_m": 0.758, "bearing_deg": 16.9, "elev_deg_vs_trunk_x": 57.1, "ball_px_96": 177, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.487, "ball_equiv_diam_px_12": 1.877, "cells_touched_12": 5, "max_cell_cover_12": 1.0, "ball_px_gray_mean": 0.13, "max_cell_gray_12": 0.178, "ring_gray_12": 0.0, "contrast_12": 0.178, "max_cell_other_px_sky_floor_robot": [0, 0, 0]}
+  {"i": 34, "t_s": 0.68, "eye_ball_dist_m": 0.658, "bearing_deg": 17.9, "elev_deg_vs_trunk_x": 62.3, "ball_px_96": 94, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.714, "ball_equiv_diam_px_12": 1.368, "cells_touched_12": 3, "max_cell_cover_12": 0.812, "ball_px_gray_mean": 0.065, "max_cell_gray_12": 0.059, "ring_gray_12": 0.0, "contrast_12": 0.059, "max_cell_other_px_sky_floor_robot": [12, 0, 0]}
+  {"i": 35, "t_s": 0.7, "eye_ball_dist_m": 0.552, "bearing_deg": 21.5, "elev_deg_vs_trunk_x": 67.3, "ball_px_96": 14, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.04, "ball_equiv_diam_px_12": 0.528, "cells_touched_12": 2, "max_cell_cover_12": 0.156, "ball_px_gray_mean": 0.044, "max_cell_gray_12": 0.008, "ring_gray_12": 0.0, "contrast_12": 0.008, "max_cell_other_px_sky_floor_robot": [54, 0, 0]}
+  {"i": 36, "t_s": 0.72, "eye_ball_dist_m": 0.442, "bearing_deg": 28.5, "elev_deg_vs_trunk_x": 72.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.547}
+  {"i": 37, "t_s": 0.74, "eye_ball_dist_m": 0.333, "bearing_deg": 52.3, "elev_deg_vs_trunk_x": 80.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.383}
+  {"i": 38, "t_s": 0.76, "eye_ball_dist_m": 0.239, "bearing_deg": 158.2, "elev_deg_vs_trunk_x": 76.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 4.708}
+  {"i": 39, "t_s": 0.78, "eye_ball_dist_m": 0.194, "bearing_deg": -179.5, "elev_deg_vs_trunk_x": 44.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 5.813}
+  {"i": 40, "t_s": 0.8, "eye_ball_dist_m": 0.243, "bearing_deg": -175.0, "elev_deg_vs_trunk_x": 25.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 4.634}
+  {"i": 41, "t_s": 0.82, "eye_ball_dist_m": 0.338, "bearing_deg": -173.5, "elev_deg_vs_trunk_x": 29.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 3.329}
+  {"i": 42, "t_s": 0.84, "eye_ball_dist_m": 0.43, "bearing_deg": -172.7, "elev_deg_vs_trunk_x": 31.4, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.62}
+  {"i": 43, "t_s": 0.86, "eye_ball_dist_m": 0.517, "bearing_deg": -172.2, "elev_deg_vs_trunk_x": 31.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 2.179}
+  {"i": 44, "t_s": 0.88, "eye_ball_dist_m": 0.601, "bearing_deg": -172.0, "elev_deg_vs_trunk_x": 31.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.874}
+  {"i": 45, "t_s": 0.9, "eye_ball_dist_m": 0.683, "bearing_deg": -171.9, "elev_deg_vs_trunk_x": 31.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.649}
+  {"i": 46, "t_s": 0.92, "eye_ball_dist_m": 0.764, "bearing_deg": -171.8, "elev_deg_vs_trunk_x": 31.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.475}
+  {"i": 47, "t_s": 0.94, "eye_ball_dist_m": 0.843, "bearing_deg": -171.4, "elev_deg_vs_trunk_x": 30.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.336}
+  {"i": 48, "t_s": 0.96, "eye_ball_dist_m": 0.92, "bearing_deg": -170.9, "elev_deg_vs_trunk_x": 30.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.224}
+  {"i": 49, "t_s": 0.98, "eye_ball_dist_m": 0.993, "bearing_deg": -171.0, "elev_deg_vs_trunk_x": 30.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.135}
+  {"i": 50, "t_s": 1.0, "eye_ball_dist_m": 1.064, "bearing_deg": -170.8, "elev_deg_vs_trunk_x": 30.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.059}
+
+=== B_fovy90_pitch15
+situation: {"ball_rel_x_m": 4.527, "ball_rel_y_m": 0.7072, "ball_rel_z_m": 0.9463, "ball_vel_x_m_s": -4.5332, "ball_vel_y_m_s": -0.0443, "ball_vel_z_m_s": 2.9924, "dog_forward_speed_m_s": 0.8574}
+fovy_deg: 90.0
+pitch_up_deg: 15.0
+ball_rgba: null
+flight_s: 0.84
+n_frames: 51
+frames_with_ball_visible: 36
+visible_t_range_s: [0.0, 0.7]
+render_eye_vs_requested_max_abs_m: 2.2851804626355943e-07
+gray_levels_96: {"floor": {"n": 167195, "min": 0.2, "max": 0.4, "mean": 0.3983}, "sky": {"n": 301924, "min": 0.0, "max": 0.2627, "mean": 0.0009}, "ball": {"n": 897, "min": 0.0118, "max": 0.4549, "mean": 0.1756}, "robot": {"n": 0}}
+footprint_at_distance: {"3.0": {"t_s": 0.3, "eye_ball_dist_m": 3.006, "ball_px_96": 9, "ball_equiv_diam_px_12": 0.423, "expected_diam_px_12_at_centre": 0.375, "cells_touched_12": 1, "max_cell_cover_12": 0.141, "ball_px_gray_mean": 0.172, "max_cell_gray_12": 0.025, "ring_gray_12": 0.0, "contrast_12": 0.025, "max_cell_other_px_sky_floor_robot": [55, 0, 0], "bearing_deg": 13.8, "elev_deg_vs_trunk_x": 25.6}, "2.0": {"t_s": 0.5, "eye_ball_dist_m": 2.033, "ball_px_96": 22, "ball_equiv_diam_px_12": 0.662, "expected_diam_px_12_at_centre": 0.554, "cells_touched_12": 3, "max_cell_cover_12": 0.25, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.058, "ring_gray_12": 0.0, "contrast_12": 0.058, "max_cell_other_px_sky_floor_robot": [48, 0, 0], "bearing_deg": 23.3, "elev_deg_vs_trunk_x": 32.8}, "1.0": {"t_s": 0.7, "eye_ball_dist_m": 0.998, "ball_px_96": 65, "ball_equiv_diam_px_12": 1.137, "expected_diam_px_12_at_centre": 1.129, "cells_touched_12": 3, "max_cell_cover_12": 0.547, "ball_px_gray_mean": 0.088, "max_cell_gray_12": 0.065, "ring_gray_12": 0.0, "contrast_12": 0.065, "max_cell_other_px_sky_floor_robot": [29, 0, 0], "bearing_deg": 54.4, "elev_deg_vs_trunk_x": 35.2}, "0.5": {"in_view": false, "closest_frame": {"t_s": 0.8, "eye_ball_dist_m": 0.677, "bearing_deg": 94.4, "elev_deg_vs_trunk_x": 12.5}, "expected_diam_px_12_if_at_centre": 2.254}}
+saved_pngs_[stem,dist_m,ball_px_96]: [["B_fovy90_pitch15_f00_t0.00", 4.349, 4], ["B_fovy90_pitch15_f07_t0.14", 3.727, 6], ["B_fovy90_pitch15_f14_t0.28", 3.098, 7], ["B_fovy90_pitch15_f21_t0.42", 2.441, 13], ["B_fovy90_pitch15_f28_t0.56", 1.713, 37], ["B_fovy90_pitch15_f35_t0.70", 0.998, 65]]
+per_frame:
+  {"i": 0, "t_s": 0.0, "eye_ball_dist_m": 4.349, "bearing_deg": 9.7, "elev_deg_vs_trunk_x": 9.0, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.259, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 2, "max_cell_cover_12": 0.031, "ball_px_gray_mean": 0.205, "max_cell_gray_12": 0.007, "ring_gray_12": 0.011, "contrast_12": -0.003, "max_cell_other_px_sky_floor_robot": [62, 0, 0]}
+  {"i": 1, "t_s": 0.02, "eye_ball_dist_m": 4.259, "bearing_deg": 10.0, "elev_deg_vs_trunk_x": 10.9, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.265, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 2, "max_cell_cover_12": 0.031, "ball_px_gray_mean": 0.181, "max_cell_gray_12": 0.007, "ring_gray_12": 0.027, "contrast_12": -0.02, "max_cell_other_px_sky_floor_robot": [62, 0, 0]}
+  {"i": 2, "t_s": 0.04, "eye_ball_dist_m": 4.17, "bearing_deg": 10.3, "elev_deg_vs_trunk_x": 13.9, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.27, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 2, "max_cell_cover_12": 0.047, "ball_px_gray_mean": 0.181, "max_cell_gray_12": 0.011, "ring_gray_12": 0.059, "contrast_12": -0.048, "max_cell_other_px_sky_floor_robot": [61, 0, 0]}
+  {"i": 3, "t_s": 0.06, "eye_ball_dist_m": 4.083, "bearing_deg": 10.7, "elev_deg_vs_trunk_x": 16.0, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.276, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.194, "max_cell_gray_12": 0.014, "ring_gray_12": 0.0, "contrast_12": 0.014, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 4, "t_s": 0.08, "eye_ball_dist_m": 3.995, "bearing_deg": 11.4, "elev_deg_vs_trunk_x": 16.9, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.282, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.215, "max_cell_gray_12": 0.014, "ring_gray_12": 0.0, "contrast_12": 0.014, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 5, "t_s": 0.1, "eye_ball_dist_m": 3.906, "bearing_deg": 12.1, "elev_deg_vs_trunk_x": 17.3, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.289, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.178, "max_cell_gray_12": 0.018, "ring_gray_12": 0.0, "contrast_12": 0.018, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 6, "t_s": 0.12, "eye_ball_dist_m": 3.816, "bearing_deg": 12.4, "elev_deg_vs_trunk_x": 17.8, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.295, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.219, "max_cell_gray_12": 0.014, "ring_gray_12": 0.0, "contrast_12": 0.014, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 7, "t_s": 0.14, "eye_ball_dist_m": 3.727, "bearing_deg": 12.6, "elev_deg_vs_trunk_x": 18.8, "ball_px_96": 6, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.302, "ball_equiv_diam_px_12": 0.345, "cells_touched_12": 1, "max_cell_cover_12": 0.094, "ball_px_gray_mean": 0.193, "max_cell_gray_12": 0.019, "ring_gray_12": 0.0, "contrast_12": 0.019, "max_cell_other_px_sky_floor_robot": [58, 0, 0]}
+  {"i": 8, "t_s": 0.16, "eye_ball_dist_m": 3.638, "bearing_deg": 12.5, "elev_deg_vs_trunk_x": 19.6, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.31, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.215, "max_cell_gray_12": 0.02, "ring_gray_12": 0.0, "contrast_12": 0.02, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 9, "t_s": 0.18, "eye_ball_dist_m": 3.55, "bearing_deg": 12.7, "elev_deg_vs_trunk_x": 20.6, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.317, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.234, "max_cell_gray_12": 0.021, "ring_gray_12": 0.0, "contrast_12": 0.021, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 10, "t_s": 0.2, "eye_ball_dist_m": 3.462, "bearing_deg": 13.0, "elev_deg_vs_trunk_x": 21.6, "ball_px_96": 6, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.325, "ball_equiv_diam_px_12": 0.345, "cells_touched_12": 1, "max_cell_cover_12": 0.094, "ball_px_gray_mean": 0.192, "max_cell_gray_12": 0.022, "ring_gray_12": 0.0, "contrast_12": 0.022, "max_cell_other_px_sky_floor_robot": [58, 0, 0]}
+  {"i": 11, "t_s": 0.22, "eye_ball_dist_m": 3.373, "bearing_deg": 13.2, "elev_deg_vs_trunk_x": 22.5, "ball_px_96": 6, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.334, "ball_equiv_diam_px_12": 0.345, "cells_touched_12": 1, "max_cell_cover_12": 0.094, "ball_px_gray_mean": 0.188, "max_cell_gray_12": 0.018, "ring_gray_12": 0.001, "contrast_12": 0.017, "max_cell_other_px_sky_floor_robot": [58, 0, 0]}
+  {"i": 12, "t_s": 0.24, "eye_ball_dist_m": 3.282, "bearing_deg": 13.3, "elev_deg_vs_trunk_x": 23.3, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.343, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 2, "max_cell_cover_12": 0.078, "ball_px_gray_mean": 0.189, "max_cell_gray_12": 0.013, "ring_gray_12": 0.0, "contrast_12": 0.013, "max_cell_other_px_sky_floor_robot": [59, 0, 0]}
+  {"i": 13, "t_s": 0.26, "eye_ball_dist_m": 3.19, "bearing_deg": 13.5, "elev_deg_vs_trunk_x": 24.1, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.353, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 2, "max_cell_cover_12": 0.078, "ball_px_gray_mean": 0.215, "max_cell_gray_12": 0.02, "ring_gray_12": 0.0, "contrast_12": 0.02, "max_cell_other_px_sky_floor_robot": [59, 0, 0]}
+  {"i": 14, "t_s": 0.28, "eye_ball_dist_m": 3.098, "bearing_deg": 13.7, "elev_deg_vs_trunk_x": 24.9, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.364, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 1, "max_cell_cover_12": 0.109, "ball_px_gray_mean": 0.225, "max_cell_gray_12": 0.027, "ring_gray_12": 0.0, "contrast_12": 0.027, "max_cell_other_px_sky_floor_robot": [57, 0, 0]}
+  {"i": 15, "t_s": 0.3, "eye_ball_dist_m": 3.006, "bearing_deg": 13.8, "elev_deg_vs_trunk_x": 25.6, "ball_px_96": 9, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.375, "ball_equiv_diam_px_12": 0.423, "cells_touched_12": 1, "max_cell_cover_12": 0.141, "ball_px_gray_mean": 0.172, "max_cell_gray_12": 0.025, "ring_gray_12": 0.0, "contrast_12": 0.025, "max_cell_other_px_sky_floor_robot": [55, 0, 0]}
+  {"i": 16, "t_s": 0.32, "eye_ball_dist_m": 2.915, "bearing_deg": 14.1, "elev_deg_vs_trunk_x": 26.7, "ball_px_96": 8, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.387, "ball_equiv_diam_px_12": 0.399, "cells_touched_12": 1, "max_cell_cover_12": 0.125, "ball_px_gray_mean": 0.195, "max_cell_gray_12": 0.031, "ring_gray_12": 0.0, "contrast_12": 0.031, "max_cell_other_px_sky_floor_robot": [56, 0, 0]}
+  {"i": 17, "t_s": 0.34, "eye_ball_dist_m": 2.824, "bearing_deg": 14.8, "elev_deg_vs_trunk_x": 27.8, "ball_px_96": 9, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.399, "ball_equiv_diam_px_12": 0.423, "cells_touched_12": 1, "max_cell_cover_12": 0.141, "ball_px_gray_mean": 0.193, "max_cell_gray_12": 0.035, "ring_gray_12": 0.0, "contrast_12": 0.035, "max_cell_other_px_sky_floor_robot": [55, 0, 0]}
+  {"i": 18, "t_s": 0.36, "eye_ball_dist_m": 2.733, "bearing_deg": 15.6, "elev_deg_vs_trunk_x": 28.9, "ball_px_96": 10, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.412, "ball_equiv_diam_px_12": 0.446, "cells_touched_12": 1, "max_cell_cover_12": 0.156, "ball_px_gray_mean": 0.184, "max_cell_gray_12": 0.036, "ring_gray_12": 0.0, "contrast_12": 0.036, "max_cell_other_px_sky_floor_robot": [54, 0, 0]}
+  {"i": 19, "t_s": 0.38, "eye_ball_dist_m": 2.639, "bearing_deg": 16.4, "elev_deg_vs_trunk_x": 29.8, "ball_px_96": 11, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.427, "ball_equiv_diam_px_12": 0.468, "cells_touched_12": 1, "max_cell_cover_12": 0.172, "ball_px_gray_mean": 0.185, "max_cell_gray_12": 0.037, "ring_gray_12": 0.0, "contrast_12": 0.037, "max_cell_other_px_sky_floor_robot": [53, 0, 0]}
+  {"i": 20, "t_s": 0.4, "eye_ball_dist_m": 2.542, "bearing_deg": 17.3, "elev_deg_vs_trunk_x": 30.1, "ball_px_96": 13, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.443, "ball_equiv_diam_px_12": 0.509, "cells_touched_12": 1, "max_cell_cover_12": 0.203, "ball_px_gray_mean": 0.193, "max_cell_gray_12": 0.045, "ring_gray_12": 0.0, "contrast_12": 0.045, "max_cell_other_px_sky_floor_robot": [51, 0, 0]}
+  {"i": 21, "t_s": 0.42, "eye_ball_dist_m": 2.441, "bearing_deg": 18.1, "elev_deg_vs_trunk_x": 30.0, "ball_px_96": 13, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.462, "ball_equiv_diam_px_12": 0.509, "cells_touched_12": 2, "max_cell_cover_12": 0.172, "ball_px_gray_mean": 0.194, "max_cell_gray_12": 0.041, "ring_gray_12": 0.0, "contrast_12": 0.041, "max_cell_other_px_sky_floor_robot": [53, 0, 0]}
+  {"i": 22, "t_s": 0.44, "eye_ball_dist_m": 2.338, "bearing_deg": 18.9, "elev_deg_vs_trunk_x": 29.9, "ball_px_96": 15, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.482, "ball_equiv_diam_px_12": 0.546, "cells_touched_12": 2, "max_cell_cover_12": 0.172, "ball_px_gray_mean": 0.196, "max_cell_gray_12": 0.035, "ring_gray_12": 0.0, "contrast_12": 0.035, "max_cell_other_px_sky_floor_robot": [53, 0, 0]}
+  {"i": 23, "t_s": 0.46, "eye_ball_dist_m": 2.237, "bearing_deg": 20.1, "elev_deg_vs_trunk_x": 30.6, "ball_px_96": 17, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.504, "ball_equiv_diam_px_12": 0.582, "cells_touched_12": 4, "max_cell_cover_12": 0.109, "ball_px_gray_mean": 0.193, "max_cell_gray_12": 0.019, "ring_gray_12": 0.0, "contrast_12": 0.019, "max_cell_other_px_sky_floor_robot": [57, 0, 0]}
+  {"i": 24, "t_s": 0.48, "eye_ball_dist_m": 2.136, "bearing_deg": 22.0, "elev_deg_vs_trunk_x": 31.7, "ball_px_96": 19, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.528, "ball_equiv_diam_px_12": 0.615, "cells_touched_12": 4, "max_cell_cover_12": 0.125, "ball_px_gray_mean": 0.193, "max_cell_gray_12": 0.033, "ring_gray_12": 0.0, "contrast_12": 0.033, "max_cell_other_px_sky_floor_robot": [56, 0, 0]}
+  {"i": 25, "t_s": 0.5, "eye_ball_dist_m": 2.033, "bearing_deg": 23.3, "elev_deg_vs_trunk_x": 32.8, "ball_px_96": 22, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.554, "ball_equiv_diam_px_12": 0.662, "cells_touched_12": 3, "max_cell_cover_12": 0.25, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.058, "ring_gray_12": 0.0, "contrast_12": 0.058, "max_cell_other_px_sky_floor_robot": [48, 0, 0]}
+  {"i": 26, "t_s": 0.52, "eye_ball_dist_m": 1.928, "bearing_deg": 24.3, "elev_deg_vs_trunk_x": 33.5, "ball_px_96": 26, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.584, "ball_equiv_diam_px_12": 0.719, "cells_touched_12": 2, "max_cell_cover_12": 0.391, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.077, "ring_gray_12": 0.0, "contrast_12": 0.077, "max_cell_other_px_sky_floor_robot": [39, 0, 0]}
+  {"i": 27, "t_s": 0.54, "eye_ball_dist_m": 1.821, "bearing_deg": 25.4, "elev_deg_vs_trunk_x": 33.8, "ball_px_96": 28, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.619, "ball_equiv_diam_px_12": 0.746, "cells_touched_12": 1, "max_cell_cover_12": 0.438, "ball_px_gray_mean": 0.19, "max_cell_gray_12": 0.093, "ring_gray_12": 0.0, "contrast_12": 0.093, "max_cell_other_px_sky_floor_robot": [36, 0, 0]}
+  {"i": 28, "t_s": 0.56, "eye_ball_dist_m": 1.713, "bearing_deg": 26.9, "elev_deg_vs_trunk_x": 33.8, "ball_px_96": 37, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.658, "ball_equiv_diam_px_12": 0.858, "cells_touched_12": 1, "max_cell_cover_12": 0.578, "ball_px_gray_mean": 0.18, "max_cell_gray_12": 0.106, "ring_gray_12": 0.0, "contrast_12": 0.106, "max_cell_other_px_sky_floor_robot": [27, 0, 0]}
+  {"i": 29, "t_s": 0.58, "eye_ball_dist_m": 1.606, "bearing_deg": 29.1, "elev_deg_vs_trunk_x": 34.0, "ball_px_96": 41, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.702, "ball_equiv_diam_px_12": 0.903, "cells_touched_12": 2, "max_cell_cover_12": 0.484, "ball_px_gray_mean": 0.189, "max_cell_gray_12": 0.095, "ring_gray_12": 0.0, "contrast_12": 0.095, "max_cell_other_px_sky_floor_robot": [33, 0, 0]}
+  {"i": 30, "t_s": 0.6, "eye_ball_dist_m": 1.502, "bearing_deg": 31.7, "elev_deg_vs_trunk_x": 34.6, "ball_px_96": 51, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.75, "ball_equiv_diam_px_12": 1.007, "cells_touched_12": 4, "max_cell_cover_12": 0.359, "ball_px_gray_mean": 0.188, "max_cell_gray_12": 0.074, "ring_gray_12": 0.0, "contrast_12": 0.074, "max_cell_other_px_sky_floor_robot": [41, 0, 0]}
+  {"i": 31, "t_s": 0.62, "eye_ball_dist_m": 1.401, "bearing_deg": 34.7, "elev_deg_vs_trunk_x": 36.7, "ball_px_96": 64, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.804, "ball_equiv_diam_px_12": 1.128, "cells_touched_12": 4, "max_cell_cover_12": 0.594, "ball_px_gray_mean": 0.181, "max_cell_gray_12": 0.145, "ring_gray_12": 0.0, "contrast_12": 0.145, "max_cell_other_px_sky_floor_robot": [26, 0, 0]}
+  {"i": 32, "t_s": 0.64, "eye_ball_dist_m": 1.301, "bearing_deg": 38.8, "elev_deg_vs_trunk_x": 38.2, "ball_px_96": 90, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.866, "ball_equiv_diam_px_12": 1.338, "cells_touched_12": 6, "max_cell_cover_12": 0.672, "ball_px_gray_mean": 0.178, "max_cell_gray_12": 0.094, "ring_gray_12": 0.0, "contrast_12": 0.094, "max_cell_other_px_sky_floor_robot": [21, 0, 0]}
+  {"i": 33, "t_s": 0.66, "eye_ball_dist_m": 1.199, "bearing_deg": 43.7, "elev_deg_vs_trunk_x": 37.8, "ball_px_96": 123, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.94, "ball_equiv_diam_px_12": 1.564, "cells_touched_12": 6, "max_cell_cover_12": 0.859, "ball_px_gray_mean": 0.179, "max_cell_gray_12": 0.127, "ring_gray_12": 0.0, "contrast_12": 0.127, "max_cell_other_px_sky_floor_robot": [9, 0, 0]}
+  {"i": 34, "t_s": 0.68, "eye_ball_dist_m": 1.097, "bearing_deg": 48.8, "elev_deg_vs_trunk_x": 36.5, "ball_px_96": 151, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.027, "ball_equiv_diam_px_12": 1.733, "cells_touched_12": 4, "max_cell_cover_12": 0.938, "ball_px_gray_mean": 0.169, "max_cell_gray_12": 0.239, "ring_gray_12": 0.002, "contrast_12": 0.238, "max_cell_other_px_sky_floor_robot": [4, 0, 0]}
+  {"i": 35, "t_s": 0.7, "eye_ball_dist_m": 0.998, "bearing_deg": 54.4, "elev_deg_vs_trunk_x": 35.2, "ball_px_96": 65, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.129, "ball_equiv_diam_px_12": 1.137, "cells_touched_12": 3, "max_cell_cover_12": 0.547, "ball_px_gray_mean": 0.088, "max_cell_gray_12": 0.065, "ring_gray_12": 0.0, "contrast_12": 0.065, "max_cell_other_px_sky_floor_robot": [29, 0, 0]}
+  {"i": 36, "t_s": 0.72, "eye_ball_dist_m": 0.905, "bearing_deg": 60.8, "elev_deg_vs_trunk_x": 33.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.245}
+  {"i": 37, "t_s": 0.74, "eye_ball_dist_m": 0.822, "bearing_deg": 68.2, "elev_deg_vs_trunk_x": 30.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.37}
+  {"i": 38, "t_s": 0.76, "eye_ball_dist_m": 0.753, "bearing_deg": 76.4, "elev_deg_vs_trunk_x": 26.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.496}
+  {"i": 39, "t_s": 0.78, "eye_ball_dist_m": 0.703, "bearing_deg": 85.4, "elev_deg_vs_trunk_x": 20.4, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.602}
+  {"i": 40, "t_s": 0.8, "eye_ball_dist_m": 0.677, "bearing_deg": 94.4, "elev_deg_vs_trunk_x": 12.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.664}
+  {"i": 41, "t_s": 0.82, "eye_ball_dist_m": 0.68, "bearing_deg": 103.0, "elev_deg_vs_trunk_x": 3.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.658}
+  {"i": 42, "t_s": 0.84, "eye_ball_dist_m": 0.713, "bearing_deg": 111.1, "elev_deg_vs_trunk_x": -5.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.58}
+  {"i": 43, "t_s": 0.86, "eye_ball_dist_m": 0.777, "bearing_deg": 118.6, "elev_deg_vs_trunk_x": -12.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.45}
+  {"i": 44, "t_s": 0.88, "eye_ball_dist_m": 0.865, "bearing_deg": 125.1, "elev_deg_vs_trunk_x": -18.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.303}
+  {"i": 45, "t_s": 0.9, "eye_ball_dist_m": 0.922, "bearing_deg": 130.0, "elev_deg_vs_trunk_x": -16.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.222}
+  {"i": 46, "t_s": 0.92, "eye_ball_dist_m": 0.961, "bearing_deg": 133.8, "elev_deg_vs_trunk_x": -10.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.173}
+  {"i": 47, "t_s": 0.94, "eye_ball_dist_m": 1.013, "bearing_deg": 137.3, "elev_deg_vs_trunk_x": -5.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.112}
+  {"i": 48, "t_s": 0.96, "eye_ball_dist_m": 1.076, "bearing_deg": 140.4, "elev_deg_vs_trunk_x": -1.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.047}
+  {"i": 49, "t_s": 0.98, "eye_ball_dist_m": 1.146, "bearing_deg": 143.3, "elev_deg_vs_trunk_x": 2.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.983}
+  {"i": 50, "t_s": 1.0, "eye_ball_dist_m": 1.222, "bearing_deg": 145.9, "elev_deg_vs_trunk_x": 6.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.922}
+
+=== B_fovy90_pitch15_white_ball
+situation: {"ball_rel_x_m": 4.527, "ball_rel_y_m": 0.7072, "ball_rel_z_m": 0.9463, "ball_vel_x_m_s": -4.5332, "ball_vel_y_m_s": -0.0443, "ball_vel_z_m_s": 2.9924, "dog_forward_speed_m_s": 0.8574}
+fovy_deg: 90.0
+pitch_up_deg: 15.0
+ball_rgba: [1.0, 1.0, 1.0, 1.0]
+flight_s: 0.84
+n_frames: 51
+frames_with_ball_visible: 36
+visible_t_range_s: [0.0, 0.7]
+render_eye_vs_requested_max_abs_m: 2.2851804626355943e-07
+gray_levels_96: {"floor": {"n": 167195, "min": 0.2, "max": 0.4, "mean": 0.3983}, "sky": {"n": 301924, "min": 0.0, "max": 0.4627, "mean": 0.0009}, "ball": {"n": 897, "min": 0.0275, "max": 0.7569, "mean": 0.342}, "robot": {"n": 0}}
+footprint_at_distance: {"3.0": {"t_s": 0.3, "eye_ball_dist_m": 3.006, "ball_px_96": 9, "ball_equiv_diam_px_12": 0.423, "expected_diam_px_12_at_centre": 0.375, "cells_touched_12": 1, "max_cell_cover_12": 0.141, "ball_px_gray_mean": 0.343, "max_cell_gray_12": 0.051, "ring_gray_12": 0.0, "contrast_12": 0.051, "max_cell_other_px_sky_floor_robot": [55, 0, 0], "bearing_deg": 13.8, "elev_deg_vs_trunk_x": 25.6}, "2.0": {"t_s": 0.5, "eye_ball_dist_m": 2.033, "ball_px_96": 22, "ball_equiv_diam_px_12": 0.662, "expected_diam_px_12_at_centre": 0.554, "cells_touched_12": 3, "max_cell_cover_12": 0.25, "ball_px_gray_mean": 0.351, "max_cell_gray_12": 0.112, "ring_gray_12": 0.0, "contrast_12": 0.112, "max_cell_other_px_sky_floor_robot": [48, 0, 0], "bearing_deg": 23.3, "elev_deg_vs_trunk_x": 32.8}, "1.0": {"t_s": 0.7, "eye_ball_dist_m": 0.998, "ball_px_96": 65, "ball_equiv_diam_px_12": 1.137, "expected_diam_px_12_at_centre": 1.129, "cells_touched_12": 3, "max_cell_cover_12": 0.547, "ball_px_gray_mean": 0.174, "max_cell_gray_12": 0.128, "ring_gray_12": 0.0, "contrast_12": 0.128, "max_cell_other_px_sky_floor_robot": [29, 0, 0], "bearing_deg": 54.4, "elev_deg_vs_trunk_x": 35.2}, "0.5": {"in_view": false, "closest_frame": {"t_s": 0.8, "eye_ball_dist_m": 0.677, "bearing_deg": 94.4, "elev_deg_vs_trunk_x": 12.5}, "expected_diam_px_12_if_at_centre": 2.254}}
+saved_pngs_[stem,dist_m,ball_px_96]: [["B_fovy90_pitch15_white_ball_f00_t0.00", 4.349, 4], ["B_fovy90_pitch15_white_ball_f07_t0.14", 3.727, 6], ["B_fovy90_pitch15_white_ball_f14_t0.28", 3.098, 7], ["B_fovy90_pitch15_white_ball_f21_t0.42", 2.441, 13], ["B_fovy90_pitch15_white_ball_f28_t0.56", 1.713, 37], ["B_fovy90_pitch15_white_ball_f35_t0.70", 0.998, 65]]
+per_frame:
+  {"i": 0, "t_s": 0.0, "eye_ball_dist_m": 4.349, "bearing_deg": 9.7, "elev_deg_vs_trunk_x": 9.0, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.259, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 2, "max_cell_cover_12": 0.031, "ball_px_gray_mean": 0.413, "max_cell_gray_12": 0.015, "ring_gray_12": 0.011, "contrast_12": 0.004, "max_cell_other_px_sky_floor_robot": [62, 0, 0]}
+  {"i": 1, "t_s": 0.02, "eye_ball_dist_m": 4.259, "bearing_deg": 10.0, "elev_deg_vs_trunk_x": 10.9, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.265, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 2, "max_cell_cover_12": 0.031, "ball_px_gray_mean": 0.369, "max_cell_gray_12": 0.014, "ring_gray_12": 0.027, "contrast_12": -0.013, "max_cell_other_px_sky_floor_robot": [62, 0, 0]}
+  {"i": 2, "t_s": 0.04, "eye_ball_dist_m": 4.17, "bearing_deg": 10.3, "elev_deg_vs_trunk_x": 13.9, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.27, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 2, "max_cell_cover_12": 0.047, "ball_px_gray_mean": 0.344, "max_cell_gray_12": 0.02, "ring_gray_12": 0.059, "contrast_12": -0.039, "max_cell_other_px_sky_floor_robot": [61, 0, 0]}
+  {"i": 3, "t_s": 0.06, "eye_ball_dist_m": 4.083, "bearing_deg": 10.7, "elev_deg_vs_trunk_x": 16.0, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.276, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.396, "max_cell_gray_12": 0.029, "ring_gray_12": 0.0, "contrast_12": 0.028, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 4, "t_s": 0.08, "eye_ball_dist_m": 3.995, "bearing_deg": 11.4, "elev_deg_vs_trunk_x": 16.9, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.282, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.43, "max_cell_gray_12": 0.029, "ring_gray_12": 0.0, "contrast_12": 0.029, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 5, "t_s": 0.1, "eye_ball_dist_m": 3.906, "bearing_deg": 12.1, "elev_deg_vs_trunk_x": 17.3, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.289, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.338, "max_cell_gray_12": 0.034, "ring_gray_12": 0.0, "contrast_12": 0.034, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 6, "t_s": 0.12, "eye_ball_dist_m": 3.816, "bearing_deg": 12.4, "elev_deg_vs_trunk_x": 17.8, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.295, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.449, "max_cell_gray_12": 0.029, "ring_gray_12": 0.0, "contrast_12": 0.029, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 7, "t_s": 0.14, "eye_ball_dist_m": 3.727, "bearing_deg": 12.6, "elev_deg_vs_trunk_x": 18.8, "ball_px_96": 6, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.302, "ball_equiv_diam_px_12": 0.345, "cells_touched_12": 1, "max_cell_cover_12": 0.094, "ball_px_gray_mean": 0.364, "max_cell_gray_12": 0.035, "ring_gray_12": 0.0, "contrast_12": 0.035, "max_cell_other_px_sky_floor_robot": [58, 0, 0]}
+  {"i": 8, "t_s": 0.16, "eye_ball_dist_m": 3.638, "bearing_deg": 12.5, "elev_deg_vs_trunk_x": 19.6, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.31, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.426, "max_cell_gray_12": 0.039, "ring_gray_12": 0.0, "contrast_12": 0.039, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 9, "t_s": 0.18, "eye_ball_dist_m": 3.55, "bearing_deg": 12.7, "elev_deg_vs_trunk_x": 20.6, "ball_px_96": 4, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.317, "ball_equiv_diam_px_12": 0.282, "cells_touched_12": 1, "max_cell_cover_12": 0.062, "ball_px_gray_mean": 0.461, "max_cell_gray_12": 0.04, "ring_gray_12": 0.0, "contrast_12": 0.04, "max_cell_other_px_sky_floor_robot": [60, 0, 0]}
+  {"i": 10, "t_s": 0.2, "eye_ball_dist_m": 3.462, "bearing_deg": 13.0, "elev_deg_vs_trunk_x": 21.6, "ball_px_96": 6, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.325, "ball_equiv_diam_px_12": 0.345, "cells_touched_12": 1, "max_cell_cover_12": 0.094, "ball_px_gray_mean": 0.376, "max_cell_gray_12": 0.043, "ring_gray_12": 0.0, "contrast_12": 0.043, "max_cell_other_px_sky_floor_robot": [58, 0, 0]}
+  {"i": 11, "t_s": 0.22, "eye_ball_dist_m": 3.373, "bearing_deg": 13.2, "elev_deg_vs_trunk_x": 22.5, "ball_px_96": 6, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.334, "ball_equiv_diam_px_12": 0.345, "cells_touched_12": 1, "max_cell_cover_12": 0.094, "ball_px_gray_mean": 0.373, "max_cell_gray_12": 0.036, "ring_gray_12": 0.001, "contrast_12": 0.035, "max_cell_other_px_sky_floor_robot": [58, 0, 0]}
+  {"i": 12, "t_s": 0.24, "eye_ball_dist_m": 3.282, "bearing_deg": 13.3, "elev_deg_vs_trunk_x": 23.3, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.343, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 2, "max_cell_cover_12": 0.078, "ball_px_gray_mean": 0.366, "max_cell_gray_12": 0.024, "ring_gray_12": 0.0, "contrast_12": 0.024, "max_cell_other_px_sky_floor_robot": [59, 0, 0]}
+  {"i": 13, "t_s": 0.26, "eye_ball_dist_m": 3.19, "bearing_deg": 13.5, "elev_deg_vs_trunk_x": 24.1, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.353, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 2, "max_cell_cover_12": 0.078, "ball_px_gray_mean": 0.415, "max_cell_gray_12": 0.039, "ring_gray_12": 0.0, "contrast_12": 0.039, "max_cell_other_px_sky_floor_robot": [59, 0, 0]}
+  {"i": 14, "t_s": 0.28, "eye_ball_dist_m": 3.098, "bearing_deg": 13.7, "elev_deg_vs_trunk_x": 24.9, "ball_px_96": 7, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.364, "ball_equiv_diam_px_12": 0.373, "cells_touched_12": 1, "max_cell_cover_12": 0.109, "ball_px_gray_mean": 0.431, "max_cell_gray_12": 0.053, "ring_gray_12": 0.0, "contrast_12": 0.053, "max_cell_other_px_sky_floor_robot": [57, 0, 0]}
+  {"i": 15, "t_s": 0.3, "eye_ball_dist_m": 3.006, "bearing_deg": 13.8, "elev_deg_vs_trunk_x": 25.6, "ball_px_96": 9, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.375, "ball_equiv_diam_px_12": 0.423, "cells_touched_12": 1, "max_cell_cover_12": 0.141, "ball_px_gray_mean": 0.343, "max_cell_gray_12": 0.051, "ring_gray_12": 0.0, "contrast_12": 0.051, "max_cell_other_px_sky_floor_robot": [55, 0, 0]}
+  {"i": 16, "t_s": 0.32, "eye_ball_dist_m": 2.915, "bearing_deg": 14.1, "elev_deg_vs_trunk_x": 26.7, "ball_px_96": 8, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.387, "ball_equiv_diam_px_12": 0.399, "cells_touched_12": 1, "max_cell_cover_12": 0.125, "ball_px_gray_mean": 0.381, "max_cell_gray_12": 0.061, "ring_gray_12": 0.0, "contrast_12": 0.061, "max_cell_other_px_sky_floor_robot": [56, 0, 0]}
+  {"i": 17, "t_s": 0.34, "eye_ball_dist_m": 2.824, "bearing_deg": 14.8, "elev_deg_vs_trunk_x": 27.8, "ball_px_96": 9, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.399, "ball_equiv_diam_px_12": 0.423, "cells_touched_12": 1, "max_cell_cover_12": 0.141, "ball_px_gray_mean": 0.381, "max_cell_gray_12": 0.064, "ring_gray_12": 0.0, "contrast_12": 0.064, "max_cell_other_px_sky_floor_robot": [55, 0, 0]}
+  {"i": 18, "t_s": 0.36, "eye_ball_dist_m": 2.733, "bearing_deg": 15.6, "elev_deg_vs_trunk_x": 28.9, "ball_px_96": 10, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.412, "ball_equiv_diam_px_12": 0.446, "cells_touched_12": 1, "max_cell_cover_12": 0.156, "ball_px_gray_mean": 0.358, "max_cell_gray_12": 0.071, "ring_gray_12": 0.0, "contrast_12": 0.071, "max_cell_other_px_sky_floor_robot": [54, 0, 0]}
+  {"i": 19, "t_s": 0.38, "eye_ball_dist_m": 2.639, "bearing_deg": 16.4, "elev_deg_vs_trunk_x": 29.8, "ball_px_96": 11, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.427, "ball_equiv_diam_px_12": 0.468, "cells_touched_12": 1, "max_cell_cover_12": 0.172, "ball_px_gray_mean": 0.364, "max_cell_gray_12": 0.073, "ring_gray_12": 0.0, "contrast_12": 0.073, "max_cell_other_px_sky_floor_robot": [53, 0, 0]}
+  {"i": 20, "t_s": 0.4, "eye_ball_dist_m": 2.542, "bearing_deg": 17.3, "elev_deg_vs_trunk_x": 30.1, "ball_px_96": 13, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.443, "ball_equiv_diam_px_12": 0.509, "cells_touched_12": 1, "max_cell_cover_12": 0.203, "ball_px_gray_mean": 0.381, "max_cell_gray_12": 0.087, "ring_gray_12": 0.0, "contrast_12": 0.087, "max_cell_other_px_sky_floor_robot": [51, 0, 0]}
+  {"i": 21, "t_s": 0.42, "eye_ball_dist_m": 2.441, "bearing_deg": 18.1, "elev_deg_vs_trunk_x": 30.0, "ball_px_96": 13, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.462, "ball_equiv_diam_px_12": 0.509, "cells_touched_12": 2, "max_cell_cover_12": 0.172, "ball_px_gray_mean": 0.382, "max_cell_gray_12": 0.081, "ring_gray_12": 0.0, "contrast_12": 0.081, "max_cell_other_px_sky_floor_robot": [53, 0, 0]}
+  {"i": 22, "t_s": 0.44, "eye_ball_dist_m": 2.338, "bearing_deg": 18.9, "elev_deg_vs_trunk_x": 29.9, "ball_px_96": 15, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.482, "ball_equiv_diam_px_12": 0.546, "cells_touched_12": 2, "max_cell_cover_12": 0.172, "ball_px_gray_mean": 0.376, "max_cell_gray_12": 0.066, "ring_gray_12": 0.0, "contrast_12": 0.066, "max_cell_other_px_sky_floor_robot": [53, 0, 0]}
+  {"i": 23, "t_s": 0.46, "eye_ball_dist_m": 2.237, "bearing_deg": 20.1, "elev_deg_vs_trunk_x": 30.6, "ball_px_96": 17, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.504, "ball_equiv_diam_px_12": 0.582, "cells_touched_12": 4, "max_cell_cover_12": 0.109, "ball_px_gray_mean": 0.379, "max_cell_gray_12": 0.039, "ring_gray_12": 0.0, "contrast_12": 0.039, "max_cell_other_px_sky_floor_robot": [57, 0, 0]}
+  {"i": 24, "t_s": 0.48, "eye_ball_dist_m": 2.136, "bearing_deg": 22.0, "elev_deg_vs_trunk_x": 31.7, "ball_px_96": 19, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.528, "ball_equiv_diam_px_12": 0.615, "cells_touched_12": 4, "max_cell_cover_12": 0.125, "ball_px_gray_mean": 0.376, "max_cell_gray_12": 0.063, "ring_gray_12": 0.0, "contrast_12": 0.063, "max_cell_other_px_sky_floor_robot": [56, 0, 0]}
+  {"i": 25, "t_s": 0.5, "eye_ball_dist_m": 2.033, "bearing_deg": 23.3, "elev_deg_vs_trunk_x": 32.8, "ball_px_96": 22, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.554, "ball_equiv_diam_px_12": 0.662, "cells_touched_12": 3, "max_cell_cover_12": 0.25, "ball_px_gray_mean": 0.351, "max_cell_gray_12": 0.112, "ring_gray_12": 0.0, "contrast_12": 0.112, "max_cell_other_px_sky_floor_robot": [48, 0, 0]}
+  {"i": 26, "t_s": 0.52, "eye_ball_dist_m": 1.928, "bearing_deg": 24.3, "elev_deg_vs_trunk_x": 33.5, "ball_px_96": 26, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.584, "ball_equiv_diam_px_12": 0.719, "cells_touched_12": 2, "max_cell_cover_12": 0.391, "ball_px_gray_mean": 0.35, "max_cell_gray_12": 0.15, "ring_gray_12": 0.0, "contrast_12": 0.15, "max_cell_other_px_sky_floor_robot": [39, 0, 0]}
+  {"i": 27, "t_s": 0.54, "eye_ball_dist_m": 1.821, "bearing_deg": 25.4, "elev_deg_vs_trunk_x": 33.8, "ball_px_96": 28, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.619, "ball_equiv_diam_px_12": 0.746, "cells_touched_12": 1, "max_cell_cover_12": 0.438, "ball_px_gray_mean": 0.369, "max_cell_gray_12": 0.18, "ring_gray_12": 0.0, "contrast_12": 0.18, "max_cell_other_px_sky_floor_robot": [36, 0, 0]}
+  {"i": 28, "t_s": 0.56, "eye_ball_dist_m": 1.713, "bearing_deg": 26.9, "elev_deg_vs_trunk_x": 33.8, "ball_px_96": 37, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.658, "ball_equiv_diam_px_12": 0.858, "cells_touched_12": 1, "max_cell_cover_12": 0.578, "ball_px_gray_mean": 0.351, "max_cell_gray_12": 0.206, "ring_gray_12": 0.0, "contrast_12": 0.206, "max_cell_other_px_sky_floor_robot": [27, 0, 0]}
+  {"i": 29, "t_s": 0.58, "eye_ball_dist_m": 1.606, "bearing_deg": 29.1, "elev_deg_vs_trunk_x": 34.0, "ball_px_96": 41, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.702, "ball_equiv_diam_px_12": 0.903, "cells_touched_12": 2, "max_cell_cover_12": 0.484, "ball_px_gray_mean": 0.368, "max_cell_gray_12": 0.185, "ring_gray_12": 0.0, "contrast_12": 0.185, "max_cell_other_px_sky_floor_robot": [33, 0, 0]}
+  {"i": 30, "t_s": 0.6, "eye_ball_dist_m": 1.502, "bearing_deg": 31.7, "elev_deg_vs_trunk_x": 34.6, "ball_px_96": 51, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.75, "ball_equiv_diam_px_12": 1.007, "cells_touched_12": 4, "max_cell_cover_12": 0.359, "ball_px_gray_mean": 0.365, "max_cell_gray_12": 0.142, "ring_gray_12": 0.0, "contrast_12": 0.142, "max_cell_other_px_sky_floor_robot": [41, 0, 0]}
+  {"i": 31, "t_s": 0.62, "eye_ball_dist_m": 1.401, "bearing_deg": 34.7, "elev_deg_vs_trunk_x": 36.7, "ball_px_96": 64, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.804, "ball_equiv_diam_px_12": 1.128, "cells_touched_12": 4, "max_cell_cover_12": 0.594, "ball_px_gray_mean": 0.352, "max_cell_gray_12": 0.282, "ring_gray_12": 0.001, "contrast_12": 0.281, "max_cell_other_px_sky_floor_robot": [26, 0, 0]}
+  {"i": 32, "t_s": 0.64, "eye_ball_dist_m": 1.301, "bearing_deg": 38.8, "elev_deg_vs_trunk_x": 38.2, "ball_px_96": 90, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.866, "ball_equiv_diam_px_12": 1.338, "cells_touched_12": 6, "max_cell_cover_12": 0.672, "ball_px_gray_mean": 0.346, "max_cell_gray_12": 0.186, "ring_gray_12": 0.0, "contrast_12": 0.186, "max_cell_other_px_sky_floor_robot": [21, 0, 0]}
+  {"i": 33, "t_s": 0.66, "eye_ball_dist_m": 1.199, "bearing_deg": 43.7, "elev_deg_vs_trunk_x": 37.8, "ball_px_96": 123, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.94, "ball_equiv_diam_px_12": 1.564, "cells_touched_12": 6, "max_cell_cover_12": 0.859, "ball_px_gray_mean": 0.349, "max_cell_gray_12": 0.247, "ring_gray_12": 0.0, "contrast_12": 0.247, "max_cell_other_px_sky_floor_robot": [9, 0, 0]}
+  {"i": 34, "t_s": 0.68, "eye_ball_dist_m": 1.097, "bearing_deg": 48.8, "elev_deg_vs_trunk_x": 36.5, "ball_px_96": 151, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.027, "ball_equiv_diam_px_12": 1.733, "cells_touched_12": 4, "max_cell_cover_12": 0.938, "ball_px_gray_mean": 0.325, "max_cell_gray_12": 0.452, "ring_gray_12": 0.003, "contrast_12": 0.449, "max_cell_other_px_sky_floor_robot": [4, 0, 0]}
+  {"i": 35, "t_s": 0.7, "eye_ball_dist_m": 0.998, "bearing_deg": 54.4, "elev_deg_vs_trunk_x": 35.2, "ball_px_96": 65, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.129, "ball_equiv_diam_px_12": 1.137, "cells_touched_12": 3, "max_cell_cover_12": 0.547, "ball_px_gray_mean": 0.174, "max_cell_gray_12": 0.128, "ring_gray_12": 0.0, "contrast_12": 0.128, "max_cell_other_px_sky_floor_robot": [29, 0, 0]}
+  {"i": 36, "t_s": 0.72, "eye_ball_dist_m": 0.905, "bearing_deg": 60.8, "elev_deg_vs_trunk_x": 33.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.245}
+  {"i": 37, "t_s": 0.74, "eye_ball_dist_m": 0.822, "bearing_deg": 68.2, "elev_deg_vs_trunk_x": 30.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.37}
+  {"i": 38, "t_s": 0.76, "eye_ball_dist_m": 0.753, "bearing_deg": 76.4, "elev_deg_vs_trunk_x": 26.6, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.496}
+  {"i": 39, "t_s": 0.78, "eye_ball_dist_m": 0.703, "bearing_deg": 85.4, "elev_deg_vs_trunk_x": 20.4, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.602}
+  {"i": 40, "t_s": 0.8, "eye_ball_dist_m": 0.677, "bearing_deg": 94.4, "elev_deg_vs_trunk_x": 12.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.664}
+  {"i": 41, "t_s": 0.82, "eye_ball_dist_m": 0.68, "bearing_deg": 103.0, "elev_deg_vs_trunk_x": 3.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.658}
+  {"i": 42, "t_s": 0.84, "eye_ball_dist_m": 0.713, "bearing_deg": 111.1, "elev_deg_vs_trunk_x": -5.2, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.58}
+  {"i": 43, "t_s": 0.86, "eye_ball_dist_m": 0.777, "bearing_deg": 118.6, "elev_deg_vs_trunk_x": -12.8, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.45}
+  {"i": 44, "t_s": 0.88, "eye_ball_dist_m": 0.865, "bearing_deg": 125.1, "elev_deg_vs_trunk_x": -18.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.303}
+  {"i": 45, "t_s": 0.9, "eye_ball_dist_m": 0.922, "bearing_deg": 130.0, "elev_deg_vs_trunk_x": -16.9, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.222}
+  {"i": 46, "t_s": 0.92, "eye_ball_dist_m": 0.961, "bearing_deg": 133.8, "elev_deg_vs_trunk_x": -10.5, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.173}
+  {"i": 47, "t_s": 0.94, "eye_ball_dist_m": 1.013, "bearing_deg": 137.3, "elev_deg_vs_trunk_x": -5.3, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.112}
+  {"i": 48, "t_s": 0.96, "eye_ball_dist_m": 1.076, "bearing_deg": 140.4, "elev_deg_vs_trunk_x": -1.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 1.047}
+  {"i": 49, "t_s": 0.98, "eye_ball_dist_m": 1.146, "bearing_deg": 143.3, "elev_deg_vs_trunk_x": 2.7, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.983}
+  {"i": 50, "t_s": 1.0, "eye_ball_dist_m": 1.222, "bearing_deg": 145.9, "elev_deg_vs_trunk_x": 6.0, "ball_px_96": 0, "robot_px_96": 0, "expected_diam_px_12_at_centre": 0.922}
+
+=== visibility_study: {
+ "n_throws": 20000,
+ "flight_s_quantiles_0_50_100": [
+  0.589,
+  0.942,
+  1.548
+ ],
+ "abs_bearing_from_eye_at_release_deg_q50_q90_max": [
+  32.8,
+  57.8,
+  64.8
+ ],
+ "elevation_from_eye_at_release_deg_q10_q50_q90": [
+  8.6,
+  12.1,
+  16.0
+ ],
+ "max_elevation_during_flight_deg_q10_q50_q90": [
+  37.2,
+  58.2,
+  83.4
+ ],
+ "abs_bearing_0.4s_before_arrival_deg_q50_q90": [
+  36.0,
+  63.4
+ ],
+ "by_fovy_and_pitch_up_deg": {
+  "fovy45_pitch0": {
+   "in_view_at_release": 0.344,
+   "in_view_at_some_time_in_first_0.3s": 0.346,
+   "in_view_0.4s_before_arrival": 0.0,
+   "mean_fraction_of_flight_in_view": 0.061,
+   "ball_diam_px_at_12x12_at_1m_3m_(image_centre)": [
+    2.72,
+    0.91
+   ]
+  },
+  "fovy60_pitch0": {
+   "in_view_at_release": 0.456,
+   "in_view_at_some_time_in_first_0.3s": 0.461,
+   "in_view_0.4s_before_arrival": 0.008,
+   "mean_fraction_of_flight_in_view": 0.138,
+   "ball_diam_px_at_12x12_at_1m_3m_(image_centre)": [
+    1.95,
+    0.65
+   ]
+  },
+  "fovy90_pitch0": {
+   "in_view_at_release": 0.697,
+   "in_view_at_some_time_in_first_0.3s": 0.701,
+   "in_view_0.4s_before_arrival": 0.3,
+   "mean_fraction_of_flight_in_view": 0.372,
+   "ball_diam_px_at_12x12_at_1m_3m_(image_centre)": [
+    1.13,
+    0.38
+   ]
+  },
+  "fovy90_pitch15": {
+   "in_view_at_release": 0.718,
+   "in_view_at_some_time_in_first_0.3s": 0.757,
+   "in_view_0.4s_before_arrival": 0.666,
+   "mean_fraction_of_flight_in_view": 0.554,
+   "ball_diam_px_at_12x12_at_1m_3m_(image_centre)": [
+    1.13,
+    0.38
+   ]
+  },
+  "fovy90_pitch25": {
+   "in_view_at_release": 0.716,
+   "in_view_at_some_time_in_first_0.3s": 0.789,
+   "in_view_0.4s_before_arrival": 0.797,
+   "mean_fraction_of_flight_in_view": 0.642,
+   "ball_diam_px_at_12x12_at_1m_3m_(image_centre)": [
+    1.13,
+    0.38
+   ]
+  },
+  "fovy120_pitch0": {
+   "in_view_at_release": 0.937,
+   "in_view_at_some_time_in_first_0.3s": 0.937,
+   "in_view_0.4s_before_arrival": 0.734,
+   "mean_fraction_of_flight_in_view": 0.652,
+   "ball_diam_px_at_12x12_at_1m_3m_(image_centre)": [
+    0.65,
+    0.22
+   ]
+  },
+  "fovy120_pitch15": {
+   "in_view_at_release": 0.967,
+   "in_view_at_some_time_in_first_0.3s": 0.992,
+   "in_view_0.4s_before_arrival": 0.96,
+   "mean_fraction_of_flight_in_view": 0.813,
+   "ball_diam_px_at_12x12_at_1m_3m_(image_centre)": [
+    0.65,
+    0.22
+   ]
+  }
+ }
+}

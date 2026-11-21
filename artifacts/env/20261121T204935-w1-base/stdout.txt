@@ -1,0 +1,20 @@
+........................................................................ [ 57%]
+...............F......................................                   [100%]
+================================== FAILURES ===================================
+_______________________ test_trots_thirty_seconds[0.3] ________________________
+
+config = {'project': {'name': 'Learned Judgment', 'status': 'scaffold', 'primary_skill': 'dodge', 'no_substitute_robot_or_proje...232\\test_trots_thirty_seconds_0_3_0\\traces', 'save_traces': True, 'render': {'width': 640, 'height': 480}, ...}, ...}
+vx = 0.3
+
+    @pytest.mark.parametrize("vx", [0.3, 0.6, 0.9])
+    def test_trots_thirty_seconds(config, vx):
+        r = run_locomotion(config, vx=vx, yaw_rate=0.0, duration_s=30, seed=config["runtime"]["seed"])
+        assert not r["fallen"]
+>       assert abs(r["mean_speed_m_s"] - vx) <= config["robot"]["acceptance"]["speed_tolerance_fraction"] * vx
+E       assert 0.07439528955513408 <= (0.2 * 0.3)
+E        +  where 0.07439528955513408 = abs((0.2256047104448659 - 0.3))
+
+tests\env\test_locomotion.py:12: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/env/test_locomotion.py::test_trots_thirty_seconds[0.3] - assert ...
+1 failed, 125 passed in 802.92s (0:13:22)
