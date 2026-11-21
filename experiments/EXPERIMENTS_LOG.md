@@ -415,3 +415,22 @@ Rebound tests stated by the rules, with the implied coefficient of restitution `
 - TabPFN calls: 0.
 - Limitations: one world, one seed, one delay and hold; single episodes per case; no ball; the formula constants (delay 0.05 s, time constant 0.3 s) were starting values taken from Person A's standstill traces and were not changed here.
 - Decision: the interface works as agreed. The formula is the right size for full commands during the hold and misses the half-command response, the left/right difference and the turning. Those are left to the residual model, as designed; the constants stay as they are until Person A's step-response traces exist.
+
+## E7-settle — first real TabPFN prediction through the project's teacher — 2026-11-21 — Person B
+
+- Question: does the provider's real response have the layout the teacher parses, is the charge equal to the free quote, and is a repeated identical call answered from the cache without a second request? The offline checks could not answer these.
+- Status: CONTRACT PROOF on fixture data. One real billed request. The predicted numbers are not evidence about the robot, the simulator or the quality of any model.
+- Versions: tabpfn-client 0.10.1; model `v3.5_default`, 8 estimators, random state 0; `engine.multi_outcome_mode: stacked`. Config digest `dc09cf80bcc6`.
+- Data: a fixture shaped like one DODGE decision. 40 context rows, 17 feature columns (one categorical with 2 levels), 5 outcomes (3 regression, 2 binary), 108 candidate rows for one situation. Generated from `numpy.random.default_rng(20261121)`; residual = a smooth function of two action columns plus noise of standard deviation 0.02.
+- Command: `.venv\Scripts\python.exe experiments\proofs\E7_tabpfn_contract\p6_first_real_request.py`, exit code 0. Output: `experiments/proofs/E7_tabpfn_contract/p6_first_real_request.txt`. Ledger: `results/tabpfn_calls.jsonl` (3 lines: dispatch, completed, cache hit). Cache entry: `.cache/tabpfn/416a06c4….npz` (git-ignored).
+- Before the request: account usage 40,000 of 35,000,000 tokens; quote 10,000 tokens for the stacked request (200 training rows, 540 query rows, 18 columns). The teacher's gate read both before dispatch.
+- Measured:
+  - One request, answered in 2.98 s. Request hash `416a06c40ddd…`.
+  - Layout: mean and median (108, 5), quantiles (108, 5, 5) at levels 0.1, 0.25, 0.5, 0.75, 0.9, spread (108, 5); all finite; quantiles do not decrease with the level; the 0.5 quantile equals the median exactly.
+  - Charge: the account's `current_usage`, `daily_tokens_used` and `monthly_tokens_used` each rose by 10,000, equal to the quote. Usage after: 50,000.
+  - The same call again: answered from the cache in 0.010 s, bit-for-bit the same arrays, no second request, account counters unchanged.
+  - The account reports `usage_limit`, `daily_token_limit` and `monthly_token_limit` of 35,000,000 each.
+  - On this fixture the predicted mean correlated 0.92 to 0.99 with the fixture's noise-free residual per outcome (printed for information; not a result).
+- TabPFN calls: 1 billed (10,000 tokens). Project ledger total: 10,000 tokens.
+- Limitations: one request, one shape, fixture data. Rate limits per minute and per hour are still not verified (`tabpfn.verified_request_limit_per_minute` and `_per_hour` stay null). Multi-chunk requests (more than 32,000 query rows) have not been sent for real.
+- Decision: the teacher's request path is confirmed against the real service for the DODGE shape. No code change was needed.

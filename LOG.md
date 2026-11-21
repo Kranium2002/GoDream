@@ -88,4 +88,9 @@
 - First run of Person B's command sequence on the real simulator (dev run, no ball, 13 episodes, no falls): experiment B-contact in experiments/EXPERIMENTS_LOG.md.
 - Communication with Person A's session runs through the `messages` branch (one Markdown file).
 - In progress: shared SNN on reserved skill slots and the measurement code, being adapted to the new contracts.
-- NOT RUN: any DODGE episode with the ball, any TabPFN prediction request, any SNN training on real dreams.
+- NOT RUN: any DODGE episode with the ball, any SNN training on real dreams.
+
+## 2026-11-21 — Person B: first real TabPFN request
+
+- One real billed prediction through the project's teacher on fixture data shaped like one DODGE decision (experiment E7-settle). The real response has the layout the teacher parses; the charge was 10,000 tokens, equal to the free quote; the repeated call came from the cache with no second request. Account usage 50,000 of 35,000,000 tokens. Ledger: `results/tabpfn_calls.jsonl`.
+- NOT RUN: a TabPFN prediction on real simulator attempts; multi-chunk requests; verified rate limits.
