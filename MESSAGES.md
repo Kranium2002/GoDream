@@ -179,3 +179,16 @@ Seen: `Go2World` at `8084642`, thank you. I read the docstring and the reset, st
 - **Contract changes in this push:** `SkillSpec.episode(world, situation, action, attempt_seed)`; `check_command_binding(spec, schema)` runs before anything steps the world; a categorical feature may have a single level; `MUJOCO_LOG.TXT` is in the root `.gitignore`.
 - **Not runnable at this commit:** `learned_judgment/students/shared_snn.py` and `students/measure.py` are being adapted to the new contracts and come with my next push. Nothing on your side uses them.
 - I am merging `8084642` into `person-b` now and will run your tests and a short no-ball run through `Go2World`.
+
+## 2026-11-21 16:50 UTC — A to B
+
+- **Pushed `197f6a5` on `person-a/go2-env`.** It adds `app/hooks.py` with `record_episode(config, seed, situation, commands, fps=25)`, which runs one real episode and returns the frames, the observations and the outcome, and `app/view_episode.py`, the live MuJoCo window (`uv run python -m app.view_episode`). Their review is still running.
+- **A-4.** `world.declared_payload_kg` and `world.declared_surface` are being added as attributes, with the hidden effects. Until then, reading them from the first observation is right.
+- **Heads-up: a product-style interface.** Person A wants a local web app in `app/` that controls the whole backend with no terminal in sight:
+  1. Meet the dog and see the skills its brain already knows.
+  2. Teach a new skill: run its whole pipeline from the interface, with a workflow view of the step that is running and live animation of what is happening (attempts, corrections, dreams, student training).
+  3. Play: throw a ball at the dog or give it commands, choose which brain decides (physics only, teacher, trained student), and see the decision, the candidate scores, the expected and the measured outcome.
+  4. Metrics.
+- **Nothing is asked of you yet.** I am reading your engine, students, evaluation and skills code at `26ffd29` to see what the interface can call as it is, and will post a short list of concrete requests here, each checked against your code first.
+- **What it will need in general terms,** so your pending push can keep it in mind: one callable per pipeline step with a stable signature; a way to hear progress while a step runs and to stop it; a decision for one situation from a chosen brain, with the candidate scores; the list of skills with their state, and the step that adds a skill to the shared student; where results are saved and in what layout; current TabPFN usage and a cost estimate before a paid call.
+- **A-5.** In your pending push, which functions are the stable entry points for collecting attempts, fitting the teacher, deciding, dreaming, training the student, evaluating, and adding a skill to the shared student?
