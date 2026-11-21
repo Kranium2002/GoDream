@@ -108,3 +108,21 @@ DODGE cannot run until Person A's simulated ball exists. Half of the DODGE physi
 ## 2026-11-21 — The first real TabPFN request was a contract proof on fixture data (Person B)
 
 The offline checks could not show that the real response has the layout the teacher parses. One billed request (10,000 tokens, the minimum charge) on fixture data shaped like one DODGE decision settled that before any simulator attempts existed (experiment E7-settle). It is a proof about the service's contract and the project's request path. It is not a result about the robot or about any model's quality.
+
+## 2026-11-21 — Ranges of the hidden world that are designed, not measured
+
+These are properties of the simulated world we design, not of a real Go2, so each is chosen from something we can point to (Task 6; values in `config.yaml` `world.hidden_effects`):
+
+- **Floor types** `default` and `slippery`, as the sliding friction of every foot-floor contact. `default` is 0.4, the foot geoms' own friction in Unitree's `go2.xml` (class `foot`): their contact priority 1 overrides the floor plane's, so the floor type is applied to the four foot geoms `FL`, `FR`, `RL`, `RR` (proof: `artifacts/env/20261121T165353-e5-effect-facts`). `slippery` is 0.1, from a dev sweep of 0.4 down to 0.02 (`artifacts/env/friction-sweep/sweep.json`): the dog fell at none of them, so the bound is the trot instead: the lowest friction whose 0.6 m/s trot stays within Gate 1's 20% speed tolerance is 0.06 (0.4995 m/s; 0.05 gives 0.4726). 0.1 keeps every run at least 1.5 times that.
+- **Per-run friction variation** ±10% of the type's value, drawn once per world: 0.36–0.44 and 0.09–0.11 never overlap, and slippery stays above 0.06.
+- **Payload offset range** the top face of the trunk's collision box (`go2.xml` line 74): x within ±0.1881 m, y within ±0.04675 m of `base_link`'s origin. The payload is a 15 × 9 × 8 cm box resting on that face that adds mass and touches nothing.
+- **Latency jitter** one control period: each attempt's latency is the nominal one plus −1, 0 or +1 period (0.02 s), uniformly. Every preset's nominal latency is 0.08 s, the shortest whole number of periods whose jittered value stays inside the mission's 0.05–0.3 s.
+
+The preset values (`world.presets`) are a proposal for the integrator and Person B to confirm; changing them is a config edit.
+
+## 2026-11-21 — How the hidden effects are applied
+
+- **Declared values** come from the preset whatever is switched on: `declared_payload_kg` is the preset's payload mass × (1 + an error drawn per world within ±0.2), `declared_surface` its floor type. The `enabled` switches change only what the simulator applies.
+- **Motor strength** scales the PD gains and feed-forward torque after Efferent's torque clamp, so every joint torque and the torque limit scale together, from the spawn hold and soft start on: a motor that is tired is tired during the spawn too.
+- **Slope** tilts gravity instead of the floor (the plan's shortcut, exact for an infinite flat floor). So that the policy is not blind to it, the trunk orientation it reads (from which Efferent computes projected gravity) is turned to be relative to true gravity, as an IMU on a real slope would sense it. Observations stay in the floor frame. A consequence: `policy_obs[3:6]` shows the slope, as a real robot's sensors would.
+- **Latency jitter** is drawn from a child stream of the attempt's `noise` stream (`Generator.spawn`), not from the stream itself, so `attempt_streams` still reach their user untouched (`tests/env/test_determinism.py` checks this unmodified).

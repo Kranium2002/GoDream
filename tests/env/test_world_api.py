@@ -7,14 +7,16 @@ import numpy as np
 import pytest
 
 from learned_judgment.env import CommandError, Go2World
+from learned_judgment.env.world import recovery
 
 pytestmark = pytest.mark.system
 OBS_KEYS = {"t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang_vel_rad_s", "joint_pos_rad",
-            "joint_vel_rad_s", "policy_obs", "foot_contact", "fallen", "ball", "command_active", "declared_payload_kg",
+            "joint_vel_rad_s", "foot_contact", "fallen", "ball", "command_active", "declared_payload_kg",
             "declared_surface"}
 OUTCOME_KEYS = {"elapsed_s", "fall", "fall_time_s", "sim_unstable", "commands_received", "final_base_pos_m",
                 "declared_payload_kg", "declared_surface", "collision", "first_collision_time_s", "min_separation_m",
-                "recovery_time_s", "recovered", "trace_path"}
+                "recovery_time_s", "recovered", "trace_path", "final_forward_m", "final_sideways_m",
+                "final_yaw_change_rad", "final_speed_m_s"}
 
 
 def yaw_of(quats_wxyz):
@@ -112,9 +114,13 @@ def test_finish_episode_reports_outcome_and_saves_trace(config, world, forward):
     assert (out["declared_payload_kg"], out["declared_surface"]) == (0.0, "default")
     trace = np.load(out["trace_path"])
     assert trace["t_s"].shape == (51,) and trace["joint_pos_rad"].shape == (51, 12)  # decision instant + 50 periods
+    assert "policy_obs" not in trace  # it carried the latency-delayed command and the slope's gravity
     assert np.array_equal(trace["base_pos_m"][-1], out["final_base_pos_m"])
     hidden = json.loads(Path(out["trace_path"]).with_suffix(".hidden.json").read_text())
-    assert hidden == {"preset": "default", "seed": config["runtime"]["seed"], "attempt_seed": 0, "hidden_effects": {}}
+    assert {k: hidden[k] for k in ("preset", "seed", "attempt_seed")} == {
+        "preset": "default", "seed": config["runtime"]["seed"], "attempt_seed": 0}
+    # config.yaml switches all five effects on; their values are tested in test_effects.py
+    assert set(hidden["hidden_effects"]) == {"payload", "friction", "slope", "motor_strength", "latency"}
 
 
 def test_trace_files_are_unique_and_optional(config, tmp_path, zero, period):
@@ -186,3 +192,90 @@ def test_render_frame_shows_the_dog(config, world):
     size = config["world"]["render"]
     assert frame.shape == (size["height"], size["width"], 3) and frame.dtype == np.uint8
     assert len(np.unique(frame.reshape(-1, 3), axis=0)) > 1  # not a single flat colour
+
+
+def test_final_measurements_are_in_the_heading_frame_of_the_decision_instant(world, zero):
+    # A trot at 0.6 m/s until the decision instant (its heading drifts from the spawn's +x), then 1 s sideways left.
+    world.reset({"dog_forward_speed_m_s": 0.6})
+    world.step(zero | {"vel_y": 0.5}, 1.0)
+    out = world.finish_episode()
+    trace = np.load(out["trace_path"])
+    pos, yaw = trace["base_pos_m"][:, :2], yaw_of(trace["base_quat_wxyz"])
+    travel = pos[-1] - pos[0]
+    ahead, left = np.array([np.cos(yaw[0]), np.sin(yaw[0])]), np.array([-np.sin(yaw[0]), np.cos(yaw[0])])
+    assert out["final_forward_m"] == pytest.approx(travel @ ahead)
+    assert out["final_sideways_m"] == pytest.approx(travel @ left)
+    assert out["final_yaw_change_rad"] == pytest.approx(yaw[-1] - yaw[0])  # small here: no wrap needed
+    assert out["final_speed_m_s"] == pytest.approx(np.hypot(*trace["base_lin_vel_m_s"][-1, :2]))
+    assert out["final_sideways_m"] > 0.2  # + is left: the side vel_y > 0 moves to
+
+
+def test_final_yaw_change_follows_a_left_turn(world, zero):
+    world.reset()
+    world.step(zero | {"yaw_rate": 0.8}, 1.0)
+    out = world.finish_episode()
+    assert 0.3 < out["final_yaw_change_rad"] < 1.0  # anticlockwise is +; 0.8 rad/s for 1 s less the latency and rise
+    assert abs(out["final_forward_m"]) < 0.1 and abs(out["final_sideways_m"]) < 0.1  # turned on the spot
+
+
+def shoved_episode(config, save_traces, zero, period):
+    """150 control periods standing, shoved sideways at 2.5 m/s after 0.2 s: out of the recovery limits, then back."""
+    w = Go2World(config | {"world": config["world"] | {"save_traces": save_traces}}, seed=1)
+    w.reset({"settle_s": 0.5})
+    w.step(zero, 0.2)
+    w.policy.data.qvel[1] = 2.5
+    for _ in range(150):
+        w.step(zero, period)
+    return w, w.finish_episode()
+
+
+def test_without_traces_an_episode_keeps_no_growing_trace(config, zero, period, tmp_path):
+    config["world"]["trace_dir"] = str(tmp_path)
+    (kept, out_kept), (lean, out_lean) = (shoved_episode(config, save, zero, period) for save in (True, False))
+    assert out_kept["recovery_time_s"] > 0  # the running measures had something to measure
+    assert {k: v for k, v in out_kept.items() if k != "trace_path"} == {
+        k: v for k, v in out_lean.items() if k != "trace_path"}
+    assert len(kept._trace) == 1 + 10 + 150 and lean._trace == []  # decision instant, 0.2 s, 150 periods
+    # The running recovery measure equals recovery() over the saved trace.
+    trace, limits = np.load(out_kept["trace_path"]), config["robot"]["recovery"]
+    q, w = trace["base_quat_wxyz"], trace["base_ang_vel_rad_s"]
+    within = ((1 - 2 * (q[:, 1] ** 2 + q[:, 2] ** 2) >= np.cos(np.radians(limits["max_tilt_deg"])))
+              & (np.hypot(w[:, 0], w[:, 1]) <= limits["max_tilt_rate_rad_s"]))
+    assert (out_kept["recovery_time_s"], out_kept["recovered"]) == recovery(trace["t_s"], within, limits["hold_s"])
+
+
+def test_commands_received_records_each_change_once(world, zero, forward, period):
+    world.reset()
+    for _ in range(50):
+        world.step(forward, period)
+    split = world.finish_episode()["commands_received"]
+    world.reset()
+    world.step(forward, 50 * period)
+    assert split == world.finish_episode()["commands_received"] == [(0.0, forward)]
+    sideways = zero | {"vel_y": 0.5}
+    world.reset()
+    for command in (forward, sideways, forward):
+        for _ in range(15):
+            world.step(command, period)
+    received = world.finish_episode()["commands_received"]
+    assert [c for _, c in received] == [forward, sideways, forward]
+    assert [t for t, _ in received] == pytest.approx([0.0, 15 * period, 30 * period])
+
+
+class Stop(Exception):
+    pass
+
+
+def test_on_period_sees_every_control_period(world, zero, period):
+    world.reset()
+    seen = []
+    last = world.step(zero, 10 * period, on_period=seen.append)
+    assert [o["t_s"] for o in seen] == pytest.approx([(i + 1) * period for i in range(10)])
+    assert seen[-1]["t_s"] == last["t_s"] and np.array_equal(seen[-1]["base_pos_m"], last["base_pos_m"])
+
+    def stop_at_the_third(obs):
+        if obs["t_s"] > 12.5 * period:
+            raise Stop
+    with pytest.raises(Stop):  # an exception from on_period ends step after that period; the episode stays open
+        world.step(zero, 10 * period, on_period=stop_at_the_third)
+    assert world.step(zero, period)["t_s"] == pytest.approx(14 * period)

@@ -554,3 +554,67 @@ Both exit 0; each throw and its outcome in `artifacts/env/dodge-calibration/<run
 - TabPFN calls: 5 billed requests, 50,000 tokens quoted. Account usage 100,000 of 35,000,000 tokens after the run.
 - Limitations: one world and one seed, no intervals, 1 repeat per situation; no hidden effects in the world yet; a development skill, not one of the project's skills; no confidence threshold was set, so every dream was kept; the constant-bias baseline does about as well as the teacher here, because the formula's error on this skill is mostly one offset, so this run does not show that TabPFN is needed, only that the chain works and that 40 attempts remove most of the formula's error.
 - Decision: the chain is ready for DODGE. The next run is the same chain on DODGE once Person A's ball, throw model and `skills.dodge` settings land.
+
+## E5 — hidden effects and world presets — 2026-11-21 — Person A
+
+**Question.** Do the five hidden effects of MISSION.md (payload, floor friction, slope, motor strength, command latency) each change the simulated Go2 on their own, switch off without a trace and stay out of what Person B sees, and do the five presets load and stand?
+
+**Pass criteria (fixed in the plan, Task 6, before any run).** With all five effects switched off, every measurement equals the baseline exactly. Each effect switched on alone changes its own measurement: steady speed at 0.6 m/s commanded (payload 3 kg, slope +5°, motor strength 0.8), stopping distance from 0.9 m/s (floor `slippery`), time from the command to half the commanded speed (latency 0.3 s). Each preset stands 1 s at zero command without a fall. No hidden key in an observation or outcome. Motors at strength 0 make the dog fall and the fall is reported, not raised. Added for the integrator's decisions: the seed fixes the hidden world and the declared payload; the latency jitter is drawn per attempt; `command_active` lags `commands_received` by the latency; the latency is a pure delay line (fifty one-period steps equal one fifty-period step, bit for bit); the declared values are fixed attributes equal to every observation and the outcome; a non-integer hidden value reaches `<trace>.hidden.json` intact; on a slope the policy senses true gravity.
+
+**Simulator facts (proof).** Entry M saw the foot geoms' contact priority on the menagerie model only. Re-checked on the pinned stack:
+
+    uv run python -m learned_judgment.env.evidence e5-effect-facts -- uv run python -X utf8 artifacts/env/research/e5_effect_facts.py
+
+Exit code 0, `artifacts/env/20261121T165353-e5-effect-facts/stdout.txt`. Unitree's foot geoms `FL`, `FR`, `RL`, `RR` have priority 1 and friction [0.4, 0.02, 0.01]; every foot-floor contact uses sliding friction 0.4, and still 0.4 with the floor's friction set to 0.05; with the foot geoms set to 0.15 the contacts use 0.15. `MjSpec` adds a 3 kg child body to `base_link` (model mass 15.2064 → 18.2064 kg), edits a foot geom's friction and the gravity option. `mju_quatZ2Vec(−g)` then `mju_negQuat` gives the rotation under which a trunk level on a +5° floor reads 5.0° nose up. numpy's `Generator.spawn` leaves the parent stream's own draws unchanged.
+
+**Implementation.** `build_model(config, hidden)`: a 15 × 9 × 8 cm box body of the payload's mass on the top face of the trunk's collision box at the preset's x, y offset, colliding with nothing; the floor type's sliding friction on the four foot geoms; the slope as gravity tilted about y (`# shortcut: exact only for an infinite flat floor`). `WalkingPolicy(config, model, motor_strength)`: the PD gains and feed-forward torque are scaled after Efferent's torque clamp, so every torque and the torque limit scale, from the spawn on; with tilted gravity the trunk orientation the policy reads is turned to be relative to true gravity. `Go2World`: the hidden values and the declared payload drawn at construction from the `world` stream; latency a delay line of whole 0.02 s control periods, jitter −1, 0 or +1 period drawn at each reset from a child of the attempt's `noise` stream. Each effect is switched by `world.hidden_effects.enabled`. `measure_effects` in `learned_judgment/env/effects.py` measures through `Go2World` only.
+
+**Friction sweep (dev, for the `slippery` type).** Only friction on, no per-run variation, seed 5: a 20 s trot at 0.6 m/s (mean speed along the heading over its last 4 s) and a stop from 0.9 m/s, at 13 sliding frictions from 0.4 to 0.02.
+
+    uv run python -m learned_judgment.env.evidence friction-sweep -- uv run python -X utf8 artifacts/env/research/friction_sweep.py
+
+Exit code 0, `artifacts/env/20261121T164432-friction-sweep`, values in `artifacts/env/friction-sweep/sweep.json`. No fall at any friction. Trot speed 0.5448 (0.4), 0.5947 (0.2), 0.5405 (0.1), 0.5291 (0.08), 0.4995 (0.06), 0.4726 (0.05), 0.2612 m/s (0.02); stop from 0.9 m/s 0.1428 m (0.4) to 0.2957 m (0.1). With no fall to bound it, the bound is the trot: 0.06 is the lowest friction within Gate 1's 20% speed tolerance at 0.6 m/s; `slippery` is 0.1 (DECISIONS.md).
+
+**Payload offset check (dev, for the `heavy_payload` offset).** Only payload on, 3 kg, seed 5, 10 s trots at 0.6 and 0.9 m/s:
+
+    uv run python -m learned_judgment.env.evidence payload-offset-check -- uv run python -X utf8 artifacts/env/research/payload_offset_check.py
+
+Exit code 0, `artifacts/env/20261121T170552-payload-offset-check/stdout.txt`. Speeds along the heading (mean of the last 5 s) at 0.6 / 0.9 m/s: centred 0.5612 / 0.8696, rear end 0.5450 / 0.8477, front end 0.6138 / 0.8823, rear-left corner 0.5457 / 0.8666. No fall.
+
+**Tests.**
+
+    uv run python -m learned_judgment.env.evidence effects -- uv run pytest tests/env/test_effects.py -v
+
+Exit code 0, `artifacts/env/20261121T171133-effects`, `20 passed`. Each test written for a decision was first seen failing for the expected reason, or, where it passed on the first implementation (delay line, slope sensing), was run against a version of the code with the bug it guards and failed. Full `tests/env`: 87 passed, 1 failed (`test_trots_thirty_seconds[0.3]`, the accepted Gate 1 result); `tests/env/test_determinism.py` and `tests/env/test_policy_parity.py` pass unmodified.
+
+**Measurements.**
+
+    uv run python -m learned_judgment.env.evidence effects-data -- uv run python -c "from learned_judgment.env import load_config; from learned_judgment.env.effects import measure_effects; measure_effects(load_config(), 5, 'artifacts/env/effects-data')"
+
+(`effects`, not the plan's `calibrate`: the integrator moved `measure_effects` there.) Exit code 0, `artifacts/env/20261121T171250-effects-data`, values in `artifacts/env/effects-data/effects.json`, seed 5, one episode per value, 6 s after the decision instant. Baseline: the default preset with all effects off. "All off": a preset with every effect at its demanding end, all switched off; equal to the baseline in every value.
+
+| Effect on alone | Value | Quantity | Baseline | Measured | Fall |
+|---|---|---|---|---|---|
+| payload | 3 kg, centred | steady speed at 0.6 m/s | 0.5480 m/s | 0.5645 m/s | no |
+| slope | +5° (uphill) | steady speed at 0.6 m/s | 0.5480 m/s | 0.5214 m/s | no |
+| motor_strength | 0.8 | steady speed at 0.6 m/s | 0.5480 m/s | 0.5552 m/s | no |
+| friction | `slippery`, 0.0951 this world | stopping distance from 0.9 m/s | 0.1428 m | 0.3061 m | no |
+| latency | 0.3 s nominal, 0.30 s this attempt | time to half of 0.6 m/s | 0.20 s | 0.42 s | no |
+
+**Result: PASS on the criteria.** All off equals the baseline exactly; each effect alone changes its quantity; every preset stands; no hidden key reaches an observation or outcome; with motors at 0 the dog falls and the fall is reported with its time.
+
+**Versions.** efferent 0.5.0, mujoco 3.11.0, onnxruntime 1.32.0, numpy 2.5.5, Python 3.13.18, Windows-10-10.0.19045, CPU only (recorder `run.json`). Git `8084642`, dirty (the Task 6 code was not yet committed). `config_sha256` 4552b401… for the sweep (before `slippery` was set), 3cd6778e… for the facts proof and the offset check, 988aa823… for the tests and the measurements (the committed `config.yaml`; it differs from 3cd6778e… only in the comment citing the offset check). Wall time: tests 70.06 s, measurements 39.95 s, sweep 175.63 s, offset check 58.15 s, facts 24.28 s (`run.json` `wall_s`).
+
+**Limitations.**
+- One seed and one episode per value. The world is deterministic, so a difference is the effect's, but its size at other seeds, speeds and durations is not measured, and the criterion asks only for a change.
+- The 3 kg payload and the 0.8 motor strength made the dog slightly faster at 0.6 m/s, not slower. Not investigated.
+- The latency of 0.30 s moved the time to half speed by 0.22 s, not 0.30 s. The dog steps in place while the command is delayed, so it may meet the command in another gait phase than the baseline; not investigated. The quantity is the first control period whose instantaneous trunk speed along the heading reaches half the command.
+- Slope is tilted gravity: no visible incline, and the dog's anticlockwise drift (Gate 1) means "along the heading" holds at the start only. The policy senses the tilt, so `policy_obs[3:6]` shows it.
+- Friction changes only the foot geoms' sliding coefficient. Other robot contacts with the floor (trunk, legs) keep MuJoCo's pair rule, the larger value, the floor's 1.0.
+- The payload box collides with nothing.
+- The latency jitter is drawn once per attempt, not per command.
+- The preset values are a proposal; the integrator confirms them with the project owner.
+
+**Cost.** TabPFN calls: 0.
+
+**Decision and next step.** Presets proposed in `config.yaml` `world.presets`; floor types for `skills.dodge.declared_surfaces`: `default`, `slippery`. The integrator confirms the values at the merge.

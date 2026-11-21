@@ -4,6 +4,7 @@ import itertools
 import json
 import math
 import numbers
+from collections import deque
 from pathlib import Path
 
 import mujoco
@@ -20,22 +21,47 @@ SITUATION_KEYS = ("dog_forward_speed_m_s", "settle_s", *BALL_KEYS)
 FEET = ("FL", "FR", "RL", "RR")  # go2.xml foot geoms, in the model's body order
 BAD_STATE = (mujoco.mjtWarning.mjWARN_BADQPOS, mujoco.mjtWarning.mjWARN_BADQVEL, mujoco.mjtWarning.mjWARN_BADQACC)
 TRACE_KEYS = ("t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang_vel_rad_s", "joint_pos_rad",
-              "joint_vel_rad_s", "policy_obs", "foot_contact", "fallen")
+              "joint_vel_rad_s", "foot_contact", "fallen")
+
+
+def _yaw(quat_wxyz) -> float:
+    """Heading of a body-to-world quaternion: its rotation about world z, rad."""
+    w, x, y, z = quat_wxyz
+    return math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
+
+
+class RecoveryClock:
+    """recovery() one sample at a time, so an episode need not keep its samples."""
+
+    def __init__(self, hold_s: float):
+        self.hold_s = hold_s
+        self._first = self._start = self._last = self._result = None  # sample times
+
+    def add(self, t_s: float, within: bool) -> None:
+        if self._result is not None:
+            return
+        self._last = t_s
+        if self._first is None:
+            self._first = None if within else t_s
+            return
+        self._start = None if not within else t_s if self._start is None else self._start
+        if self._start is not None and t_s - self._start >= self.hold_s - 1e-9:  # 1e-9: times are sums of 0.002 s
+            self._result = float(self._start - self._first), 1
+
+    def result(self) -> tuple[float, int]:
+        if self._first is None:
+            return 0.0, 1
+        return self._result or (float(self._last - self._first), 0)
 
 
 def recovery(t_s: np.ndarray, within: np.ndarray, hold_s: float) -> tuple[float, int]:
     """(recovery_time_s, recovered) from per-sample times and whether each sample is within the recovery limits:
     (0.0, 1) if every sample is; else the time from the first sample out to the first sample from which they hold
     for hold_s, and 1; or, if they never hold that long, the time to the last sample, and 0."""
-    out = np.flatnonzero(~within)
-    if out.size == 0:
-        return 0.0, 1
-    first, start = out[0], None
-    for i in range(first, len(t_s)):
-        start = None if not within[i] else i if start is None else start
-        if start is not None and t_s[i] - t_s[start] >= hold_s - 1e-9:  # 1e-9: sample times are sums of 0.002 s steps
-            return float(t_s[start] - t_s[first]), 1
-    return float(t_s[-1] - t_s[first]), 0
+    clock = RecoveryClock(hold_s)
+    for t, w in zip(t_s, within):
+        clock.add(t, w)
+    return clock.result()
 
 
 def _number(key: str, value) -> float:
@@ -59,16 +85,27 @@ class Go2World:
 
     Seeds. `seed` and `preset` fix the hidden world for the life of the object. reset(attempt_seed=k) fixes one
     episode's noise: `attempt_streams` is make_streams(seed, k), so two worlds with the same seed reset with the same
-    k face the same noise whatever ran before; k=None is the episode index (0 for this object's first reset). No
-    episode draws random numbers yet (sample_dodge_situation draws from the world's own `ball` stream): the simulator
-    and the policy are deterministic, and repeated runs are bit-identical.
+    k face the same noise whatever ran before; k=None is the episode index (0 for this object's first reset). The
+    hidden values and the declared payload are drawn at construction from make_streams(seed)["world"], and
+    sample_dodge_situation draws from the world's own `ball` stream; each reset draws its latency jitter from a child
+    of attempt_streams["noise"] (Generator.spawn), so attempt_streams reach their user untouched. The simulator and the
+    policy are deterministic: repeated runs are bit-identical.
+
+    Hidden effects (config.yaml world.hidden_effects; each applied only if switched on in its `enabled`): a payload box
+    on the trunk; the feet's sliding friction on the floor, by the preset's floor_type with a per-world variation; a
+    slope, as tilted gravity (the policy senses true gravity, as an IMU would); motor strength, scaling every joint
+    torque and its limit; command latency, a delay line of whole control periods with a per-attempt jitter. A preset
+    that makes the dog fall is a measurement: the fall is reported, nothing raises.
 
     Episode. reset(situation) spawns the dog, runs the policy's settle and soft start, trots at
     dog_forward_speed_m_s (default 0.0, a vel_x command) for settle_s (default world.settle_s) and returns the
-    observation at the decision instant, t_s 0.0. step(command, duration_s) holds a command, validated strictly
-    against command_schema, for duration_s rounded to whole control periods (at least one), any number of times.
+    observation at the decision instant, t_s 0.0. step(command, duration_s, on_period=None) holds a command, validated
+    strictly against command_schema, for duration_s rounded to whole control periods (at least one), any number of
+    times, and returns the last observation; on_period, if given, is called after every control period with a copy of
+    that period's observation, and an exception it raises ends step after that period with the episode still open.
     finish_episode() ends the episode and returns the outcome; reset may follow for a new episode. A reset during an
-    episode abandons it without a trace.
+    episode abandons it without a trace. With world.save_traces false nothing is kept per control period: the outcome
+    comes from the last observation and measures updated as the episode runs.
 
     Ball (DODGE). A situation with all six BALL_KEYS throws the ball; with some of them reset raises ValueError naming
     the missing ones, and with none the episode simulates the scene without a ball body. Their frame is fixed at the
@@ -80,8 +117,8 @@ class Go2World:
     (the six keys and dog_forward_speed_m_s) from the world's own `ball` stream with sample_dodge_situations
     (learned_judgment/env/throws.py).
 
-    Observation, one per control period (0.02 s). World frame: x, y on the floor, z up, origin on the floor under the
-    spawn point (the dog starts facing +x).
+    Observation, one per control period (0.02 s). World frame: x, y on the floor, z up (normal to the floor; a slope
+    tilts gravity instead), origin on the floor under the spawn point (the dog starts facing +x).
         t_s                 float, s. Episode time, 0.0 at the decision instant.
         base_pos_m          (3,) m. Trunk (base_link) origin, world frame.
         base_quat_wxyz      (4,) Trunk orientation, body to world, w x y z.
@@ -90,14 +127,16 @@ class Go2World:
                             rotated here). z > 0 turns anticlockwise seen from above.
         joint_pos_rad       (12,) rad and joint_vel_rad_s (12,) rad/s. Leg joints in the model's order FL, FR, RL,
                             RR, each hip, thigh, calf (the policy's own order is config.yaml action_schema).
-        policy_obs          (45,) float32. What the policy read at its last step, scaled as in config.yaml
-                            observation_schema; NaN before its first step (settle_s 0).
         foot_contact        (4,) bool, FL, FR, RL, RR: that foot geom has a contact with the floor.
         fallen              bool. A fall (below) has happened this episode; once true it stays true.
         ball                None without a ball, else {"pos_m": (3,) m, "vel_m_s": (3,) m/s, "radius_m": float}: the
                             ball's centre and linear velocity, world frame.
-        command_active      {field: float}. The command the policy is receiving now.
-        declared_payload_kg float, kg, and declared_surface str: what the preset declares.
+        command_active      {field: float}. The command the caller issued last (the reset's trot until the first
+                            step), whatever the latency. What the policy receives, delayed by the latency, is hidden.
+        declared_payload_kg float, kg, and declared_surface str: what the judge declares, fixed for the world's life
+                            and also its read-only attributes of the same names. The payload is the true mass times
+                            (1 + an error drawn per world in declared_mass_error_fraction); the surface is the
+                            preset's floor_type.
 
     Outcome of finish_episode():
         elapsed_s           float, s. t_s at the end.
@@ -106,7 +145,9 @@ class Go2World:
         fall_time_s         t_s of the first such physics step (negative: before the decision instant), or None.
         sim_unstable        0 or 1. 1 if MuJoCo flagged a bad state this episode (warning mjWARN_BADQPOS, BADQVEL or
                             BADQACC: it then resets the state itself) or the final state is not finite.
-        commands_received   [(t_s, command)], one per step() call, at the t_s it took effect.
+        commands_received   [(t_s, command)]: each command that differs from the one before it, at the t_s it was
+                            issued. Re-sending the same command, in steps of any length, adds no entry and gives the
+                            same episode: the delay line is not restarted.
         final_base_pos_m    [x, y, z], m, world frame.
         declared_payload_kg, declared_surface as in the observation.
         collision           0 or 1. 1 if the ball had a contact with a robot geom (any body but the world and the
@@ -119,11 +160,18 @@ class Go2World:
                             control period from the decision instant on; otherwise the time from first leaving them to
                             the sample from which they hold for robot.recovery.hold_s, or to the end of the episode.
         recovered           0 or 1. 0 if they never held for hold_s after first leaving them.
+        final_forward_m, final_sideways_m  m. Trunk travel from the decision instant to the end, along the dog's
+                            heading at the decision instant (yaw only) and to its left.
+        final_yaw_change_rad  rad. Heading at the end minus heading at the decision instant, wrapped to [-pi, pi);
+                            + is anticlockwise seen from above.
+        final_speed_m_s     m/s. Trunk speed over the ground (horizontal) at the end.
         trace_path          The episode's .npz (world.trace_dir), or None if world.save_traces is false. It holds
                             each TRACE_KEYS array stacked per control period from the decision instant on,
                             command_active as (N, 3) in command_schema field order and, with a ball, ball_pos_m and
-                            ball_vel_m_s as (N, 3). The hidden values are only in <trace>.hidden.json beside it, never
-                            in an observation or outcome.
+                            ball_vel_m_s as (N, 3). The hidden values (the effects switched on and this attempt's
+                            latency) and policy_command, the command the policy received at each of those control periods (N lists in
+                            command_schema field order), are only in <trace>.hidden.json beside it, never in an
+                            observation or outcome.
     """
 
     def __init__(self, config: dict, seed: int, preset: str = "default"):
@@ -133,24 +181,46 @@ class Go2World:
         self.config, self.seed, self.preset = config, seed, preset
         self.command_schema = config["robot"]["walking_policy"]["command_schema"]
         self._streams = make_streams(seed)
-        self._hidden = self._hidden_effects()
+        self._hidden, self._declared = self._hidden_effects()
         self.model = build_model(config, self._hidden)
-        self.policy = WalkingPolicy(config, self.model)
-        self._declared = {k: presets[preset][k] for k in ("declared_payload_kg", "declared_surface")}
+        self.policy = WalkingPolicy(config, self.model, self._hidden.get("motor_strength", 1.0))
         self._base = self.model.body("base_link").id
         self._floor = self.model.geom("floor").id
         self._feet = [self.model.geom(name).id for name in FEET]
         self._cos_max_tilt = math.cos(math.radians(config["robot"]["fall"]["max_tilt_deg"]))
+        limits = config["robot"]["recovery"]
+        self._recovery_limits = math.cos(math.radians(limits["max_tilt_deg"])), limits["max_tilt_rate_rad_s"]
         self._episodes = 0
         self._active = False
         self._renderer = None
         self._scenes = {False: (self.model, self.policy)}  # the scene with the ball is built for its first episode
         self._ball_live = False
 
-    def _hidden_effects(self) -> dict:
-        """The true hidden values of this world, drawn once from the preset and self._streams["world"]. Payload,
-        friction, slope, motor strength and latency are added here by Task 6; until then there are none."""
-        return {}
+    def _hidden_effects(self) -> tuple[dict, dict]:
+        """The true hidden values of this world, for each effect switched on in world.hidden_effects.enabled, and the
+        declared values, both fixed by the preset and self._streams["world"]. The draws are made whatever is switched
+        on, so switching one effect never changes another's value."""
+        he, p = self.config["world"]["hidden_effects"], self.config["world"]["presets"][self.preset]
+        variation = self._streams["world"].uniform(-1.0, 1.0) * he["friction_per_run_variation"]
+        mass_error = self._streams["world"].uniform(*he["declared_mass_error_fraction"])
+        hidden = {
+            "payload": {"mass_kg": p["payload_mass_kg"], "offset_m": p["payload_offset_m"]},
+            "friction": he["surface_friction_by_type"][p["floor_type"]] * (1.0 + variation),
+            "slope": p["slope_deg"],
+            "motor_strength": p["motor_strength_fraction"],
+            "latency": p["command_latency_s"],  # nominal; each attempt adds its jitter (reset)
+        }
+        declared = {"declared_payload_kg": p["payload_mass_kg"] * (1.0 + mass_error),
+                    "declared_surface": p["floor_type"]}
+        return {k: v for k, v in hidden.items() if he["enabled"][k]}, declared
+
+    @property
+    def declared_payload_kg(self) -> float:
+        return self._declared["declared_payload_kg"]
+
+    @property
+    def declared_surface(self) -> str:
+        return self._declared["declared_surface"]
 
     def sample_dodge_situation(self) -> dict:
         """One DODGE situation from this world's `ball` stream (throws.sample_dodge_situations with n=1)."""
@@ -179,6 +249,12 @@ class Go2World:
         self._attempt_seed, self.attempt_streams = attempt, streams
         self._episodes += 1
         self._use_scene(ball)
+        dt, self._delay = self.policy.control_dt, 0  # control periods from issuing a command to the policy receiving it
+        if "latency" in self._hidden:
+            # From a child of the attempt's noise stream (Generator.spawn), so that stream reaches its user untouched.
+            jitter = round(self.config["world"]["hidden_effects"]["command_latency_jitter_s"] / dt)
+            draw = self.attempt_streams["noise"].spawn(1)[0].integers(-jitter, jitter + 1)
+            self._delay = max(0, round(self._hidden["latency"] / dt) + int(draw))
         self._n, self._fall_n = 0, None  # physics steps since the spawn; the step of the first fall
         self.policy.reset(on_substep=self._watch)
         for _ in range(round(settle_s / self.policy.control_dt)):
@@ -187,22 +263,32 @@ class Go2World:
         self._hit_n, self._min_sep = None, math.inf  # the step of the first ball contact; the smallest separation
         if ball:
             self._throw(throw)
-        self._command = {name: float(v) for name, v in trot.items()}
-        self._received, self._trace = [], []
+        self._start_pos, self._start_yaw = self.policy.data.qpos[0:2].copy(), _yaw(self.policy.data.qpos[3:7])
+        self._issued = self._command = {name: float(v) for name, v in trot.items()}  # last issued; policy's (delayed)
+        self._queue = deque([(native, self._command)] * self._delay)  # the trot, issued long enough ago
+        # With traces off only the last observation and the running measures are kept, never every period's.
+        self._received, self._trace, self._policy_commands, self._last = [], [], [], None
+        self._recovery = RecoveryClock(self.config["robot"]["recovery"]["hold_s"])
         self._active = True
         return copy.deepcopy(self._observe())
 
-    def step(self, command: dict, duration_s: float) -> dict:
+    def step(self, command: dict, duration_s: float, on_period=None) -> dict:
         if not self._active:
             raise RuntimeError("no episode in progress: call reset() first")
         native = validate_command(command, self.command_schema)
         if not 0.0 < duration_s < math.inf:
             raise ValueError(f"duration_s must be finite and > 0, got {duration_s}")
-        self._command = {name: float(command[name]) for name in self.command_schema["fields"]}
-        self._received.append((self._t(), dict(self._command)))
+        issued = {name: float(command[name]) for name in self.command_schema["fields"]}
+        if not self._received or self._received[-1][1] != issued:  # recorded when it changes, at its issue time
+            self._received.append((self._t(), dict(issued)))
+        self._issued = issued
         for _ in range(max(1, round(duration_s / self.policy.control_dt))):
-            self.policy.step(native, on_substep=self._watch)
+            self._queue.append((native, issued))
+            active, self._command = self._queue.popleft()  # the command issued self._delay control periods ago
+            self.policy.step(active, on_substep=self._watch)
             obs = self._observe()
+            if on_period is not None:
+                on_period(copy.deepcopy(obs))
         return copy.deepcopy(obs)
 
     def finish_episode(self) -> dict:
@@ -213,13 +299,9 @@ class Go2World:
         # MuJoCo checks qpos, qvel and qacc at every step, so a bad state before the last step left a warning count.
         unstable = any(d.warning[w].number for w in BAD_STATE) or not (
             np.isfinite(d.qpos).all() and np.isfinite(d.qvel).all())
-        last = self._trace[-1]
-        limits = self.config["robot"]["recovery"]
-        quat = np.array([o["base_quat_wxyz"] for o in self._trace])
-        spin = np.array([o["base_ang_vel_rad_s"] for o in self._trace])
-        within = ((1 - 2 * (quat[:, 1] ** 2 + quat[:, 2] ** 2) >= math.cos(math.radians(limits["max_tilt_deg"])))
-                  & (np.hypot(spin[:, 0], spin[:, 1]) <= limits["max_tilt_rate_rad_s"]))
-        recovery_time_s, recovered = recovery(np.array([o["t_s"] for o in self._trace]), within, limits["hold_s"])
+        last = self._last
+        recovery_time_s, recovered = self._recovery.result()
+        travel, yaw0 = last["base_pos_m"][:2] - self._start_pos, self._start_yaw
         return {
             "elapsed_s": last["t_s"],
             "fall": int(self._fall_n is not None),
@@ -233,6 +315,10 @@ class Go2World:
             "min_separation_m": self._min_sep if self._ball_live else None,
             "recovery_time_s": recovery_time_s,
             "recovered": recovered,
+            "final_forward_m": float(travel @ [math.cos(yaw0), math.sin(yaw0)]),
+            "final_sideways_m": float(travel @ [-math.sin(yaw0), math.cos(yaw0)]),
+            "final_yaw_change_rad": (_yaw(last["base_quat_wxyz"]) - yaw0 + math.pi) % (2 * math.pi) - math.pi,
+            "final_speed_m_s": float(np.hypot(*last["base_lin_vel_m_s"][:2])),
             "trace_path": self._write_trace() if self.config["world"]["save_traces"] else None,
         }
 
@@ -269,7 +355,7 @@ class Go2World:
         ball collides with nothing until _throw."""
         if ball not in self._scenes:
             model = build_model(self.config, self._hidden, ball=True)
-            self._scenes[True] = (model, WalkingPolicy(self.config, model))
+            self._scenes[True] = (model, WalkingPolicy(self.config, model, self._hidden.get("motor_strength", 1.0)))
             body = model.body("ball")
             self._ball_geom, self._ball_q, self._ball_v = model.geom("ball").id, model.jnt_qposadr[body.jntadr[0]], \
                 body.dofadr[0]
@@ -288,8 +374,7 @@ class Go2World:
     def _throw(self, throw: list[float]) -> None:
         """Place the ball at the decision instant: the situation's frame turned into the world frame."""
         d = self.policy.data
-        w, x, y, z = d.qpos[3:7]
-        yaw = math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
+        yaw = _yaw(d.qpos[3:7])
         turn = np.array([[math.cos(yaw), -math.sin(yaw), 0.0], [math.sin(yaw), math.cos(yaw), 0.0], [0.0, 0.0, 1.0]])
         d.qpos[self._ball_q:self._ball_q + 7] = [*(d.qpos[0:3] + turn @ throw[:3]), 1.0, 0.0, 0.0, 0.0]
         d.qvel[self._ball_v:self._ball_v + 6] = [*(turn @ throw[3:]), 0.0, 0.0, 0.0]
@@ -327,16 +412,21 @@ class Go2World:
             "base_ang_vel_rad_s": ang_vel,
             "joint_pos_rad": d.qpos[7:19].copy(),
             "joint_vel_rad_s": d.qvel[6:18].copy(),
-            "policy_obs": self.policy.last_obs.copy(),
             "foot_contact": np.isin(self._feet, pairs[(pairs == self._floor).any(axis=1)]),
             "fallen": self._fall_n is not None,
             "ball": None if not self._ball_live else {"pos_m": d.qpos[self._ball_q:self._ball_q + 3].copy(),
                                                       "vel_m_s": d.qvel[self._ball_v:self._ball_v + 3].copy(),
                                                       "radius_m": self.config["ball"]["radius_m"]},
-            "command_active": dict(self._command),
+            "command_active": dict(self._issued),
             **self._declared,
         }
-        self._trace.append(obs)
+        q, cos_tilt, max_rate = obs["base_quat_wxyz"], *self._recovery_limits
+        self._recovery.add(obs["t_s"], bool(1 - 2 * (q[1] ** 2 + q[2] ** 2) >= cos_tilt
+                                            and np.hypot(ang_vel[0], ang_vel[1]) <= max_rate))
+        self._last = obs
+        if self.config["world"]["save_traces"]:
+            self._trace.append(obs)
+            self._policy_commands.append(list(self._command.values()))
         return obs
 
     def _write_trace(self) -> str:
@@ -357,6 +447,7 @@ class Go2World:
                 np.savez_compressed(f, **arrays)
             break
         hidden = {"preset": self.preset, "seed": self.seed, "attempt_seed": self._attempt_seed,
-                  "hidden_effects": self._hidden}
-        path.with_suffix(".hidden.json").write_text(json.dumps(hidden, indent=2, default=int))
+                  "hidden_effects": self._hidden, "attempt_latency_s": self._delay * self.policy.control_dt,
+                  "policy_command": self._policy_commands}
+        path.with_suffix(".hidden.json").write_text(json.dumps(hidden, indent=2, default=lambda o: o.tolist()))
         return path.as_posix()

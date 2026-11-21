@@ -18,6 +18,10 @@ import mujoco.viewer
 from learned_judgment.env import Go2World, load_config, validate_command
 
 
+class StopViewing(Exception):
+    """Raised from step's on_period callback when the window is closed or --max-seconds is reached."""
+
+
 def parse_command(text: str) -> tuple[dict, float]:
     vel_x, vel_y, yaw_rate, duration_s = map(float, text.split(","))
     if not 0.0 < duration_s < math.inf:
@@ -41,25 +45,30 @@ def main() -> None:
     world = Go2World(config, args.seed, args.preset)
     for command, _ in commands:
         validate_command(command, world.command_schema)  # before the window opens
-    dt = world.policy.control_dt
-    periods = [command for command, duration_s in commands for _ in range(max(1, round(duration_s / dt)))]
     world.reset(json.loads(args.situation.read_text(encoding="utf-8")) if args.situation else None)
 
     with mujoco.viewer.launch_passive(world.model, world.policy.data) as viewer:
         with viewer.lock():  # follow the trunk, as render_frame does
             viewer.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
             viewer.cam.trackbodyid = world.model.body("base_link").id
-        start = time.perf_counter()
-        for n, command in enumerate(periods, 1):
-            if not viewer.is_running() or (args.max_seconds is not None and time.perf_counter() - start > args.max_seconds):
-                break
-            world.step(command, dt)
-            viewer.sync()
-            time.sleep(max(0.0, start + n * dt - time.perf_counter()))
+        start, periods = time.perf_counter(), 0
 
-    outcome = world.finish_episode()
-    # commands_received has one entry per control period here; the commands are the ones given above.
-    print(json.dumps({k: v for k, v in outcome.items() if k != "commands_received"}, indent=2))
+        def on_period(_obs: dict) -> None:
+            """Show the period just simulated, keep real-time pace, and stop when the window closes or time is up."""
+            nonlocal periods
+            periods += 1
+            viewer.sync()
+            time.sleep(max(0.0, start + periods * world.policy.control_dt - time.perf_counter()))
+            if not viewer.is_running() or (args.max_seconds is not None and time.perf_counter() - start > args.max_seconds):
+                raise StopViewing
+
+        try:
+            for command, duration_s in commands:
+                world.step(command, duration_s, on_period=on_period)
+        except StopViewing:  # step stopped after a whole period; the episode is finished below as it stands
+            pass
+
+    print(json.dumps(world.finish_episode(), indent=2))
 
 
 if __name__ == "__main__":
