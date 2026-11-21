@@ -85,7 +85,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
-from learned_judgment.config import CONFIG_PATH, ConfigError, config_digest, load_config, require
+from learned_judgment.config import CONFIG_PATH, ConfigError, config_digest, load_config, optional, require
 from learned_judgment.engine.features import FeatureLayout
 from learned_judgment.engine.types import OutcomeDistribution
 from learned_judgment.fileio import atomic_write_bytes, atomic_write_text
@@ -141,7 +141,7 @@ FEATURE_BLOCKS = ("window", "action", "physics")  # the only order a FeatureLayo
 OUTCOME_KINDS = ("regression", "binary")
 STUDENT_FORMAT = "learned-judgment/observed-student/v1"
 INPUT_ENCODING = "(x - 0.5) * sqrt(12)"
-WINDOW_ENCODINGS = ("raw", "abs_diff", "signed_diff")  # values of config.yaml vision.encoding and student.json input.window_encoding
+WINDOW_ENCODINGS = ("raw", "abs_diff", "signed_diff", "signed_diff_first", "events")  # values of config.yaml vision.encoding and student.json input.window_encoding
 THREAT, ACTION = "threat", "action"
 EXIT_REFUSED = 3
 
@@ -766,6 +766,9 @@ def dream_scores(
     if layout.names != teacher.layout.names:
         raise ValueError("the teacher was fitted on other columns than this feature_set builds")
     predicted = predict_outcomes(teacher, spec, x, flat_physics, allow_billing=allow_billing)
+    # The dream world's predicted outcome means (m, C, K), kept for the threat target "collision_course".
+    dream_scores.last_predicted_mean = np.asarray(predicted.mean, dtype=np.float64).reshape(
+        physics.shape[0], physics.shape[1], physics.shape[2])
     return _objective(spec, predicted).reshape(physics.shape[0], physics.shape[1])
 
 
@@ -774,7 +777,7 @@ def dream_scores(
 # --------------------------------------------------------------------------------------
 
 
-def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any]) -> dict[str, np.ndarray]:
+def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any], predicted_mean: np.ndarray | None = None) -> dict[str, np.ndarray]:
     """Training targets of the student from the dream scores (m, C).
 
     "action": students.targets.soft_targets with students.snn.target_temperature and
@@ -788,7 +791,16 @@ def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any]) -> d
     mode = require(config, "students.snn.target_spread")
     spread = score_spread(scores) if mode == "global_median" else None
     targets = {ACTION: soft_targets(scores, temperature=temperature, target_spread=mode, spread=spread)}
-    if checked.no_op_index is not None:
+    if checked.no_op_index is not None and optional(config, f"skills.{checked.name}.threat_target") == "collision_course":
+        # Threat = the dream world (physics guess corrected by the teacher) says doing nothing ends in the outcome
+        # named by skills.<name>.threat_outcome (a binary outcome: its predicted mean under NO_OP, clipped to [0, 1]).
+        # talkhere.md: "threat means an object approaching on a collision course"; only the simulation scorer labels it.
+        if predicted_mean is None:
+            raise ValueError("threat_target collision_course needs predicted_mean (scores.npz of a teach run that saved it)")
+        outcome = list(checked.outcome_names).index(require(config, f"skills.{checked.name}.threat_outcome"))
+        threat = np.clip(np.asarray(predicted_mean, dtype=np.float64)[:, checked.no_op_index, outcome], 0.0, 1.0)
+        targets[THREAT] = np.column_stack([1.0 - threat, threat])
+    elif checked.no_op_index is not None:
         key = f"skills.{checked.name}.threat_target_scale"
         scale = require(config, key)
         if isinstance(scale, bool) or not isinstance(scale, (int, float)) or not (math.isfinite(scale) and scale > 0):
@@ -798,6 +810,12 @@ def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any]) -> d
         threat = np.exp(-np.logaddexp(0.0, -z))  # logistic(z) without overflow
         targets[THREAT] = np.column_stack([np.exp(-np.logaddexp(0.0, z)), threat])
     return targets
+
+
+def _predicted_mean(scores_path: Any) -> np.ndarray | None:
+    """predicted_mean (m, C, K) of a scores.npz, or None for a file written before it was saved."""
+    with np.load(scores_path) as data:
+        return np.array(data["predicted_mean"]) if "predicted_mean" in data.files else None
 
 
 def encode_inputs(features: np.ndarray) -> np.ndarray:
@@ -836,7 +854,9 @@ def encoded_width(frames: int, frame_size: int, encoding: str) -> int:
 
 def window_encoding_from_config(config: Mapping[str, Any]) -> tuple[str, float]:
     """(vision.encoding, vision.diff_floor) of config.yaml; ConfigError for a missing or invalid value."""
-    encoding, floor = require(config, "vision.encoding"), require(config, "vision.diff_floor")
+    encoding = require(config, "vision.encoding")
+    # "events" takes its event threshold in the place of the divisor floor (one parameter per encoding).
+    floor = require(config, "vision.event_threshold" if encoding == "events" else "vision.diff_floor")
     if encoding not in WINDOW_ENCODINGS:
         raise ConfigError(f"config.yaml key 'vision.encoding' must be one of {WINDOW_ENCODINGS}; got {encoding!r}")
     try:
@@ -876,7 +896,22 @@ def encode_window_features(windows: np.ndarray, encoding: str, diff_floor: float
         return np.array(array.reshape(n, -1), dtype=np.float32, copy=True)
     floor = np.float32(_diff_floor(diff_floor))
     encoded_width(array.shape[1], array.shape[2], encoding)  # F >= 2
-    change = (array[:, 1:] - array[:, :-1]).reshape(n, -1)
+    if encoding == "events":
+        # Event-camera style: each pixel of each adjacent frame pair gives an ON event (1.0) when it got brighter by
+        # more than the threshold, an OFF event (0.0) when it got darker by more than it, and 0.5 (no event, zero
+        # input current) otherwise. For this encoding the ``diff_floor`` argument IS the event threshold
+        # (config vision.event_threshold; stored in student.json input.diff_floor).
+        change = array[:, 1:] - array[:, :-1]
+        events = np.full(change.shape, 0.5, dtype=np.float32)
+        events[change > floor] = 1.0
+        events[change < -floor] = 0.0
+        return events.reshape(n, -1)
+    if encoding == "signed_diff_first":
+        # Change of every later frame against the OLDEST frame of the window: a slow approach adds up over the
+        # window (7 frames = 233 ms) instead of showing only one frame step; a still scene is still 0.5 everywhere.
+        change = (array[:, 1:] - array[:, :1]).reshape(n, -1)
+    else:
+        change = (array[:, 1:] - array[:, :-1]).reshape(n, -1)
     scale = np.maximum(np.abs(change).max(axis=1), floor)
     if encoding == "abs_diff":
         return np.abs(change) / scale[:, None]
@@ -1452,7 +1487,7 @@ def _teach_command(args: argparse.Namespace, config: Mapping[str, Any], spec: An
         keys = list(teacher.last_request_hashes)
         buffer = io.BytesIO()
         np.savez(buffer, scores=scores, scenario_index=dream["scenario_index"], decision_time_s=dream["decision_time_s"],
-                 request_keys=np.array(keys, dtype=str))
+                 request_keys=np.array(keys, dtype=str), predicted_mean=dream_scores.last_predicted_mean)
         path = result.path.parent / "scores.npz"
         atomic_write_bytes(path, buffer.getvalue())
         record = {"path": path, "sha256": _sha256(path), "shape": list(scores.shape), "request_keys": keys}
@@ -1510,7 +1545,7 @@ def _train_command(args: argparse.Namespace, config: Mapping[str, Any], spec: An
     hidden = list(args.hidden) if args.hidden else list(require(config, f"observed.{checked.name}.snn_hidden_sizes"))
     steps = int(args.steps) if args.steps is not None else int(require(config, f"observed.{checked.name}.snn_max_steps"))
     seed = int(require(config, "runtime.seed"))
-    targets = dream_targets(scores, spec, config)
+    targets = dream_targets(scores, spec, config, predicted_mean=_predicted_mean(args.scores))
 
     def progress(info: dict[str, Any]) -> None:
         events.emit("train", "running", done=int(info["step"]), total=int(info["max_steps"]), data={

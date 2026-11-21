@@ -432,29 +432,32 @@ skills:
     hold_s: 0.6
     settle_s: 1.0  # Seconds the dog stands on the zero command before the object is launched (t_s 0). Starting value; the stand is checked by the collection run.
     episode_duration_s: 4.0  # Simulated seconds per episode after the launch: slowest arrival (3.2 m at 1.0 m/s), then hold and recovery.
-    decision_time_range_s: [0.3, 2.5]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
-    windows_per_dream_episode: 4  # Decision instants taken from one rendered dream episode (the dog stays on the zero command, so one episode gives several windows).
+    decision_time_range_s: [0.3, 3.0]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
+    windows_per_dream_episode: 6  # Decision instants taken from one rendered dream episode (the dog stays on the zero command, so one episode gives several windows).
     teacher_features: [window, action, physics]  # Columns given to the residual teacher. Compared on dev with [action, physics]; the wider one is talkhere.md's plan.
     window_repeat_tolerance: 0.01  # Largest allowed grey difference (0-1 scale) between the windows the episodes of one situation saw before acting; the render repeats to within 0.002 (seen twice in about 700 situations).
+    pre_contact_margin_s: 0.05  # Decision frames are drawn only up to this long before the object's straight-line arrival at the dog.
     separation_clip_m: 2.0  # min_separation_m is reported at most this (measured and guessed); a scene without an object reads this value.
+    threat_target: collision_course  # Threat target of the student: the dream world's predicted collision under NO_OP (scorer side). The decision-margin target (threat_target_scale) called late frames, where no dodge helps any more, 'no threat' although the image shows the object at its largest (development run v2).
+    threat_outcome: collision
     threat_target_scale: 0.05  # Threat target = logistic((best active score - NO_OP score) / this). Small against the motion cost of an active command (0.3), so a scene where NO_OP is best gives about 0.
     # Scenario kinds (Person A's nine names, messages log 2026-11-21 20:29 UTC) and their sampling weights. The kind shapes the
     # draw only; whether a scene is a threat is measured by the simulator (a NO_OP episode that ends in a collision).
     kind_weights: {empty: 1.0, static: 1.0, receding: 1.0, off_path: 1.5, background_motion: 1.0, ambiguous: 1.5, incoming_left: 2.0, incoming_center: 2.0, incoming_right: 2.0}
     object_kinds: [punch]  # ball: the handball under gravity (rolls or is thrown). punch: a slow straight flight at head height.
     punch:  # The punch object. Until Go2World accepts object_kind (Person A's punch body), the stand-in is the existing handball with its weight cancelled by a constant upward force (straight flight, real contact); rows.json records which was used.
-      speed_m_s: [0.8, 2.5]  # Constant approach speed: the slow punch of the demo.
-      launch_height_m: [-0.1, 0.5]  # Launch height relative to the trunk origin.
+      speed_m_s: [0.4, 1.2]  # Constant approach speed: the slow punch of the demo. v2 used 0.8-2.5 from 1.8-3.2 m; slower and closer keeps the 5 cm object several pixels wide for longer before contact.
+      launch_height_m: [-0.1, 0.2]  # Launch height relative to the trunk origin.
       aim_height_m: [-0.03, 0.12]  # Height of the aim point relative to the trunk origin (the head camera is at 0.017).
       aim_x_m: 0.3  # The aim point lies this far ahead of the trunk origin: the head.
     visual:  # Per-scenario visual draws for Person B's stopgap render (Person A's visual key replaces them).
       object_grey: [0.1, 1.0]  # Grey level of the thrown object.
-      backdrop_grey: [0.15, 0.85]  # Grey level painted over the model's black sky.
+      backdrop_grey: [0.3, 0.5]  # Near the lit floor's grey (0.40) since v3: with 0.15-0.85 the horizon line, moved by the standing dog's sway, changed pixels as much as the 5 cm punch did (development run v2). Was [0.15, 0.85].
       min_contrast: 0.15  # Redraw the object grey until it differs from the backdrop grey by at least this.
     scenarios:  # Ranges of the draws, in the dog's frame at the launch (x ahead, y left). Starting values; change only from dev runs, logged in DECISIONS.md.
       launch_modes: {roll: 1.0, throw: 0.0}  # roll: on the floor, no vertical speed. throw: ballistic, aimed at the head camera's height.
-      distance_m: [1.8, 3.2]  # Launch distance ahead of the trunk origin.
-      bearing_deg: [-12.0, 12.0]  # Bearing of the launch point; inside the 45 degree view.
+      distance_m: [0.75, 1.4]  # v3: the lead's description of the demo punch: it starts about half a metre from the camera (0.34 m ahead of the trunk origin) and ends almost covering it. Camera distance 0.4-1.05 m. Original comment:  # Launch distance ahead of the trunk origin.
+      bearing_deg: [-8.0, 8.0]  # Bearing of the launch point; inside the 45 degree view.
       roll_speed_m_s: [1.0, 2.5]  # Ground speed of a rolling ball.
       throw_speed_m_s: [4.0, 7.0]  # Horizontal speed of a thrown ball.
       throw_release_height_m: [0.0, 0.5]  # Release height above the trunk origin.
@@ -462,9 +465,9 @@ skills:
       aim_side_m: [0.08, 0.22]  # incoming_left (+y) and incoming_right (-y).
       aim_ambiguous_m: [0.25, 0.45]  # Near misses and grazes.
       aim_off_path_m: [0.6, 1.5]  # Clear misses.
-      static_distance_m: [1.0, 4.0]  # A ball at rest on the floor, in view.
-      receding_distance_m: [1.0, 2.5]  # Start of a ball rolling away at roll_speed_m_s.
-      background_distance_m: [3.0, 5.0]  # A ball crossing sideways at roll_speed_m_s, never approaching.
+      static_distance_m: [0.6, 1.4]  # A ball at rest on the floor, in view.
+      receding_distance_m: [0.5, 1.0]  # Start of a ball rolling away at roll_speed_m_s.
+      background_distance_m: [0.7, 1.4]  # A ball crossing sideways at roll_speed_m_s, never approaching.
     physics:  # Constants of the physics guess (ballistic or rolling ball, first-order dog response). The residual teacher absorbs the rest.
       gravity_m_s2: 9.81
       assumed_latency_s: 0.05  # As skills.dodge.physics.
@@ -747,6 +750,7 @@ vision:  # learned_judgment.vision (Person B): the image-window contract, identi
   # runtime): abs_diff = |frame k - frame k-1| for the F-1 adjacent pairs, divided by max(largest of those values,
   # diff_floor). A still background gives 0; a darker and a brighter object give the same input. raw = the F frames as they are.
   encoding: signed_diff  # signed_diff: (frame k - frame k-1) over the same divisor, mapped to 0.5 + 0.5 x: keeps whether a pixel got brighter or darker. Chosen on v1 dream data (development): a plain MLP reached 0.70 validation accuracy with signed_diff, 0.71 raw, 0.58 abs_diff.
+  event_threshold: 0.04  # Encoding "events" (event-camera style): a pixel fires ON (OFF) when it got brighter (darker) than this between two frames (0-1 grey scale); below it, no event. Above the still-scene noise of adjacent frames (augmentation noise up to 0.01 per frame), below a low-contrast object's edge.
   diff_floor: 0.1  # Raised from 0.03 on development data: in still scenes the standing dog's own sway changes pixels by up to 0.06 (empty) and 0.13 (object at rest), which 0.03 stretched to full scale.
   # Smallest divisor of the change encoding (0-1 grey scale): keeps sensor noise in a still scene small instead of stretching it to 1.
   # Simulation frames are taken at the 0.02 s control period nearest each k / frame_rate_hz (at most 6.7 ms off) until
@@ -793,8 +797,8 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
     fast_dream_situations: 1000  # Fast run: dream situations (no simulator) scored by the teacher; 1000 x 4 candidates.
     fast_snn_max_steps: 1200  # Fast run: max optimizer steps of the spiking student (the full run's snn_max_steps is 3000).
   dodge_vision:
-    context_scenarios: 120  # Scenarios whose four actions are all run for the teacher's context: 480 measured rows.
-    dream_episodes: 1500  # Rendered zero-command episodes; x windows_per_dream_episode dream situations.
+    context_scenarios: 80  # Scenarios whose four actions are all run for the teacher's context: 320 measured rows.
+    dream_episodes: 4000  # Rendered zero-command episodes; x windows_per_dream_episode dream situations.
     dev_scenarios: 240  # Dev split: thresholds, frame count and settings are chosen here.
     test_scenarios: 240  # Held-out split: run once, after the freeze.
     snn_hidden_sizes: [128]  # Starting value; compare on dev.
