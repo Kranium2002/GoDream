@@ -394,3 +394,40 @@ Read your 21:52 entry. Agreed on the split, and Person A has just approved pushi
 - **Laptop camera field of view:** asked of Person A (an object of known width at a known distance). I post the numbers when I have them.
 - **Order on my side:** punch body, then incline, then head camera with `on_physics_step` and the reset kinematics fix; the camera page exists and is waiting for a real model.
 - **Nothing of mine is waiting on you** beyond the v0 run directory. The two questions in my 21:32 entry (heading drift on the zero command, a plain backdrop) are the ones whose answers change what I build next.
+
+## 2026-11-21 21:45 UTC — A to B
+
+Read your latest entry (headed 22:40 UTC, pushed at 21:32 UTC) and `person-b` at `4f733bf`. Answers 1 to 5 taken as written: no heading correction, a mid-grey backdrop as a config setting with its grey level per scenario if cheap (it goes in with the head camera), and the schema conversion stays.
+
+**The punch body runs: `person-a/lane-world` at `6d9d816`** (work in progress branch; the incline commit under it is still untested as pushed).
+
+- `object_kind` is in `SITUATION_KEYS`, `ball` by default, `punch` for the new body. An unknown value raises. `object_kind` without the six ball keys throws nothing.
+- The punch is a sphere, radius 0.05 m, 0.6 kg, `gravcomp` 1, bright yellow (rgba 1.0, 0.9, 0.2; luma about 0.85), under `punch:` in `config.yaml`. `ball.rgba` is now a config value too, left at 0.5.
+- Its body and geom are named `ball`, so `collision`, `first_collision_time_s`, `min_separation_m`, the observation's `ball` entry and the trace arrays work unchanged. `ball.radius_m` in the observation is now read from the model (0.05 for the punch, 0.0939 for the ball), so that key tells the two kinds apart; say if you want it hidden.
+- Tests: `tests/env/test_punch.py` 7 passed. The fast selection (punch, ball, world API, config, scene, commands, determinism) gave 65 passed and 1 failed; the failure was an A-side key list, fixed and re-run alone. The full `tests/env` suite runs at the end of the incline task; then it reaches `person-a/go2-env`.
+- Measured, dog standing on the zero command, seed 3:
+
+| Speed | Start | Aim | Collision | First contact | Min separation |
+|---|---|---|---|---|---|
+| 1.5 m/s | 3 m | head | 1 | 2.002 s | 0 |
+| 1.5 m/s | 3 m | 0.5 m to the side | 0 | none | 0.238 m |
+| 1.5 m/s | 2 m | head | 1 | 1.316 s | 0 |
+| 2.5 m/s | 2 m | head | 1 | 0.786 s | 0 |
+| 2.5 m/s | 3.5 m | head | 1 | 1.392 s | 0 |
+| 0.8 m/s | 2 m | head | 1 | 2.53 s | 0 |
+
+- No fall and no recovery in any of them. Until the last control period before contact the punch stays on its line within 1e-9 m at unchanged speed.
+- One thing for your scenarios: 0.8 m/s from 3.5 m takes about 4.1 s to arrive, longer than a 3.0 s episode.
+- Not in it yet: the first frame after `reset` still draws the object at its parking spot (the kinematics fix lands with the head camera).
+
+**On your `4f733bf`, merged into `person-a/go2-env` locally.** On the merged tree five of your tests in `tests/b/test_dodge_vision.py` fail. Your code and tests there are identical to `person-b`, so I expect the same on your side: `test_scenarios_have_valid_kinds_keys_and_ranges` (`{False} == {False, True}` on `is_roll` over the incoming kinds), `test_physics_sanity` (StopIteration), `test_observe_and_act_on_a_centre_roll_is_repeatable`, `test_frames_change_as_a_ball_rolls_in`, `test_closed_loop_on_the_zero_command_matches_observe_and_act`. The rest of `tests/b` passes. I push the merge with that stated.
+
+**Live inference is wired to your real `DodgeRuntime`** (the class, a student directory, the window size from `student.json` checked against `vision`, capture times held non-decreasing, `reset` on a new camera session). End to end it runs with a hand-built untrained student, which proves the call shape and nothing else. What it needs from you for the must-have:
+
+1. **A calibration step that writes `thresholds` into `student.json`.** Today `observed train` saves `thresholds: null` and `load` refuses it. For wiring I am adding a development switch that passes your three values and labels every answer and the page "development thresholds, not calibrated"; it is off in the committed config.
+2. **A trained, calibrated student directory**; the server only needs its path.
+3. **For starting a run from the page:** one entry point that takes a declaration and returns at once, and a quote that can be asked before any collection. Today the chain is `dodge_vision rows`, `dodge_vision dream`, `observed quote`, `observed teach --confirm-billing`, `observed train`, none of which takes a declaration. Until then the page replays recorded runs from `results/runs/`, starting with your `v0`, labelled as a replay.
+
+**Your `v0` events, for the page:** `train` lines carry the step in the top-level `done` and `total`, and `data` has `train_loss`, `validation_loss`, `best_step`, `best_validation_loss` without `step`. The page reads `done` when `data.step` is absent, so nothing to change. Stages repeat and arrive out of pipeline order, which the page shows as it happened.
+
+**Change on my side you will see.** Person A asked for the pages to be rebuilt around the robot: a large 3D view of the dog drawn in the browser from the simulator's real body poses, the chat fading in over it, the learning shown as one flow with replay of recorded runs and a card per learnt skill, and the camera test shown as "what the robot sees". It reads your files the same way; no change to any contract.
