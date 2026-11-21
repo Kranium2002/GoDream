@@ -91,9 +91,9 @@ class Simulation(threading.Thread):
         # Guarded by self.changed and written by this thread only:
         self.status, self.preset, self.available = "resetting", None, []
         self.frame, self.frame_n = b"", 0
-        self.observation, self.observation_n = None, 0
-        # shortcut: grows by one entry per episode start, end or notice (a few hundred bytes); trim it if the server
-        # ever has to run for days.
+        self.latest = {}  # name -> (count, data) of the events only the newest of which matters: observation, infer
+        # shortcut: grows by one entry per episode start, end, notice, run line or inference (a few hundred bytes);
+        # trim it if the server ever has to run for days. Also written by announce() from other threads.
         self.event_log = []
         self.stopped = False
 
@@ -112,6 +112,19 @@ class Simulation(threading.Thread):
         self.requests.put(("stop", None, Future()))
         self.join()
 
+    def announce(self, name: str, data: dict, latest_only: bool = False) -> None:
+        """Add an event from another thread to the event streams: logged for every reader (run), or latest_only, where
+        a reader gets the newest one (infer, many a second)."""
+        with self.changed:
+            self._add(name, data, latest_only)
+            self.changed.notify_all()
+
+    def _add(self, name: str, data: dict, latest_only: bool) -> None:  # with self.changed held
+        if latest_only:
+            self.latest[name] = (self.latest.get(name, (0, None))[0] + 1, data)
+        else:
+            self.event_log.append((name, data))
+
     def state(self) -> dict:
         with self.changed:
             return {"status": self.status, "preset": self.preset, "available_presets": list(self.available)}
@@ -128,18 +141,21 @@ class Simulation(threading.Thread):
             yield frame
 
     def events(self):
-        """(name, data) for every episode and notice event from now on and the latest observation after them; a reader
-        too slow for every observation gets the newest. Ends when the thread stops and all has been sent."""
+        """(name, data) for every logged event (episode, notice, run) from now on and the latest observation and infer
+        event after them; a reader too slow for every one of those gets the newest. Ends when the thread stops and all
+        has been sent."""
         with self.changed:
-            logged, seen = len(self.event_log), self.observation_n
+            logged, seen = len(self.event_log), {name: n for name, (n, _) in self.latest.items()}
+
+        def fresh():
+            return [(name, data) for name, (n, data) in self.latest.items() if seen.get(name) != n]
+
         while True:
             with self.changed:
-                self.changed.wait_for(lambda: len(self.event_log) > logged or self.observation_n != seen or self.stopped)
-                new = self.event_log[logged:]
+                self.changed.wait_for(lambda: len(self.event_log) > logged or fresh() or self.stopped)
+                new = self.event_log[logged:] + fresh()
                 logged = len(self.event_log)
-                if self.observation_n != seen:
-                    seen = self.observation_n
-                    new.append(("observation", self.observation))
+                seen = {name: n for name, (n, _) in self.latest.items()}
             if not new:
                 return
             yield from new
@@ -253,7 +269,7 @@ class Simulation(threading.Thread):
         with self.changed:
             self.event_log.extend(events)
             if observation is not None:
-                self.observation, self.observation_n = observation, self.observation_n + 1
+                self._add("observation", observation, latest_only=True)
             if frame is not None:
                 self.frame, self.frame_n = frame, self.frame_n + 1
             if status is not None:

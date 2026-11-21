@@ -7,13 +7,16 @@ Serves on config.yaml app.host and app.port (--port 0 picks a free port) until C
 
     GET  /api/state    what the page needs to draw its controls: command fields and ranges, presets, status,
                        frame size and rate, the skill catalogue and which capabilities work, each with its reason
-    GET  /api/stream   multipart/x-mixed-replace stream of PNG frames rendered by MuJoCo, at app.stream_fps
+    GET  /api/stream   multipart/x-mixed-replace stream of PNG frames rendered by MuJoCo, at app.stream_fps;
+                       ?camera=tracking (the default); head is 503 until the head camera exists, anything else 400
     GET  /api/events   Server-Sent Events: observation (app.observation_hz), episode (start, end with the outcome),
                        notice ({code, message})
     POST /api/drive    {vel_x, vel_y, yaw_rate}, validated strictly; applied from the next control period
     POST /api/stop     the zero command
     POST /api/reset    optional {preset}: a fresh episode, on a new world if the preset differs
     GET  /api/skills, POST /api/chat   the skill catalogue and the chat (app/chat.py)
+    GET  /api/runs, GET /api/runs/{run_id}, POST /api/runs   learning runs (app/runs.py)
+    POST /api/infer    live inference from the browser's image window (app/infer.py)
     GET  /             and other static files, from app/static only
 Every refusal or error is {code, message}: a stable code and one plain sentence; the detail goes to the log on stderr.
 Routes live in app/routes.py's table: the ones above are registered here, each later feature in a module of its own,
@@ -28,11 +31,13 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 import app.chat  # noqa: F401  registers GET /api/skills, POST /api/chat and the chat capability
+import app.infer  # noqa: F401  registers POST /api/infer and the infer capability
+import app.runs  # noqa: F401  registers the run routes and the runs and results capabilities
 from app import backend
-from app.routes import CAPABILITIES, ROUTES, Refusal, capability, route
+from app.routes import CAPABILITIES, Refusal, capability, find, route, to_json
 from app.simulation import Simulation
 from learned_judgment.env import CommandError, load_config, validate_command
 
@@ -43,9 +48,9 @@ NOT_BUILT = {
     "head_camera": "The head camera stream needs the world lane's head camera, and this server does not serve it yet.",
     "scenarios": "Threat scenarios need the world lane's scenario sampler, and this server does not serve them yet.",
     "chat": "The chat module did not register.",  # app/chat.py replaces it
-    "runs": "Learning runs need Dev B's pipeline entry point and run event files, which are not published yet.",
-    "results": "Run results need Dev B's per-run results files, which are not published yet.",
-    "infer": "Live inference needs Dev B's inference adapter and image window contract, which are not published yet.",
+    "runs": "The runs module did not register.",  # app/runs.py replaces it
+    "results": "The runs module did not register.",  # app/runs.py replaces it
+    "infer": "The inference module did not register.",  # app/infer.py replaces it
 }
 log = logging.getLogger(__name__)
 
@@ -55,6 +60,7 @@ class Server(ThreadingHTTPServer):
 
     def __init__(self, config: dict, port: int):
         self.config, self.sim = config, Simulation(config)
+        self.closing = threading.Event()  # set by stop(); background helpers (app/runs.py) end on it
         super().__init__((config["app"]["host"], port), Handler)
 
 
@@ -64,10 +70,10 @@ class Handler(BaseHTTPRequestHandler):
     server_version, sys_version = "viewer", ""  # the Server header names no software or version
 
     def do_GET(self) -> None:
-        self._answer(ROUTES.get(("GET", urlsplit(self.path).path), static))
+        self._answer(find("GET", urlsplit(self.path).path) or static)
 
     def do_POST(self) -> None:
-        self._answer(ROUTES.get(("POST", urlsplit(self.path).path), nothing_here))
+        self._answer(find("POST", urlsplit(self.path).path) or nothing_here)
 
     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
         """http.server's own errors (a malformed request, an unsupported method) as {code, message} too."""
@@ -78,7 +84,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             handle(self)
         except Refusal as r:
-            self.send_json(r.status, {"code": r.code, "message": r.message})
+            self.send_json(r.status, r.body())
         except ConnectionError:
             pass  # the client went away
         except Exception:
@@ -87,7 +93,7 @@ class Handler(BaseHTTPRequestHandler):
                                  "message": "Something went wrong in the server; its log has the details."})
 
     def send_json(self, status: int, body: dict) -> None:
-        data = json.dumps(body).encode()
+        data = to_json(body).encode()
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(data)))
@@ -163,13 +169,18 @@ def state(h: Handler) -> None:
         "frame": {"width": render["width"], "height": render["height"], "stream_fps": config["app"]["stream_fps"]},
         "capabilities": capabilities(h.server),
         "skills": backend.skill_catalog(config),
-        "image_window": None,  # Dev B has not published the image window contract (capability infer says so)
-        "actions": None,  # nor the four actions' command values
+        "image_window": backend.image_window(config),  # null until config.yaml has Dev B's vision block
+        "actions": None,  # Dev B has not published the four actions' command values
     })
 
 
 @route("GET", "/api/stream")
 def stream(h: Handler) -> None:
+    camera = parse_qs(urlsplit(h.path).query).get("camera", ["tracking"])[-1]
+    if camera == "head":
+        raise Refusal(503, "head_camera_unavailable", NOT_BUILT["head_camera"])
+    if camera != "tracking":
+        raise Refusal(400, "unknown_camera", "The stream offers the cameras tracking and head only.")
     h.start_stream("multipart/x-mixed-replace; boundary=frame")
     for png in h.server.sim.frames():
         h.wfile.write(b"--frame\r\nContent-Type: image/png\r\nContent-Length: %d\r\n\r\n%b\r\n" % (len(png), png))
@@ -179,7 +190,7 @@ def stream(h: Handler) -> None:
 def events(h: Handler) -> None:
     h.start_stream("text/event-stream")
     for name, data in h.server.sim.events():
-        h.wfile.write(f"event: {name}\ndata: {json.dumps(data)}\n\n".encode())
+        h.wfile.write(f"event: {name}\ndata: {to_json(data)}\n\n".encode())
 
 
 @route("POST", "/api/drive")
@@ -238,11 +249,13 @@ def start(config: dict, port: int) -> Server:
         server.server_close()
         raise
     threading.Thread(target=server.serve_forever, name="http", daemon=True).start()
+    app.runs.watch(server)
     return server
 
 
 def stop(server: Server) -> None:
     """Stop serving, stop the simulation thread (open streams then end) and free the port. Safe to call again."""
+    server.closing.set()
     server.shutdown()
     server.sim.stop()
     server.server_close()

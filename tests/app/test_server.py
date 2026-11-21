@@ -4,6 +4,7 @@ or busy machine only makes the tests take longer."""
 import copy
 import http.client
 import json
+import logging
 import re
 import socket
 import struct
@@ -11,10 +12,12 @@ import threading
 import time
 import zlib
 from contextlib import closing, contextmanager
+from pathlib import Path
 
 import numpy as np
 import pytest
 
+from app import backend
 from app.server import STATIC, start, stop
 from learned_judgment.env import load_config
 
@@ -163,8 +166,10 @@ def test_state_names_every_capability_and_why_it_is_unavailable(server):
         if not capability["available"]:  # one sentence; it may name a module or a file, so dots are allowed
             assert capability["reason"].endswith(".") and "Traceback" not in capability["reason"], name
     assert capabilities["drive"]["available"]
-    for name in ["head_camera", "scenarios", "runs", "results", "infer"]:  # not built in this server yet
+    for name in ["head_camera", "scenarios", "runs"]:  # not built in this server yet, or no Dev B runner
         assert not capabilities[name]["available"], name
+    assert capabilities["results"]["available"] == (backend.runs_dir(server.config)[0] is not None)
+    assert capabilities["infer"]["available"] == (backend.inference(server.config)[0] is not None)
 
 
 SKILL_KEYS = {"skill", "description", "params", "actions", "outcomes", "available", "missing"}
@@ -302,7 +307,7 @@ def test_server_refuses_to_start_with_an_unusable_app_setting(config, key, value
 
 
 @pytest.fixture(scope="module")
-def own_server(config):
+def own_server(config, tmp_path_factory):
     """A server of its own, whose config adds a preset that cannot be built (a floor type with no friction) and one
     whose command latency (1 s, presets are not range-checked) is far longer than an observation period."""
     own = copy.deepcopy(config)
@@ -310,6 +315,7 @@ def own_server(config):
     assert own["world"]["hidden_effects"]["enabled"]["latency"]
     presets["unknown_floor"] = presets["default"] | {"floor_type": "no_such_floor"}
     presets["slow_commands"] = presets["default"] | {"command_latency_s": 1.0}
+    own["observed"]["runs_dir"] = str(tmp_path_factory.mktemp("runs"))  # absolute: its own, empty runs directory
     server = start(own, 0)
     yield server
     stop(server)  # again after the shutdown test: stop is idempotent
@@ -334,6 +340,21 @@ def test_observations_show_the_issued_command_at_once_not_the_delayed_one(own_se
         assert request(own_server, "POST", "/api/drive", FORWARD)[0] == 200
         seen = observe(events, until_s=before + 0.5)
         assert seen[-1]["command"] == FORWARD  # 1 s of latency would still show the zero command here
+
+
+def test_new_run_lines_are_relayed_as_events_and_the_run_can_be_read(own_server):
+    """A run folder written while the server runs (a fixture for this plumbing, not a learning run)."""
+    root = Path(own_server.config["observed"]["runs_dir"])
+    line = {"run_id": "r_test", "skill": "RAMP", "step": "baseline", "state": "done", "done": 4, "total": 4,
+            "time_utc": "2026-11-21T22:00:00Z", "data": {"anything": [1, 2]}}
+    with event_stream(own_server) as events:
+        (root / "r_test").mkdir()
+        (root / "r_test" / "events.jsonl").write_text(json.dumps(line) + "\n")
+        assert next(data for name, data in events if name == "run") == line
+    assert request(own_server, "GET", "/api/runs") == (200, ["r_test"])
+    status, run = request(own_server, "GET", "/api/runs/r_test")
+    assert status == 200 and run["state"] == "running" and run["baseline"] == {"anything": [1, 2]}
+    assert run["steps"] == [{k: line[k] for k in ("step", "state", "done", "total", "data")}]
 
 
 def test_shutdown_ends_open_streams_and_frees_the_port(own_server):
@@ -363,3 +384,95 @@ def test_shutdown_ends_open_streams_and_frees_the_port(own_server):
         socket.create_connection(("127.0.0.1", port), timeout=30)
     with socket.socket() as s:
         s.bind(("127.0.0.1", port))  # no SO_REUSEADDR: fails while anything still holds the port
+
+
+# ---- stream cameras, runs and live inference ---------------------------------------------------------------------
+
+def test_stream_refuses_an_unknown_camera_and_the_head_camera_until_it_exists(server):
+    for camera, status, code in [("bogus", 400, "unknown_camera"), ("head", 503, "head_camera_unavailable")]:
+        got, body = request(server, "GET", f"/api/stream?camera={camera}")
+        assert (got, body["code"]) == (status, code)
+        assert_plain_sentence(body["message"])
+
+
+def test_runs_are_listed_unknown_ones_refused_and_starting_one_is_unavailable(server):
+    status, found = request(server, "GET", "/api/runs")
+    assert status == 200 and isinstance(found, list)
+    for path in ["/api/runs/no_such_run", "/api/runs/..", "/api/runs/%2e%2e", "/api/runs/..%5c..%5cconfig.yaml",
+                 "/api/runs/"]:
+        assert request(server, "GET", path) == (404, {"code": "unknown_run", "message": "There is no run with that id."})
+    status, body = request(server, "POST", "/api/runs", {"declared_spec": {"skill": "RAMP", "params": {}},
+                                                         "confirm_cost": True})
+    assert status == 503 and body["code"] == "runs_unavailable" and "entry point" in body["message"]
+
+
+MARK = 0.123456789  # a window value easy to find if it ever leaks
+SMALL = {"frames": 2, "height": 3, "width": 3}
+STEER = {"vel_x": 0.0, "vel_y": 0.5, "yaw_rate": 0.0}
+
+
+def infer_body(n_values, frames):
+    return {"window": [MARK] * n_values, "frames": frames, "captured_ms": time.time() * 1000.0}
+
+
+def no_leak(text):
+    assert "0.1234" not in text
+
+
+def test_infer_is_unavailable_naming_what_is_missing_and_repeats_no_value(server, caplog):
+    if backend.inference(server.config)[0] is not None:
+        pytest.skip("Dev B's runtime and a frozen model are present here")
+    window = backend.image_window(server.config)
+    with caplog.at_level(logging.DEBUG):
+        status, body = request(server, "POST", "/api/infer",
+                               infer_body(window["frames"] * window["height"] * window["width"], window["frames"]))
+    assert status == 503 and body["code"] == "infer_unavailable"
+    assert body["message"] == request(server, "GET", "/api/state")[1]["capabilities"]["infer"]["reason"]
+    no_leak(json.dumps(body))
+    no_leak(" ".join(r.getMessage() for r in caplog.records))
+
+
+class StandInRuntime:
+    """Dev B's runtime, to test this server's plumbing only; no evidence that live inference works."""
+
+    def __init__(self, fail=False):
+        self.fail, self.resets = fail, 0
+
+    def infer(self, window, t_capture_s):
+        if self.fail:
+            raise ValueError(f"bad window {window.tolist()}")
+        return {"action": "DODGE_LEFT", "command": STEER, "threat_confidence": np.float32(0.97),
+                "action_confidence": 0.9, "margin": 0.4, "gate": {"passed": True}, "issued": True}
+
+    def reset(self):
+        self.resets += 1
+
+
+def test_infer_applies_the_command_and_announces_the_action_only(server, monkeypatch, caplog):
+    runtime = StandInRuntime()
+    monkeypatch.setattr(backend, "inference", lambda config: (runtime.infer, runtime.reset, SMALL, []))
+    with caplog.at_level(logging.DEBUG), event_stream(server) as events:
+        fresh_episode(server, events)
+        before = observe(events, until_s=0.5)[-1]["t_s"]
+        status, body = request(server, "POST", "/api/infer", infer_body(18, 2) | {"session_start": True})
+        assert status == 200 and body["action"] == "DODGE_LEFT" and body["command"] == STEER
+        assert body["threat_confidence"] == pytest.approx(0.97) and body["latency_ms"] >= 0
+        assert body["frame_age_clamped"] in (False, True) and runtime.resets == 1
+        assert next(data for name, data in events if name == "infer") == {
+            "action": "DODGE_LEFT", "threat_confidence": pytest.approx(0.97), "action_confidence": 0.9}
+        assert observe(events, until_s=before + 0.5)[-1]["command"] == STEER  # applied to the stage
+    no_leak(json.dumps(body))
+    no_leak(" ".join(r.getMessage() for r in caplog.records))
+
+
+def test_a_failing_inference_leaks_the_window_nowhere(server, monkeypatch, caplog):
+    runtime = StandInRuntime(fail=True)
+    monkeypatch.setattr(backend, "inference", lambda config: (runtime.infer, runtime.reset, SMALL, []))
+    with caplog.at_level(logging.DEBUG):
+        status, body = request(server, "POST", "/api/infer", infer_body(18, 2))
+        bad_status, bad = request(server, "POST", "/api/infer", infer_body(17, 2))
+    assert status == 502 and body["code"] == "infer_failed"
+    assert bad_status == 400 and bad["code"] == "invalid_window"
+    no_leak(json.dumps(body) + json.dumps(bad))
+    no_leak(" ".join(r.getMessage() for r in caplog.records))
+    assert all(r.exc_info is None for r in caplog.records if r.name.startswith("app"))
