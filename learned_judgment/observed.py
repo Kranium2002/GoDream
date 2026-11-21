@@ -36,9 +36,15 @@ The run, with nothing skill-specific in this module (the spec object carries the
                      [threat (2) | action (C)], parity-checked against the torch model
     save_student     network.npz + network.json (snn_core.save_network) and student.json
 
-Student input encoding: x -> (x - 0.5) * sqrt(12) per feature (the existing InputEncoder's map
-for a float feature declared on [0, 1]); stated in student.json. Readout: softmax over each
-head's logits; threat confidence = softmax(threat logits)[1].
+Student input encoding, image windows: the stored RAW window of F frames (newest F of the
+dream's, vision.take_frames) -> :func:`encode_window_features` with config.yaml vision.encoding
+and vision.diff_floor ("abs_diff": the F - 1 adjacent-frame changes |frame k - frame k-1|,
+divided per window by max(largest change, diff_floor); "raw": the F frames) -> x -> (x - 0.5) *
+sqrt(12) per feature (the existing InputEncoder's map for a float feature declared on [0, 1]);
+all stated in student.json "input" ("frames" = F camera frames, "frame_size", "window_encoding",
+"diff_floor", "encoding"). learned_judgment.runtime applies the same function. The teacher's
+matrix stays on the raw windows. Readout: softmax over each head's logits; threat confidence =
+softmax(threat logits)[1].
 
 Billing: only :func:`predict_outcomes` (and :func:`dream_scores`, which calls it) sends a
 billable request, and both raise RuntimeError before any network use unless the caller passes
@@ -109,8 +115,11 @@ __all__ = [
     "available_observed_skills",
     "dream_request_plan",
     "dream_scores",
+    "WINDOW_ENCODINGS",
     "dream_targets",
     "encode_inputs",
+    "encode_window_features",
+    "encoded_width",
     "load_dream",
     "load_rows",
     "load_spec",
@@ -123,6 +132,7 @@ __all__ = [
     "student_readout",
     "teacher_matrix",
     "train_student",
+    "window_encoding_from_config",
 ]
 
 EVENT_STEPS = ("baseline", "attempts", "teacher_fit", "dream", "train", "evaluate")
@@ -131,6 +141,7 @@ FEATURE_BLOCKS = ("window", "action", "physics")  # the only order a FeatureLayo
 OUTCOME_KINDS = ("regression", "binary")
 STUDENT_FORMAT = "learned-judgment/observed-student/v1"
 INPUT_ENCODING = "(x - 0.5) * sqrt(12)"
+WINDOW_ENCODINGS = ("raw", "abs_diff", "signed_diff")  # values of config.yaml vision.encoding and student.json input.window_encoding
 THREAT, ACTION = "threat", "action"
 EXIT_REFUSED = 3
 
@@ -801,6 +812,92 @@ def encode_inputs(features: np.ndarray) -> np.ndarray:
     return (array - 0.5) * math.sqrt(12.0)
 
 
+def _window_encoding(encoding: Any) -> str:
+    if encoding not in WINDOW_ENCODINGS:
+        raise ValueError(f"the window encoding must be one of {WINDOW_ENCODINGS}; got {encoding!r}")
+    return encoding
+
+
+def _diff_floor(value: Any) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, float, np.integer, np.floating)):
+        raise ValueError(f"diff_floor must be a finite number > 0; got {value!r}")
+    if not (math.isfinite(float(value)) and float(value) > 0.0):
+        raise ValueError(f"diff_floor must be a finite number > 0; got {value!r}")
+    return float(value)
+
+
+def encoded_width(frames: int, frame_size: int, encoding: str) -> int:
+    """Student input width for windows of ``frames`` frames of N x N: (F - 1) * N * N for "abs_diff",
+    F * N * N for "raw". ValueError for an unknown encoding, or F < 2 with "abs_diff"."""
+    if _window_encoding(encoding) != "raw" and frames < 2:
+        raise ValueError(f"the {encoding} encoding needs windows of >= 2 frames; got {frames}")
+    return (frames - 1 if encoding != "raw" else frames) * frame_size * frame_size
+
+
+def window_encoding_from_config(config: Mapping[str, Any]) -> tuple[str, float]:
+    """(vision.encoding, vision.diff_floor) of config.yaml; ConfigError for a missing or invalid value."""
+    encoding, floor = require(config, "vision.encoding"), require(config, "vision.diff_floor")
+    if encoding not in WINDOW_ENCODINGS:
+        raise ConfigError(f"config.yaml key 'vision.encoding' must be one of {WINDOW_ENCODINGS}; got {encoding!r}")
+    try:
+        return encoding, _diff_floor(floor)
+    except ValueError:
+        raise ConfigError(f"config.yaml key 'vision.diff_floor' must be a finite number > 0; got {floor!r}") from None
+
+
+def encode_window_features(windows: np.ndarray, encoding: str, diff_floor: float | None) -> np.ndarray:
+    """The student's features of image windows: float32 (n, F' * N * N) in [0, 1].
+
+    Args:
+        windows:    float (n, F, N, N) grey levels in [0, 1], oldest frame first (float32 by contract).
+        encoding:   "raw": the windows unchanged, flattened (F' = F; per window what vision.flatten_window gives).
+                    "abs_diff": d = |w[:, 1:] - w[:, :-1]| (the F - 1 adjacent pairs, oldest pair first,
+                    F' = F - 1) divided per window by max(largest d of that window, diff_floor). A still scene
+                    gives 0; an object darker or brighter than its backdrop by the same amount gives the same
+                    features.
+        diff_floor: the smallest divisor of "abs_diff", a finite number > 0 (unused by "raw"; may be None there).
+
+    Deterministic and vectorised (float32 arithmetic). The observed run's training, :func:`student_readout` and
+    learned_judgment.runtime all use this one function.
+
+    Raises:
+        ValueError for an unknown encoding, an invalid diff_floor for "abs_diff", windows that are not a finite
+        float (n, F, N, N) array, or F < 2 for "abs_diff".
+    """
+    encoding = _window_encoding(encoding)
+    array = np.asarray(windows)
+    if array.ndim != 4 or array.shape[2] != array.shape[3] or array.shape[2] < 1 or array.dtype.kind != "f":
+        raise ValueError(f"windows must be a float (n, F, N, N) array; got {array.dtype} {array.shape}")
+    array = array.astype(np.float32, copy=False)
+    if not np.all(np.isfinite(array)):
+        raise ValueError("windows contain non-finite values")
+    n = array.shape[0]
+    if encoding == "raw":
+        return np.array(array.reshape(n, -1), dtype=np.float32, copy=True)
+    floor = np.float32(_diff_floor(diff_floor))
+    encoded_width(array.shape[1], array.shape[2], encoding)  # F >= 2
+    change = (array[:, 1:] - array[:, :-1]).reshape(n, -1)
+    scale = np.maximum(np.abs(change).max(axis=1), floor)
+    if encoding == "abs_diff":
+        return np.abs(change) / scale[:, None]
+    # "signed_diff": 0.5 is "no change"; brighter than the frame before is above it, darker below. A still scene
+    # gives 0.5 everywhere, which the student's input map (x - 0.5) * sqrt(12) turns into zero current.
+    return np.float32(0.5) + np.float32(0.5) * change / scale[:, None]
+
+
+def _student_features(features: np.ndarray, student_input: Mapping[str, Any] | None) -> np.ndarray:
+    """Raw flattened windows (n, F * N * N) -> the features the student was trained on, by student.json "input"
+    (None or no "window_encoding": used as given, i.e. raw windows or features that are not image windows)."""
+    if student_input is None or "window_encoding" not in student_input:
+        return features
+    frames, size = int(student_input["frames"]), int(student_input["frame_size"])
+    array = np.asarray(features)
+    if array.ndim != 2 or array.shape[1] != frames * size * size:
+        raise ValueError(f"features must be raw flattened windows (n, {frames * size * size}); got {array.shape}")
+    windows = array.reshape(array.shape[0], frames, size, size)
+    return encode_window_features(windows, student_input["window_encoding"], student_input.get("diff_floor"))
+
+
 def _combine(networks: Mapping[str, SpikingNetwork]) -> SpikingNetwork:
     """One network with outputs [threat | action] from two heads exported from one trunk."""
     if THREAT not in networks:
@@ -974,18 +1071,25 @@ def save_student(
 
     student.json: {"format": STUDENT_FORMAT, "skill", "action_names", "heads": {"threat": [0, 2],
     "action": [2, 2 + C]} (only "action": [0, C] without a NO_OP), "no_op_index", "input":
-    {"frames", "frame_size", "encoding"}, "vision": the VisionSettings for ``frames``,
-    "thresholds": thresholds or null, "provenance", "network": {"files", "sha256"}}.
-    frames None (features that are not image windows): "input": {"features": D (the network's
-    input width), "encoding"} and "vision": null.
+    {"frames" (F: camera frames the runtime is given), "frame_size", "window_encoding",
+    "diff_floor" (config.yaml vision.encoding / vision.diff_floor, see encode_window_features),
+    "encoding"}, "vision": the VisionSettings for ``frames``, "thresholds": thresholds or null,
+    "provenance", "network": {"files", "sha256"}}. The network takes encoded_width(F, N,
+    window_encoding) inputs. frames None (features that are not image windows): "input":
+    {"features": D (the network's input width), "encoding"} and "vision": null.
 
-    Raises ValueError when the network's input or output width does not fit the spec and frames.
+    Raises ValueError when the network's input or output width does not fit the spec, frames and
+    the window encoding.
     """
     checked = _check_spec(spec)
     vision = None if frames is None else VisionSettings.from_config(config, frames=frames)
+    window_encoding, diff_floor = (None, None) if vision is None else window_encoding_from_config(config)
     heads = _heads(checked)
     outputs = max(stop for _, stop in heads.values())
-    inputs = getattr(network, "n_inputs", None) if vision is None else vision.n_features
+    if vision is None:
+        inputs = getattr(network, "n_inputs", None)
+    else:
+        inputs = encoded_width(vision.frames, vision.frame_size, window_encoding)
     if not isinstance(network, SpikingNetwork) or network.n_inputs != inputs or network.n_outputs != outputs:
         raise ValueError(
             f"the network must take {inputs} inputs and give {outputs} outputs; "
@@ -1000,7 +1104,13 @@ def save_student(
     if vision is None:
         input_block = {"features": network.n_inputs, "encoding": INPUT_ENCODING}
     else:
-        input_block = {"frames": vision.frames, "frame_size": vision.frame_size, "encoding": INPUT_ENCODING}
+        input_block = {
+            "frames": vision.frames,
+            "frame_size": vision.frame_size,
+            "window_encoding": window_encoding,
+            "diff_floor": diff_floor,
+            "encoding": INPUT_ENCODING,
+        }
     digest = save_network(
         folder / "network",
         network,
@@ -1029,15 +1139,23 @@ def _softmax(logits: np.ndarray) -> np.ndarray:
 
 
 def student_readout(
-    network: SpikingNetwork, features: np.ndarray, heads: Mapping[str, Sequence[int]] | None = None
+    network: SpikingNetwork,
+    features: np.ndarray,
+    heads: Mapping[str, Sequence[int]] | None = None,
+    student_input: Mapping[str, Any] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """(threat_confidence (n,), action_scores (n, C)) for window features (n, D) in [0, 1].
+    """(threat_confidence (n,), action_scores (n, C)) for features (n, D) in [0, 1].
+
+    ``student_input`` is student.json "input". With a "window_encoding" key, ``features`` are RAW
+    flattened windows (n, frames * frame_size**2) and :func:`encode_window_features` turns them into
+    the student's features first; None or no such key (a student saved before the key, or features
+    that are not image windows) uses ``features`` as given. Then encode_inputs and one forward.
 
     Softmax over each head's logits; threat_confidence = softmax(threat logits)[:, 1].
     ``heads`` is student.json "heads"; None means the layout [threat (2) | action (rest)].
     Without a "threat" head, threat_confidence is 0.0 for every row.
     """
-    logits = network.forward(encode_inputs(features))
+    logits = network.forward(encode_inputs(_student_features(features, student_input)))
     if heads is None:
         if network.n_outputs < 3:
             raise ValueError(f"a [threat (2) | action] network needs >= 3 outputs; got {network.n_outputs}")
@@ -1381,10 +1499,14 @@ def _train_command(args: argparse.Namespace, config: Mapping[str, Any], spec: An
         if args.frames is not None:
             raise ValueError("--frames applies to image windows only; this dream's meta has frames null")
         frames, features = None, np.asarray(dream["features"])
+        window_encoding, diff_floor = None, None
     else:
         stored = int(dream["meta"]["frames"])
         frames = stored if args.frames is None else int(args.frames)
-        features = _newest_frames(dream["features"], config, stored, frames)
+        raw = _newest_frames(dream["features"], config, stored, frames)
+        window_encoding, diff_floor = window_encoding_from_config(config)
+        size = VisionSettings.from_config(config, frames=frames).frame_size
+        features = encode_window_features(raw.reshape(raw.shape[0], frames, size, size), window_encoding, diff_floor)
     hidden = list(args.hidden) if args.hidden else list(require(config, f"observed.{checked.name}.snn_hidden_sizes"))
     steps = int(args.steps) if args.steps is not None else int(require(config, f"observed.{checked.name}.snn_max_steps"))
     seed = int(require(config, "runtime.seed"))
@@ -1395,7 +1517,8 @@ def _train_command(args: argparse.Namespace, config: Mapping[str, Any], spec: An
             key: info[key] for key in ("train_loss", "validation_loss", "best_validation_loss", "best_step")
         })
 
-    settings = {"dream": dream["path"], "scores": scores_path, "frames": frames, "hidden_sizes": hidden, "max_steps": steps}
+    settings = {"dream": dream["path"], "scores": scores_path, "frames": frames, "window_encoding": window_encoding,
+                "diff_floor": diff_floor, "hidden_sizes": hidden, "max_steps": steps}
     result.merge(settings)
     events.emit("train", "running", done=0, total=steps, data={**settings, "rows": int(features.shape[0])})
     try:

@@ -19,6 +19,7 @@ from learned_judgment.observed import (
     dream_request_plan,
     dream_targets,
     encode_inputs,
+    encoded_width,
     load_spec,
     make_teacher,
     one_shot_report,
@@ -206,9 +207,10 @@ def test_student_readout_without_threat_head() -> None:
 
 def test_save_student_round_trip(tmp_path) -> None:
     frames = require(CONFIG, "vision.frame_variants")[0]
+    window_encoding, diff_floor = require(CONFIG, "vision.encoding"), require(CONFIG, "vision.diff_floor")
     rng = np.random.default_rng(2)
     network = SpikingNetwork(
-        hidden_weights=(rng.normal(size=(8, frames * N * N)),), hidden_biases=(np.zeros(8),), betas=(0.9,),
+        hidden_weights=(rng.normal(size=(8, encoded_width(frames, N, window_encoding))),), hidden_biases=(np.zeros(8),), betas=(0.9,),
         thresholds=(1.0,), readout_weight=rng.normal(size=(6, 8)), readout_bias=np.zeros(6), readout_beta=0.9,
         time_steps=5,
     )
@@ -220,7 +222,8 @@ def test_save_student_round_trip(tmp_path) -> None:
     assert student["format"] == "learned-judgment/observed-student/v1"
     assert student["skill"] == SPEC.name and student["action_names"] == list(NAMES) and student["no_op_index"] == 0
     assert student["heads"] == {"threat": [0, 2], "action": [2, 6]}
-    assert student["input"] == {"frames": frames, "frame_size": N, "encoding": "(x - 0.5) * sqrt(12)"}
+    assert student["input"] == {"frames": frames, "frame_size": N, "window_encoding": window_encoding,
+                                "diff_floor": diff_floor, "encoding": "(x - 0.5) * sqrt(12)"}
     assert student["vision"]["frames"] == frames and student["thresholds"] is None
     assert student["provenance"] == {"run_id": "t"} and student["network"]["sha256"] == digest
     with pytest.raises(ValueError):

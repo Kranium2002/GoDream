@@ -12,13 +12,18 @@ Student directory (written by the observed run's export):
                                 outputs [threat (2) | action (C)]; its digest is checked on load
     student.json                {"format": "learned-judgment/observed-student/v1", "skill",
                                 "action_names" (C), "heads": {"threat": [0, 2], "action": [2, 2 + C]},
-                                "no_op_index", "input": {"frames", "frame_size", "encoding"}, "vision",
+                                "no_op_index", "input": {"frames", "frame_size", "window_encoding",
+                                "diff_floor", "encoding"}, "vision",
                                 "thresholds": {"threat", "action", "margin"} or null, "provenance"}
 
-Per window (F = input.frames and N = input.frame_size, both from student.json, never config.yaml):
+Per window (F = input.frames, N = input.frame_size, the window encoding and diff_floor, all from student.json,
+never config.yaml; a student.json without input.window_encoding is "raw"):
 
-    readout   window (F, N, N) float32 in [0, 1], oldest frame first
-              -> x = (flatten_window(window) - 0.5) * sqrt(12) in float64, D = F * N * N
+    readout   window (F, N, N) float32 in [0, 1], oldest frame first (the F raw camera frames)
+              -> features = learned_judgment.observed.encode_window_features(window, window_encoding, diff_floor):
+                 "abs_diff": the F - 1 adjacent-frame changes |frame k - frame k-1| divided by max(largest change,
+                 diff_floor), D = (F - 1) * N * N; "raw": the frames as they are, D = F * N * N
+              -> x = (features - 0.5) * sqrt(12) in float64
               -> one SpikingNetwork forward -> logits (2 + C,)
               -> threat_confidence = softmax(logits[0:2])[1]; action_scores = softmax(logits[2:2 + C])
     gate      learned_judgment.gate.ThreatGate with GateSettings.from_config(config, thresholds)
@@ -41,6 +46,7 @@ import numpy as np
 
 from learned_judgment.config import ConfigError, load_config, require
 from learned_judgment.gate import UNCERTAIN, GateSettings, ThreatGate
+from learned_judgment.observed import WINDOW_ENCODINGS, encode_window_features, encoded_width
 from learned_judgment.students.snn_core import SpikingNetwork, load_network
 from learned_judgment.vision import flatten_window
 
@@ -78,16 +84,23 @@ class DodgeRuntime:
         commands: Mapping[str, Mapping[str, float]],
         frames: int,
         frame_size: int,
+        window_encoding: str = "raw",
+        diff_floor: float | None = None,
     ) -> None:
-        if network.n_inputs != frames * frame_size * frame_size:
-            raise ValueError(f"the network takes {network.n_inputs} inputs, not frames * frame_size**2")
+        width = encoded_width(frames, frame_size, window_encoding)
+        if network.n_inputs != width:
+            raise ValueError(f"the network takes {network.n_inputs} inputs, not {width} ({window_encoding} windows)")
         if network.n_outputs != 2 + len(settings.action_names):
             raise ValueError(f"the network has {network.n_outputs} outputs, not 2 + {len(settings.action_names)}")
+        if window_encoding != "raw":  # the same check encode_window_features makes, at load time
+            encode_window_features(np.zeros((1, frames, frame_size, frame_size), np.float32), window_encoding, diff_floor)
         self._network = network
         self._settings = settings
         self._commands = {name: dict(commands[name]) for name in settings.action_names}
         self._frames = frames
         self._frame_size = frame_size
+        self._window_encoding = window_encoding
+        self._diff_floor = diff_floor
         self._gate = ThreatGate(settings)
 
     @classmethod
@@ -104,8 +117,9 @@ class DodgeRuntime:
 
         Checks: the format string; the network digest (load_network); action_names equal to the
         keys of skills.dodge_vision.actions in order; heads exactly {"threat": [0, 2], "action":
-        [2, 2 + C]} and 2 + C network outputs; input frames and frame_size integers >= 1 with
-        frames * frame_size**2 network inputs, and the encoding string; no_op_index the index of
+        [2, 2 + C]} and 2 + C network outputs; input frames and frame_size integers >= 1,
+        window_encoding "raw" (also when absent) or "abs_diff" (then diff_floor a finite number > 0), and
+        (frames - 1 for abs_diff, else frames) * frame_size**2 network inputs, and the encoding string; no_op_index the index of
         the zero command; every command exactly the fields vel_x, vel_y, yaw_rate.
 
         Raises:
@@ -143,10 +157,20 @@ class DodgeRuntime:
         frame_size = _count(spec.get("frame_size"), "input.frame_size")
         if spec.get("encoding") != ENCODING:
             raise ValueError(f"{student_path} input.encoding must be {ENCODING!r}; got {spec.get('encoding')!r}")
-        if network.n_inputs != frames * frame_size * frame_size:
+        window_encoding = spec.get("window_encoding", "raw")
+        if window_encoding not in WINDOW_ENCODINGS:
+            raise ValueError(f"{student_path} input.window_encoding must be one of {WINDOW_ENCODINGS}; got {window_encoding!r}")
+        diff_floor = spec.get("diff_floor")
+        if window_encoding != "raw" and (
+            isinstance(diff_floor, bool) or not isinstance(diff_floor, (int, float))
+            or not (math.isfinite(diff_floor) and diff_floor > 0)
+        ):
+            raise ValueError(f"{student_path} input.diff_floor must be a finite number > 0 for abs_diff; got {diff_floor!r}")
+        width = encoded_width(frames, frame_size, window_encoding)
+        if network.n_inputs != width:
             raise ValueError(
-                f"the network takes {network.n_inputs} inputs; input.frames {frames} x frame_size "
-                f"{frame_size}**2 is {frames * frame_size * frame_size}"
+                f"the network takes {network.n_inputs} inputs; input.frames {frames}, frame_size {frame_size} and "
+                f"window_encoding {window_encoding} give {width}"
             )
 
         chosen = thresholds if thresholds is not None else student.get("thresholds")
@@ -168,7 +192,7 @@ class DodgeRuntime:
                     f"{COMMAND_FIELDS}; got {sorted(command)}"
                 )
             commands[name] = {field: float(command[field]) for field in COMMAND_FIELDS}
-        return cls(network, settings, commands, frames, frame_size)
+        return cls(network, settings, commands, frames, frame_size, window_encoding, diff_floor)
 
     # ----- properties ----------------------------------------------------------------------
 
@@ -228,7 +252,8 @@ class DodgeRuntime:
         low, high = float(flat.min()), float(flat.max())
         if low < -_RANGE_TOLERANCE or high > 1.0 + _RANGE_TOLERANCE:
             raise ValueError(f"window values must lie in [0, 1]; got min {low}, max {high}")
-        encoded = (flat.astype(np.float64) - 0.5) * _SCALE
+        features = encode_window_features(flat.reshape((1, *shape)), self._window_encoding, self._diff_floor)[0]
+        encoded = (features.astype(np.float64) - 0.5) * _SCALE
         logits = self._network.forward(encoded[None, :])[0]
         threat = _softmax(logits[0:2])
         scores = _softmax(logits[2:])
