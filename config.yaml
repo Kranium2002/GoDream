@@ -172,6 +172,39 @@ world:
   render:
     width: 640
     height: 480
+    # Tracking camera distance from the trunk, m. Fixed so added geometry (the incline) does not zoom the view out:
+    # MuJoCo's default is 1.5 x model.stat.extent, 1.4394 for the flat scene (extent 0.9596) and about 10 with a ramp.
+    tracking_distance_m: 1.4394
+  # RAMP's traversable incline (Go2World situation key incline_deg; learned_judgment/env/incline.py). A non-zero
+  # incline_deg places, at the decision instant and along the dog's heading then, a slab rising at that angle from the
+  # floor and a level plateau after it: flat, slope, flat. Both are boxes on mocap bodies, so placing them per episode
+  # needs no recompile and collides exactly like boxes compiled there (proof: scratchpad poc-w3/reposition.py).
+  incline:
+    # Supported angles, published for sample_ramp_situations. From the W3 sweep (artifacts/env/
+    # 20261121T214147-w3-incline-sweep-2, vel_x 0.6 held, 3 attempts each): every run reached the plateau up to 12.5
+    # degrees (slower as the angle grows), none at 15 or above (no falls: the dog stalls). 5 is where the climb is
+    # clearly not flat; 15 is the first angle where the constant-command baseline fails, so the range holds room to learn.
+    range_deg: [5.0, 15.0]
+    max_deg: 20.0  # Largest incline_deg reset accepts (0 to this): the geometry below stays gap-free up to it.
+    start_x_m: 1.0  # Floor distance ahead of the trunk origin at the decision instant to the foot of the slope.
+    length_m: 2.0  # Slope length along its surface (rise length_m x sin(angle): 0.35 m at 10 degrees).
+    plateau_length_m: 4.0  # Level top after the slope; its far end is a drop, so episodes should end before it.
+    # Across the heading. With vel_x alone the dog yaws about 50 degrees and drifts about 2.4 m sideways in 8 s on flat
+    # ground (scratchpad poc-incline, one seed), so +-5 m keeps an 8 s run on the ramp without a yaw correction.
+    width_m: 10.0
+    # Of the slab and the plateau box. At least length_m x tan(max_deg) (0.73 m) and the plateau's height at max_deg
+    # (0.68 m), so neither shows a gap above the floor (tests/env/test_config.py checks it).
+    thickness_m: 1.0
+    rgba: [0.62, 0.52, 0.40, 1.0]  # Visible colour: a light brown against MuJoCo's default floor.
+    park_height_m: 100.0  # Height the boxes wait at until the decision instant, clear of the spawn's lowest-geom search.
+    sweep:  # learned_judgment/env/incline_sweep.py: the baseline's room to improve, measured (W3 evidence).
+      angles_deg: [0.0, 2.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0]  # Flat, then 2.5 degree steps up to max_deg.
+      attempt_seeds: [0, 1, 2]  # Three attempts per angle (the plan's minimum).
+      duration_s: 10.0  # Long enough to reach the plateau at 0.5 m/s (slope foot 1 m, end at most 2.9 m ahead).
+      vel_x: 0.6  # Constant forward command, m/s: the speed of Gate 1's middle condition and of the earlier proof.
+      # yaw_rate trims tried on flat ground; the one that turns least is used for the trimmed sweep. Small steps near 0:
+      # the first sweep (artifacts/env/20261121T212102-w3-incline-sweep) found -0.07 turned the dog about 180 degrees.
+      trim_candidates_rad_s: [0.0, -0.005, -0.01, -0.015, -0.02, -0.025, -0.03]
   # The hidden world (Go2World._hidden_effects). A preset's values are applied only for the effects switched on in
   # `enabled`; with all five off an episode is bit-identical to one without hidden effects. The ranges bound the
   # experiments (MISSION.md); presets are not range-checked, so a test can build a world outside them.
@@ -272,6 +305,7 @@ ball:
   solref: [0.04, 0.1]
   # Same masks as go2.xml's collision geoms (group 3) and the floor: the ball collides with both (E6 simulator half).
   collision_masks: {contype: 1, conaffinity: 1}
+  rgba: [0.5, 0.5, 0.5, 1.0]  # MuJoCo's default geom colour, as before this key existed; the floor is the same grey.
   # m/s^2, downward. The model's own: go2.xml sets no gravity, so MuJoCo's default (0, 0, -9.81); the sampler needs it
   # without a model, and tests/env/test_ball.py checks the two agree.
   gravity_m_s2: 9.81
@@ -285,6 +319,18 @@ ball:
   throw_release_height_range_m: [0.6, 1.2]  # height of the release point above the trunk origin
   throw_speed_range_m_s: [3.3, 4.8]  # horizontal speed of the ball; with the ranges above, flights of 0.61-1.59 s
   throw_aim_error_range_m: [-0.7, 0.7]
+
+# The punch (Go2World situation key object_kind "punch"): a fist-sized sphere that ignores gravity (MuJoCo body
+# gravcomp 1), so from the six ball_* keys it flies straight at constant speed until it touches something, and collides
+# physically with finite mass. It takes the ball's place in the scene, the observation's `ball` entry, the trace arrays
+# and the DODGE outcome keys. Contact parameters are MuJoCo's defaults.
+punch:
+  radius_m: 0.05  # A fist: about 10 cm across.
+  mass_kg: 0.6  # About a fist and wrist; finite, so a hit pushes the dog. The objects research tried 0.3-1.0 kg.
+  # Bright yellow (luma about 0.85): the floor and the handball are both 0.5 grey, so a grey object changes a 12 x 12
+  # grayscale head-camera pixel by only 0.03-0.09 (Dev B's measurement, 2026-11-21).
+  rgba: [1.0, 0.9, 0.2, 1.0]
+  collision_masks: {contype: 1, conaffinity: 1}  # The ball's: it collides with the robot and the floor.
 
 skills:
   dodge:
@@ -734,6 +780,7 @@ app:  # The local viewer server: uv run python -m app.server
   port: 8765  # --port overrides it; --port 0 picks a free port and prints it.
   stream_fps: 10  # PNG frames per second on /api/stream; must divide the 50 Hz control rate into whole control periods.
   observation_hz: 10  # Observation events per second on /api/events; the same rule as stream_fps.
+  pose_hz: 25  # Body pose events per second on /api/events for the 3D view; the same rule as stream_fps.
   fall_restart_pause_s: 2.0  # After a fall, seconds the fallen dog stays on screen before a fresh episode starts.
   png_compression_level: 1  # zlib level 0-9; measured on 640x480 frames: level 1 13 ms and 64 kB, level 6 51 ms and 61 kB.
   # POST /api/chat: Claude turns a request into a declaration (data only, validated, never executed). The key is
@@ -750,7 +797,12 @@ app:  # The local viewer server: uv run python -m app.server
   runs:
     poll_s: 0.5  # Seconds between looks for new lines in the run event files (observed.runs_dir) relayed as SSE.
   infer:
-    model_path: null  # The frozen SNN export Dev B hands over, relative to the repository root; null until then.
+    # The frozen student directory (student.json, network.npz, network.json with frozen thresholds), relative to the
+    # repository root; Dev B's observed run exports it to <observed.runs_dir>/<run>/student/. null until one exists.
+    student_dir: null
+    # Development only: {threat, action, margin} passed to the runtime when the student has no frozen thresholds; every
+    # answer, the infer capability and the log then say so. Never committed set; null uses frozen thresholds only.
+    dev_thresholds: null
     # A frame age (receive time minus the browser's captured_ms, both wall clocks) outside 0 to this is clock skew:
     # it is taken as 0 and flagged in the answer, never an error.
     max_frame_age_ms: 2000

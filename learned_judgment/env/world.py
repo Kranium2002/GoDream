@@ -13,11 +13,13 @@ import numpy as np
 from learned_judgment.env.acceptance import trunk_on_floor
 from learned_judgment.env.commands import validate_command
 from learned_judgment.env.policy import WalkingPolicy
-from learned_judgment.env.scene import build_model
+from learned_judgment.env.incline import place as place_incline
+from learned_judgment.env.scene import build_model, is_ground
 from learned_judgment.env.throws import BALL_KEYS, sample_dodge_situations
 
 STREAMS = ("situation", "world", "ball", "noise")
-SITUATION_KEYS = ("dog_forward_speed_m_s", "settle_s", *BALL_KEYS)
+SITUATION_KEYS = ("dog_forward_speed_m_s", "settle_s", *BALL_KEYS, "object_kind", "incline_deg")
+OBJECT_KINDS = ("ball", "punch")  # object_kind: config.yaml `ball` and `punch`
 FEET = ("FL", "FR", "RL", "RR")  # go2.xml foot geoms, in the model's body order
 BAD_STATE = (mujoco.mjtWarning.mjWARN_BADQPOS, mujoco.mjtWarning.mjWARN_BADQVEL, mujoco.mjtWarning.mjWARN_BADQACC)
 TRACE_KEYS = ("t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang_vel_rad_s", "joint_pos_rad",
@@ -81,7 +83,7 @@ def make_streams(seed: int, attempt_seed: int | None = None) -> dict[str, np.ran
 
 
 class Go2World:
-    """One world: the pinned Go2 and its frozen walking policy on a flat floor, with a preset's hidden effects.
+    """One world: the pinned Go2 and its frozen walking policy on a floor or an incline, with a preset's hidden effects.
 
     Seeds. `seed` and `preset` fix the hidden world for the life of the object. reset(attempt_seed=k) fixes one
     episode's noise: `attempt_streams` is make_streams(seed, k), so two worlds with the same seed reset with the same
@@ -115,7 +117,17 @@ class Go2World:
     `ball`: an IHF size 3 handball) is a free MuJoCo body that collides with nothing until the decision instant, is then
     placed there with that velocity and no spin, and is never touched again. sample_dodge_situation() draws a situation
     (the six keys and dog_forward_speed_m_s) from the world's own `ball` stream with sample_dodge_situations
-    (learned_judgment/env/throws.py).
+    (learned_judgment/env/throws.py). object_kind (default "ball") chooses the thrown object: "punch" (config.yaml
+    `punch`) is a sphere outside gravity (MuJoCo gravcomp) that flies straight at constant speed until it touches
+    something; it takes the ball's place in the observation's `ball` entry (radius_m is its own), the trace arrays and
+    the outcome keys, and its kind is only in <trace>.hidden.json. Any other kind raises ValueError.
+
+    Incline (RAMP). incline_deg (degrees, 0 to world.incline.max_deg; absent or 0: the plain flat scene, the same
+    episode as without the key) places, at the decision instant, a slope rising at that angle world.incline.start_x_m
+    ahead of the trunk origin along the heading then, and a level plateau after it (learned_judgment/env/incline.py).
+    Ramp and plateau are ground like the floor: foot contact, the trunk-on-ground fall check and foot_slip_m count
+    them. The angle is hidden: it is only in <trace>.hidden.json. sample_ramp_situations(config, rng, n) draws angles
+    from world.incline.range_deg.
 
     Observation, one per control period (0.02 s). World frame: x, y on the floor, z up (normal to the floor; a slope
     tilts gravity instead), origin on the floor under the spawn point (the dog starts facing +x).
@@ -127,7 +139,7 @@ class Go2World:
                             rotated here). z > 0 turns anticlockwise seen from above.
         joint_pos_rad       (12,) rad and joint_vel_rad_s (12,) rad/s. Leg joints in the model's order FL, FR, RL,
                             RR, each hip, thigh, calf (the policy's own order is config.yaml action_schema).
-        foot_contact        (4,) bool, FL, FR, RL, RR: that foot geom has a contact with the floor.
+        foot_contact        (4,) bool, FL, FR, RL, RR: that foot geom has a contact with the ground (floor or incline).
         fallen              bool. A fall (below) has happened this episode; once true it stays true.
         ball                None without a ball, else {"pos_m": (3,) m, "vel_m_s": (3,) m/s, "radius_m": float}: the
                             ball's centre and linear velocity, world frame.
@@ -140,8 +152,8 @@ class Go2World:
 
     Outcome of finish_episode():
         elapsed_s           float, s. t_s at the end.
-        fall                0 or 1. A trunk geom touched the floor or the trunk tilted beyond robot.fall.max_tilt_deg,
-                            at any physics step from the spawn on.
+        fall                0 or 1. A trunk geom touched the ground (floor or incline) or the trunk tilted beyond
+                            robot.fall.max_tilt_deg, at any physics step from the spawn on.
         fall_time_s         t_s of the first such physics step (negative: before the decision instant), or None.
         sim_unstable        0 or 1. 1 if MuJoCo flagged a bad state this episode (warning mjWARN_BADQPOS, BADQVEL or
                             BADQACC: it then resets the state itself) or the final state is not finite.
@@ -150,7 +162,7 @@ class Go2World:
                             same episode: the delay line is not restarted.
         final_base_pos_m    [x, y, z], m, world frame.
         declared_payload_kg, declared_surface as in the observation.
-        collision           0 or 1. 1 if the ball had a contact with a robot geom (any body but the world and the
+        collision           0 or 1. 1 if the ball had a contact with a robot geom (any body but the ground and the
                             ball) at a physics step from the decision instant on. Ball and floor is not a collision.
         first_collision_time_s  t_s of the first such physics step, or None.
         min_separation_m    m. Smallest surface-to-surface distance between the ball and the robot's collision geoms
@@ -162,16 +174,22 @@ class Go2World:
         recovered           0 or 1. 0 if they never held for hold_s after first leaving them.
         final_forward_m, final_sideways_m  m. Trunk travel from the decision instant to the end, along the dog's
                             heading at the decision instant (yaw only) and to its left.
-        final_yaw_change_rad  rad. Heading at the end minus heading at the decision instant, wrapped to [-pi, pi);
-                            + is anticlockwise seen from above.
+        final_yaw_change_rad  rad. Heading change from the decision instant to the end, summed over the control
+                            periods, so whole turns count (not wrapped); + is anticlockwise seen from above.
         final_speed_m_s     m/s. Trunk speed over the ground (horizontal) at the end.
+        ramp_start_m, ramp_end_m  m, for scoring. Floor distance along the decision-instant heading from the trunk
+                            origin then to where the slope begins and ends; None without an incline.
+        foot_slip_m         m. Sum over the physics steps of step() and over the feet with a ground contact at that
+                            step (the first such contact of each foot) of the speed of the foot's material point at
+                            the contact point along the contact plane, times the physics timestep: how far the feet slid
+                            on the ground, rolling of the foot spheres excluded.
         trace_path          The episode's .npz (world.trace_dir), or None if world.save_traces is false. It holds
                             each TRACE_KEYS array stacked per control period from the decision instant on,
                             command_active as (N, 3) in command_schema field order and, with a ball, ball_pos_m and
-                            ball_vel_m_s as (N, 3). The hidden values (the effects switched on and this attempt's
-                            latency) and policy_command, the command the policy received at each of those control periods (N lists in
-                            command_schema field order), are only in <trace>.hidden.json beside it, never in an
-                            observation or outcome.
+                            ball_vel_m_s as (N, 3). The hidden values (the effects switched on, this attempt's
+                            latency and incline_deg) and policy_command, the command the policy received at each of
+                            those control periods (N lists in command_schema field order), are only in
+                            <trace>.hidden.json beside it, never in an observation or outcome.
     """
 
     def __init__(self, config: dict, seed: int, preset: str = "default"):
@@ -185,7 +203,6 @@ class Go2World:
         self.model = build_model(config, self._hidden)
         self.policy = WalkingPolicy(config, self.model, self._hidden.get("motor_strength", 1.0))
         self._base = self.model.body("base_link").id
-        self._floor = self.model.geom("floor").id
         self._feet = [self.model.geom(name).id for name in FEET]
         self._cos_max_tilt = math.cos(math.radians(config["robot"]["fall"]["max_tilt_deg"]))
         limits = config["robot"]["recovery"]
@@ -193,7 +210,10 @@ class Go2World:
         self._episodes = 0
         self._active = False
         self._renderer = None
-        self._scenes = {False: (self.model, self.policy)}  # the scene with the ball is built for its first episode
+        # (object kind or None, incline) -> (model, policy); a scene with an object or the incline is built for its
+        # first episode
+        self._scenes = {(None, False): (self.model, self.policy)}
+        self._ground = is_ground(self.model)
         self._ball_live = False
 
     def _hidden_effects(self) -> tuple[dict, dict]:
@@ -236,6 +256,13 @@ class Go2World:
         if ball and missing:
             raise ValueError(f"missing ball key(s) {missing}: give all six of {list(BALL_KEYS)} or none")
         throw = [_number(k, situation[k]) for k in BALL_KEYS] if ball else None
+        kind = situation.get("object_kind", "ball")
+        if kind not in OBJECT_KINDS:
+            raise ValueError(f"object_kind must be one of {list(OBJECT_KINDS)}, got {kind!r}")
+        incline = _number("incline_deg", situation.get("incline_deg", 0.0))
+        if not 0.0 <= incline <= self.config["world"]["incline"]["max_deg"]:
+            raise ValueError(f"incline_deg must be from 0 to world.incline.max_deg "
+                             f"({self.config['world']['incline']['max_deg']}), got {incline}")
         trot = {name: 0.0 for name in self.command_schema["fields"]} | {
             "vel_x": situation.get("dog_forward_speed_m_s", 0.0)}
         native = validate_command(trot, self.command_schema)
@@ -248,7 +275,9 @@ class Go2World:
         self._active = self._ball_live = False
         self._attempt_seed, self.attempt_streams = attempt, streams
         self._episodes += 1
-        self._use_scene(ball)
+        self._object = kind if ball else None
+        self._use_scene(self._object, incline > 0.0)
+        self._incline = incline
         dt, self._delay = self.policy.control_dt, 0  # control periods from issuing a command to the policy receiving it
         if "latency" in self._hidden:
             # From a child of the attempt's noise stream (Generator.spawn), so that stream reaches its user untouched.
@@ -256,6 +285,9 @@ class Go2World:
             draw = self.attempt_streams["noise"].spawn(1)[0].integers(-jitter, jitter + 1)
             self._delay = max(0, round(self._hidden["latency"] / dt) + int(draw))
         self._n, self._fall_n = 0, None  # physics steps since the spawn; the step of the first fall
+        if incline:  # parked out of the spawn's way until the decision instant
+            self.policy.data.mocap_pos[:] = [0.0, 0.0, self.config["world"]["incline"]["park_height_m"]]
+            self.policy.data.mocap_quat[:] = [1.0, 0.0, 0.0, 0.0]
         self.policy.reset(on_substep=self._watch)
         for _ in range(round(settle_s / self.policy.control_dt)):
             self.policy.step(native, on_substep=self._watch)
@@ -264,6 +296,13 @@ class Go2World:
         if ball:
             self._throw(throw)
         self._start_pos, self._start_yaw = self.policy.data.qpos[0:2].copy(), _yaw(self.policy.data.qpos[3:7])
+        self._turned, self._yaw_last = 0.0, self._start_yaw  # heading change so far, summed per control period
+        self._ramp = None  # (ramp_start_m, ramp_end_m)
+        if incline:
+            self._ramp = place_incline(self.model, self.policy.data, self.config["world"]["incline"], incline,
+                                       self._start_pos, self._start_yaw)
+            mujoco.mj_kinematics(self.model, self.policy.data)  # so a frame at t_s 0 shows it; the policy reads qpos
+        self._slip = 0.0
         self._issued = self._command = {name: float(v) for name, v in trot.items()}  # last issued; policy's (delayed)
         self._queue = deque([(native, self._command)] * self._delay)  # the trot, issued long enough ago
         # With traces off only the last observation and the running measures are kept, never every period's.
@@ -317,8 +356,11 @@ class Go2World:
             "recovered": recovered,
             "final_forward_m": float(travel @ [math.cos(yaw0), math.sin(yaw0)]),
             "final_sideways_m": float(travel @ [-math.sin(yaw0), math.cos(yaw0)]),
-            "final_yaw_change_rad": (_yaw(last["base_quat_wxyz"]) - yaw0 + math.pi) % (2 * math.pi) - math.pi,
+            "final_yaw_change_rad": self._turned,
             "final_speed_m_s": float(np.hypot(*last["base_lin_vel_m_s"][:2])),
+            "ramp_start_m": None if self._ramp is None else self._ramp[0],
+            "ramp_end_m": None if self._ramp is None else self._ramp[1],
+            "foot_slip_m": self._slip,
             "trace_path": self._write_trace() if self.config["world"]["save_traces"] else None,
         }
 
@@ -331,6 +373,7 @@ class Go2World:
             self._camera = mujoco.MjvCamera()
             mujoco.mjv_defaultFreeCamera(self.model, self._camera)
             self._camera.type, self._camera.trackbodyid = mujoco.mjtCamera.mjCAMERA_TRACKING, self._base
+            self._camera.distance = self.config["world"]["render"]["tracking_distance_m"]
         self._renderer.update_scene(self.policy.data, camera=self._camera)
         return self._renderer.render()
 
@@ -346,27 +389,50 @@ class Go2World:
             self._fall_n = self._n
         if self._ball_live:
             self._watch_ball()
+        if self._active:
+            self._watch_feet()
+
+    def _watch_feet(self) -> None:
+        """After every physics step of step(): add each foot's slip at this step to foot_slip_m (see the outcome)."""
+        d, g = self.policy.data, self.policy.data.contact.geom
+        ground = self._ground[g]
+        velocity = np.empty(6)
+        for foot in self._feet:
+            rows = np.flatnonzero(((g[:, 0] == foot) & ground[:, 1]) | ((g[:, 1] == foot) & ground[:, 0]))
+            if rows.size:  # its first ground contact: one per foot, also where the slope meets the floor
+                c = d.contact[rows[0]]
+                mujoco.mj_objectVelocity(self.model, d, mujoco.mjtObj.mjOBJ_GEOM, foot, velocity, 0)  # rot, lin
+                v = velocity[3:] + np.cross(velocity[:3], c.pos - d.geom_xpos[foot])  # at the contact point
+                normal = c.frame[:3]
+                self._slip += float(np.linalg.norm(v - (v @ normal) * normal)) * self.model.opt.timestep
 
     # The ball. Its scene is the plain one plus a free body after the robot (scene.build_model), so the robot's qpos,
     # qvel, body and geom indices are the same in both scenes.
 
-    def _use_scene(self, ball: bool) -> None:
-        """Point model and policy at the scene with or without the ball, building the ball scene on first use. The
-        ball collides with nothing until _throw."""
-        if ball not in self._scenes:
-            model = build_model(self.config, self._hidden, ball=True)
-            self._scenes[True] = (model, WalkingPolicy(self.config, model, self._hidden.get("motor_strength", 1.0)))
+    def _use_scene(self, ball: str | None, incline: bool = False) -> None:
+        """Point model and policy at the scene with the thrown object of kind `ball` (or none) and with or without
+        the incline, building it on first use. The object collides with nothing until _throw. Object and incline come
+        after the robot, the object first, so the robot's and the object's indices are the same in every scene."""
+        key = (ball, incline)
+        if key not in self._scenes:
+            model = build_model(self.config, self._hidden, ball=ball or False, incline=incline)
+            self._scenes[key] = (model, WalkingPolicy(self.config, model, self._hidden.get("motor_strength", 1.0)))
+        if ball:
+            model = self._scenes[key][0]
             body = model.body("ball")
             self._ball_geom, self._ball_q, self._ball_v = model.geom("ball").id, model.jnt_qposadr[body.jntadr[0]], \
                 body.dofadr[0]
             self._ball_masks = model.geom_contype[self._ball_geom], model.geom_conaffinity[self._ball_geom]
-            self._robot_geoms = np.array([g for g in range(model.ngeom) if model.geom_bodyid[g] not in (0, body.id)
+            self._robot_geoms = np.array([g for g in range(model.ngeom) if not is_ground(model)[g]
+                                          and model.geom_bodyid[g] != body.id
                                           and (model.geom_contype[g] or model.geom_conaffinity[g])])
             # Centres closer than this can mean surfaces closer than 0 (bounding spheres); contacts start within margin.
             self._reach = model.geom_rbound[self._robot_geoms] + model.geom_rbound[self._ball_geom]
             self._margin = model.geom_margin[[*self._robot_geoms, self._ball_geom]].max()
-        if self.model is not self._scenes[ball][0]:
-            self.model, self.policy = self._scenes[ball]
+            self._ball_radius = float(model.geom_size[self._ball_geom][0])
+        if self.model is not self._scenes[key][0]:
+            self.model, self.policy = self._scenes[key]
+            self._ground = is_ground(self.model)
             self._renderer = None  # a renderer belongs to one model
         if ball:
             self.model.geom_contype[self._ball_geom] = self.model.geom_conaffinity[self._ball_geom] = 0
@@ -412,15 +478,18 @@ class Go2World:
             "base_ang_vel_rad_s": ang_vel,
             "joint_pos_rad": d.qpos[7:19].copy(),
             "joint_vel_rad_s": d.qvel[6:18].copy(),
-            "foot_contact": np.isin(self._feet, pairs[(pairs == self._floor).any(axis=1)]),
+            "foot_contact": np.isin(self._feet, pairs[self._ground[pairs].any(axis=1)]),
             "fallen": self._fall_n is not None,
             "ball": None if not self._ball_live else {"pos_m": d.qpos[self._ball_q:self._ball_q + 3].copy(),
                                                       "vel_m_s": d.qvel[self._ball_v:self._ball_v + 3].copy(),
-                                                      "radius_m": self.config["ball"]["radius_m"]},
+                                                      "radius_m": self._ball_radius},
             "command_active": dict(self._issued),
             **self._declared,
         }
         q, cos_tilt, max_rate = obs["base_quat_wxyz"], *self._recovery_limits
+        yaw = _yaw(q)  # a control period turns far less than pi, so each step's change unwraps exactly
+        self._turned += (yaw - self._yaw_last + math.pi) % (2 * math.pi) - math.pi
+        self._yaw_last = yaw
         self._recovery.add(obs["t_s"], bool(1 - 2 * (q[1] ** 2 + q[2] ** 2) >= cos_tilt
                                             and np.hypot(ang_vel[0], ang_vel[1]) <= max_rate))
         self._last = obs
@@ -448,6 +517,7 @@ class Go2World:
             break
         hidden = {"preset": self.preset, "seed": self.seed, "attempt_seed": self._attempt_seed,
                   "hidden_effects": self._hidden, "attempt_latency_s": self._delay * self.policy.control_dt,
+                  "incline_deg": self._incline, "object_kind": self._object,
                   "policy_command": self._policy_commands}
         path.with_suffix(".hidden.json").write_text(json.dumps(hidden, indent=2, default=lambda o: o.tolist()))
         return path.as_posix()

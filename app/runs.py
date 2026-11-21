@@ -1,7 +1,11 @@
 """Learning runs: GET /api/runs, GET /api/runs/{run_id}, POST /api/runs and the SSE `run` events.
 
-    GET  /api/runs           the run ids found in config.yaml observed.runs_dir (Dev B), sorted
-    GET  /api/runs/{run_id}  {run_id, state, steps: [{step, state, done, total, data}], baseline, results, problems}
+    GET  /api/runs           the run ids found in config.yaml observed.runs_dir (Dev B), sorted; ?summary=1 gives a
+                             card per run instead: {run_id, skill, state, updated_utc, steps_done, has_result,
+                             has_student}, state "unreadable" for a folder that cannot be read
+    GET  /api/runs/{run_id}  {run_id, state, steps: [{step, state, done, total, time_utc, data}], baseline, results,
+                             problems}
+    GET  /api/runs/{run_id}/events  every complete, valid line of the run's events.jsonl in file order, unchanged
                              from <runs_dir>/<run_id>/events.jsonl and result.json, read as they are now
     POST /api/runs           {declared_spec, confirm_cost}: 202 {run_id}; without confirm_cost 409
                              cost_confirmation_required with the quote's fields flat in the body; 503 runs_unavailable
@@ -12,7 +16,7 @@ passed through untouched everywhere: the page shows what Dev B sends. A bad line
 import json
 import logging
 import threading
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 import re
 
 from app import backend
@@ -79,9 +83,16 @@ def _latest(events) -> dict:
 
 
 def summarize(events) -> list:
-    """The newest line of each step, in pipeline order, as {step, state, done, total, data}."""
+    """The newest line of each step, in pipeline order, as {step, state, done, total, time_utc, data}."""
     latest = _latest(events)
-    return [{k: latest[s][k] for k in ("step", "state", "done", "total", "data")} for s in STEPS if s in latest]
+    return [{k: latest[s][k] for k in ("step", "state", "done", "total", "time_utc", "data")}
+            for s in STEPS if s in latest]
+
+
+def all_events(folder) -> list:
+    """Every complete, valid line of a run's events.jsonl in file order, unchanged; [] without the file."""
+    events_file = folder / EVENTS
+    return parse_lines(events_file.read_bytes())[0] if events_file.is_file() else []
 
 
 def run_state(events) -> str:
@@ -109,6 +120,30 @@ def report(folder) -> dict:
     return {"run_id": folder.name, "state": run_state(events), "steps": steps,
             "baseline": next((s["data"] for s in steps if s["step"] == "baseline"), None),
             "results": results, "problems": problems}
+
+
+def summary(folder) -> dict:
+    """A skill card for a run folder, from its files only: {run_id, skill, state, updated_utc, steps_done, has_result,
+    has_student}. skill and updated_utc come from the newest event line, else from result.json, else null; a folder
+    whose files cannot be read is state "unreadable"."""
+    card = {"run_id": folder.name, "skill": None, "state": "unreadable", "updated_utc": None, "steps_done": 0,
+            "has_result": False, "has_student": False}
+    try:
+        events_file, result_file = folder / EVENTS, folder / RESULT
+        events, _, _ = parse_lines(events_file.read_bytes() if events_file.exists() else b"")
+        try:
+            result = json.loads(result_file.read_bytes().decode("utf-8")) if result_file.exists() else None
+        except ValueError:
+            result = None
+        has_student = (folder / "student" / "student.json").is_file()
+    except OSError:
+        return card
+    fallback = result if isinstance(result, dict) else {}
+    newest = events[-1] if events else {}
+    return card | {"skill": newest.get("skill", fallback.get("skill")), "state": run_state(events),
+                   "updated_utc": newest.get("time_utc", fallback.get("updated_utc")),
+                   "steps_done": sum(1 for s in summarize(events) if s["state"] == "done"),
+                   "has_result": result is not None, "has_student": has_student}
 
 
 def scan(root, offsets: dict, emit, first: bool = False) -> None:
@@ -199,16 +234,27 @@ def _root(h):
 def list_runs(h) -> None:
     root = _root(h)
     found = sorted(p.name for p in root.iterdir() if p.is_dir() and RUN_ID.fullmatch(p.name)) if root.is_dir() else []
-    h.send_json(200, found)
+    wants_summary = parse_qs(urlsplit(h.path).query).get("summary", ["0"])[-1] == "1"
+    h.send_json(200, [summary(root / name) for name in found] if wants_summary else found)
+
+
+def _run_folder(h):
+    """The folder of the run named by the path's fourth segment (/api/runs/<run_id>...); Refusal 404 otherwise."""
+    run_id = unquote(urlsplit(h.path).path.split("/")[3])
+    root = _root(h)
+    if not RUN_ID.fullmatch(run_id) or not (root / run_id).is_dir():
+        raise Refusal(404, "unknown_run", "There is no run with that id.")
+    return root / run_id
 
 
 @route("GET", "/api/runs/*")
 def get_run(h) -> None:
-    run_id = unquote(urlsplit(h.path).path.rsplit("/", 1)[1])
-    root = _root(h)
-    if not RUN_ID.fullmatch(run_id) or not (root / run_id).is_dir():
-        raise Refusal(404, "unknown_run", "There is no run with that id.")
-    h.send_json(200, report(root / run_id))
+    h.send_json(200, report(_run_folder(h)))
+
+
+@route("GET", "/api/runs/*/events")
+def get_run_events(h) -> None:
+    h.send_json(200, all_events(_run_folder(h)))
 
 
 @route("POST", "/api/runs")

@@ -15,6 +15,8 @@ from concurrent.futures import Future
 
 import numpy as np
 
+from app import robot
+from app.routes import to_json
 from learned_judgment.env import Go2World
 from learned_judgment.env.world import FEET
 
@@ -83,6 +85,9 @@ class Simulation(threading.Thread):
         self.period_s = self.schema["update_period_s"]
         self.frame_every = periods_per(self.app["stream_fps"], self.period_s, "stream_fps")
         self.observation_every = periods_per(self.app["observation_hz"], self.period_s, "observation_hz")
+        self.pose_every = periods_per(self.app["pose_hz"], self.period_s, "pose_hz")
+        self.described = None  # the MuJoCo model robot_text describes (this thread only)
+        self.robot_text, self.robot_version = None, 0  # GET /api/robot's JSON, built once per model; guarded
         self.zero = dict.fromkeys(self.schema["fields"], 0.0)
         self.command = self.zero
         self.requests = queue.Queue()
@@ -124,6 +129,11 @@ class Simulation(threading.Thread):
             self.latest[name] = (self.latest.get(name, (0, None))[0] + 1, data)
         else:
             self.event_log.append((name, data))
+
+    def robot_json(self) -> str | None:
+        """GET /api/robot's JSON text for the stage's current model, or None before the first episode."""
+        with self.changed:
+            return self.robot_text
 
     def state(self) -> dict:
         with self.changed:
@@ -236,8 +246,17 @@ class Simulation(threading.Thread):
             self.status = "resetting"
         obs = self.world.reset()
         self.n = 0  # control periods since the decision instant
-        self._publish(("episode", {"phase": "start", "preset": self.world.preset}), obs=obs, frame=self._frame(),
-                      status="roaming")
+        events = [("episode", {"phase": "start", "preset": self.world.preset})]
+        if self.world.model is not self.described:  # a new world, or a scene with an object: the page redraws
+            started = time.perf_counter()
+            self.described, version = self.world.model, self.robot_version + 1
+            text = to_json(robot.describe(self.world.model) | {"version": version})
+            log.info("Robot description %d: %d bytes in %.0f ms", version, len(text),
+                     (time.perf_counter() - started) * 1000)
+            with self.changed:
+                self.robot_text, self.robot_version = text, version
+            events.insert(0, ("robot", {"reason": "world_rebuilt", "version": version}))
+        self._publish(*events, obs=obs, frame=self._frame(), pose=obs["t_s"], status="roaming")
         self.due = time.perf_counter()
 
     def _step(self) -> None:
@@ -251,7 +270,8 @@ class Simulation(threading.Thread):
             self.due = time.perf_counter() + self.app["fall_restart_pause_s"]
             return
         self._publish(obs=obs if self.n % self.observation_every == 0 else None,
-                      frame=self._frame() if self.n % self.frame_every == 0 else None)
+                      frame=self._frame() if self.n % self.frame_every == 0 else None,
+                      pose=obs["t_s"] if self.n % self.pose_every == 0 else None)
 
     def _end_episode(self, status: str) -> None:
         outcome = self.world.finish_episode()
@@ -263,13 +283,17 @@ class Simulation(threading.Thread):
     def _frame(self) -> bytes:
         return encode_png(self.world.render_frame(), self.app["png_compression_level"])
 
-    def _publish(self, *events, obs=None, frame=None, status=None) -> None:
-        """Publish events, an observation, a frame and a status together, so no reader sees one without the others."""
+    def _publish(self, *events, obs=None, frame=None, pose=None, status=None) -> None:
+        """Publish events, an observation, a frame, the bodies' poses and a status together, so no reader sees one
+        without the others. pose is the episode time to stamp the bodies' poses with, or None for none."""
         observation = None if obs is None else describe(obs, self.command)
+        poses = None if pose is None else robot.pose(self.world.policy.data, pose) | {"version": self.robot_version}
         with self.changed:
             self.event_log.extend(events)
             if observation is not None:
                 self._add("observation", observation, latest_only=True)
+            if poses is not None:
+                self._add("pose", poses, latest_only=True)
             if frame is not None:
                 self.frame, self.frame_n = frame, self.frame_n + 1
             if status is not None:
