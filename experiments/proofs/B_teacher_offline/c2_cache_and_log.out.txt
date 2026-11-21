@@ -1,0 +1,36 @@
+FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+== RequestCache ==
+  [ok] get of an unknown key is None (directory does not exist yet)
+  [ok] entry returned
+  [ok] request x_train bitwise equal (dtype float64, shape (7, 3))
+  [ok] request y_train bitwise equal (dtype float64, shape (8,))
+  [ok] request x_query bitwise equal (dtype float64, shape (4, 3))
+  [ok] response mean bitwise equal
+  [ok] response quantiles bitwise equal
+  [ok] request metadata round-trips
+  [ok] response metadata round-trips
+  [ok] get of another unknown key is None
+  files: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.npz']
+  [ok] exactly <key>.npz + <key>.json, no temp files left
+  [ok] second put of the same key leaves a readable entry
+  [ok]   ...holding the second response bitwise
+  [ok]   ...no temp files left
+  [ok] NaN in metadata is rejected before writing: Out of range float values are not JSON compliant: nan
+  [ok] string array is rejected: request array 'x' has dtype <U1; only numeric arrays are cached
+  [ok] malformed key is rejected: a cache key must be 64 lowercase hex characters (sha256); got 'not-a-key'
+  [ok] altered .npz is detected: <tmp>\cache\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.npz does not match the sha256 recorded in <tmp>\cache\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json
+
+== CallLog ==
+  [ok] read of a missing log is []
+  [ok] tokens of an empty log is 0
+  [ok] 5 records read back in order
+  [ok] each record carries the injected clock's UTC timestamp
+  [ok] tokens quoted for billed calls counts only dispatch records: 22345
+  [ok] credential key at top level is rejected: call-log field record.access_token names a credential; credentials are never logged
+  [ok] credential key nested is rejected: call-log field record.meta.Authorization names a credential; credentials are never logged
+  [ok] caller-set timestamp is rejected: timestamp_utc is set by the call log from its clock
+  [ok] non-finite float is rejected: Out of range float values are not JSON compliant: inf
+  [ok] rejected records were not written
+  [ok] a naive (non-UTC) clock is rejected: the clock must return a timezone-aware UTC datetime; got datetime.datetime(2026, 11, 21, 12, 0)
+
+RESULT: 0 failed check(s)

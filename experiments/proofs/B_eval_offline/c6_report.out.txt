@@ -1,0 +1,26 @@
+FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+  skill        method  status                                          blocker mean_abs_error mean_abs_error__artifact  spearman spearman__artifact
+fixture  physics_only     RUN                                                            0.25         fixture_run.json undefined   fixture_run.json
+fixture constant_bias NOT RUN no saved result record for this skill and method        NOT RUN                            NOT RUN                   
+fixture       teacher NOT RUN        fixture blocker: provider request NOT RUN        NOT RUN                            NOT RUN                   
+OK   one row per skill x method, in the declared order
+OK   method without any record -> NOT RUN row with a blocker
+OK   not-run record keeps its own blocker
+OK   numeric cell carries its artifact path
+OK   no PASS cell anywhere
+OK   CSV round trip statuses ['RUN', 'NOT RUN', 'NOT RUN']
+OK   Markdown has header, divider and 3 rows
+
+| skill | method | status | blocker | mean_abs_error | mean_abs_error__artifact | spearman | spearman__artifact |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| fixture | physics_only | RUN |  | 0.25 | fixture_run.json | undefined | fixture_run.json |
+| fixture | constant_bias | NOT RUN | no saved result record for this skill and method | NOT RUN |  | NOT RUN |  |
+| fixture | teacher | NOT RUN | fixture blocker: provider request NOT RUN | NOT RUN |  | NOT RUN |  |
+OK   rejects a PASS string as a value: ValueError: record 0 (fixture, physics_only) metric 'm': value must be a finite number or 'undefined'; got 'PASS'
+OK   rejects a missing artifact file: FileNotFoundError: record 0 (fixture, physics_only) metric 'm': artifact 'missing.json' does not exist (looked at C:\Users\vidhu\AppData\Local\Temp\tmpu5pr9n4i\missing.json)
+OK   rejects a record with metrics and a blocker: ValueError: record 0 (fixture, physics_only): needs exactly one of 'metrics' (run) or 'blocker' (not run)
+OK   rejects an undeclared method: ValueError: record 0: skill 'fixture' / method 'oracle' not in the declared lists
+OK   rejects a duplicated record: record 2 (fixture, physics_only): duplicated skill x method record
+
+CHECK RESULT: 12 assertions held, 0 failed 
+exit=0

@@ -1,0 +1,41 @@
+FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+direct layout F=5 names=('approach_speed', 'lateral_offset', 'surface', 'side_speed', 'start_delay') n_physics=0
+
+== DirectTargetAdapter(ConstantBiasResidual) ==
+OK   adapter implements the ResidualModel protocol
+OK   physics + returned mean == inner predicted outcome mean (max |diff| 0 <= 1.15e-15)
+OK   physics + returned median == inner predicted outcome median (max |diff| 1.11e-16 <= 1.15e-15)
+OK   physics + returned quantiles == inner predicted outcome quantiles (max |diff| 1.11e-16 <= 1.16e-15)
+OK   spread passed through unchanged
+OK   inner model was fitted on the outcome: bitwise equal to a separate fit on residual + physics
+OK   method label 'direct_constant_bias'
+
+== DirectTargetAdapter(GradientBoostingResidual) ==
+OK   adapter implements the ResidualModel protocol
+OK   physics + returned mean == inner predicted outcome mean (max |diff| 5.55e-17 <= 1.15e-15)
+OK   physics + returned median == inner predicted outcome median (max |diff| 1.11e-16 <= 1.15e-15)
+OK   physics + returned quantiles == inner predicted outcome quantiles (max |diff| 1.11e-16 <= 1.15e-15)
+OK   spread passed through unchanged
+OK   inner model was fitted on the outcome: bitwise equal to a separate fit on residual + physics
+OK   method label 'direct_gradient_boosting'
+
+== DirectTargetAdapter(MLPAttemptsResidual) ==
+OK   adapter implements the ResidualModel protocol
+OK   physics + returned mean == inner predicted outcome mean (max |diff| 5.55e-17 <= 1.29e-15)
+OK   physics + returned median == inner predicted outcome median (max |diff| 0 <= 1.29e-15)
+OK   physics + returned quantiles == inner predicted outcome quantiles (max |diff| 1.11e-16 <= 1.29e-15)
+OK   spread passed through unchanged
+OK   inner model was fitted on the outcome: bitwise equal to a separate fit on residual + physics
+OK   method label 'direct_mlp_on_attempts'
+
+== decide_batch with the adapter ==
+OK   decided outcome mean = clip(inner direct prediction) (max |diff| 1.39e-17 <= 1.57e-15)
+OK   decided outcome mean = clip(inner direct prediction) (max |diff| 0 <= 1.23e-15)
+OK   decided outcome mean = clip(inner direct prediction) (max |diff| 0 <= 2.2e-15)
+
+== refusals ==
+OK   refuses a layout with the physics block: DirectTargetAdapter needs a layout without the physics block; this one has 2 physics columns (build it with build_layout(spec, include_physics=False))
+OK   refuses an inner model built for another layout: the inner model was built for a different FeatureLayout
+
+CHECK RESULT: 26 assertions held, 0 failed 
+exit=0

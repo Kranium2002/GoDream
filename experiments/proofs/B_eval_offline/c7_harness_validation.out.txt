@@ -1,0 +1,13 @@
+FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+OK   evaluate_actions refuses action outside the declared bounds: actions: rows [0, 1, 2] are outside the bounds of skill 'fixture'
+OK   evaluate_actions refuses noise seeds of the wrong shape: noise_seeds must be an integer array of shape (3,); got int64 (2,)
+OK   evaluate_actions refuses float noise seeds: noise_seeds must be an integer array of shape (3,); got float64 (3,)
+OK   evaluate_actions refuses actions of the wrong width: actions must have shape (3, 2); got (3, 1)
+OK   compare_methods validates every method's actions before the first episode: actions of method 'bad': rows [0, 1, 2] are outside the bounds of skill 'fixture'
+OK   the world factory was never called
+OK   no attempt file was written
+OK   latency record keys ['cpu_count', 'median_s', 'n_decisions', 'n_inputs', 'p95_s', 'platform', 'processor', 'timer']
+OK   p95 >= median >= 0, n_decisions recorded
+
+CHECK RESULT: 9 assertions held, 0 failed 
+exit=0

@@ -1,0 +1,38 @@
+FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+== sealed test split ==
+OK   split_situations refuses split='test': the test split is sealed; use test_situations(..., final_evaluation=True) at the final evaluation
+OK   test_situations refuses final_evaluation=False: test situations of 'fixture' are sealed until the final evaluation (final_evaluation=True)
+OK   a refused access writes no log line
+OK   test_situations refuses a clock without a UTC offset: clock() must return an ISO 8601 string with a zero UTC offset; got '2026-11-21T12:00:00'
+
+== draw all splits ==
+OK   dev: shape (100, 3)
+OK   context: shape (100, 3)
+OK   shift: shape (100, 3)
+OK   test: shape (100, 3)
+OK   one access-log line written: {"base_seed":20261121,"event":"test_split_access","n":100,"skill":"fixture","timestamp_utc":"2026-11-21T14:19:03.274220+00:00","world_preset":"default"}
+
+== disjoint ==
+OK   check_disjoint: the four splits share no identical situation row
+OK   brute-force pairwise comparison: 0 shared rows
+OK   check_disjoint detects an overlap: splits 'dev' and 'overlap' share 3 identical situation rows
+
+== noise seeds ==
+OK   noise seeds shape (100, 3) dtype int64
+OK   noise_seeds[i, r] == noise_seed(i, r) (no method argument: shared by all methods)
+OK   300 distinct per-episode seeds
+
+== same process: repeated draw ==
+OK   repeated draw is bitwise identical
+
+== across processes ==
+OK   child process PYTHONHASHSEED=1 exit=0: identical sha256 for ['context', 'dev', 'dev_noise', 'shift', 'test']
+OK   child process PYTHONHASHSEED=2 exit=0: identical sha256 for ['context', 'dev', 'dev_noise', 'shift', 'test']
+     sha256 context: 50dcef6d72dfaaf49d1ada4152e34946314ddd70400bc72753e91fbb372cdd06
+     sha256 dev: 037a7c66dbde749311e1337c601f59af8066d97ea25cf3a493065f91905b3811
+     sha256 dev_noise: 5dfb7000d759e2c620e7321007b578a770fbfb6f0e934a6db8e5681b0ab03812
+     sha256 shift: dfc86a1732623c9f8f7365ec8866b68c296dd6467f049a8031a656127d56282f
+     sha256 test: fa68c6c481db218e259bb48290cd484984ef944b2dfde7c92468d6821e16bdbc
+
+CHECK RESULT: 18 assertions held, 0 failed 
+exit=0

@@ -1,0 +1,40 @@
+FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+  [ok] TabPFNTeacher satisfies the ResidualModel protocol
+== fit() validation ==
+  [ok] features with 4 columns (layout has 5) raises ValueError: features must have shape (n, 5) in layout order ('sit_x', 'sit_side', 'act_t', 'physics_r0', 'physics_r1'); got (6, 4)
+  [ok] residuals with 3 outcomes (layout has 2) raises ValueError: residuals must have shape (6, 2) in outcome order ('r0', 'r1'); got (6, 3)
+  [ok] residual rows != feature rows raises ValueError: residuals must have shape (6, 2) in outcome order ('r0', 'r1'); got (5, 2)
+  [ok] 1-D residuals raises ValueError: residuals must have shape (6, 2) in outcome order ('r0', 'r1'); got (6,)
+  [ok] 1 context row raises ValueError: the teacher needs at least 2 context rows; got 1
+  [ok] 0 context rows raises ValueError: the teacher needs at least 2 context rows; got 0
+  [ok] NaN in features raises ValueError: features contains non-finite values
+  [ok] inf in residuals raises ValueError: residuals contain non-finite values
+  [ok] categorical level index 2 for a 2-level column raises ValueError: features column 1 ('sit_side') must hold level indices 0..1
+  [ok] categorical level index 0.5 raises ValueError: features column 1 ('sit_side') must hold level indices 0..1
+  [ok] predict before any successful fit raises RuntimeError: fit() must be called before predicting
+
+== a valid fit stores the context without any provider call ==
+  [ok] fit returns the teacher
+  [ok] 2 rows is accepted (minimum context)
+  [ok] no prediction call was started
+  [ok] no call-log file was written
+
+== predict() query validation happens before any provider call ==
+  [ok] query with 6 columns raises ValueError: query_features must have shape (n, 5) in layout order ('sit_x', 'sit_side', 'act_t', 'physics_r0', 'physics_r1'); got (3, 6)
+  [ok] query with 0 rows raises ValueError: query_features needs at least one row
+  [ok] NaN in query raises ValueError: query_features contains non-finite values
+
+== all-constant residuals need no provider call ==
+  [ok] median is the constant per outcome
+  [ok] spread is exactly 0
+  [ok] no request hash
+  [ok] still no prediction call and no call log
+
+== an unconnected provider is refused before any network call ==
+  [ok] uncached request with an unconnected provider raises RuntimeError: TabPFNProvider.connect() must succeed before any provider call
+
+== construction rules ==
+  [ok] provider settings differing in a keyed field raises ValueError: provider and teacher settings differ in keyed fields ['n_estimators']
+  [ok] a feature named like the reserved stacked outcome column raises ValueError: feature name 'stacked_outcome_index' is reserved for the stacked outcome column
+
+RESULT: 0 failed check(s)
