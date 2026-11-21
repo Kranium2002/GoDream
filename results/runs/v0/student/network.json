@@ -1,0 +1,1 @@
+{"action_names":["NO_OP","DODGE_LEFT","DODGE_RIGHT","RETREAT"],"format":"learned-judgment/spiking-network/v1","heads":{"action":[2,6],"threat":[0,2]},"input":{"encoding":"(x - 0.5) * sqrt(12)","frame_size":12,"frames":8},"layer_sizes":[1152,128,6],"network_sha256":"38d1e36fe70b858685af9c6f48c3433db25f878c101d2a51ea85e1b83b554b49","skill":"dodge_vision"}
