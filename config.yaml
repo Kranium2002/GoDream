@@ -145,6 +145,17 @@ robot:
     # A fall is a trunk geom touching the floor or a trunk tilt above this. 60 degrees is the value fixed in the plan
     # (Task 2) for the locomotion gate before any run; Go2World uses the same definition.
     max_tilt_deg: 60
+  recovery:
+    # Go2World's recovery_time_s: the dog is within these limits at a 50 Hz sample when its trunk tilt and tilt rate
+    # (the horizontal part of the trunk's world-frame angular velocity, so turning is not counted) are at most these.
+    # Limits: the largest value over every saved commanded walking run, plus a 25% margin. The 13 runs are Gate 1
+    # (artifacts/env/locomotion) and the command proof (artifacts/env/commands), whole runs: tilt 8.859 deg
+    # (yaw_rate_max), tilt rate 2.6552 rad/s (vel_y_max); experiments/EXPERIMENTS_LOG.md, "E6 (simulator half)".
+    max_tilt_deg: 11.07
+    max_tilt_rate_rad_s: 3.32
+    # Back within the limits counts once they hold this long: one gait period at the slowest trot (0.57 s at 0.3 m/s
+    # commanded, from the knee angle's main frequency in artifacts/env/locomotion/trot_0.3.npz), rounded up.
+    hold_s: 0.6
 
 world:
   # Seconds the dog trots at the situation's dog_forward_speed_m_s after the soft start, before the decision instant
@@ -214,10 +225,31 @@ ball:
   spec: ihf_size_3_handball
   mass_kg: 0.450
   radius_m: 0.0939
-  throw_origin_range_m: null
-  throw_speed_range_m_s: null
-  throw_direction_range_deg: null
-  collision_masks: null
+  # Contact and inertia: no ball rule sets them (experiments/EXPERIMENTS_LOG.md, "E6 (simulator half)").
+  inertia: shell  # an inflated ball: mass on its surface (MuJoCo mjINERTIA_SHELL, I = 2/3 m r^2)
+  friction: [1.0, 0.005, 0.0001]  # MuJoCo's default geom friction (sliding, torsional, rolling)
+  condim: 3  # MuJoCo's default: sliding friction only
+  priority: 2  # above the Go2 feet (1), so these contact parameters apply to every contact of the ball
+  # MuJoCo solref [time constant s, damping ratio], from a drop test (E6 simulator half): 0.04 s is the smallest time
+  # constant of 0.02-0.05 at which the rebound falls steadily as the damping ratio rises (at MuJoCo's default 0.02 a ball
+  # dropped from 2 m can rebound to 1.9 m); 0.1 gives the rebound nearest 1.0 m, the middle of IHF Rule 3:2's 90-110 cm
+  # (1.052 m; restitution 0.725, and 0.74-0.80 for drops of 0.5-4 m).
+  solref: [0.04, 0.1]
+  # Same masks as go2.xml's collision geoms (group 3) and the floor: the ball collides with both (E6 simulator half).
+  collision_masks: {contype: 1, conaffinity: 1}
+  # m/s^2, downward. The model's own: go2.xml sets no gravity, so MuJoCo's default (0, 0, -9.81); the sampler needs it
+  # without a model, and tests/env/test_ball.py checks the two agree.
+  gravity_m_s2: 9.81
+  # Throw protocol (learned_judgment/env/throws.py). Each throw draws uniformly from each range below. The thrower aims
+  # at the trunk origin's height where the dog will be after the flight if it keeps dog_forward_speed_m_s, missed
+  # sideways (along the dog's y) by the aim error. Starting values; changed only from calibrate_throws output on dev
+  # seeds, each change logged in DECISIONS.md.
+  dog_forward_speed_range_m_s: [0.3, 0.9]  # the speeds the locomotion gate measured
+  throw_origin_range_m: [3.5, 5.0]  # horizontal distance of the release point from the trunk origin
+  throw_direction_range_deg: [-60.0, 60.0]  # bearing of the release point, anticlockwise from the dog's heading
+  throw_release_height_range_m: [0.6, 1.2]  # height of the release point above the trunk origin
+  throw_speed_range_m_s: [3.3, 4.8]  # horizontal speed of the ball; with the ranges above, flights of 0.61-1.59 s
+  throw_aim_error_range_m: [-0.7, 0.7]
 
 skills:
   dodge:
@@ -234,18 +266,25 @@ skills:
       yaw_rate_field: yaw_rate  # Held at 0 during the whole episode.
       start_delay_s: [0.0, 0.6]  # Wait after the decision instant before the dodge command. Starting value; tune on dev.
       hold_duration_s: [0.2, 1.0]  # How long the dodge command is held. Starting value; tune on dev.
-    episode_duration_s: null  # Total simulated time per attempt; set with Person A's ball flight times.
+    # Total simulated time per attempt; set with Person A's ball flight times. Proposed by Person A, to be confirmed by
+    # the project owner: the latest throw arrives by about 1.6 s, the latest dodge ends at 1.6 s (largest start delay plus
+    # largest hold), and recovery needs robot.recovery.hold_s (0.6 s) of calm after the dog settles again.
+    episode_duration_s: 3.0
     # Observed situation ranges. Person A publishes the ball ranges with the throw model; all null until then.
+    # The seven DODGE keys: [min, max] of what learned_judgment.env.sample_dodge_situations produces with the `ball`
+    # block above. From a large sample, not analytically: calibrate.situation_ranges(config, seed=0, n=100000), each
+    # span widened by 2% per side and rounded outward to 0.01 (artifacts/env/20261121T171139-dodge-situation-ranges);
+    # tests/env/test_dodge_functions.py checks an independent 20,000-throw sample stays inside.
     situation_ranges:
-      ball_rel_x_m: null
-      ball_rel_y_m: null
-      ball_rel_z_m: null
-      ball_vel_x_m_s: null
-      ball_vel_y_m_s: null
-      ball_vel_z_m_s: null
-      dog_forward_speed_m_s: null
+      ball_rel_x_m: [1.69, 5.07]
+      ball_rel_y_m: [-4.49, 4.5]
+      ball_rel_z_m: [0.58, 1.22]
+      ball_vel_x_m_s: [-4.89, -0.68]
+      ball_vel_y_m_s: [-4.75, 4.73]
+      ball_vel_z_m_s: [0.68, 7.38]
+      dog_forward_speed_m_s: [0.28, 0.92]
       declared_payload_kg: [0.0, 3.6]  # Payload 0-3 kg with a declared label up to 20% wrong (MISSION.md).
-    declared_surfaces: null  # Level names of the declared floor type, from Person A's presets.
+    declared_surfaces: [default]  # Level names of the declared floor type, from Person A's presets.
     # Constants of the physics guess (a straight-line dog and a ballistic ball). The residual model absorbs the rest.
     physics:
       gravity_m_s2: 9.81  # MuJoCo model default, config runtime.
@@ -253,9 +292,17 @@ skills:
       response_time_s: 0.3  # Time constant of the first-order rise of sideways speed after that delay; same source. A step response while trotting would replace both.
       time_step_s: 0.02  # Step of the closest-approach search; equals the 50 Hz control period.
       collision_softness_m: 0.05  # Width of the logistic that turns predicted clearance into a collision probability.
-      body_half_length_m: null  # Half length of the trunk along x, from the verified Go2 model.
-      body_radius_m: null  # Radius of the capsule around the trunk, from the verified Go2 model.
-      base_height_m: null  # Height of the base above the floor while trotting, from a verified run.
+      # Capsule: the points within body_radius_m of the segment from -body_half_length_m to +body_half_length_m on the
+      # trunk's x axis through its origin. Read by artifacts/env/research/e6_sim_facts.py from go2.xml's three trunk
+      # collision geoms (base_link: box 0.1881 x 0.04675 x 0.057, cylinder r 0.05 at x 0.285, sphere r 0.047 at x 0.293
+      # z -0.06): the radius is their largest distance from that axis (the sphere), the half length the shortest segment
+      # whose capsule then holds them all. The geoms span x -0.188 to 0.340 m, so the capsule (x -0.400 to 0.400 m)
+      # reaches 0.21 m further back than the trunk; the legs are outside it. EXPERIMENTS_LOG.md, E6 (simulator half).
+      body_half_length_m: 0.293  # Half length of the trunk along x, from the verified Go2 model.
+      body_radius_m: 0.107  # Radius of the capsule around the trunk, from the verified Go2 model.
+      # Mean trunk origin height after the first 5 s of the Gate 1 trots at 0.3, 0.6 and 0.9 m/s (0.3118, 0.3248,
+      # 0.3335 m; artifacts/env/locomotion/trot_*.npz), by the same script.
+      base_height_m: 0.3234  # Height of the base above the floor while trotting, from a verified run.
     # Risk-aware objective, higher is better. Starting weights, fixed before any data; tune on dev data only.
     objective_weights:
       collision: 10.0  # Per unit of predicted collision probability.

@@ -104,3 +104,10 @@
 - TabPFN usage: 100,000 of 35,000,000 tokens.
 - In progress: `learned_judgment/pipeline.py` (built, under independent review and a real-simulator run); Person A's ball, throw model and `skills.dodge` settings.
 - NOT RUN: any DODGE episode with the ball; the shared SNN on real dreams; the oracle; any evaluation on a test or shift split.
+
+## 2026-11-21 — Person A: the ball, the throw protocol and the DODGE measurements (Task 5)
+
+- `Go2World` throws a physical IHF size 3 handball when a situation holds all six ball keys (frame fixed at the decision instant: origin at the trunk origin, x along the heading, y left, z up); partial keys raise; without them the scene has no ball body. New outcome keys `collision`, `first_collision_time_s`, `min_separation_m`, `recovery_time_s`, `recovered`; observation `ball`; trace arrays `ball_pos_m`, `ball_vel_m_s`. `sample_dodge_situations(config, rng, n)` (`learned_judgment/env/throws.py`, exported) and `Go2World.sample_dodge_situation()`. `learned_judgment/env/calibrate.py`: `calibrate_throws`, `situation_ranges`, `step_response`, `save_dodge_example`.
+- `config.yaml`: `ball` contact, inertia and throw ranges; `robot.recovery`; `skills.dodge.situation_ranges`, `episode_duration_s` 3.0 (proposed, to be confirmed by the project owner), `physics.body_half_length_m` 0.293, `body_radius_m` 0.107, `base_height_m` 0.3234, `declared_surfaces` [default].
+- Evidence: E6 simulator half (`artifacts/env/20261121T170836-e6-sim-facts`), calibration (final hit rate 0.408 over dev seeds 11–13, 120 throws), ball tests 13 passed (`artifacts/env/20261121T171926-dodge`), step response while trotting (no falls; faster than Person B's 0.05 s / 0.3 s model), saved example `artifacts/env/dodge-example/`. Details: `experiments/EXPERIMENTS_LOG.md`, the three entries of this date after "Single-threaded policy inference".
+- Task 4 review items folded in: observations returned as copies, stream key `(4, k)` literal, bad `attempt_seed` and non-number `settle_s` rejected before the open episode is abandoned, a test of a fall before the decision instant, test traces under `tmp_path`.

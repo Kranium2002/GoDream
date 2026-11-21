@@ -1,0 +1,6 @@
+step(command, 3.0) simulated s per wall s, ball: median 3.168; runs [2.094, 3.502, 3.82, 3.075, 3.196, 4.607, 2.744, 3.14]
+step(command, 3.0) simulated s per wall s, no ball: median 4.794; runs [4.067, 4.745, 5.962, 4.843, 4.259, 5.166, 2.689, 6.055]
+wall: ball / no ball, per pair: median 0.689; runs [0.515, 0.738, 0.641, 0.635, 0.75, 0.892, 1.021, 0.519]
+step(command, 3.0) simulated s per CPU s, ball: median 3.660; runs [2.909, 3.918, 4.465, 3.491, 3.556, 5.053, 3.048, 3.765]
+step(command, 3.0) simulated s per CPU s, no ball: median 5.909; runs [4.683, 5.818, 6.621, 6.0, 4.923, 6.4, 4.683, 6.621]
+CPU: ball / no ball, per pair: median 0.662; runs [0.621, 0.673, 0.674, 0.582, 0.722, 0.789, 0.651, 0.569]
