@@ -15,10 +15,11 @@ from learned_judgment.env.commands import validate_command
 from learned_judgment.env.policy import WalkingPolicy
 from learned_judgment.env.incline import place as place_incline
 from learned_judgment.env.scene import build_model, is_ground
+from learned_judgment.env import visual as visuals
 from learned_judgment.env.throws import BALL_KEYS, sample_dodge_situations
 
 STREAMS = ("situation", "world", "ball", "noise")
-SITUATION_KEYS = ("dog_forward_speed_m_s", "settle_s", *BALL_KEYS, "object_kind", "incline_deg")
+SITUATION_KEYS = ("dog_forward_speed_m_s", "settle_s", *BALL_KEYS, "object_kind", "incline_deg", "visual")
 OBJECT_KINDS = ("ball", "punch")  # object_kind: config.yaml `ball` and `punch`
 FEET = ("FL", "FR", "RL", "RR")  # go2.xml foot geoms, in the model's body order
 BAD_STATE = (mujoco.mjtWarning.mjWARN_BADQPOS, mujoco.mjtWarning.mjWARN_BADQVEL, mujoco.mjtWarning.mjWARN_BADQACC)
@@ -133,6 +134,12 @@ class Go2World:
     them. The angle is hidden: it is only in <trace>.hidden.json. sample_ramp_situations(config, rng, n) draws angles
     from world.incline.range_deg.
 
+    Visual. visual (a dict; learned_judgment/env/visual.py) sets how one episode looks: object_rgb, object_radius_m
+    (physical: the same episode as an object compiled at that radius), floor_grey, backdrop_grey, light_dir,
+    light_strength; absent fields keep the scene's own values, and every reset restores them first. An unknown field
+    or a value out of range raises ValueError naming it. The settings are only in <trace>.hidden.json; the
+    observation's ball.radius_m reports the object's radius as before.
+
     Observation, one per control period (0.02 s). World frame: x, y on the floor, z up (normal to the floor; a slope
     tilts gravity instead), origin on the floor under the spawn point (the dog starts facing +x).
         t_s                 float, s. Episode time, 0.0 at the decision instant.
@@ -217,6 +224,7 @@ class Go2World:
         # (object kind or None, incline) -> (model, policy); a scene with an object or the incline is built for its
         # first episode
         self._scenes = {(None, False): (self.model, self.policy)}
+        self._looks = {(None, False): visuals.defaults(self.model)}  # per scene: what `visual` restores
         self._ground = is_ground(self.model)
         self._ball_live = False
 
@@ -260,6 +268,7 @@ class Go2World:
         if ball and missing:
             raise ValueError(f"missing ball key(s) {missing}: give all six of {list(BALL_KEYS)} or none")
         throw = [_number(k, situation[k]) for k in BALL_KEYS] if ball else None
+        settings = visuals.check_visual(situation.get("visual"), self.config)
         kind = situation.get("object_kind", "ball")
         if kind not in OBJECT_KINDS:
             raise ValueError(f"object_kind must be one of {list(OBJECT_KINDS)}, got {kind!r}")
@@ -280,7 +289,8 @@ class Go2World:
         self._attempt_seed, self.attempt_streams = attempt, streams
         self._episodes += 1
         self._object = kind if ball else None
-        self._use_scene(self._object, incline > 0.0)
+        self._use_scene(self._object, incline > 0.0, settings)
+        self._visual = settings
         self._incline = incline
         dt, self._delay = self.policy.control_dt, 0  # control periods from issuing a command to the policy receiving it
         if "latency" in self._hidden:
@@ -442,14 +452,20 @@ class Go2World:
     # The ball. Its scene is the plain one plus a free body after the robot (scene.build_model), so the robot's qpos,
     # qvel, body and geom indices are the same in both scenes.
 
-    def _use_scene(self, ball: str | None, incline: bool = False) -> None:
+    def _use_scene(self, ball: str | None, incline: bool = False, settings: dict | None = None) -> None:
         """Point model and policy at the scene with the thrown object of kind `ball` (or none) and with or without
-        the incline, building it on first use. The object collides with nothing until _throw. Object and incline come
-        after the robot, the object first, so the robot's and the object's indices are the same in every scene."""
+        the incline, building it on first use, and give it this episode's `visual` settings (visual.apply). The object
+        collides with nothing until _throw. Object and incline come after the robot, the object first, so the robot's
+        and the object's indices are the same in every scene."""
         key = (ball, incline)
         if key not in self._scenes:
             model = build_model(self.config, self._hidden, ball=ball or False, incline=incline)
             self._scenes[key] = (model, WalkingPolicy(self.config, model, self._hidden.get("motor_strength", 1.0)))
+            self._looks[key] = visuals.defaults(model)
+        # shortcut: a new backdrop grey rebuilds the renderers to upload it (tens of ms); re-upload under each
+        # renderer's GL context if that cost ever matters
+        rebuild = visuals.apply(self._scenes[key][0], self._looks[key], settings or {},
+                                self.config["world"]["render"]["znear_m"])
         if ball:
             model = self._scenes[key][0]
             body = model.body("ball")
@@ -463,7 +479,7 @@ class Go2World:
             self._reach = model.geom_rbound[self._robot_geoms] + model.geom_rbound[self._ball_geom]
             self._margin = model.geom_margin[[*self._robot_geoms, self._ball_geom]].max()
             self._ball_radius = float(model.geom_size[self._ball_geom][0])
-        if self.model is not self._scenes[key][0]:
+        if self.model is not self._scenes[key][0] or rebuild:
             self.model, self.policy = self._scenes[key]
             self._ground = is_ground(self.model)
             for renderer in self._renderers.values():  # a renderer and the private MjData belong to one model
@@ -552,7 +568,7 @@ class Go2World:
             break
         hidden = {"preset": self.preset, "seed": self.seed, "attempt_seed": self._attempt_seed,
                   "hidden_effects": self._hidden, "attempt_latency_s": self._delay * self.policy.control_dt,
-                  "incline_deg": self._incline, "object_kind": self._object,
+                  "incline_deg": self._incline, "object_kind": self._object, "visual": self._visual,
                   "policy_command": self._policy_commands}
         path.with_suffix(".hidden.json").write_text(json.dumps(hidden, indent=2, default=lambda o: o.tolist()))
         return path.as_posix()

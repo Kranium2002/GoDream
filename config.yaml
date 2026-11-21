@@ -191,6 +191,12 @@ world:
     # Grey level (0-1) of a plain skybox behind the scene, instead of black: the black-sky horizon dominated a 12 x 12
     # head image (research run, 2026-11-21: up to 7.7% of a frame in 0.04 s). A skybox adds no geometry.
     backdrop_grey: 0.5
+  # Go2World situation key `visual` (learned_judgment/env/visual.py): per-episode object colour and size, floor and
+  # backdrop grey, light direction and strength. Colours and greys are 0-1 and the light must point down; these bound
+  # the rest. Exposure, blur and sensor noise are Dev B's, in image space.
+  visual:
+    object_radius_range_m: [0.03, 0.2]  # From a small fist (6 cm across) to a large ball (40 cm); the handball is 0.094.
+    light_strength_range: [0.1, 1.0]  # Diffuse level of the scene's one light; MuJoCo's default is 0.7.
   # RAMP's traversable incline (Go2World situation key incline_deg; learned_judgment/env/incline.py). A non-zero
   # incline_deg places, at the decision instant and along the dog's heading then, a slab rising at that angle from the
   # floor and a level plateau after it: flat, slope, flat. Both are boxes on mocap bodies, so placing them per episode
