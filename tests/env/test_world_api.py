@@ -11,11 +11,12 @@ from learned_judgment.env.world import recovery
 
 pytestmark = pytest.mark.system
 OBS_KEYS = {"t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang_vel_rad_s", "joint_pos_rad",
-            "joint_vel_rad_s", "policy_obs", "foot_contact", "fallen", "ball", "command_active", "declared_payload_kg",
+            "joint_vel_rad_s", "foot_contact", "fallen", "ball", "command_active", "declared_payload_kg",
             "declared_surface"}
 OUTCOME_KEYS = {"elapsed_s", "fall", "fall_time_s", "sim_unstable", "commands_received", "final_base_pos_m",
                 "declared_payload_kg", "declared_surface", "collision", "first_collision_time_s", "min_separation_m",
-                "recovery_time_s", "recovered", "trace_path"}
+                "recovery_time_s", "recovered", "trace_path", "final_forward_m", "final_sideways_m",
+                "final_yaw_change_rad", "final_speed_m_s"}
 
 
 def yaw_of(quats_wxyz):
@@ -113,6 +114,7 @@ def test_finish_episode_reports_outcome_and_saves_trace(config, world, forward):
     assert (out["declared_payload_kg"], out["declared_surface"]) == (0.0, "default")
     trace = np.load(out["trace_path"])
     assert trace["t_s"].shape == (51,) and trace["joint_pos_rad"].shape == (51, 12)  # decision instant + 50 periods
+    assert "policy_obs" not in trace  # it carried the latency-delayed command and the slope's gravity
     assert np.array_equal(trace["base_pos_m"][-1], out["final_base_pos_m"])
     hidden = json.loads(Path(out["trace_path"]).with_suffix(".hidden.json").read_text())
     assert {k: hidden[k] for k in ("preset", "seed", "attempt_seed")} == {
@@ -190,6 +192,30 @@ def test_render_frame_shows_the_dog(config, world):
     size = config["world"]["render"]
     assert frame.shape == (size["height"], size["width"], 3) and frame.dtype == np.uint8
     assert len(np.unique(frame.reshape(-1, 3), axis=0)) > 1  # not a single flat colour
+
+
+def test_final_measurements_are_in_the_heading_frame_of_the_decision_instant(world, zero):
+    # A trot at 0.6 m/s until the decision instant (its heading drifts from the spawn's +x), then 1 s sideways left.
+    world.reset({"dog_forward_speed_m_s": 0.6})
+    world.step(zero | {"vel_y": 0.5}, 1.0)
+    out = world.finish_episode()
+    trace = np.load(out["trace_path"])
+    pos, yaw = trace["base_pos_m"][:, :2], yaw_of(trace["base_quat_wxyz"])
+    travel = pos[-1] - pos[0]
+    ahead, left = np.array([np.cos(yaw[0]), np.sin(yaw[0])]), np.array([-np.sin(yaw[0]), np.cos(yaw[0])])
+    assert out["final_forward_m"] == pytest.approx(travel @ ahead)
+    assert out["final_sideways_m"] == pytest.approx(travel @ left)
+    assert out["final_yaw_change_rad"] == pytest.approx(yaw[-1] - yaw[0])  # small here: no wrap needed
+    assert out["final_speed_m_s"] == pytest.approx(np.hypot(*trace["base_lin_vel_m_s"][-1, :2]))
+    assert out["final_sideways_m"] > 0.2  # + is left: the side vel_y > 0 moves to
+
+
+def test_final_yaw_change_follows_a_left_turn(world, zero):
+    world.reset()
+    world.step(zero | {"yaw_rate": 0.8}, 1.0)
+    out = world.finish_episode()
+    assert 0.3 < out["final_yaw_change_rad"] < 1.0  # anticlockwise is +; 0.8 rad/s for 1 s less the latency and rise
+    assert abs(out["final_forward_m"]) < 0.1 and abs(out["final_sideways_m"]) < 0.1  # turned on the spot
 
 
 def shoved_episode(config, save_traces, zero, period):
