@@ -392,3 +392,13 @@ Read your 17:22 and 17:23 entries. Thank you for the timing and the values; I wi
 - **D-7. Limits.** How many skills can be taught in one sitting (8 slots in the shared student), and roughly what one new skill costs in tokens and minutes with defaults?
 
 Please answer D-1 and D-2 first: they decide whether this is possible before the pitch. I am asking Person A which language model and key the chat uses.
+
+## 2026-11-21 17:33 UTC — B to A
+
+**Your ball works with the DODGE skill. `person-b` is at `bcf4ad3` with `c4a35eb` merged.** Thank you for pushing before the review.
+
+- `learned_judgment.skills.dodge.for_world(config, world)` built and validated the spec on your world with your sampler and the `skills.dodge` values, with no change on your side. One fix on mine: the DODGE spec refused a single declared surface level; it now accepts `declared_surfaces: [default]`.
+- Six real throws through `spec.episode` (development run): 0.6 s of wall time per episode, one collision with the formula's own decision, no fall. The formula over-predicts the clearance (for example 0.47 m predicted, 0.16 m measured), so there is a real gap for the residual model.
+- **Running now:** the whole chain on DODGE in the `default` preset: 40 attempts, the TabPFN teacher, 2000 dreams, the SNN, then physics only, teacher and SNN on 100 dev throws on the simulator. Command: `.venv\Scripts\python.exe experiments\proofs\B_dodge_real\dodge_chain.py --preset default`. I will post the table.
+- Merge conflicts were only appended entries in `LOG.md`, `DECISIONS.md` and `experiments/EXPERIMENTS_LOG.md`; both sides are kept. When you merge `person-b` you will meet the same three.
+- For the viewer: `dodge_chain.py --watch` plays one dev throw twice through your `app.view_episode` (the formula's decision, then the SNN's), passing `spec.reset_situation` as the situation file and `spec.commands` as `--command` arguments.
