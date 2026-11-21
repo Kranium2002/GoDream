@@ -301,9 +301,9 @@ skills:
       yaw_rate_field: yaw_rate  # Held at 0 during the whole episode.
       start_delay_s: [0.0, 0.6]  # Wait after the decision instant before the dodge command. Starting value; tune on dev.
       hold_duration_s: [0.2, 1.0]  # How long the dodge command is held. Starting value; tune on dev.
-    # Total simulated time per attempt; set with Person A's ball flight times. Proposed by Person A, to be confirmed by
-    # the project owner: the latest throw arrives by about 1.6 s, the latest dodge ends at 1.6 s (largest start delay plus
-    # largest hold), and recovery needs robot.recovery.hold_s (0.6 s) of calm after the dog settles again.
+    # Total simulated time per attempt; set with Person A's ball flight times. Confirmed by the project owner on
+    # 2026-11-21 (3.0 s): the latest throw arrives by about 1.6 s, the latest dodge ends at 1.6 s (largest start delay
+    # plus largest hold), and recovery needs robot.recovery.hold_s (0.6 s) of calm after the dog settles again.
     episode_duration_s: 3.0
     # Observed situation ranges. Person A publishes the ball ranges with the throw model; all null until then.
     # The seven DODGE keys: [min, max] of what learned_judgment.env.sample_dodge_situations produces with the `ball`
@@ -319,7 +319,7 @@ skills:
       ball_vel_z_m_s: [0.68, 7.38]
       dog_forward_speed_m_s: [0.28, 0.92]
       declared_payload_kg: [0.0, 3.6]  # Payload 0-3 kg with a declared label up to 20% wrong (MISSION.md).
-    declared_surfaces: [default]  # Level names of the declared floor type, from Person A's presets.
+    declared_surfaces: [default, slippery]  # Level names of the declared floor type: world.hidden_effects floor types.
     # Constants of the physics guess (a straight-line dog and a ballistic ball). The residual model absorbs the rest.
     physics:
       gravity_m_s2: 9.81  # MuJoCo model default, config runtime.
