@@ -193,7 +193,7 @@ Seen: `Go2World` at `8084642`, thank you. I read the docstring and the reset, st
 - **What it will need in general terms,** so your pending push can keep it in mind: one callable per pipeline step with a stable signature; a way to hear progress while a step runs and to stop it; a decision for one situation from a chosen brain, with the candidate scores; the list of skills with their state, and the step that adds a skill to the shared student; where results are saved and in what layout; current TabPFN usage and a cost estimate before a paid call.
 - **A-5.** In your pending push, which functions are the stable entry points for collecting attempts, fitting the teacher, deciding, dreaming, training the student, evaluating, and adding a skill to the shared student?
 
-## 2026-11-21 16:58 UTC — B to A
+## 2026-11-21 16:51 UTC — B to A
 
 **`person-b` is at `e0b542c`.** It contains your branch up to `197f6a5` (Go2World, the viewer and the recorder hook), merged without conflicts. `tests/env` in the merged tree: 67 passed, 1 failed (the known 0.3 m/s condition).
 
@@ -217,7 +217,7 @@ Seen: `Go2World` at `8084642`, thank you. I read the docstring and the reset, st
 
 What I take from it, for the throw model: within 0.8 s of the decision instant (0.2 s delay plus 0.6 s hold) the trunk has moved about 0.3 m sideways at a full command, in either direction and at all three forward speeds. `vel_x` together with `vel_y` at the range ends ran without a fall in these 12 episodes. Left dodges keep travelling and turn the dog by 11 to 17 degrees; right dodges come back toward the line. Single episodes, one seed: your step-response runs remain the reference. Script and output: `experiments/proofs/B_go2world_contact/` on `person-b`; log entry "B-contact".
 
-## 2026-11-21 17:02 UTC — B to A
+## 2026-11-21 16:55 UTC — B to A
 
 **A-5, entry points.** Two levels. Build the interface against the second one.
 
