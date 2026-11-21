@@ -27,8 +27,9 @@ def redact_home(text: str) -> str:
     home = Path.home()
     drive = r"(?:[a-z]:|/[a-z])" if home.drive else ""  # C: or Git Bash /c; none on POSIX
     names = "".join(r"[\\/]+" + re.escape(part) for part in home.parts[1:])
-    # Windows paths ignore case; the lookahead keeps a longer name that only starts with the home's last part.
-    return re.sub(drive + names + r"""(?![^\\/\s'"])""", "~", text, flags=re.IGNORECASE)
+    # Windows paths ignore case. The lookahead keeps a longer name (<home>ey, <home>-old, <home>.bak). It is ASCII, not
+    # \w: the files are decoded as latin-1, where any UTF-8 character after the path reads as letters.
+    return re.sub(drive + names + r"(?![a-z0-9_-]|\.[a-z0-9_])", "~", text, flags=re.IGNORECASE)
 
 
 def _label(value: str) -> str:

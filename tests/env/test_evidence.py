@@ -7,6 +7,19 @@ from pathlib import Path, PurePosixPath
 
 from learned_judgment.env.evidence import redact_home
 
+HOME = Path.home()
+HOME_SPELLINGS = (
+    str(HOME),
+    HOME.as_posix(),
+    "/" + HOME.as_posix().replace(":", "", 1).lower(),  # Git Bash
+    str(HOME).replace("\\", "\\\\"),  # repr and JSON double the backslashes
+    str(HOME).replace("\\", "/", 1),  # mixed separators
+)
+# Text that may follow the home path: where the path ends (redact) or a longer name (keep).
+# The last end is a UTF-8 "…" as the recorder sees it in stdout.txt/stderr.txt, decoded as latin-1.
+PATH_ENDS = (")", ",", ";", ":", "'", '"', "\\", "/", " ", "\n", "", ". Next", ".", "…".encode().decode("latin-1"))
+LONGER_NAMES = ("ey", "-old", ".bak")
+
 
 def record(tmp_path, label, *child, **kwargs):
     return subprocess.call(
@@ -30,16 +43,9 @@ def test_failing_child_propagates(tmp_path):
 
 
 def test_home_directory_is_redacted(tmp_path):
-    home = Path.home()
-    spellings = (
-        str(home),
-        home.as_posix(),
-        "/" + home.as_posix().replace(":", "", 1).lower(),  # Git Bash
-        str(home).replace("\\", "\\\\"),  # repr and JSON double the backslashes
-        str(home).replace("\\", "/", 1),  # mixed separators
-    )
+    spellings = HOME_SPELLINGS
     child = "import sys; from pathlib import Path; print(Path.home(), *sys.argv[1:]); sys.stderr.write(' '.join(sys.argv[1:]))"
-    rc = record(tmp_path, "h", sys.executable, "-c", child, *spellings)
+    rc = record(tmp_path, "h", sys.executable, "-c", child, *spellings, *(f"({s})." for s in spellings))
     run_dir = next(tmp_path.glob("*-h"))
     run = json.loads((run_dir / "run.json").read_text())
     assert rc == 0 and run["home_redacted"] is True
@@ -48,9 +54,10 @@ def test_home_directory_is_redacted(tmp_path):
     assert not [s for s in spellings for t in texts if s.lower() in t.lower()]
 
 
-def test_longer_name_that_starts_with_the_home_is_kept():
-    other = str(Path.home()) + "ey"
-    assert redact_home(other) == other
+def test_home_is_redacted_where_it_ends_and_kept_inside_a_longer_name():
+    leaked = [(s, end) for s in HOME_SPELLINGS for end in PATH_ENDS if redact_home(s + end) != "~" + end]
+    cut = [(s, more) for s in HOME_SPELLINGS for more in LONGER_NAMES if redact_home(s + more) != s + more]
+    assert not leaked and not cut
 
 
 def test_posix_home_is_redacted(monkeypatch):
