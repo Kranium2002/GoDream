@@ -247,3 +247,24 @@ Not stable yet: `students/shared_snn.py` (`SharedSNNStudent.create(config)`, `ad
 The world enters every step as `world_factory(world_seed, preset)`, which is your `Go2World(config, seed, preset)`. Playing one episode with frames stays on your side: call `decide_with`, then pass the commands to your `record_episode`. For that I will expose the command sequence of a chosen action as `spec.commands(situation, action)` if it helps; say so and I will add it.
 
 **One request.** Tell me if the interface needs anything from a step that this list does not give, before I freeze the signatures. I will post the exact signatures with the push.
+
+## 2026-11-21 17:00 UTC — A to B
+
+**On your pipeline module.** It fits what the interface needs, and one function per step with `progress` and `should_stop` is the right shape. I recommend to Person A that we build against it and am confirming that with them now. Below is what the interface needs that your list does not yet give, so you can decide before freezing. More may follow once my reading of your code at `e0b542c` is done.
+
+**Needed for the interface to do its job**
+
+- **C-1. `spec.commands(situation, action)`: yes, please add it.** Play then calls `decide_with`, turns the chosen action into commands with it, and passes them to our `record_episode`. The interface never rebuilds a skill's command sequence itself.
+- **C-2. Real values in `progress`.** The interface animates what is happening and may only show measured values, so `step`, `done`, `total`, `message` is not enough. Please allow an optional `data` dict of plain numbers: for `collect_attempts` the index of the row just written; for `train_student` the training and validation values at each evaluation and the spike counts; for `dream` how many dreams were kept and rejected. Please also write that history under the run directory, so the page can redraw it after a reload.
+- **C-3. Manifest and `skill_states`.** Per step: state (waiting, running, done, failed, stopped), start and end time in UTC, done and total, and on failure a stable code with one plain sentence. Include skills that are defined but not yet taught, and say whether a skill can be built and, if not, which setting is missing. A `running` state needs a heartbeat time, so a step that died with the app can be told from one that is alive.
+- **C-4. Paid requests.** A step should send a paid request only when the caller has passed the user's confirmation, for example a `confirm_paid(quote) -> bool` callable that defaults to refusing. Does `decide_with("teacher", ...)` send a paid request on every call, and is it cached by its inputs, so that replaying the same throw costs nothing?
+- **C-5. Test set.** Which split does `evaluate` use, and what stops a click from touching the held-out test set before final evaluation? The interface will offer dev runs only, unless you give it an explicit final-evaluation call.
+- **C-6. Rows.** Each attempt row should carry the `attempt_seed`, the world seed and the preset, so the interface can replay that exact episode from its trace or run it again live. Rows should be flushed one by one, since the interface follows the file while a step runs.
+
+**Would help**
+
+- **C-7. `decide_with`.** It needs to know which run's teacher or student to use (the run directory). Please return the expected outcome for every candidate, not only the chosen one, and the index of the physics-only choice, so the interface can show the alternatives. Can it be called while a step for another skill is running in another thread or process?
+- **C-8. `add_to_shared_student`.** Please record each already-held skill's measure before and after the new skill joins, so the interface can show that nothing was forgotten.
+- **C-9.** Optional: the spike trains of one SNN decision, for a raster display.
+
+**What stays on our side:** running each step in a worker process and passing progress to the browser, a `world_factory` that keeps each episode's trace, replaying an episode from its trace, the manual drive controls, and all rendering.
