@@ -14,7 +14,7 @@
       <p class="brand">Go2 skill teacher <span class="brand__sub">simulated Unitree Go2</span></p>
       <nav class="areas" aria-label="Sections">
         <a href="#robot">Robot</a>
-        <a href="#learn">Learning</a>
+        <a href="#learn">Learnt skills</a>
         <a href="#live">Camera test</a>
       </nav>
       <div class="conn" role="status" aria-live="polite">
@@ -38,15 +38,36 @@
       <p class="scene-status" id="scene-status" role="status" aria-live="polite">Loading the robot.</p>
       <p class="notice notice--stage" id="notice" role="status" aria-live="polite" hidden></p>
 
+      <div class="track" id="track" aria-labelledby="track-title" hidden>
+        <div class="track__head">
+          <p class="track__title" id="track-title" role="status" aria-live="polite"></p>
+          <p class="track__meta">RAMP mode: <span id="l-mode">not reported by the backend yet</span> · DODGE: <span id="l-gate">not reported by the backend yet</span></p>
+          <div class="track__actions">
+            <button class="btn btn--secondary btn--small" type="button" id="replay-stop" hidden>Stop replay</button>
+            <button class="btn btn--secondary btn--small" type="button" id="track-close">Hide</button>
+          </div>
+        </div>
+        <ol class="track__steps" id="track-steps"></ol>
+      </div>
+
       <aside class="dock" id="dock" aria-labelledby="dock-h" hidden>
         <div class="dock__head">
           <h2 id="dock-h">Teach a skill</h2>
           <button class="btn btn--secondary btn--small" type="button" id="teach-close">Close</button>
         </div>
 
+        <section class="dock__part" aria-labelledby="skills-h">
+          <h3 id="skills-h">What it can learn</h3>
+          <p class="empty" id="skills-empty">Not known yet: the skill catalogue has not arrived.</p>
+          <ul class="skills" id="skills" aria-labelledby="skills-h"></ul>
+          <p class="hint">Try asking:</p>
+          <div class="examples">
+            <button class="chip" type="button" data-example="Teach it to cross this slope safely.">Teach it to cross this slope safely.</button>
+            <button class="chip" type="button" data-example="Teach it to dodge an incoming punch or ball, but stay quiet when it is safe.">Teach it to dodge an incoming punch or ball, but stay quiet when it is safe.</button>
+          </div>
+        </section>
         <section class="dock__part" aria-labelledby="chat-h">
           <h3 id="chat-h">Chat</h3>
-          <p class="cap-note" id="chat-cap" hidden></p>
           <ol class="log" id="log" tabindex="0" aria-label="Conversation" aria-live="polite">
             <li class="log__empty" id="log-empty">Describe what the dog should learn, for example crossing a slope or dodging an incoming ball.</li>
           </ol>
@@ -58,6 +79,7 @@
               <button class="btn btn--primary" type="submit" id="send">Send message</button>
             </div>
           </form>
+          <p class="cap-note cap-note--quiet" id="chat-cap" hidden></p>
         </section>
 
         <section class="dock__part intent" aria-labelledby="spec-h">
@@ -84,11 +106,6 @@
             </div>
             <p class="run__status" id="run-status" tabindex="-1" role="status" aria-live="polite">Available once the declared skill is valid.</p>
           </div>
-          <details class="known">
-            <summary id="skills-h">Skills the server knows</summary>
-            <p class="empty" id="skills-empty">Not known yet: the skill catalogue has not arrived.</p>
-            <ul class="skills" id="skills" aria-labelledby="skills-h"></ul>
-          </details>
         </section>
       </aside>
     </section>
@@ -96,67 +113,55 @@
     <div class="wrap below">
 
     <section class="area" id="learn" aria-labelledby="learn-h">
-      <h2 id="learn-h">Learning</h2>
-      <p class="lead">Measured simulation data from the server: the baseline before learning, each step of the run, and the results on the same held-out scenarios.</p>
+      <h2 id="learn-h">Learnt skills</h2>
+      <p class="lead">Every learning run saved on this computer. Open one to replay its recorded progress on the robot stage and read what it measured.</p>
       <p class="cap-note" id="learn-cap" hidden></p>
-      <form class="pick" id="run-pick">
-        <div class="pick__field">
-          <label for="run-select">Run</label>
-          <select id="run-select"><option value="">No run in this session yet</option></select>
-        </div>
-        <div class="pick__field">
-          <label for="run-id">Or open a run by its id</label>
-          <input id="run-id" name="run-id" autocomplete="off" spellcheck="false">
-        </div>
-        <button class="btn btn--secondary" type="submit">Open run</button>
-      </form>
-      <p class="hint" id="run-list-note" hidden></p>
-      <p id="learn-status" role="status" aria-live="polite">No run open. Start one from Teach, or open a run by its id.</p>
-
-      <div class="split">
-        <section class="panel" aria-labelledby="lstage-h">
-          <h2 id="lstage-h">Simulated dog</h2>
-          <div class="stage" id="l-stage">
-            <div class="stage__view">
-              <h3>Tracking view</h3>
-              <div class="stage__frame stage__frame--track">
-                <img id="l-tracking" alt="Live simulator frames from the tracking camera" hidden>
-                <p class="stage__note" id="l-trk-note" hidden></p>
-              </div>
-            </div>
-            <div class="stage__view">
-              <h3>Head camera</h3>
-              <div class="stage__frame stage__frame--head">
-                <img id="l-head" alt="Live simulator frames from the dog's head camera" hidden>
-                <p class="stage__note" id="l-head-note" hidden></p>
-              </div>
-            </div>
+      <div class="replay-bar">
+        <label for="replay-speed">Replay speed</label>
+        <select id="replay-speed">
+          <option value="1">1x, as recorded</option>
+          <option value="10" selected>10x</option>
+          <option value="60">60x</option>
+        </select>
+      </div>
+      <p class="hint" id="cards-note" hidden></p>
+      <ul class="cards" id="cards" aria-label="Learning runs"></ul>
+      <details class="pick-wrap">
+        <summary>Open a run by its id</summary>
+        <form class="pick" id="run-pick">
+          <div class="pick__field">
+            <label for="run-select">Runs seen on this page</label>
+            <select id="run-select"><option value="">No run in this session yet</option></select>
           </div>
-          <dl class="stats">
-            <dt>RAMP mode</dt><dd id="l-mode">The backend does not report it yet.</dd>
-            <dt>DODGE gate</dt><dd id="l-gate">The backend does not report it yet.</dd>
-          </dl>
-        </section>
+          <div class="pick__field">
+            <label for="run-id">Run id</label>
+            <input id="run-id" name="run-id" autocomplete="off" spellcheck="false">
+          </div>
+          <button class="btn btn--secondary" type="submit">Open run</button>
+        </form>
+        <p class="hint" id="run-list-note" hidden></p>
+      </details>
+      <p id="learn-status" role="status" aria-live="polite">No run open. Start one from the chat, or open a learnt skill.</p>
 
-        <section class="panel" aria-labelledby="tl-h">
-          <h2 id="tl-h">Steps</h2>
-          <p class="hint" id="tl-meta"></p>
-          <ol class="timeline" id="timeline"></ol>
+      <div class="split split--even">
+        <section class="panel" aria-labelledby="train-h">
+          <h3 id="train-h">SNN training</h3>
+          <div id="train-body"><p class="empty">No training observations in this run yet.</p></div>
+        </section>
+        <section class="panel" aria-labelledby="res-h">
+          <h3 id="res-h">Before and after</h3>
+          <h4>Baseline before learning</h4>
+          <div id="baseline-body"><p class="empty">Not reported yet.</p></div>
+          <h4>Results</h4>
+          <div id="results-body"><p class="empty">Not reported yet.</p></div>
         </section>
       </div>
 
-      <section class="panel" aria-labelledby="train-h">
-        <h2 id="train-h">SNN training</h2>
-        <div id="train-body"><p class="empty">No training observations in this run yet.</p></div>
-      </section>
-
-      <section class="panel" aria-labelledby="res-h">
-        <h2 id="res-h">Before and after</h2>
-        <h3>Baseline before learning</h3>
-        <div id="baseline-body"><p class="empty">Not reported yet.</p></div>
-        <h3>Results on the held-out scenarios</h3>
-        <div id="results-body"><p class="empty">Not reported yet.</p></div>
-      </section>
+      <details class="panel" id="step-details">
+        <summary><h3 id="tl-h">Step details</h3></summary>
+        <p class="hint" id="tl-meta"></p>
+        <ol class="timeline" id="timeline"></ol>
+      </details>
     </section>
 
     <section class="area" id="live" aria-labelledby="live-h">

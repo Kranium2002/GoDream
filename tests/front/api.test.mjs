@@ -134,3 +134,12 @@ test("robot() GETs /api/robot", async () => {
   assert.equal(calls[0].url, "/api/robot");
   assert.equal(r.ok, true);
 });
+
+test("runCards() asks for the summary list and runEvents() for a run's recorded lines", async () => {
+  const { calls, fetchFn } = recorder(() => json(200, []));
+  const api = createApi(fetchFn);
+  await api.runCards();
+  await api.runEvents("v 0");
+  assert.equal(calls[0].url, "/api/runs?summary=1");
+  assert.equal(calls[1].url, "/api/runs/v%200/events");
+});

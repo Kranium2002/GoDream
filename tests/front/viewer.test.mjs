@@ -163,3 +163,40 @@ test("the pose buffer interpolates the short way round and survives a body count
   b.clear();
   assert.equal(b.sample(100), null);
 });
+
+test("the pose buffer says when it is still moving between two poses, and when it has settled", () => {
+  const b = createPoseBuffer();
+  assert.equal(b.moving(0), false);
+  b.push(P(0), 1000);
+  assert.equal(b.moving(1000), false); // one pose: nothing to interpolate
+  b.push(P(1), 1040);
+  assert.equal(b.moving(1050), true);
+  assert.equal(b.moving(1080), true);  // the end of the interval is still drawn once
+  assert.equal(b.moving(1100), false);
+});
+
+test("the quality controller lowers the resolution when frames are slow and raises it when they are fast", async () => {
+  const { createQuality } = await import("../../app/static/js/viewer/quality.js");
+  const q = createQuality({ min: 0.5, max: 1, slowMs: 40, fastMs: 22, settleMs: 500 });
+  assert.equal(q.scale, 1);
+  let t = 0;
+  for (let k = 0; k < 20; k++) q.frame((t += 66)); // 15 frames per second for over a second
+  assert.ok(q.scale < 1 && q.scale >= 0.5, `scale ${q.scale}`);
+  const low = q.scale;
+  for (let k = 0; k < 200; k++) q.frame((t += 66));
+  assert.equal(q.scale, 0.5); // never below the floor
+  for (let k = 0; k < 300; k++) q.frame((t += 12)); // fast again
+  assert.ok(q.scale > low);
+  for (let k = 0; k < 2000; k++) q.frame((t += 12));
+  assert.equal(q.scale, 1); // never above the ceiling
+});
+
+test("the quality controller ignores the gap when drawing pauses (nothing changed, tab hidden)", async () => {
+  const { createQuality } = await import("../../app/static/js/viewer/quality.js");
+  const q = createQuality({ min: 0.5, max: 1, slowMs: 40, fastMs: 22, settleMs: 500 });
+  let t = 0;
+  for (let k = 0; k < 50; k++) q.frame((t += 16));
+  q.frame((t += 5000)); // a pause, not a slow frame
+  for (let k = 0; k < 3; k++) q.frame((t += 16));
+  assert.equal(q.scale, 1);
+});

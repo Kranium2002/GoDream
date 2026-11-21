@@ -26,7 +26,16 @@ export function flatRows(value, prefix = "") {
 // ---- timeline ------------------------------------------------------------------------------------------------------
 export const emptyTimeline = () => ({ runId: null, skill: null, state: null, steps: {}, train: {}, baseline: null, results: null, unreadable: 0, arrivals: 0 });
 
-const isTrainObservation = (d) => d !== null && typeof d === "object" && finite(d.step) && (finite(d.train_loss) || finite(d.validation_loss));
+const hasLoss = (d) => d !== null && typeof d === "object" && (finite(d.train_loss) || finite(d.validation_loss));
+// A training observation from a train line: Dev B's observer dict; its step is data.step, or the line's done when the
+// runner puts it there (run v0), and its step count data.max_steps or the line's total. null without a loss or a step.
+function trainObservation(line) {
+  const d = line.data;
+  if (!hasLoss(d)) return null;
+  const step = finite(d.step) ? d.step : finite(line.done) ? line.done : null;
+  if (step === null) return null;
+  return { ...d, step, max_steps: finite(d.max_steps) ? d.max_steps : finite(line.total) ? line.total : undefined };
+}
 
 // One event line into the timeline (pure). Per step the line with the latest time_utc wins (the later arrival on a tie);
 // a line without a readable time never overrides one with a time. Train observations are kept by their own step.
@@ -42,7 +51,8 @@ export function applyLine(tl, line) {
   if (typeof line.run_id === "string") next.runId = line.run_id;
   if (typeof line.skill === "string") next.skill = line.skill;
   if (wins) next.steps = { ...tl.steps, [line.step]: entry };
-  if (line.step === "train" && isTrainObservation(line.data)) next.train = { ...tl.train, [line.data.step]: line.data };
+  const obs = line.step === "train" ? trainObservation(line) : null;
+  if (obs) next.train = { ...tl.train, [obs.step]: obs };
   return next;
 }
 
@@ -68,7 +78,7 @@ export function timelineRows(tl) {
       progress: finite(e?.done) && finite(e?.total) && e.total > 0 ? `${e.done} of ${e.total}` : null,
       time: typeof e?.time === "string" ? e.time : null,
       reason: STOPPED.includes(e?.state) && why ? why : null,
-      isTrainObservation: step === "train" && isTrainObservation(d),
+      isTrainObservation: step === "train" && hasLoss(d),
       dataRows: flatRows(d),
     };
   });
@@ -158,4 +168,15 @@ export function inferLine(data) {
 export function rampMode(obs) {
   const v = obs?.ramp_mode ?? obs?.mode;
   return v === "NORMAL" || v === "SLOPE" ? v : null;
+}
+
+// Key and value rows grouped by their first key (a result's top-level sections), in order; no row is dropped.
+export function groupRows(rows) {
+  const groups = [];
+  for (const [k, v] of rows) {
+    const key = k.split(".")[0];
+    const g = groups.at(-1)?.key === key ? groups.at(-1) : (groups.push({ key, rows: [] }), groups.at(-1));
+    g.rows.push([k, v]);
+  }
+  return groups;
 }

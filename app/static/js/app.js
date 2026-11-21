@@ -45,18 +45,29 @@ function setDock(open) {
   if (open) {
     dock.hidden = false;
     requestAnimationFrame(() => dock.classList.add("is-in"));
-    $("msg").focus();
+    $("msg").focus({ preventScroll: true }); // the page stays where it is; the dock scrolls on its own
   } else {
     dock.classList.remove("is-in");
     dock.hidden = true;
-    $("teach-open").focus();
+    $("teach-open").focus({ preventScroll: true });
   }
   placeDog();
 }
+// The dog is centred in the part of the stage nothing covers: right of the introduction, left of the open dock,
+// or, on narrow screens where the introduction sits at the bottom, above it. Measured from the layout, as a lens shift.
 function placeDog() {
+  const s = $("robot").getBoundingClientRect();
+  if (!s.width || !s.height) return;
   const open = !$("dock").hidden;
-  stage.setShift(wide.matches ? (open ? -0.42 : 0.32) : 0);
+  let left = s.left, right = s.right, top = s.top, bottom = s.bottom;
+  if (open && wide.matches) right = $("dock").getBoundingClientRect().left;
+  else if (!open && wide.matches) left = $("hero-copy").getBoundingClientRect().right;
+  else if (!open) bottom = $("hero-copy").getBoundingClientRect().top; // narrow with the dock open: it covers the stage
+  const x = 2 * ((left + right) / 2 - s.left) / s.width - 1;
+  const y = 1 - 2 * ((top + bottom) / 2 - s.top) / s.height;
+  stage.setShift(x, y);
 }
+addEventListener("resize", placeDog);
 wide.addEventListener("change", placeDog);
 placeDog();
 $("teach-open").addEventListener("click", () => setDock(true));
@@ -318,3 +329,8 @@ $("confirm-no").addEventListener("click", () => dispatch({ type: "cancel" }));
 loadState();
 loadCatalogue();
 connectEvents();
+
+// Example requests fill the message box; the person still decides to send.
+for (const chip of document.querySelectorAll("[data-example]")) {
+  chip.addEventListener("click", () => { $("msg").value = chip.dataset.example; $("msg").focus({ preventScroll: true }); });
+}

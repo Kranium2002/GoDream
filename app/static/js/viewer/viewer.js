@@ -5,6 +5,7 @@ import { lookAt, multiply, normalMatrix, perspective } from "./mat.js";
 import { createOrbit } from "./orbit.js";
 import { buildScene, bodyMatrix } from "./scene.js";
 import { createPoseBuffer } from "./pose.js";
+import { createQuality } from "./quality.js";
 
 const ROBOT_VS = `#version 300 es
 layout(location = 0) in vec3 aPos;
@@ -102,7 +103,8 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
   const START = { distance: 1.7, yaw: 0.75, pitch: 0.3 };
   const orbit = createOrbit({ target: [0, 0, 0.25], ...START, minDistance: 0.6, maxDistance: 8 });
   const poses = createPoseBuffer();
-  let scene = null, vaos = new Map(), shift = 0, shiftGoal = 0, raf = 0, dirty = true;
+  const quality = createQuality(); // the internal resolution scale; its rule is in quality.js
+  let scene = null, vaos = new Map(), shift = [0, 0], shiftGoal = [0, 0], raf = 0, dirty = true;
 
   const floorBuf = gl.createBuffer();
   const floorVao = gl.createVertexArray();
@@ -139,18 +141,23 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
   }
 
   function resize() {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const dpr = Math.min(devicePixelRatio || 1, 2) * quality.scale;
     const w = Math.max(1, Math.round(canvas.clientWidth * dpr)), h = Math.max(1, Math.round(canvas.clientHeight * dpr));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; dirty = true; }
   }
 
   function frame(now) {
     raf = requestAnimationFrame(frame);
+    if (shift.some((v, k) => Math.abs(shiftGoal[k] - v) > 1e-3)) {
+      shift = reduceMotion.matches ? [...shiftGoal] : shift.map((v, k) => v + (shiftGoal[k] - v) * 0.12);
+      dirty = true;
+    }
+    // Draw only when something changed: a pose pair still being interpolated, a camera move, a resize, a new robot.
+    if (!dirty && !(scene && poses.moving(now))) return;
+    dirty = false;
+    quality.frame(now);
     resize();
     const pose = scene ? poses.sample(now) : null;
-    if (Math.abs(shiftGoal - shift) > 1e-3) { shift = reduceMotion.matches ? shiftGoal : shift + (shiftGoal - shift) * 0.12; dirty = true; }
-    if (!dirty && !pose) return;
-    dirty = false;
     if (pose && scene.rootBody !== null) {
       const p = pose.pos[scene.rootBody];
       if (p) orbit.setTarget([p[0], p[1], scene.floorZ + 0.22]); // the camera follows the dog the simulator moves
@@ -160,7 +167,8 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
     const proj = perspective((35 * Math.PI) / 180, canvas.width / canvas.height, 0.05, 80);
-    proj[8] = -shift; // lens shift: the dog sits beside the text, not under it
+    proj[8] = -shift[0]; // lens shift: the dog sits in the free part of the stage, not under the text
+    proj[9] = -shift[1];
     const eye = orbit.eye();
     const view = lookAt(eye, orbit.target, [0, 0, 1]);
     const t = orbit.target, z = (scene?.floorZ ?? 0) - 0.0005, R = 30;
@@ -239,15 +247,18 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     if (!document.hidden) { dirty = true; raf = requestAnimationFrame(frame); }
   };
   document.addEventListener("visibilitychange", onVisibility);
+  const onResize = () => { dirty = true; };
+  addEventListener("resize", onResize);
   raf = requestAnimationFrame(frame);
 
   return {
     setRobot,
-    pushPose(pose) { if (scene && Array.isArray(pose?.pos) && Array.isArray(pose?.quat)) poses.push(pose, performance.now()); },
+    pushPose(pose) { if (scene && Array.isArray(pose?.pos) && Array.isArray(pose?.quat)) { poses.push(pose, performance.now()); dirty = true; } },
+    resolutionScale: () => quality.scale,
     hasPose: () => Boolean(scene && poses.sample(performance.now())),
     bodyCount: () => scene?.bodyCount ?? 0,
-    setShift(x) { shiftGoal = x; },
+    setShift(x, y = 0) { shiftGoal = [x, y]; },
     resetView,
-    destroy() { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVisibility); },
+    destroy() { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVisibility); removeEventListener("resize", onResize); },
   };
 }

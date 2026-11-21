@@ -42,6 +42,8 @@ export function createApi(fetchFn) {
     robot: () => call("/api/robot"),
     chat: (messages) => call("/api/chat", { messages }),
     runs: () => call("/api/runs"),
+    runCards: () => call("/api/runs?summary=1"),
+    runEvents: (runId) => call(`/api/runs/${encodeURIComponent(runId)}/events`),
     run: (runId) => call(`/api/runs/${encodeURIComponent(runId)}`),
     startRun: (declaredSpec, confirmCost) => call("/api/runs", { declared_spec: declaredSpec, confirm_cost: confirmCost }),
     // The camera window goes here and nowhere else. captured_ms: the newest frame's capture time, ms since the epoch.

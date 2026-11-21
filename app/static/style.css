@@ -275,3 +275,73 @@ body.dock-open .hero-copy > * { pointer-events: none; }
 }
 @media (max-width: 640px) { :root { --bar-h: 120px; } .btn--hero { justify-self: stretch; } }
 @media (prefers-reduced-motion: reduce) { .dock { transition: none; transform: none; } }
+.examples { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.chip {
+  font: 500 var(--t-small)/1.35 var(--font); color: var(--ink); background: var(--g-main); text-align: left; cursor: pointer;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); padding: var(--s-2) var(--s-3); min-height: 44px;
+  transition: background-color var(--m-out) var(--m-ease), transform var(--m-out) var(--m-ease);
+}
+@media (hover: hover) and (pointer: fine) { .chip:hover { background: rgba(29, 91, 184, .08); transform: translateY(-1px); transition-duration: var(--m-in); } }
+.chip:active { transform: translateY(1px) scale(.985); transition-duration: var(--m-press); }
+.cap-note--quiet { border-left-color: var(--line-strong); background: var(--g-main); font-size: var(--t-small); }
+
+/* ---- The pipeline track under the dog ---------------------------------------------------------------------- */
+:root { --track-h: 176px; }
+.track {
+  position: absolute; left: var(--s-4); right: var(--s-4); bottom: var(--s-4); height: var(--track-h);
+  display: grid; grid-template-rows: auto 1fr; gap: var(--s-3); padding: var(--s-4) var(--s-5);
+  background: var(--stage-panel); border: 1px solid var(--stage-line); border-radius: var(--r-lg); color: var(--stage-ink);
+}
+.track__head { display: flex; align-items: center; gap: var(--s-5); flex-wrap: wrap; }
+.track__title { font-weight: 650; font-size: var(--t-body); }
+.track__meta { color: var(--stage-muted); font-size: var(--t-small); }
+.track__actions { margin-left: auto; display: flex; gap: var(--s-2); }
+.track .btn--secondary { color: var(--stage-ink); border-color: var(--stage-line); }
+.track .btn--secondary:focus-visible { outline-color: var(--stage-ink); }
+.track__steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s-3); overflow-x: auto; }
+.ts { display: grid; align-content: start; gap: var(--s-1); padding: var(--s-2) var(--s-3); border-radius: var(--r-md); border: 1px solid var(--stage-line); min-width: 0; }
+.ts__top { display: flex; gap: var(--s-1); align-items: baseline; }
+.ts__label { font-weight: 600; font-size: var(--t-small); }
+.ts__state { font-size: 15px; color: var(--stage-muted); font-variant-numeric: tabular-nums; }
+.ts__explain { font-size: 14px; line-height: 1.35; color: var(--stage-muted); }
+.ts__bar { display: block; height: 6px; border-radius: 3px; background: var(--stage-line); overflow: hidden; }
+.ts__fill { display: block; height: 100%; background: var(--stage-ink); }
+.ts.is-done { border-color: rgba(120, 200, 150, .5); }
+.ts.is-done .mark { color: #8fd6a8; }
+.ts.is-bad { border-color: rgba(240, 130, 120, .6); }
+.ts.is-bad .mark { color: #f0a49b; }
+.ts.is-running { border-color: var(--stage-ink); }
+.ts.is-running .mark { animation: pulse 1.4s ease-in-out infinite; } /* moves only while an event says running */
+@keyframes pulse { 50% { opacity: .35; } }
+body.track-open .dock { bottom: calc(var(--track-h) + 2 * var(--s-4)); }
+body.track-open .scene-status, body.track-open .notice--stage { bottom: calc(var(--track-h) + 2 * var(--s-4) + var(--s-2)); }
+@media (max-width: 999px) { :root { --track-h: 220px; } body.track-open .hero-copy { display: none; } }
+
+/* ---- Learnt skills ------------------------------------------------------------------------------------------- */
+.replay-bar { display: flex; align-items: center; gap: var(--s-3); }
+.replay-bar label { font-size: var(--t-label); font-weight: 600; }
+.replay-bar select { min-width: 0; }
+.cards { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: var(--s-4); }
+.card {
+  width: 100%; height: 100%; text-align: left; font: inherit; color: var(--ink); cursor: pointer; display: grid; gap: var(--s-2); align-content: start;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s-5);
+  transition: transform 180ms var(--m-ease), border-color var(--m-out) var(--m-ease), box-shadow var(--m-out) var(--m-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: 0 8px 24px rgba(25, 27, 30, .08); transition-duration: 180ms, var(--m-in), var(--m-in); }
+}
+.card:active { transform: translateY(0) scale(.99); }
+.card__skill { font-size: var(--t-h3); font-weight: 650; }
+.card__id { font-family: var(--mono); font-size: var(--t-small); color: var(--muted); }
+.card__facts { font-size: var(--t-small); color: var(--muted); }
+.card__badges { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.badge { font-size: var(--t-label); font-weight: 600; padding: 2px var(--s-2); border-radius: var(--r-sm); background: var(--g-main); border: 1px solid var(--line); }
+.card__go { color: var(--action); font-weight: 600; margin-top: var(--s-2); }
+.pick-wrap summary, details.panel > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+details.panel > summary h3 { display: inline; }
+.split--even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 1100px) { .split--even { grid-template-columns: 1fr; } }
+.section { border-top: 1px solid var(--line); padding-block: var(--s-2); }
+.section summary { cursor: pointer; font-family: var(--mono); font-size: var(--t-small); min-height: 36px; display: flex; align-items: center; }
+.section .kv dd { max-height: 7.5em; overflow: auto; }
+@media (prefers-reduced-motion: reduce) { .ts.is-running .mark { animation: none; } }

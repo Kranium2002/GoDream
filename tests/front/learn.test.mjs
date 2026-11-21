@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  STEPS, applyLine, emptyTimeline, flatRows, fromRunResponse, inferLine, lossCurve, rampMode, resultView, runIds, timelineRows, trainSeries,
+  STEPS, applyLine, emptyTimeline, flatRows, fromRunResponse, groupRows, inferLine, lossCurve, rampMode, resultView, runIds, timelineRows, trainSeries,
 } from "../../app/static/js/learn.js";
 
 // Pure-function fixtures in the agreed event-line shape; never shown on the page.
@@ -168,4 +168,32 @@ test("inferLine shows the action and confidences an infer event carries, and the
   assert.equal(inferLine({ action: "UNCERTAIN", gate: { passed: true } }), "Uncertain: stays still (UNCERTAIN), gate passed");
   assert.equal(inferLine({ threat_confidence: 0.5 }), null);
   assert.equal(inferLine(null), null);
+});
+
+// ---- the recorded run v0's shapes (results/runs/v0/events.jsonl): step in done/total, no data.step ------------
+const v0train = (done, val, tr = null) => ({ run_id: "v0", skill: "dodge_vision", step: "train", state: "running", done, total: 3000,
+  time_utc: `2026-11-21T21:26:${String(25 + done / 100).padStart(2, "0")}Z`, data: { train_loss: tr, validation_loss: val, best_validation_loss: val, best_step: done } });
+
+test("train lines without data.step use done as the step and total as the step count", () => {
+  const tl = build([v0train(0, 0.84), v0train(100, 0.57, 0.66), v0train(200, 0.56, 0.58)]);
+  const series = trainSeries(tl);
+  assert.deepEqual(series.map((d) => d.step), [0, 100, 200]);
+  assert.equal(series[2].max_steps, 3000);
+  assert.equal(series[0].train_loss, null);
+  assert.equal(rowOf(tl, "train").isTrainObservation, true);
+  assert.equal(rowOf(tl, "train").progress, "200 of 3000");
+});
+
+test("a train line with neither data.step nor done is not a curve point", () => {
+  const tl = build([{ ...v0train(0, 0.8), done: null }]);
+  assert.deepEqual(trainSeries(tl), []);
+});
+
+test("groupRows gathers key and value rows by their first key, in order, keeping every row", () => {
+  const rows = flatRows({ run_id: "v0", quote: { state: "done", quote: { dream: 1 } }, train: { steps_run: 700 } });
+  assert.deepEqual(groupRows(rows), [
+    { key: "run_id", rows: [["run_id", "v0"]] },
+    { key: "quote", rows: [["quote.state", "done"], ["quote.quote.dream", "1"]] },
+    { key: "train", rows: [["train.steps_run", "700"]] },
+  ]);
 });
