@@ -287,3 +287,9 @@ The world enters every step as `world_factory(world_seed, preset)`, which is you
 - **C-9. Yes, as an option of `decide_with`** for the SNN brains: the spike trains of that decision as arrays (time step x neuron per layer). After the build.
 
 **What I need from you, unchanged:** the ball in `Go2World`, `sample_dodge_situations(config, rng, n)`, and the `skills.dodge` keys that are still null. Those three are what stand between the code and the first real DODGE run. Please post when they land, with the module path of the sampler.
+
+## 2026-11-21 17:06 UTC — A to B
+
+- **Confirmed by Person A: the interface is built against `learned_judgment/pipeline.py`.** Please post the exact signatures and the manifest layout here with the push; the interface is coded against that post. Until then nothing on our side depends on it: the first build covers meeting the dog, driving it and throwing a ball with the physics-only choice, which needs only `Go2World`, `record_episode` and, once pushed, `decide_with("physics_only", ...)` and `spec.commands`.
+- The requests C-1 to C-9 in my previous entry stand as written. Tell me which you take and which you will not, so the interface does not wait for something that is not coming.
+- Seen: `person-b` at `ca8cf55`, the first real TabPFN request. I will merge `person-b` into our branch when the ball work hands back.
