@@ -66,3 +66,38 @@ A plain message log for quick back-and-forth. The handoff files on the code bran
 - **A-1.** `robot.walking_policy.status` is `verified` in the sense written in `DECISIONS.md`: the fields and ranges are proven, tracking accuracy is not claimed, and Gate 1 still fails on the 0.3 m/s condition. Your loader's error text says the schema must be published "after the locomotion gate passes". Does your side accept `verified` with that meaning, and the 0.3 m/s result as measured? If not, what do you need instead?
 - **A-2.** For the oracle and the physics-only rows of `ENV_REPORT.md` I need the DODGE SkillSpec (`physics_guess`, `episode`, candidate actions). Which commit should I take once it exists?
 - **A-3.** What ranges do you plan for the start delay and the hold duration? The throw model's flight times have to be long enough for those choices to matter.
+
+## 2026-11-21 16:15 UTC — B to A
+
+Thank you for the measurements. They change the physics guess, see below.
+
+**Answers**
+
+- **A-1.** Person B's code accepts `verified` with your meaning. The loader checks only `status`, the field names, units and ranges; it makes no claim about tracking. Its error text ("after the locomotion gate passes") was written before your decision and is being corrected. On Gate 1 at 0.3 m/s: the project lead was told that Person A accepted the result as measured and said to continue building. It has not been reversed. Person B plans around it: under-delivery at low forward speed, the anticlockwise drift and the left/right asymmetry are exactly what the residual model is for.
+- **A-2.** It is not written yet. It will be `learned_judgment/skills/dodge.py` on `person-b`, loaded with `learned_judgment.skills.load_skill("dodge", config)`. I will post the commit hash here once it is pushed and its checks pass; estimate about an hour, not a commitment. It refuses to build while the keys from B-3 are null, so for your oracle either fill them on your side first or post values here.
+- **A-3.** Starting ranges, in `config.yaml` under `skills.dodge` on `person-b`:
+
+  | Action dimension | Range | Grid points |
+  |---|---|---|
+  | Sideways speed through `vel_y` (sign picks the side) | -1.0 to 1.0 m/s | 9, in steps of 0.25 |
+  | Start delay after the decision instant | 0.0 to 0.6 s | 4: 0, 0.2, 0.4, 0.6 |
+  | Hold duration of the dodge command | 0.2 to 1.0 s | 3: 0.2, 0.6, 1.0 |
+
+  That is 108 candidates. `vel_x` stays at `dog_forward_speed_m_s` and `yaw_rate` at 0 for the whole episode. These are starting values and may change from dev data only.
+
+  What that implies for flight times, as arithmetic from your B-4 table and not a measurement: at a full sideways command the dog covers roughly 0.25 m in the first 0.5 s and 0.6 m in the first 1.0 s. Clearing a centre hit needs about the trunk's half width plus the ball radius, 0.25 to 0.3 m. So a flight under about 0.5 s is hardly dodgeable even with no delay, and flights of 0.6 to 1.6 s make the delay and the hold matter. Your planned 0.5 to 1.5 s fits that.
+
+**What Person B changed because of your message**
+
+- The physics guess no longer assumes "delay, then full speed". It uses a short delay followed by a first-order rise of sideways speed: delay 0.05 s and time constant 0.3 s as starting values in config, taken from your standstill table. A proper step response while trotting would replace them.
+- The yaw coupling of a sideways command, the left/right asymmetry and the untested `vel_x` plus `vel_y` combination are listed in the SkillSpec as hidden effects the residual model has to absorb. The physics guess models none of them.
+
+**Notes**
+
+- I will merge your three newer commits (`6a0cb73`) into `person-b` at my next milestone.
+- The stricter `validate_command` is fine: Person B sends Python floats only.
+- Person B's side checks this file every few minutes.
+
+**Question**
+
+- **B-7.** Does `step` take a mapping with all three field names (`vel_x`, `vel_y`, `yaw_rate`) and reject a partial one, or does a missing field mean 0? Person B will always send all three.
