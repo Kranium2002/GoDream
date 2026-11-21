@@ -34,6 +34,7 @@ __all__ = [
     "command_binding_problems",
     "decode_row",
     "encode_row",
+    "exposes_command_sequence",
     "validate_spec",
 ]
 
@@ -439,6 +440,26 @@ class SkillSpec(ABC):
         the simulator; nothing is derived from the intended action.
         """
 
+    def reset_situation(self, situation: Mapping[str, Any]) -> dict[str, Any]:
+        """The mapping this skill passes to ``world.reset`` for ``situation`` (all situation keys).
+
+        Optional, together with :meth:`commands`. A spec that implements the pair must run
+        :meth:`episode` from them, so an episode replayed outside ``episode`` (the dashboard's
+        recorder, the live viewer) sends the world exactly what a measured episode sends.
+        """
+        raise NotImplementedError(f"skill {self.name!r} does not expose its reset request")
+
+    def commands(
+        self, situation: Mapping[str, Any], action: Mapping[str, Any]
+    ) -> list[tuple[dict[str, float], float]]:
+        """The command sequence of one attempt: ``[(command, duration_s), ...]`` in the order sent.
+
+        Every command names every field of the verified command schema and stays inside the
+        verified ranges; every duration is in seconds and > 0. Optional, see
+        :meth:`reset_situation`. :func:`validate_spec` checks the sequence when it is implemented.
+        """
+        raise NotImplementedError(f"skill {self.name!r} does not expose its command sequence")
+
     @abstractmethod
     def loss(self, measured: np.ndarray) -> np.ndarray:
         """Preregistered primary per-episode loss of measured outcomes (n, K) -> (n,); lower is better."""
@@ -737,5 +758,61 @@ def validate_spec(
         elif dtype_kind == "f" and not np.all(np.isfinite(values.astype(np.float64))):
             problems.append(f"{label} returns non-finite values")
 
+    problems.extend(_command_sequence_problems(spec, command_schema, batch_situations, batch_actions))
+
     if problems:
         raise SkillSpecError("; ".join(problems))
+
+
+def exposes_command_sequence(spec: SkillSpec) -> bool:
+    """True when ``spec`` implements both :meth:`SkillSpec.reset_situation` and :meth:`SkillSpec.commands`."""
+    kind = type(spec)
+    return kind.reset_situation is not SkillSpec.reset_situation and kind.commands is not SkillSpec.commands
+
+
+def _command_sequence_problems(
+    spec: SkillSpec, command_schema: CommandSchema, situations: np.ndarray, actions: np.ndarray
+) -> list[str]:
+    """Problems of the optional reset request and command sequence on the probe rows (no simulator).
+
+    A spec that implements only one of the two methods is a problem: replay needs both.
+    """
+    kind = type(spec)
+    has_reset = kind.reset_situation is not SkillSpec.reset_situation
+    has_commands = kind.commands is not SkillSpec.commands
+    if not has_reset and not has_commands:
+        return []
+    if has_reset != has_commands:
+        return ["reset_situation and commands must be implemented together"]
+    fields = set(command_schema.fields)
+    problems: list[str] = []
+    for situation_row, action_row in zip(situations, actions):
+        situation, action = spec.decode_situation(situation_row), spec.decode_action(action_row)
+        where = f"commands({situation}, {action})"
+        request = spec.reset_situation(situation)
+        if not isinstance(request, Mapping):
+            problems.append(f"reset_situation must return a mapping; got {type(request).__name__}")
+            break
+        sequence = spec.commands(situation, action)
+        if not isinstance(sequence, list) or not sequence:
+            problems.append(f"{where} must return a non-empty list of (command, duration_s)")
+            break
+        for step in sequence:
+            if not isinstance(step, tuple) or len(step) != 2 or not isinstance(step[0], Mapping):
+                problems.append(f"{where}: every step must be a (command mapping, duration_s) pair; got {step!r}")
+                break
+            command, duration = step
+            if set(command) != fields:
+                problems.append(f"{where}: a command must name exactly the verified fields {sorted(fields)}; got {sorted(command)}")
+                break
+            try:
+                command_schema.check_command(command)
+            except (TypeError, ValueError) as error:
+                problems.append(f"{where}: {error}")
+                break
+            if isinstance(duration, bool) or not isinstance(duration, (int, float)) or not 0.0 < duration < math.inf:
+                problems.append(f"{where}: duration_s must be a finite number > 0; got {duration!r}")
+                break
+        if problems:
+            break
+    return problems

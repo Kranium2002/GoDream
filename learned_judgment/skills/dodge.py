@@ -670,6 +670,37 @@ class DodgeSpec(SkillSpec):
         check_command_binding(self, self.command_schema)
         if isinstance(attempt_seed, bool) or not isinstance(attempt_seed, (int, np.integer)) or attempt_seed < 0:
             raise ValueError(f"attempt_seed must be an int >= 0; got {attempt_seed!r}")
+        request = self.reset_situation(situation)
+        schedule = self.commands(situation, action)
+        side, _, hold = (float(value) for value in self.encode_action(action))
+
+        observation = world.reset(request, int(attempt_seed))
+        self._check_declared(observation, situation)
+        for command, duration in schedule:
+            world.step(dict(command), float(duration))
+        measured = self._read_outcome(world.finish_episode())
+        measured["lateral_command_m"] = abs(side) * hold
+        return {name: measured[name] for name in self.outcome_names}
+
+    def reset_situation(self, situation: Mapping[str, Any]) -> dict[str, Any]:
+        """The seven ball and dog values requested from the world for ``situation`` (all nine keys).
+
+        The two declared keys are not requested: the world reports them, and :meth:`episode`
+        checks that they equal the situation's.
+        """
+        situation_vector = self.encode_situation(situation)
+        return {key: float(situation_vector[column]) for column, key in enumerate(BALL_DOG_KEYS)}
+
+    def commands(
+        self, situation: Mapping[str, Any], action: Mapping[str, Any]
+    ) -> list[tuple[dict[str, float], float]]:
+        """The commands of one attempt, in the order sent, as ``[(command, duration_s), ...]``.
+
+        Trot at the situation's forward speed for ``start_delay_s``, the same trot plus the
+        sideways command for ``hold_duration_s``, then the trot again until
+        ``episode_duration_s``. A phase of zero length is left out. Every command names all
+        three verified fields and is checked against the verified schema.
+        """
         situation_vector = self.encode_situation(situation)
         action_vector = self.encode_action(action)
         forward = float(situation_vector[self.situation_names.index("dog_forward_speed_m_s")])
@@ -683,20 +714,11 @@ class DodgeSpec(SkillSpec):
         dodge = self._command(forward, side)
         for command in (nominal, dodge):
             self.command_schema.check_command(command)
-        schedule = [
-            (command, duration)
+        return [
+            (dict(command), float(duration))
             for command, duration in ((nominal, delay), (dodge, hold), (nominal, remaining))
             if duration > _TIME_TOLERANCE_S
         ]
-        request = {key: float(situation_vector[column]) for column, key in enumerate(BALL_DOG_KEYS)}
-
-        observation = world.reset(request, int(attempt_seed))
-        self._check_declared(observation, situation)
-        for command, duration in schedule:
-            world.step(dict(command), float(duration))
-        measured = self._read_outcome(world.finish_episode())
-        measured["lateral_command_m"] = abs(side) * hold
-        return {name: measured[name] for name in self.outcome_names}
 
     @staticmethod
     def _check_declared(observation: Mapping[str, Any], situation: Mapping[str, Any]) -> None:

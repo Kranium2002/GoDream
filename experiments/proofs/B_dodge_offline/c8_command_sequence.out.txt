@@ -1,0 +1,16 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+CallRecorder: a call recorder that returns fixed dictionaries; it is not a simulator
+PASS  the DODGE spec exposes its reset request and command sequence
+PASS  episode() sent exactly reset_situation() and commands() on 648 situation x candidate pairs
+PASS  every command names exactly the verified fields
+PASS  the durations of every sequence add up to the episode duration
+PASS  the reset request holds the seven ball and dog keys and no declared key
+PASS  the returned commands are copies: changing one does not change the next call
+PASS  validate_spec passes with the exposed command sequence
+PASS  validate_spec refuses a command outside the verified range  [SkillSpecError: commands({'ball_rel_x_m': 4.555145322338129, 'ball_rel_y_m': 0.9239646708148501, 'ball_rel_z_m': 0.32555168443919275, 'ball_vel_x_m_s': -4.2255950565900156, 'ball_vel_y_m_s': -0.9226384494339226, 'ball_vel_z_m_s': 4.4864550107157575, 'dog_forward_speed_m_s': 0.5897617449154166, 'declared_payload_kg': 1.0, 'declared_surface': 'fixture_surface_a'}, {'side_velocity_m_s': -1.0, 'start_delay_s': 0.0, 'hold_duration_s': 0.2}): command vel_y=5.0 m/s is outside the verified range [-1.0, 1.0]]
+PASS  validate_spec refuses a command that leaves out a verified field  [SkillSpecError: commands({'ball_rel_x_m': 4.555145322338129, 'ball_rel_y_m': 0.9239646708148501, 'ball_rel_z_m': 0.32555168443919275, 'ball_vel_x_m_s': -4.2255950565900156, 'ball_vel_y_m_s': -0.9226384494339226, 'ball_vel_z_m_s': 4.4864550107157575, 'dog_forward_speed_m_s': 0.5897617449154166, 'declared_payload_kg': 1.0, 'declared_surface': 'fixture_surface_a'}, {'side_velocity_m_s': -1.0, 'start_delay_s': 0.0, 'hold_duration_s': 0.2}): a command must name exactly the verified fields ['vel_x', 'vel_y', 'yaw_rate']; got ['vel_x', 'vel_y']]
+PASS  validate_spec refuses a duration of zero  [SkillSpecError: commands({'ball_rel_x_m': 4.555145322338129, 'ball_rel_y_m': 0.9239646708148501, 'ball_rel_z_m': 0.32555168443919275, 'ball_vel_x_m_s': -4.2255950565900156, 'ball_vel_y_m_s': -0.9226384494339226, 'ball_vel_z_m_s': 4.4864550107157575, 'dog_forward_speed_m_s': 0.5897617449154166, 'declared_payload_kg': 1.0, 'declared_surface': 'fixture_surface_a'}, {'side_velocity_m_s': -1.0, 'start_delay_s': 0.0, 'hold_duration_s': 0.2}): duration_s must be a finite number > 0; got 0.0]
+PASS  validate_spec refuses an empty sequence  [SkillSpecError: commands({'ball_rel_x_m': 4.555145322338129, 'ball_rel_y_m': 0.9239646708148501, 'ball_rel_z_m': 0.32555168443919275, 'ball_vel_x_m_s': -4.2255950565900156, 'ball_vel_y_m_s': -0.9226384494339226, 'ball_vel_z_m_s': 4.4864550107157575, 'dog_forward_speed_m_s': 0.5897617449154166, 'declared_payload_kg': 1.0, 'declared_surface': 'fixture_surface_a'}, {'side_velocity_m_s': -1.0, 'start_delay_s': 0.0, 'hold_duration_s': 0.2}) must return a non-empty list of (command, duration_s)]
+PASS  validate_spec refuses a spec that exposes commands without the reset request  [SkillSpecError: reset_situation and commands must be implemented together]
+
+12 passed, 0 failed
