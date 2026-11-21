@@ -50,6 +50,15 @@ def test_latest_run_of_a_label_wins(tmp_path):
     assert not any("PASS" in l or "20261121T000000-world" in l for l in lines)
 
 
+def test_unfinished_newer_run_hides_older_pass(tmp_path):
+    save_run(tmp_path, "20261121T000000-world", exit_code=0)
+    (tmp_path / "20261121T000001-world").mkdir()  # evidence.py writes run.json only after the command ends
+    lines = report_lines(tmp_path)
+    world = [l for l in lines if "| world |" in l]
+    assert len(world) == 2 and all("NOT RUN" in l and "20261121T000001-world" in l for l in world)
+    assert not any("PASS" in l for l in lines)
+
+
 def test_one_oracle_row_per_configured_skill(tmp_path):
     skills = yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))["skills"]
     save_run(tmp_path, "20261121T000000-oracle-dodge", exit_code=0)

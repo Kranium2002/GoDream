@@ -2,7 +2,8 @@
 
     python -m learned_judgment.env.report [--artifacts artifacts/env] [--out ENV_REPORT.md]
 
-Every status comes from the exit_code in the latest run.json of a label; a label with no run is NOT RUN.
+Every status comes from the exit_code in the run.json of a label's latest run directory; a label with no
+run directory, or whose latest one has no run.json yet, is NOT RUN.
 """
 import argparse
 import json
@@ -31,12 +32,14 @@ def _row(*cells) -> str:
 
 
 def latest_runs(artifacts: Path) -> dict:
-    """label -> (run dir, run.json). Stamps are fixed width, so name order is time order and the last one wins."""
+    """label -> (latest run dir, its run.json or None). Stamps are fixed width, so name order is time order."""
     runs = {}
-    for path in sorted(artifacts.glob("*/run.json")):
-        match = re.fullmatch(r"\d{8}T\d{6}-([A-Za-z0-9_-]+)", path.parent.name)
-        if match:
-            runs[match[1]] = (path.parent, json.loads(path.read_text(encoding="utf-8")))
+    for run_dir in sorted(artifacts.glob("*")):
+        match = re.fullmatch(r"\d{8}T\d{6}-([A-Za-z0-9_-]+)", run_dir.name)
+        if match and run_dir.is_dir():
+            # evidence.py writes run.json only after the command ends, so a crashed or running attempt has none.
+            path = run_dir / "run.json"
+            runs[match[1]] = (run_dir, json.loads(path.read_text(encoding="utf-8")) if path.exists() else None)
     return runs
 
 
@@ -60,10 +63,10 @@ def main(argv=None) -> int:
         _row(*["---"] * 7),
     ]
     for criterion, label in criteria:
-        if label not in runs:
-            lines.append(_row(criterion, label, "NOT RUN", None, None, None, None))
+        run_dir, run = runs.get(label, (None, None))
+        if run is None:
+            lines.append(_row(criterion, label, "NOT RUN", None, None, None, run_dir and run_dir.as_posix()))
             continue
-        run_dir, run = runs[label]
         status = "PASS" if run["exit_code"] == 0 else "FAIL"
         lines.append(_row(criterion, label, status, run["exit_code"], " ".join(run["command"]),
                           run.get("started_utc"), run_dir.as_posix()))
@@ -71,8 +74,8 @@ def main(argv=None) -> int:
     lines += ["", "## Provenance", "", _row("Label", "Python", "Platform", "Git revision", *PACKAGES),
               _row(*["---"] * (4 + len(PACKAGES)))]
     for label in dict.fromkeys(label for _, label in criteria):
-        if label in runs:
-            run = runs[label][1]
+        run = runs.get(label, (None, None))[1]
+        if run is not None:
             lines.append(_row(label, run.get("python"), run.get("platform"), run.get("git_rev"),
                               *(run["packages"].get(p) for p in PACKAGES)))
 
