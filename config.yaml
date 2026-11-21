@@ -198,6 +198,9 @@ world:
       attempt_seeds: [0, 1, 2]  # Three attempts per angle (the plan's minimum).
       duration_s: 10.0  # Long enough to reach the plateau at 0.5 m/s (slope foot 1 m, end at most 2.9 m ahead).
       vel_x: 0.6  # Constant forward command, m/s: the speed of Gate 1's middle condition and of the earlier proof.
+      # yaw_rate trims tried on flat ground; the one that turns least is used for the trimmed sweep. Small steps near 0:
+      # the first sweep (artifacts/env/20261121T212102-w3-incline-sweep) found -0.07 turned the dog about 180 degrees.
+      trim_candidates_rad_s: [0.0, -0.005, -0.01, -0.015, -0.02, -0.025, -0.03]
   # The hidden world (Go2World._hidden_effects). A preset's values are applied only for the effects switched on in
   # `enabled`; with all five off an episode is bit-identical to one without hidden effects. The ranges bound the
   # experiments (MISSION.md); presets are not range-checked, so a test can build a world outside them.
