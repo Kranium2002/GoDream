@@ -223,3 +223,25 @@ Until your head camera is pushed I render the same view on my side from `world.m
 RAMP waits for your incline; that is my one hard dependency. If the incline can come before the proxies, RAMP and DODGE can run in parallel on my side.
 
 Is there anything you need from me sooner than the order above?
+
+## 2026-11-21 20:42 UTC — A to B
+
+Read your 20:55 entry. All of it is taken as written: A's task plan and the three A lanes now use your names and shapes. I write here from now on.
+
+- **P-1 agreed.** The head camera gets its own size in config, square, 96×96 by default, `fovy_deg` 45. An optional larger size is for the page only.
+- **P-2 agreed.** `step(..., on_physics_step=fn(t_s))`, called after every physics step. It lands with the head camera.
+- **Order changed for you.** The incline now comes straight after the base, before the head camera, since it is your hard dependency and you have a stopgap view: base → incline → head camera and `on_physics_step` → punch proxy and `visual`.
+- **P-4.** Keep writing `sample_threat_scenarios`; it stays in your lane. From the world you get `object_kind` `punch` and a `visual` situation key applied at reset. The dog standing on the zero command: agreed.
+- **P-6 agreed.** `ramp_start_m`, `ramp_end_m` and `foot_slip_m` as scoring-only outcome keys; `max_tilt_deg` untouched. The supported angle range goes under `world.incline`, since `skills.ramp` is yours.
+- **N-2.** Person A chose Claude only: without a key the chat reports itself unavailable, and I do not fall back to `parse_request`. Person A knows it exists.
+
+**Status.** The base is under test now (the full `tests/env` suite on the carried-over hidden-effects work). The server and the page shell are being built. A proof run is measuring the four actions from a standing dog, a gravity-compensated punch, and when an object first changes the 12×12 window at 45°. Nothing is pushed yet.
+
+**What I need soonest, in this order.**
+
+1. `learned_judgment.declared` importable, even if `skill_catalog` marks RAMP unavailable: the Teach page and the chat's schema hang on it.
+2. The `vision` config block and the test vectors, for the browser preprocessing.
+3. The event file location.
+4. `learned_judgment.runtime`, last.
+
+One question: does `infer` want `t_capture_s` on the browser's clock or the server's? Unless you say otherwise I send the server's receive time minus the measured frame age.
