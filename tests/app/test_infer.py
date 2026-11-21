@@ -1,6 +1,8 @@
 """Live inference (app/infer.py): the request checks, the frame age, the plumbing to Dev B's runtime and the rule that
 the camera-derived window never reaches a log line, an error message or a response. The runtime here is a stand-in
 written by the test to exercise this server's own code; it is no evidence that live inference works."""
+import copy
+import types
 import logging
 
 import numpy as np
@@ -9,6 +11,10 @@ import pytest
 from app import backend, infer
 from app.routes import Refusal
 from learned_judgment.env import load_config
+from tests.app.conftest import write_student
+
+RUNTIME_KEYS = {"action", "command", "threat_confidence", "best_action", "action_confidence", "margin", "gate",
+                "cooldown_remaining_s", "hold_remaining_s", "issued", "cooldown_conflict", "valid", "inference_ms"}
 
 WINDOW = {"frames": 2, "height": 3, "width": 3}  # a small window for these tests
 MARK = 0.123456789  # a value easy to find if it ever leaks
@@ -45,10 +51,54 @@ def test_image_window_is_null_without_a_vision_block(config):
 def test_inference_names_what_is_missing(config):
     run, reset, window, missing = backend.inference(config)
     if run is not None:
-        pytest.skip("Dev B's runtime and a frozen model are present here")
-    assert window == backend.image_window(config) and missing
-    text = " ".join(missing)
-    assert "learned_judgment.runtime" in text or "model_path" in text
+        pytest.skip("a frozen student is configured here")
+    assert window is None and missing
+    assert config["app"]["infer"]["student_dir"] or "app.infer.student_dir" in " ".join(missing)
+
+
+# ---- the adapter against Dev B's REAL DodgeRuntime, with a hand-built untrained student (tests/app/conftest.py) ----
+
+def with_student(config, directory):
+    own = copy.deepcopy(config)
+    own["app"]["infer"]["student_dir"] = str(directory)  # absolute
+    return own
+
+
+def test_the_adapter_loads_a_student_directory_and_returns_dev_bs_answer(config, tmp_path):
+    own = with_student(config, write_student(tmp_path / "student", config))
+    run, reset, window, missing = backend.inference(own)
+    assert missing == [] and window == {"frames": config["vision"]["frames"], "height": config["vision"]["frame_size"],
+                                        "width": config["vision"]["frame_size"]}
+    frames = np.zeros((window["frames"], window["height"], window["width"]), np.float32)
+    out = run(frames, 10.0)
+    assert set(out) >= RUNTIME_KEYS and out["valid"] is True
+    assert out["action"] == "NO_OP" and out["command"] == config["skills"]["dodge_vision"]["actions"]["NO_OP"]
+    run(frames, 9.0)  # earlier than the last call: Dev B's runtime would raise; the adapter holds time still
+    reset()
+    run(frames, 1.0)  # a new camera session may start its clock anywhere
+
+
+def test_a_student_without_frozen_thresholds_is_reported_missing(config, tmp_path):
+    own = with_student(config, write_student(tmp_path / "student", config, thresholds=None))
+    run, _, _, missing = backend.inference(own)
+    assert run is None and "thresholds" in " ".join(missing)
+
+
+def test_a_student_whose_window_differs_from_the_vision_block_is_reported_missing(config, tmp_path):
+    own = with_student(config, write_student(tmp_path / "student", config, frames=config["vision"]["frames"] - 1))
+    run, _, _, missing = backend.inference(own)
+    assert run is None and "vision" in " ".join(missing)
+
+
+def test_a_directory_without_a_student_is_reported_missing(config, tmp_path):
+    run, _, _, missing = backend.inference(with_student(config, tmp_path))
+    assert run is None and "student.json" in " ".join(missing)
+
+
+def test_actions_and_their_hold_come_from_config_unchanged(config):
+    dodge = config["skills"]["dodge_vision"]
+    assert backend.actions(config) == (dodge["actions"], dodge["hold_s"])
+    assert backend.actions({k: v for k, v in config.items() if k != "skills"}) == (None, None)
 
 
 # ---- the request ---------------------------------------------------------------------------------------------------
@@ -140,3 +190,55 @@ def test_the_infer_event_carries_the_action_and_confidences_only():
     result = StandIn().infer(np.zeros((2, 3, 3), np.float32), 0.0)
     assert infer.event(result) == {"action": "DODGE_LEFT", "threat_confidence": result["threat_confidence"],
                                    "action_confidence": 0.9}
+
+
+# ---- development thresholds ----------------------------------------------------------------------------------------
+
+DEV = {"threat": 0.9, "action": 0.6, "margin": 0.3}
+
+
+def test_frozen_thresholds_are_labelled_frozen(config, tmp_path):
+    run, _, window, missing = backend.inference(with_student(config, write_student(tmp_path / "s", config)))
+    out = run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)
+    assert missing == [] and out["thresholds"] == "frozen" and backend.thresholds_mode() == "frozen"
+
+
+def test_development_thresholds_are_used_only_when_configured_and_say_so(config, tmp_path, caplog):
+    own = with_student(config, write_student(tmp_path / "s", config, thresholds=None))
+    own["app"]["infer"]["dev_thresholds"] = DEV
+    with caplog.at_level(logging.WARNING):
+        run, _, window, missing = backend.inference(own)
+    out = run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)
+    assert missing == [] and out["thresholds"] == "development" and backend.thresholds_mode() == "development"
+    assert any("development" in r.getMessage() and "not calibrated" in r.getMessage() for r in caplog.records)
+
+
+def test_development_thresholds_never_override_frozen_ones(config, tmp_path):
+    own = with_student(config, write_student(tmp_path / "s", config))
+    own["app"]["infer"]["dev_thresholds"] = {"threat": 0.1, "action": 0.1, "margin": 0.0}
+    run, _, window, _ = backend.inference(own)
+    assert run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)["thresholds"] == \
+        "frozen"
+
+
+def test_the_committed_config_has_no_development_thresholds(config):
+    assert config["app"]["infer"]["dev_thresholds"] is None
+
+
+def test_a_calibrated_students_gate_result_is_passed_through(config, tmp_path):
+    import json
+    directory = write_student(tmp_path / "s", config)
+    student = json.loads((directory / "student.json").read_text())
+    student["calibration"] = {"gate_passed": False, "precision": 0.97}  # as Dev B's dodge_eval calibrate writes it
+    (directory / "student.json").write_text(json.dumps(student))
+    run, _, window, missing = backend.inference(with_student(config, directory))
+    out = run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)
+    assert missing == [] and out["gate_passed"] is False and backend.calibration_gate_passed() is False
+    assert "did not pass" in infer.infer_capability(types.SimpleNamespace(config=with_student(config, directory)))[
+        "reason"]
+
+
+def test_an_uncalibrated_student_has_no_gate_result(config, tmp_path):
+    run, _, window, _ = backend.inference(with_student(config, write_student(tmp_path / "s", config)))
+    out = run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)
+    assert "gate_passed" not in out and backend.calibration_gate_passed() is None

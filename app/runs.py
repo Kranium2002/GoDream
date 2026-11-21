@@ -1,6 +1,8 @@
 """Learning runs: GET /api/runs, GET /api/runs/{run_id}, POST /api/runs and the SSE `run` events.
 
-    GET  /api/runs           the run ids found in config.yaml observed.runs_dir (Dev B), sorted
+    GET  /api/runs           the run ids found in config.yaml observed.runs_dir (Dev B), sorted; ?summary=1 gives a
+                             card per run instead: {run_id, skill, state, updated_utc, steps_done, has_result,
+                             has_student}, state "unreadable" for a folder that cannot be read
     GET  /api/runs/{run_id}  {run_id, state, steps: [{step, state, done, total, data}], baseline, results, problems}
                              from <runs_dir>/<run_id>/events.jsonl and result.json, read as they are now
     POST /api/runs           {declared_spec, confirm_cost}: 202 {run_id}; without confirm_cost 409
@@ -12,7 +14,7 @@ passed through untouched everywhere: the page shows what Dev B sends. A bad line
 import json
 import logging
 import threading
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 import re
 
 from app import backend
@@ -111,6 +113,30 @@ def report(folder) -> dict:
             "results": results, "problems": problems}
 
 
+def summary(folder) -> dict:
+    """A skill card for a run folder, from its files only: {run_id, skill, state, updated_utc, steps_done, has_result,
+    has_student}. skill and updated_utc come from the newest event line, else from result.json, else null; a folder
+    whose files cannot be read is state "unreadable"."""
+    card = {"run_id": folder.name, "skill": None, "state": "unreadable", "updated_utc": None, "steps_done": 0,
+            "has_result": False, "has_student": False}
+    try:
+        events_file, result_file = folder / EVENTS, folder / RESULT
+        events, _, _ = parse_lines(events_file.read_bytes() if events_file.exists() else b"")
+        try:
+            result = json.loads(result_file.read_bytes().decode("utf-8")) if result_file.exists() else None
+        except ValueError:
+            result = None
+        has_student = (folder / "student" / "student.json").is_file()
+    except OSError:
+        return card
+    fallback = result if isinstance(result, dict) else {}
+    newest = events[-1] if events else {}
+    return card | {"skill": newest.get("skill", fallback.get("skill")), "state": run_state(events),
+                   "updated_utc": newest.get("time_utc", fallback.get("updated_utc")),
+                   "steps_done": sum(1 for s in summarize(events) if s["state"] == "done"),
+                   "has_result": result is not None, "has_student": has_student}
+
+
 def scan(root, offsets: dict, emit, first: bool = False) -> None:
     """Hand emit each new complete line of every <root>/<run_id>/events.jsonl, keeping each file's read position in
     offsets. On the first scan what is already there is history and is skipped; a file seen later is read from its
@@ -199,7 +225,8 @@ def _root(h):
 def list_runs(h) -> None:
     root = _root(h)
     found = sorted(p.name for p in root.iterdir() if p.is_dir() and RUN_ID.fullmatch(p.name)) if root.is_dir() else []
-    h.send_json(200, found)
+    wants_summary = parse_qs(urlsplit(h.path).query).get("summary", ["0"])[-1] == "1"
+    h.send_json(200, [summary(root / name) for name in found] if wants_summary else found)
 
 
 @route("GET", "/api/runs/*")

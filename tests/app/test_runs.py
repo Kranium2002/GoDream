@@ -199,3 +199,67 @@ def test_an_invalid_declaration_is_refused_with_its_problems(config):
 def test_the_runner_is_reported_missing_until_dev_b_publishes_it(config):
     runner, missing = backend.runner(config)
     assert runner is None and any("entry point" in m for m in missing)
+
+
+# ---- run summaries (the skill cards) -------------------------------------------------------------------------------
+
+def test_a_summary_is_built_from_the_run_files(tmp_path):
+    folder = tmp_path / "r1"
+    (folder / "student").mkdir(parents=True)
+    (folder / runs.EVENTS).write_bytes(line("baseline", "done", 4, 4) + line("attempts", "done", 9, 9)
+                                       + line("teacher_fit", "running", time_utc="2026-11-21T22:00:00Z"))
+    (folder / runs.RESULT).write_text(json.dumps({"skill": "RAMP"}))
+    (folder / "student" / "student.json").write_text("{}")
+    assert runs.summary(folder) == {"run_id": "r1", "skill": "RAMP", "state": "running",
+                                    "updated_utc": "2026-11-21T22:00:00Z", "steps_done": 2, "has_result": True,
+                                    "has_student": True}
+
+
+def test_a_summary_of_a_bare_folder_invents_nothing(tmp_path):
+    (tmp_path / "r2").mkdir()
+    assert runs.summary(tmp_path / "r2") == {"run_id": "r2", "skill": None, "state": "starting", "updated_utc": None,
+                                             "steps_done": 0, "has_result": False, "has_student": False}
+
+
+def test_a_summary_with_a_broken_result_says_it_has_none(tmp_path):
+    folder = tmp_path / "r3"
+    folder.mkdir()
+    (folder / runs.RESULT).write_text("{broken")
+    assert runs.summary(folder)["has_result"] is False
+
+
+def test_a_run_folder_that_cannot_be_read_is_listed_as_unreadable(tmp_path):
+    folder = tmp_path / "r4"
+    (folder / runs.EVENTS).mkdir(parents=True)  # a directory where the event file should be: reading it fails
+    assert runs.summary(folder) == {"run_id": "r4", "skill": None, "state": "unreadable", "updated_utc": None,
+                                    "steps_done": 0, "has_result": False, "has_student": False}
+
+
+def test_dev_bs_v0_run_summarises_from_its_real_files(config):
+    root, _ = backend.runs_dir(config)
+    if not (root / "v0").is_dir():
+        pytest.skip("Dev B's v0 run is not in this tree")
+    card = runs.summary(root / "v0")  # Dev B's real run files, read as they are
+    assert card["run_id"] == "v0" and card["skill"] == "dodge_vision" and card["has_student"] is True
+    assert card["has_result"] is True and card["state"] != "unreadable"
+
+
+# ---- Dev B's entry point (learned_judgment.run_skill, agreed 21:48 UTC) -------------------------------------------
+
+def test_the_runner_names_learned_judgment_run_skill_until_it_imports(config):
+    import importlib.util
+    if importlib.util.find_spec("learned_judgment.run_skill") is not None:
+        pytest.skip("Dev B's run_skill is present")
+    runner, missing = backend.runner(config)
+    assert runner is None and any("learned_judgment.run_skill" in m for m in missing)
+
+
+def test_the_runner_calls_quote_run_and_start_run_once_the_module_imports(config, monkeypatch):
+    calls = []
+    stand_in = types.SimpleNamespace(  # Dev B's module, for this plumbing test only
+        quote_run=lambda d, c: calls.append(("quote", d)) or {"estimated_cost_usd": 0.5},
+        start_run=lambda d, c: calls.append(("start", d)) or "r7")
+    monkeypatch.setitem(__import__("sys").modules, "learned_judgment.run_skill", stand_in)
+    runner, missing = backend.runner(config)
+    assert missing == [] and runner.quote(DECLARATION, config) == {"estimated_cost_usd": 0.5}
+    assert runner.start(DECLARATION, config) == "r7" and calls == [("quote", DECLARATION), ("start", DECLARATION)]

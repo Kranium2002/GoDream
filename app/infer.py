@@ -2,7 +2,8 @@
 
     POST /api/infer  {window: [frames x height x width numbers in 0..1, oldest frame first], frames, captured_ms,
                      session_start?} -> Dev B's infer() result unchanged, plus latency_ms (measured here, request in to
-                     answer out), frame_age_ms and frame_age_clamped; 503 infer_unavailable naming what is missing
+                     answer out), frame_age_ms, frame_age_clamped, thresholds ("frozen" or "development") and,
+                     for a calibrated student, gate_passed; 503 infer_unavailable naming what is missing
 
 captured_ms is the browser's wall-clock time of the newest frame, in epoch milliseconds. Its age is this server's
 wall-clock receive time minus captured_ms; an age outside 0..app.infer.max_frame_age_ms is clock skew, taken as 0 and
@@ -80,7 +81,13 @@ def event(result: dict) -> dict:
 @capability("infer")
 def infer_capability(server) -> dict:
     missing = backend.inference(server.config)[3]
-    return {"available": not missing, "reason": f"Live inference needs {'; and '.join(missing)}." if missing else ""}
+    if missing:
+        return {"available": False, "reason": f"Live inference needs {'; and '.join(missing)}."}
+    notes = [backend.DEV_THRESHOLDS] if backend.thresholds_mode() == "development" else []
+    gate = backend.calibration_gate_passed()
+    if gate is not None:
+        notes.append(f"The student's calibration {'passed' if gate else 'did not pass'} its precision gate.")
+    return {"available": True, "reason": " ".join(notes)}
 
 
 @route("POST", "/api/infer")

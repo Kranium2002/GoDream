@@ -19,6 +19,7 @@ import pytest
 
 from app import backend
 from app.server import STATIC, start, stop
+from tests.app.conftest import write_student
 from learned_judgment.env import load_config
 
 FORWARD = {"vel_x": 0.6, "vel_y": 0.0, "yaw_rate": 0.0}  # the Gate 1 trot speed
@@ -155,6 +156,8 @@ def test_state_describes_the_controls_from_config(server, config):
                               "height": config["world"]["render"]["height"],
                               "stream_fps": config["app"]["stream_fps"]}
     assert {"skills", "image_window", "actions"} <= set(state)
+    dodge = config["skills"]["dodge_vision"]
+    assert state["actions"] == dodge["actions"] and state["action_hold_s"] == dodge["hold_s"]  # unchanged
 
 
 def test_state_names_every_capability_and_why_it_is_unavailable(server):
@@ -298,7 +301,8 @@ def test_static_files_come_only_from_the_static_directory(server):
             assert conn.getresponse().status == expected, path
 
 
-@pytest.mark.parametrize("key, value", [("stream_fps", 15), ("observation_hz", 7), ("host", "0.0.0.0")])
+@pytest.mark.parametrize("key, value", [("stream_fps", 15), ("observation_hz", 7), ("pose_hz", 30),
+                                        ("host", "0.0.0.0")])
 def test_server_refuses_to_start_with_an_unusable_app_setting(config, key, value):
     bad = copy.deepcopy(config)
     bad["app"][key] = value
@@ -316,6 +320,8 @@ def own_server(config, tmp_path_factory):
     presets["unknown_floor"] = presets["default"] | {"floor_type": "no_such_floor"}
     presets["slow_commands"] = presets["default"] | {"command_latency_s": 1.0}
     own["observed"]["runs_dir"] = str(tmp_path_factory.mktemp("runs"))  # absolute: its own, empty runs directory
+    # Dev B's real DodgeRuntime loads this hand-built, untrained student (tests/app/conftest.py): plumbing, not a model
+    own["app"]["infer"]["student_dir"] = str(write_student(tmp_path_factory.mktemp("student"), own))
     server = start(own, 0)
     yield server
     stop(server)  # again after the shutdown test: stop is idempotent
@@ -352,9 +358,40 @@ def test_new_run_lines_are_relayed_as_events_and_the_run_can_be_read(own_server)
         (root / "r_test" / "events.jsonl").write_text(json.dumps(line) + "\n")
         assert next(data for name, data in events if name == "run") == line
     assert request(own_server, "GET", "/api/runs") == (200, ["r_test"])
+    assert request(own_server, "GET", "/api/runs?summary=1") == (200, [{
+        "run_id": "r_test", "skill": "RAMP", "state": "running", "updated_utc": "2026-11-21T22:00:00Z",
+        "steps_done": 1, "has_result": False, "has_student": False}])
     status, run = request(own_server, "GET", "/api/runs/r_test")
     assert status == 200 and run["state"] == "running" and run["baseline"] == {"anything": [1, 2]}
     assert run["steps"] == [{k: line[k] for k in ("step", "state", "done", "total", "data")}]
+
+
+def test_infer_runs_end_to_end_through_dev_bs_real_runtime(own_server):
+    """POST /api/infer through Dev B's real DodgeRuntime and gate, with the hand-built student that always answers
+    NO_OP: the request checks, the call shape, the answer and the command reaching the stage. No evidence of dodging."""
+    window = backend.image_window(own_server.config)
+    n = window["frames"] * window["height"] * window["width"]
+    zero = own_server.config["skills"]["dodge_vision"]["actions"]["NO_OP"]
+    with event_stream(own_server) as events:
+        assert request(own_server, "POST", "/api/reset", {"preset": "default"})[0] == 200
+        next_episode_event(events, "start")
+        assert request(own_server, "POST", "/api/drive", FORWARD)[0] == 200
+        before = observe(events, until_s=0.5)[-1]["t_s"]
+        body = {"window": [0.5] * n, "frames": window["frames"], "captured_ms": time.time() * 1000.0,
+                "session_start": True}
+        status, answer = request(own_server, "POST", "/api/infer", body)
+        assert status == 200, answer
+        assert {"action", "command", "threat_confidence", "best_action", "action_confidence", "margin", "gate",
+                "cooldown_remaining_s", "hold_remaining_s", "issued", "cooldown_conflict", "valid", "inference_ms",
+                "latency_ms", "frame_age_ms", "frame_age_clamped"} <= set(answer)
+        assert answer["action"] == "NO_OP" and answer["valid"] is True and answer["command"] == zero
+        assert answer["thresholds"] == "frozen"  # the hand-built student has frozen thresholds
+        assert next(data for name, data in events if name == "infer")["action"] == "NO_OP"
+        assert observe(events, until_s=before + 0.5)[-1]["command"] == zero  # replaced the trot on the stage
+    later = body | {"captured_ms": body["captured_ms"] - 5000.0, "session_start": False}  # skewed: clamped, no error
+    status, answer = request(own_server, "POST", "/api/infer", later)
+    assert status == 200 and answer["frame_age_clamped"] is True
+    assert request(own_server, "GET", "/api/state")[1]["capabilities"]["infer"] == {"available": True, "reason": ""}
 
 
 def test_shutdown_ends_open_streams_and_frees_the_port(own_server):
@@ -476,3 +513,43 @@ def test_a_failing_inference_leaks_the_window_nowhere(server, monkeypatch, caplo
     no_leak(json.dumps(body) + json.dumps(bad))
     no_leak(" ".join(r.getMessage() for r in caplog.records))
     assert all(r.exc_info is None for r in caplog.records if r.name.startswith("app"))
+
+
+# ---- the 3D view: robot description and body poses ----------------------------------------------------------------
+
+def test_robot_describes_the_stage_model_and_is_built_once_per_world(server):
+    status, described = request(server, "GET", "/api/robot")
+    assert status == 200 and described["up"] == "z" and described["units"] == "m"
+    model = server.sim.described
+    assert len(described["bodies"]) == model.nbody and described["meshes"]
+    assert all(g["group"] == 2 for g in described["geoms"] if g["type"] == "mesh")
+    assert {g["type"] for g in described["geoms"]} >= {"mesh", "plane"}
+    assert request(server, "GET", "/api/robot")[1] == described  # the same text, not rebuilt per request
+
+
+def test_pose_events_move_every_body_at_the_configured_rate(server, config):
+    nbody = len(request(server, "GET", "/api/robot")[1]["bodies"])
+    with event_stream(server) as events:
+        fresh_episode(server, events)
+        poses = []
+        for name, data in events:
+            if name == "pose":
+                poses.append(data)
+                if data["t_s"] >= 1.0:
+                    break
+    assert all(len(p["pos"]) == len(p["quat"]) == nbody for p in poses)
+    steps = np.diff([p["t_s"] for p in poses])
+    assert np.isclose(steps.min(), 1 / config["app"]["pose_hz"])  # newest-only may skip some, never closer
+    assert poses[-1]["pos"] != poses[0]["pos"]  # the bodies move (the dog settles and breathes)
+
+
+def test_a_rebuilt_world_tells_the_page_to_fetch_the_robot_again(server):
+    version = request(server, "GET", "/api/robot")[1]["version"]
+    with event_stream(server) as events:
+        assert request(server, "POST", "/api/reset", {"preset": "heavy_payload"}) == (200, {"preset": "heavy_payload"})
+        signal = next(data for name, data in events if name == "robot")
+        assert signal == {"reason": "world_rebuilt", "version": version + 1}
+        pose = next(data for name, data in events if name == "pose")
+        assert pose["version"] == version + 1
+    assert request(server, "GET", "/api/robot")[1]["version"] == version + 1
+    request(server, "POST", "/api/reset", {"preset": "default"})

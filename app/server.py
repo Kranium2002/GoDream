@@ -16,6 +16,7 @@ Serves on config.yaml app.host and app.port (--port 0 picks a free port) until C
     POST /api/reset    optional {preset}: a fresh episode, on a new world if the preset differs
     GET  /api/skills, POST /api/chat   the skill catalogue and the chat (app/chat.py)
     GET  /api/runs, GET /api/runs/{run_id}, POST /api/runs   learning runs (app/runs.py)
+    GET  /api/robot    the stage's bodies, geoms and meshes for the 3D view; SSE pose and robot (app/robot.py)
     POST /api/infer    live inference from the browser's image window (app/infer.py)
     GET  /             and other static files, from app/static only
 Every refusal or error is {code, message}: a stable code and one plain sentence; the detail goes to the log on stderr.
@@ -35,6 +36,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 import app.chat  # noqa: F401  registers GET /api/skills, POST /api/chat and the chat capability
 import app.infer  # noqa: F401  registers POST /api/infer and the infer capability
+import app.robot  # noqa: F401  registers GET /api/robot
 import app.runs  # noqa: F401  registers the run routes and the runs and results capabilities
 from app import backend
 from app.routes import CAPABILITIES, Refusal, capability, find, route, to_json
@@ -92,8 +94,12 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(500, {"code": "internal_error",
                                  "message": "Something went wrong in the server; its log has the details."})
 
-    def send_json(self, status: int, body: dict) -> None:
-        data = to_json(body).encode()
+    def send_json(self, status: int, body) -> None:
+        self.send_json_text(status, to_json(body))
+
+    def send_json_text(self, status: int, text: str) -> None:
+        """An answer already encoded as JSON text (GET /api/robot's, built once per world)."""
+        data = text.encode()
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(data)))
@@ -161,6 +167,7 @@ def drive_capability(server: Server) -> dict:
 def state(h: Handler) -> None:
     config, sim = h.server.config, h.server.sim
     render = config["world"]["render"]
+    actions, hold_s = backend.actions(config)
     h.send_json(200, {
         "commands": {name: {"unit": f["unit"], "min": f["min"], "max": f["max"]}
                      for name, f in sim.schema["fields"].items()},
@@ -170,7 +177,8 @@ def state(h: Handler) -> None:
         "capabilities": capabilities(h.server),
         "skills": backend.skill_catalog(config),
         "image_window": backend.image_window(config),  # null until config.yaml has Dev B's vision block
-        "actions": None,  # Dev B has not published the four actions' command values
+        "actions": actions,  # {name: command} of skills.dodge_vision, unchanged
+        "action_hold_s": hold_s,  # how long an emitted action's command is held (skills.dodge_vision.hold_s)
     })
 
 
