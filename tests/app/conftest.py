@@ -8,11 +8,39 @@ answers is no evidence that anything dodges.
 import json
 
 import numpy as np
+import pytest
 
+import learned_judgment.run_skill as run_skill
 from learned_judgment.runtime import ENCODING, STUDENT_FORMAT
 from learned_judgment.students.snn_core import SpikingNetwork, save_network
 
 THRESHOLDS = {"threat": 0.9, "action": 0.6, "margin": 0.3}
+
+
+@pytest.fixture(autouse=True)
+def no_real_runs(monkeypatch):
+    """No server test may start or stop a real learning run: Dev B's start_run spawns a detached simulator chain and,
+    with confirm_billing, bills hosted TabPFN; stop_run kills a process tree. Route tests use a stand-in runner."""
+    def refuse(*args, **kwargs):
+        raise AssertionError("a test reached Dev B's real start_run or stop_run")
+
+    monkeypatch.setattr(run_skill, "start_run", refuse)
+    monkeypatch.setattr(run_skill, "stop_run", refuse)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def no_new_run_folders():
+    """Fails the session if any test made a folder in the real runs directory (observed.runs_dir): a real run."""
+    from app import backend
+    from learned_judgment.env import load_config
+    root, _ = backend.runs_dir(load_config())
+
+    def folders():
+        return {p.name for p in root.iterdir() if p.is_dir()} if root and root.is_dir() else set()
+
+    before = folders()
+    yield
+    assert folders() - before == set(), "a test created a run folder in the real runs directory"
 
 
 def write_student(directory, config, frames=None, thresholds=THRESHOLDS):

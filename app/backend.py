@@ -55,10 +55,11 @@ RUN_SKILL = "learned_judgment.run_skill"
 def runner(config: dict):
     """(runner, []) once Dev B's learned_judgment.run_skill imports, else (None, [what is missing]).
 
-    Agreed with Dev B (21:48 UTC): quote_run(declaration, config) -> dict, the TabPFN usage and cost a run would spend,
-    shown to the person before anything is spent; start_run(declaration, config) -> run_id, which returns at once and
-    reports progress in <observed.runs_dir>/<run_id>/events.jsonl, so a run never holds up the simulation thread or the
-    HTTP server. The runner returned here has them as quote and start.
+    Dev B's contract is run_skill's module docstring: plan_run(declaration, config) (DeclarationError with .problems
+    when invalid; the chain and what is only recorded), quote_run(declaration, config) (no network, nothing billed),
+    start_run(declaration, config, confirm_billing=...) (starts ONE detached worker process and returns at once, so a
+    run never holds up the simulation thread or the HTTP server), run_status(run_id, config) and stop_run(run_id,
+    config). The runner returned here has them as plan, quote, start, status and stop, plus DeclarationError.
     """
     try:
         module = importlib.import_module(RUN_SKILL)
@@ -67,21 +68,30 @@ def runner(config: dict):
             return None, [f"{RUN_SKILL} (Dev B's learning-run entry point, not pushed yet)"]
         log.warning("%s does not import: %s", RUN_SKILL, e)
         return None, [f"{RUN_SKILL} (Dev B's learning-run entry point) does not import: it needs {e.name}"]
-    absent = [name for name in ("quote_run", "start_run") if not callable(getattr(module, name, None))]
-    if absent:
-        return None, [f"{RUN_SKILL}.{name} (Dev B)" for name in absent]
-    return types.SimpleNamespace(quote=module.quote_run, start=module.start_run), []
+    absent = [name for name in ("plan_run", "quote_run", "start_run", "run_status", "stop_run")
+              if not callable(getattr(module, name, None))]
+    if absent or not hasattr(module, "DeclarationError"):
+        return None, [f"{RUN_SKILL}.{name} (Dev B)" for name in absent or ["DeclarationError"]]
+    return types.SimpleNamespace(plan=module.plan_run, quote=module.quote_run, start=module.start_run,
+                                 status=module.run_status, stop=module.stop_run,
+                                 DeclarationError=module.DeclarationError), []
 
 
 def image_window(config: dict):
     """The image-window contract for the browser, from config.yaml vision (Dev B), in the encoding agreed with the
-    front lane; None without a vision block."""
+    front lane; None without a vision block. window_encoding and diff_floor say what the student reads from the raw
+    frames the browser sends: the loaded student's (student.json input) once one is loaded for this config, else
+    vision.encoding and vision.diff_floor."""
     v = config.get("vision")
     if not v:
         return None
+    directory = config["app"]["infer"]["student_dir"]
+    student = _loaded if directory and _loaded.get("key", (None,))[0] == directory else None
     return {"frames": v["frames"], "height": v["frame_size"], "width": v["frame_size"], "hz": v["frame_rate_hz"],
             "order": "oldest_first", "normalization": v["pixel_scale"], "crop": "centre_square",
-            "luma": v["luma_weights"], "mirrored": False}
+            "luma": v["luma_weights"], "mirrored": False,
+            "window_encoding": student["window_encoding"] if student else v.get("encoding", "raw"),
+            "diff_floor": student["diff_floor"] if student else v.get("diff_floor")}
 
 
 def actions(config: dict):
@@ -161,9 +171,11 @@ def inference(config: dict):
             if (model.frames, model.frame_size) != (published["frames"], published["height"]):
                 return None, None, None, [f"a student whose window ({model.frames} frames of {model.frame_size} x "
                                           f"{model.frame_size}) matches config.yaml vision"]
-            calibration = json.loads((ROOT / directory / "student.json").read_text(encoding="utf-8")).get("calibration")
+            student = json.loads((ROOT / directory / "student.json").read_text(encoding="utf-8"))
+            calibration, spec = student.get("calibration"), student.get("input") or {}
             gate_passed = calibration.get("gate_passed") if isinstance(calibration, dict) else None
             _loaded.update(key=(directory, repr(dev)), model=model, thresholds=mode, last_t=-math.inf,
+                           window_encoding=spec.get("window_encoding", "raw"), diff_floor=spec.get("diff_floor"),
                            gate_passed=gate_passed if isinstance(gate_passed, bool) else None,
                            window={"frames": model.frames, "height": model.frame_size, "width": model.frame_size})
         model, window, mode = _loaded["model"], _loaded["window"], _loaded["thresholds"]
@@ -180,6 +192,14 @@ def inference(config: dict):
             _loaded["last_t"] = -math.inf
 
     return run, reset, window, []
+
+
+def skill_names(config: dict) -> dict:
+    """{spec name: catalogue skill name} from Dev B's catalogue (e.g. "dodge_vision": "DODGE"): how a run's skill,
+    which is its spec, is shown. A spec two skills share is left out rather than guessed."""
+    pairs = [(e.get("spec"), e["skill"]) for e in skill_catalog(config) if e.get("spec")]
+    specs = [spec for spec, _ in pairs]
+    return {spec: name for spec, name in pairs if specs.count(spec) == 1}
 
 
 def skill_catalog(config: dict) -> list:

@@ -7,9 +7,15 @@
                              problems}
     GET  /api/runs/{run_id}/events  every complete, valid line of the run's events.jsonl in file order, unchanged
                              from <runs_dir>/<run_id>/events.jsonl and result.json, read as they are now
-    POST /api/runs           {declared_spec, confirm_cost}: 202 {run_id}; without confirm_cost 409
-                             cost_confirmation_required with the quote's fields flat in the body; 503 runs_unavailable
-                             naming what is missing until Dev B's runner is wired in app/backend.py
+    GET  /api/runs/{run_id} also carries status: Dev B's run_status (state, step, alive, reason, history, ...) for a
+                             run started through run_skill, null for a run recorded without run_status.json
+    POST /api/runs           {declared_spec, confirm_cost}: 202 with what run_skill.start_run returns ({run_id, pid,
+                             ...}); 422 invalid_declaration with Dev B's problems; 409 run_in_progress {run_id} while
+                             another run's worker is alive; without confirm_cost true 409 cost_confirmation_required
+                             with quote_run's fields flat plus plan_run's recorded_only; 503 runs_unavailable naming
+                             what is missing while learned_judgment.run_skill does not import
+    POST /api/runs/{run_id}/stop  run_skill.stop_run's answer (the run's status); 409 run_not_started_here for a run
+                             recorded without run_status.json
 Each new complete line of any run's events.jsonl is relayed as an SSE `run` event, unchanged. Dev B's `data` is
 passed through untouched everywhere: the page shows what Dev B sends. A bad line is reported and skipped, never fatal.
 """
@@ -122,12 +128,13 @@ def report(folder) -> dict:
             "results": results, "problems": problems}
 
 
-def summary(folder) -> dict:
-    """A skill card for a run folder, from its files only: {run_id, skill, state, updated_utc, steps_done, has_result,
-    has_student}. skill and updated_utc come from the newest event line, else from result.json, else null; a folder
-    whose files cannot be read is state "unreadable"."""
-    card = {"run_id": folder.name, "skill": None, "state": "unreadable", "updated_utc": None, "steps_done": 0,
-            "has_result": False, "has_student": False}
+def summary(folder, names: dict | None = None) -> dict:
+    """A skill card for a run folder, from its files only: {run_id, skill, display_name, state, updated_utc,
+    steps_done, has_result, has_student}. skill and updated_utc come from the newest event line, else from
+    result.json, else null; display_name is names[skill] (backend.skill_names: the catalogue's name of that spec), else
+    null; a folder whose files cannot be read is state "unreadable"."""
+    card = {"run_id": folder.name, "skill": None, "display_name": None, "state": "unreadable", "updated_utc": None,
+            "steps_done": 0, "has_result": False, "has_student": False}
     try:
         events_file, result_file = folder / EVENTS, folder / RESULT
         events, _, _ = parse_lines(events_file.read_bytes() if events_file.exists() else b"")
@@ -140,7 +147,8 @@ def summary(folder) -> dict:
         return card
     fallback = result if isinstance(result, dict) else {}
     newest = events[-1] if events else {}
-    return card | {"skill": newest.get("skill", fallback.get("skill")), "state": run_state(events),
+    skill = newest.get("skill", fallback.get("skill"))
+    return card | {"skill": skill, "display_name": (names or {}).get(skill), "state": run_state(events),
                    "updated_utc": newest.get("time_utc", fallback.get("updated_utc")),
                    "steps_done": sum(1 for s in summarize(events) if s["state"] == "done"),
                    "has_result": result is not None, "has_student": has_student}
@@ -188,23 +196,52 @@ def watch(server) -> None:
     threading.Thread(target=loop, name="runs", daemon=True).start()
 
 
-def start_run(body: dict, config: dict, runner, declared) -> str:
-    """Check a run request and start it through Dev B's runner; the run id. Refusal 400 for a malformed request or a
-    declaration with problems, 409 until the quoted cost is confirmed."""
+STATUS = "run_status.json"  # written by Dev B's run_skill worker for runs it started; recorded runs may have none
+
+
+def run_status(folder, runner, config: dict):
+    """Dev B's run_status(run_id, config) for a run started through run_skill, None for a run recorded without
+    run_status.json."""
+    return runner.status(folder.name, config) if (folder / STATUS).is_file() else None
+
+
+def running_run(root, runner, config: dict):
+    """The id of a run whose status is running and whose worker is alive, or None (one run at a time here)."""
+    for folder in sorted(root.iterdir()) if root.is_dir() else []:
+        if RUN_ID.fullmatch(folder.name) and (folder / STATUS).is_file():
+            try:
+                status = runner.status(folder.name, config)
+            except (ValueError, OSError):  # a status file being written; it does not block a new run
+                continue
+            if status.get("state") == "running" and status.get("alive"):
+                return folder.name
+    return None
+
+
+def start_run(body: dict, config: dict, runner, root) -> dict:
+    """Check a run request and start it through Dev B's runner; what start_run returns (at least run_id).
+    Refusal 400 for a malformed request, 422 with Dev B's problems for an invalid declaration, 409 run_in_progress
+    while another run is running, 409 cost_confirmation_required with the quote (flat) and what is only recorded until
+    the cost is confirmed. Billing is confirmed only by confirm_cost true."""
     if not (set(body) <= {"declared_spec", "confirm_cost"} and isinstance(body.get("declared_spec"), dict)
             and isinstance(body.get("confirm_cost", False), bool)):
         raise Refusal(400, "invalid_body", "A run request is a declared_spec from the chat and confirm_cost, true or "
                                            "false.")
     declaration = body["declared_spec"]
-    problems = list(declared.check_declaration(declaration, config))
-    if problems:
-        raise Refusal(400, "invalid_declaration", "The declaration does not pass its checks; problems lists them.",
-                      {"problems": problems})
-    quote = runner.quote(declaration, config)
-    if not body.get("confirm_cost"):
-        raise Refusal(409, "cost_confirmation_required", "This run spends hosted TabPFN usage; confirm the quoted "
-                                                         "cost to start it.", quote)
-    return runner.start(declaration, config)
+    try:
+        plan = runner.plan(declaration, config)
+    except runner.DeclarationError as e:
+        raise Refusal(422, "invalid_declaration", "The declaration does not pass its checks; problems lists them.",
+                      {"problems": list(e.problems)}) from None
+    busy = running_run(root, runner, config)
+    if busy:
+        raise Refusal(409, "run_in_progress", "Another learning run is still running; stop it or wait for it to end.",
+                      {"run_id": busy})
+    if body.get("confirm_cost") is not True:
+        raise Refusal(409, "cost_confirmation_required", "This run spends simulator time and hosted TabPFN usage; "
+                                                         "confirm the quoted cost to start it.",
+                      {**runner.quote(declaration, config), "recorded_only": plan["recorded_only"]})
+    return runner.start(declaration, config, confirm_billing=True)
 
 
 def _needs(what: str, missing: list) -> str:
@@ -235,7 +272,8 @@ def list_runs(h) -> None:
     root = _root(h)
     found = sorted(p.name for p in root.iterdir() if p.is_dir() and RUN_ID.fullmatch(p.name)) if root.is_dir() else []
     wants_summary = parse_qs(urlsplit(h.path).query).get("summary", ["0"])[-1] == "1"
-    h.send_json(200, [summary(root / name) for name in found] if wants_summary else found)
+    names = backend.skill_names(h.server.config) if wants_summary else {}
+    h.send_json(200, [summary(root / name, names) for name in found] if wants_summary else found)
 
 
 def _run_folder(h):
@@ -249,7 +287,29 @@ def _run_folder(h):
 
 @route("GET", "/api/runs/*")
 def get_run(h) -> None:
-    h.send_json(200, report(_run_folder(h)))
+    folder = _run_folder(h)
+    answer = report(folder)
+    runner, _ = backend.runner(h.server.config)
+    try:
+        answer["status"] = run_status(folder, runner, h.server.config) if runner else None
+    except (ValueError, OSError) as e:  # a status file being rewritten, or not JSON
+        log.warning("Run %s: its run status cannot be read (%s)", folder.name, type(e).__name__)
+        answer["status"] = None
+        answer["problems"].append({"offset": None, "code": "unreadable_status",
+                                   "message": "The run's status file cannot be read now."})
+    h.send_json(200, answer)
+
+
+@route("POST", "/api/runs/*/stop")
+def stop_a_run(h) -> None:
+    runner, missing = backend.runner(h.server.config)
+    if missing:
+        raise Refusal(503, "runs_unavailable", _needs("Learning runs", missing))
+    folder = _run_folder(h)
+    if not (folder / STATUS).is_file():
+        raise Refusal(409, "run_not_started_here", "That run was recorded without a run status, so there is no "
+                                                   "process to stop.")
+    h.send_json(200, runner.stop(folder.name, h.server.config))
 
 
 @route("GET", "/api/runs/*/events")
@@ -260,8 +320,7 @@ def get_run_events(h) -> None:
 @route("POST", "/api/runs")
 def post_run(h) -> None:
     runner, missing = backend.runner(h.server.config)
-    declared, declared_missing = backend.declared()
-    if missing or declared_missing:
-        raise Refusal(503, "runs_unavailable", _needs("Learning runs", missing + declared_missing))
-    run_id = start_run(h.read_body(), h.server.config, runner, declared)
-    h.send_json(202, {"run_id": run_id})
+    missing = missing + backend.declared()[1]
+    if missing:
+        raise Refusal(503, "runs_unavailable", _needs("Learning runs", missing))
+    h.send_json(202, start_run(h.read_body(), h.server.config, runner, _root(h)))

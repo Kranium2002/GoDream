@@ -41,7 +41,8 @@ def test_image_window_is_published_from_the_vision_block_in_the_agreed_encoding(
     assert backend.image_window(config) == {
         "frames": v["frames"], "height": v["frame_size"], "width": v["frame_size"], "hz": v["frame_rate_hz"],
         "order": "oldest_first", "normalization": v["pixel_scale"], "crop": "centre_square",
-        "luma": v["luma_weights"], "mirrored": False}
+        "luma": v["luma_weights"], "mirrored": False,
+        "window_encoding": v["encoding"], "diff_floor": v["diff_floor"]}  # no student loaded for this config
 
 
 def test_image_window_is_null_without_a_vision_block(config):
@@ -242,3 +243,11 @@ def test_an_uncalibrated_student_has_no_gate_result(config, tmp_path):
     run, _, window, _ = backend.inference(with_student(config, write_student(tmp_path / "s", config)))
     out = run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)
     assert "gate_passed" not in out and backend.calibration_gate_passed() is None
+
+
+def test_image_window_shows_what_the_loaded_student_reads(config, tmp_path):
+    own = with_student(config, write_student(tmp_path / "s", config))  # input without window_encoding: raw
+    assert backend.inference(own)[3] == []
+    shown = backend.image_window(own)
+    assert shown["window_encoding"] == "raw" and shown["diff_floor"] is None
+    assert backend.image_window(config)["window_encoding"] == config["vision"]["encoding"]  # another config: vision's

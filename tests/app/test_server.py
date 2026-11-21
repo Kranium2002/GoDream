@@ -169,8 +169,9 @@ def test_state_names_every_capability_and_why_it_is_unavailable(server):
         if not capability["available"]:  # one sentence; it may name a module or a file, so dots are allowed
             assert capability["reason"].endswith(".") and "Traceback" not in capability["reason"], name
     assert capabilities["drive"]["available"]
-    for name in ["head_camera", "scenarios", "runs"]:  # not built in this server yet, or no Dev B runner
+    for name in ["head_camera", "scenarios"]:  # not built in this server yet
         assert not capabilities[name]["available"], name
+    assert capabilities["runs"]["available"] == (backend.runner(server.config)[0] is not None)
     assert capabilities["results"]["available"] == (backend.runs_dir(server.config)[0] is not None)
     assert capabilities["infer"]["available"] == (backend.inference(server.config)[0] is not None)
 
@@ -359,7 +360,8 @@ def test_new_run_lines_are_relayed_as_events_and_the_run_can_be_read(own_server)
         assert next(data for name, data in events if name == "run") == line
     assert request(own_server, "GET", "/api/runs") == (200, ["r_test"])
     assert request(own_server, "GET", "/api/runs?summary=1") == (200, [{
-        "run_id": "r_test", "skill": "RAMP", "state": "running", "updated_utc": "2026-11-21T22:00:00Z",
+        "run_id": "r_test", "skill": "RAMP", "display_name": None, "state": "running",
+        "updated_utc": "2026-11-21T22:00:00Z",
         "steps_done": 1, "has_result": False, "has_student": False}])
     status, run = request(own_server, "GET", "/api/runs/r_test")
     assert status == 200 and run["state"] == "running" and run["baseline"] == {"anything": [1, 2]}
@@ -393,6 +395,35 @@ def test_infer_runs_end_to_end_through_dev_bs_real_runtime(own_server):
     status, answer = request(own_server, "POST", "/api/infer", later)
     assert status == 200 and answer["frame_age_clamped"] is True
     assert request(own_server, "GET", "/api/state")[1]["capabilities"]["infer"] == {"available": True, "reason": ""}
+
+
+def test_runs_start_status_and_stop_through_a_stand_in_runner(own_server, monkeypatch):
+    """POST /api/runs, GET status and POST stop with a stand-in at the adapter boundary: Dev B's real start_run and
+    stop_run spawn and kill processes and bill TabPFN, so they are NOT RUN here."""
+    from tests.app.test_runs import DECLARATION, StandInRunner
+    root = Path(own_server.config["observed"]["runs_dir"])
+    (root / "started").mkdir()
+    (root / "started" / "run_status.json").write_text("{}")
+    status = {"run_id": "started", "skill": "RAMP", "spec": "ramp", "state": "running", "step": "train",
+              "returncode": None, "steps_done": 4, "updated_utc": "2026-11-21T23:00:00Z", "history": [],
+              "pid": 4242, "alive": True}
+    runner = StandInRunner(statuses={"started": status})
+    monkeypatch.setattr(backend, "runner", lambda config: (runner, []))
+    status_code, body = request(own_server, "POST", "/api/runs", {"declared_spec": DECLARATION, "confirm_cost": True})
+    assert (status_code, body["code"], body["run_id"]) == (409, "run_in_progress", "started")
+    status_code, run = request(own_server, "GET", "/api/runs/started")
+    assert status_code == 200 and run["status"] == status
+    status_code, stopped = request(own_server, "POST", "/api/runs/started/stop")
+    assert status_code == 200 and stopped["state"] == "stopped" and runner.stopped == ["started"]
+    runner.statuses["started"] = stopped  # no longer running: a new run may start
+    status_code, quote = request(own_server, "POST", "/api/runs", {"declared_spec": DECLARATION})
+    assert status_code == 409 and quote["code"] == "cost_confirmation_required" and "recorded_only" in quote
+    status_code, started = request(own_server, "POST", "/api/runs", {"declared_spec": DECLARATION,
+                                                                      "confirm_cost": True})
+    assert status_code == 202 and started["run_id"] == "ramp-20261121T230000"
+    assert runner.started == [(DECLARATION, True)]
+    assert request(own_server, "POST", "/api/runs/r_test/stop")[1]["code"] == "run_not_started_here"
+    assert request(own_server, "POST", "/api/runs/nope/stop")[0] == 404
 
 
 def test_shutdown_ends_open_streams_and_frees_the_port(own_server):
@@ -439,9 +470,7 @@ def test_runs_are_listed_unknown_ones_refused_and_starting_one_is_unavailable(se
     for path in ["/api/runs/no_such_run", "/api/runs/..", "/api/runs/%2e%2e", "/api/runs/..%5c..%5cconfig.yaml",
                  "/api/runs/"]:
         assert request(server, "GET", path) == (404, {"code": "unknown_run", "message": "There is no run with that id."})
-    status, body = request(server, "POST", "/api/runs", {"declared_spec": {"skill": "RAMP", "params": {}},
-                                                         "confirm_cost": True})
-    assert status == 503 and body["code"] == "runs_unavailable" and "entry point" in body["message"]
+    # Starting a run is tested only through a stand-in runner: a confirmed POST to the real one starts a real run.
 
 
 MARK = 0.123456789  # a window value easy to find if it ever leaks
@@ -563,3 +592,40 @@ def test_run_events_list_every_line_of_dev_bs_v0_run_and_refuse_unknown_ids(serv
         assert request(server, "GET", "/api/runs/v0/events") == (200, lines)  # Dev B's real file, unchanged
     for path in ["/api/runs/no_such_run/events", "/api/runs/../events", "/api/runs/%2e%2e/events", "/api/runs//events"]:
         assert request(server, "GET", path) == (404, {"code": "unknown_run", "message": "There is no run with that id."})
+
+
+# ---- learning runs through Dev B's real run_skill (no start: plan and quote only) ---------------------------------
+
+def test_a_run_request_is_quoted_by_dev_bs_real_run_skill_before_anything_starts(server):
+    """Dev B's real plan_run and quote_run: no side effect, no network, nothing billed. confirm_cost is never sent."""
+    declaration = {"skill": "MOVE", "params": {"forward_m": 1.0}, "source_text": "walk one metre forward"}
+    from app import runs
+    root, _ = backend.runs_dir(server.config)
+    busy = runs.running_run(root, backend.runner(server.config)[0], server.config)
+    status, body = request(server, "POST", "/api/runs", {"declared_spec": declaration})
+    if busy:  # a real run is in progress in this tree: one run at a time
+        assert (status, body["code"], body["run_id"]) == (409, "run_in_progress", busy)
+        return
+    assert status == 409 and body["code"] == "cost_confirmation_required" and body["message"]
+    assert body["ok"] is True and body["skill"] == "MOVE" and body["estimate"]["episodes"] > 0
+    assert set(body["recorded_only"]) == {"forward_m", "sideways_m", "turn_deg"}
+    status, body = request(server, "POST", "/api/runs", {"declared_spec": declaration | {"params": {"forward_m": 9.0}}})
+    assert status == 422 and body["code"] == "invalid_declaration" and body["problems"]
+
+
+def test_recorded_runs_have_null_status_and_their_results(server):
+    root, _ = backend.runs_dir(server.config)
+    if not (root / "ramp1").is_dir():
+        pytest.skip("Dev B's ramp1 run is not in this tree")
+    status, run = request(server, "GET", "/api/runs/ramp1")
+    assert status == 200 and run["status"] is None and {"metrics", "paired"} <= set(run["results"])
+    cards = {c["run_id"]: c for c in request(server, "GET", "/api/runs?summary=1")[1]}
+    assert cards["ramp1"]["display_name"] == "RAMP" and cards["move1"]["display_name"] == "MOVE"
+
+
+def test_the_catalogue_and_state_follow_dev_bs_skills_and_student(server, config):
+    skills = request(server, "GET", "/api/skills")[1]
+    assert {"RAMP", "DODGE", "MOVE"} <= {s["skill"] for s in skills}
+    state = request(server, "GET", "/api/state")[1]
+    assert state["capabilities"]["runs"]["available"] is True
+    assert state["image_window"]["window_encoding"] == config["vision"]["encoding"]  # no student configured here
