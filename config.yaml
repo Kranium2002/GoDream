@@ -1,0 +1,137 @@
+project:
+  name: Learned Judgment
+  status: scaffold
+  primary_skill: dodge
+  no_substitute_robot_or_project: true
+
+runtime:
+  python: "3.13"
+  simulator: mujoco
+  headless: true
+  seed: 20261121
+  timestep_s: null  # Must come from the verified Go2 simulator/policy configuration.
+
+robot:
+  model: unitree_go2
+  model_asset: null  # Set only after verifying the exact model source and revision.
+  walking_policy:
+    status: not_verified
+    source: null
+    repository_revision: null
+    checkpoint: null
+    matching_config: null
+    license: null
+    observation_schema: null
+    action_schema: null
+    control_rate_hz: null
+    command_schema: null
+  acceptance:
+    trot_duration_s: 30
+    commanded_speeds_m_s: [0.3, 0.6, 0.9]
+    yaw_rates_supported_by_policy: null
+    must_turn: true
+    must_stop: true
+    must_remain_standing: true
+
+world:
+  hidden_effects:
+    payload_mass_kg: [0.0, 3.0]
+    payload_off_center_range_m: null  # Requires an explicit experimental range.
+    declared_mass_error_fraction: [-0.2, 0.2]
+    surface_friction_by_type: null  # Copy values from the verified MuJoCo model/config.
+    friction_per_run_variation: null
+    slope_deg: [-5.0, 5.0]
+    motor_strength_fraction: [0.8, 1.0]
+    command_latency_s: [0.05, 0.3]
+    command_latency_jitter_s: null  # Measure/verify before setting.
+  presets:
+    default:
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+    heavy_payload:
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+    slippery_floor:
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+    tired_motors:
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+    downhill:
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+
+ball:
+  enabled: true
+  mass_kg: null  # Set from the verified scene/spec, not an assumed value.
+  radius_m: null
+  throw_origin_range_m: null
+  throw_speed_range_m_s: null
+  throw_direction_range_deg: null
+  collision_masks: null
+
+skills:
+  dodge:
+    status: primary
+    attempts_per_skill_target: [10, 40]
+    supported_action_schema: null  # Filled only after command-interface verification.
+    objective_weights: null  # Preregister and tune on dev data.
+    confidence_threshold: null  # Select on dev data.
+  brake:
+    status: planned
+  turn:
+    status: planned
+  ramp:
+    status: planned
+  kick:
+    status: stretch
+
+engine:
+  candidate_batch_size: null  # Determine with verified API limits and dev runs.
+  dreams_per_skill_initial: 2000
+  confidence_thresholds_by_skill: null
+  adaptation_context_policy: null  # Compare all/recent/world-ID on dev sets.
+
+evaluation:
+  dev_situations_per_skill: 100
+  test_situations_per_skill: 100
+  oracle_situations_per_skill: 100
+  minimum_seeds: 3
+  preferred_seeds: 5
+  context_attempt_counts: [0, 5, 10, 20, 40]
+
+tabpfn:
+  client_version: "0.10.1"
+  check_usage_before_uncached_request: true
+  estimate_cost_before_uncached_request: true
+  cache_requests_and_responses: true
+  cache_key_fields:
+    - training_features
+    - training_targets
+    - query_features
+    - output_type
+    - model_settings
+  verified_request_limit_per_minute: null
+  verified_request_limit_per_hour: null
+  current_usage: null  # Read live before a billable run; never hardcode.
+
+students:
+  per_skill_mlp: true
+  shared_mlp: true
+  dream_rehearsal: true
+  snn_enabled: false
