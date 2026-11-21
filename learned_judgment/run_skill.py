@@ -34,12 +34,24 @@ Chains (R = <observed.runs_dir>/<RUN>, M = learned_judgment.skills.<spec>, O = l
                   evidence      learned_judgment.dodge_eval evidence --run RUN --student R/student
     ramp          rows_context, rows_dev, dream, teach (with --dev), train as above with M = skills.ramp, then
                   run_test      M run --student R/student --split test --out R/test_run
-                                (ramp's run has no --run option: run.json stays in R/test_run and result.json gets
-                                no closed-loop section from it)
-    move          as ramp with M = skills.move; its run takes --run RUN, so it also merges the UI keys into
-                  result.json and appends "evaluate" events.
+                                (no --run: ramp's run takes RUN from the student's provenance.run_id, the same id)
+    move          as ramp with M = skills.move, run_test with --run RUN.
 
-Every command reads its sizes from the config (no --n is passed).
+Mode "fast" (move and ramp only; MISSION.md's "about 10-40 attempts per skill"; S = the spec)::
+
+    attempts   M attempts --out R/context                      (observed.S.fast_attempts episodes, ONE per scenario)
+    dream      M dream --out R/dream --n observed.S.fast_dream_situations
+    teach      O teach --run RUN --skill S --context R/context --dream R/dream [--confirm-billing]   (no --dev)
+    train      O train --run RUN --skill S --dream R/dream --scores R/scores.npz --steps observed.S.fast_snn_max_steps
+    run_test   M run --student R/student --split test --out R/test_run --run RUN
+
+dodge_vision has no fast mode (ValueError): its student learns from camera pixels and needs thousands of rendered
+windows. The full chain reads its sizes from the config (no --n is passed).
+
+Timing. The worker records each step's wall-clock seconds ("wall_s") in run_status.json history and, when the chain
+ends, merges into result.json a top-level "timing": {"mode", "learn_s" (attempts or rows_context + dream + teach +
+train), "evaluate_s" (every other step), "learn_steps", "steps" {name: s}, "attempts" (rows.json n_attempts of the
+context; None for the full chain), "machine_note", "cpu_count", "clock"}.
 
 Declared parameters are RECORDED ONLY (declaration.json "declaration" and "resolved", plan "recorded_only"): no command
 of any chain has an option for them, so the run trains on the configured distributions, not on the declared value:
@@ -54,13 +66,13 @@ Worker. Runs the steps in order. Each step runs as ``python -m learned_judgment.
 R/config.yaml MODULE ARGS...``, which points load_config() at the run's config snapshot and calls MODULE.main(ARGS):
 the commands have no --config option, and the snapshot keeps a run on the config it started with. The worker stops at
 the first non-zero exit code and rewrites R/run_status.json at every step start and end: {"run_id", "skill", "spec",
-"state" (running | done | failed | refused | stopped), "step", "returncode", "steps_done", "updated_utc", "history"
-(one entry per finished step: step, returncode, started_utc, finished_utc)} plus "reason" for a known exit code. A
+"state" (running | done | failed | refused | stopped), "mode", "step", "returncode", "steps_done", "updated_utc",
+"history" (one entry per finished step: step, returncode, started_utc, finished_utc, wall_s)} plus "reason" for a known exit code. A
 teach step exiting with observed.EXIT_REFUSED (no --confirm-billing, or the teacher's budget gate refused) ends the run
 "refused"; any other non-zero exit ends it "failed" (dodge_eval calibrate exits 4 when no threshold triple reached
 inference.gate.precision_target). The commands emit their own events; the worker adds one EventLog line per step start
-(state "running") and one at the very end (the final state), with the step names the UI knows: rows_context ->
-attempts, rows_dev -> baseline, dream -> dream, teach -> teacher_fit, train -> train, every later step -> evaluate.
+(state "running") and one at the very end (the final state), with the step names the UI knows: rows_context and
+attempts -> attempts, rows_dev -> baseline, dream -> dream, teach -> teacher_fit, train -> train, every later step -> evaluate.
 
 Billing. Only teach with --confirm-billing sends billable TabPFN requests, and each one passes the teacher's own gate
 (usage read and exact quote first). start_run adds --confirm-billing only when confirm_billing is True.
@@ -68,9 +80,11 @@ Billing. Only teach with --confirm-billing sends billable TabPFN requests, and e
 Command line (repository root)::
 
     python -m learned_judgment.run_skill [--config PATH] plan  (--declaration JSON | --declaration-file PATH) [--run RUN]
+        [--mode {full,fast}]
     python -m learned_judgment.run_skill [--config PATH] quote (--declaration JSON | --declaration-file PATH)
+        [--mode {full,fast}]
     python -m learned_judgment.run_skill [--config PATH] start (--declaration JSON | --declaration-file PATH)
-        [--run RUN] [--confirm-billing]
+        [--run RUN] [--confirm-billing] [--mode {full,fast}]
     python -m learned_judgment.run_skill [--config PATH] status --run RUN
     python -m learned_judgment.run_skill [--config PATH] stop --run RUN
 
@@ -86,6 +100,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -96,7 +111,7 @@ from learned_judgment.config import CONFIG_PATH, ConfigError, config_digest, loa
 from learned_judgment.declared import DeclarationError, check_declaration, resolve_declaration
 from learned_judgment.fileio import atomic_write_text
 
-__all__ = ["EXIT_INVALID", "RUN_STATES", "main", "plan_run", "quote_run", "run_status", "start_run", "stop_run"]
+__all__ = ["EXIT_INVALID", "MODES", "RUN_STATES", "main", "plan_run", "quote_run", "run_status", "start_run", "stop_run"]
 
 ROOT = CONFIG_PATH.parent
 RUN_STATES = ("running", "done", "failed", "refused", "stopped")
@@ -106,8 +121,15 @@ _SELF = "learned_judgment.run_skill"
 _OBSERVED = "learned_judgment.observed"
 _DODGE_EVAL = "learned_judgment.dodge_eval"
 _CHAINS = ("dodge_vision", "ramp", "move")
-_EVENT_STEP = {"rows_context": "attempts", "rows_dev": "baseline", "dream": "dream", "teach": "teacher_fit",
-               "train": "train"}  # every later step: "evaluate"
+MODES = ("full", "fast")
+_FAST_CHAINS = ("ramp", "move")
+_FAST_REFUSAL = ("mode 'fast' is defined for move and ramp only: dodge_vision's student learns from camera pixels and "
+                 "needs thousands of rendered windows (observed.dodge_vision.dream_episodes x "
+                 "skills.dodge_vision.windows_per_dream_episode), which a 40-attempt run cannot give")
+_EVENT_STEP = {"rows_context": "attempts", "attempts": "attempts", "rows_dev": "baseline", "dream": "dream",
+               "teach": "teacher_fit", "train": "train"}  # every later step: "evaluate"
+# timing.learn_s sums these steps; every other step (rows_dev, run_test, calibrate, evaluate, evidence) is evaluate_s.
+_LEARN_STEPS = ("rows_context", "attempts", "dream", "teach", "train")
 _EXIT_REASONS = {
     ("teach", 3): "refused: no --confirm-billing, or the teacher's budget gate refused (observed.EXIT_REFUSED)",
     ("calibrate", 3): "refused by dodge_eval (thresholds already frozen without --refreeze)",
@@ -160,19 +182,44 @@ def _run_dir(config: Mapping[str, Any], run_id: str) -> Path:
 # --------------------------------------------------------------------------------------
 
 
-def _steps(spec: str, run_id: str, run_dir: Path, confirm_billing: bool) -> list[dict[str, Any]]:
+def _mode(mode: Any, spec: str) -> str:
+    if mode not in MODES:
+        raise ValueError(f"mode must be one of {list(MODES)}; got {mode!r}")
+    if mode == "fast" and spec not in _FAST_CHAINS:
+        raise ValueError(_FAST_REFUSAL)
+    return mode
+
+
+def _steps(
+    spec: str, run_id: str, run_dir: Path, confirm_billing: bool, mode: str = "full",
+    config: Mapping[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     def step(name: str, module: str, *args: Any) -> dict[str, Any]:
         return {"name": name, "argv": [sys.executable, "-m", module, *(str(arg) for arg in args)]}
 
     module = f"learned_judgment.skills.{spec}"
     common = ("--run", run_id, "--skill", spec)
     student = run_dir / "student"
+    billing = ["--confirm-billing"] if confirm_billing else []
+    if mode == "fast":
+        root = f"observed.{spec}"
+        return [
+            step("attempts", module, "attempts", "--out", run_dir / "context"),
+            step("dream", module, "dream", "--out", run_dir / "dream", "--n",
+                 _count(config, f"{root}.fast_dream_situations")),
+            step("teach", _OBSERVED, "teach", *common, "--context", run_dir / "context", "--dream", run_dir / "dream",
+                 *billing),
+            step("train", _OBSERVED, "train", *common, "--dream", run_dir / "dream", "--scores", run_dir / "scores.npz",
+                 "--steps", _count(config, f"{root}.fast_snn_max_steps")),
+            step("run_test", module, "run", "--student", student, "--split", "test", "--out", run_dir / "test_run",
+                 "--run", run_id),
+        ]
     teach = [*common, "--context", run_dir / "context", "--dream", run_dir / "dream", "--dev", run_dir / "dev"]
     steps = [
         step("rows_context", module, "rows", "--split", "context", "--out", run_dir / "context"),
         step("rows_dev", module, "rows", "--split", "dev", "--out", run_dir / "dev"),
         step("dream", module, "dream", "--out", run_dir / "dream"),
-        step("teach", _OBSERVED, "teach", *teach, *(["--confirm-billing"] if confirm_billing else [])),
+        step("teach", _OBSERVED, "teach", *teach, *billing),
         step("train", _OBSERVED, "train", *common, "--dream", run_dir / "dream", "--scores", run_dir / "scores.npz"),
     ]
     if spec == "dodge_vision":
@@ -196,19 +243,23 @@ def _recorded_only(spec: str, params: Mapping[str, Any], config: Mapping[str, An
     return out
 
 
-def _plan(declaration: Any, config: Mapping[str, Any], run_id: str | None, confirm_billing: bool) -> tuple[dict, dict]:
+def _plan(
+    declaration: Any, config: Mapping[str, Any], run_id: str | None, confirm_billing: bool, mode: str = "full"
+) -> tuple[dict, dict]:
     resolved = resolve_declaration(declaration, config)
     spec = resolved["spec"]
     if spec not in _CHAINS:
         raise ValueError(f"SkillSpec {spec!r} has no run chain here; chains: {list(_CHAINS)}")
+    mode = _mode(mode, spec)
     if run_id is None:
         run_id = f"{spec}-{datetime.now(timezone.utc):%Y%m%dT%H%M%S}"
     run_dir = _run_dir(config, run_id)
     plan = {
         "skill": resolved["skill"],
         "spec": spec,
+        "mode": mode,
         "params": resolved["params"],
-        "steps": _steps(spec, run_id, run_dir, confirm_billing),
+        "steps": _steps(spec, run_id, run_dir, confirm_billing, mode, config),
         "run_id": run_id,
         "run_dir": str(run_dir),
         "recorded_only": _recorded_only(spec, resolved["params"], config),
@@ -217,18 +268,21 @@ def _plan(declaration: Any, config: Mapping[str, Any], run_id: str | None, confi
 
 
 def plan_run(
-    declaration: Any, config: Mapping[str, Any], *, run_id: str | None = None, confirm_billing: bool = False
+    declaration: Any, config: Mapping[str, Any], *, run_id: str | None = None, confirm_billing: bool = False,
+    mode: str = "full",
 ) -> dict[str, Any]:
-    """The command chain of a declaration: {"skill", "spec", "params", "steps": [{"name", "argv"}], "run_id",
+    """The command chain of a declaration: {"skill", "spec", "mode", "params", "steps": [{"name", "argv"}], "run_id",
     "run_dir", "recorded_only": {param: what the run uses instead}}. No side effect.
 
-    run_id None: "<spec>-<UTC yyyymmddThhmmss>" now. confirm_billing adds --confirm-billing to teach.
+    run_id None: "<spec>-<UTC yyyymmddThhmmss>" now. confirm_billing adds --confirm-billing to teach. mode "full"
+    (default) or "fast" (move and ramp only; see the module docstring).
 
     Raises:
         DeclarationError: the declaration is invalid (``.problems``).
-        ValueError:       the spec has no chain here, or run_id is not a valid run id.
+        ValueError:       the spec has no chain here, run_id is not a valid run id, or mode is unknown or "fast" for
+                          dodge_vision.
     """
-    return _plan(declaration, config, run_id, confirm_billing is True)[0]
+    return _plan(declaration, config, run_id, confirm_billing is True, mode)[0]
 
 
 # --------------------------------------------------------------------------------------
@@ -236,10 +290,19 @@ def plan_run(
 # --------------------------------------------------------------------------------------
 
 
-def _sizes(spec_name: str, spec: Any, config: Mapping[str, Any]) -> dict[str, Any]:
+def _sizes(spec_name: str, spec: Any, config: Mapping[str, Any], mode: str = "full") -> dict[str, Any]:
     """Configured sizes of a chain: rows, dream situations, window width D and simulator episodes per step."""
     c = len(spec.action_names)
     root = f"observed.{spec_name}"
+    if mode == "fast":
+        attempts, test = _count(config, f"{root}.fast_attempts"), _count(config, f"{root}.test_scenarios")
+        note = "attempts: ONE episode per context scenario; dream: no simulator; run_test: two methods per test scenario"
+        if spec_name == "ramp":
+            note += "; ramp context rows are an upper bound (a scenario without a detected slope entry gives no row)"
+        return {"n_actions": c, "context_rows": attempts, "dev_rows": 0,
+                "dream_situations": _count(config, f"{root}.fast_dream_situations"),
+                "window_width": len(spec.feature_names),
+                "episodes": {"attempts": attempts, "dream": 0, "run_test": 2 * test}, "episodes_note": note}
     context, dev, test = (_count(config, f"{root}.{split}_scenarios") for split in ("context", "dev", "test"))
     if spec_name == "dodge_vision":
         from learned_judgment.vision import VisionSettings
@@ -282,10 +345,13 @@ def _requests(purpose: str, n_train: int, n_query: int, width: int, k: int, sett
     return out
 
 
-def quote_run(declaration: Any, config: Mapping[str, Any]) -> dict[str, Any]:
+def quote_run(declaration: Any, config: Mapping[str, Any], *, mode: str = "full") -> dict[str, Any]:
     """Validity and cost of a run before any data exists. No network call; nothing billed.
 
-    Returns {"ok", "problems" (check_declaration), "skill", "spec", "estimate"} with estimate None when not ok, else
+    mode "fast" estimates from observed.<spec>.fast_attempts and fast_dream_situations: no dev rows, so only the dream
+    prediction is billed. ValueError for an unknown mode or "fast" with dodge_vision.
+
+    Returns {"ok", "problems" (check_declaration), "skill", "spec", "mode", "estimate"} with estimate None when not ok, else
     {"episodes": total simulator episodes from the config sizes, "episodes_by_step", "episodes_note",
     "tabpfn_tokens": {"basis", "value" (int, or None when the formula does not apply to the configured model),
     "formula", "source", "assumptions", "requests"}, "max_tokens_per_request", "project_token_budget", "usage",
@@ -298,7 +364,7 @@ def quote_run(declaration: Any, config: Mapping[str, Any]) -> dict[str, Any]:
     problems = check_declaration(declaration, config)
     skill = declaration.get("skill") if isinstance(declaration, dict) else None
     if problems:
-        return {"ok": False, "problems": problems, "skill": skill, "spec": None, "estimate": None}
+        return {"ok": False, "problems": problems, "skill": skill, "spec": None, "mode": mode, "estimate": None}
     from learned_judgment.observed import load_spec
     from learned_judgment.teacher import TeacherSettings
 
@@ -306,13 +372,14 @@ def quote_run(declaration: Any, config: Mapping[str, Any]) -> dict[str, Any]:
     spec_name = resolved["spec"]
     if spec_name not in _CHAINS:
         raise ValueError(f"SkillSpec {spec_name!r} has no run chain here; chains: {list(_CHAINS)}")
+    mode = _mode(mode, spec_name)
     spec = load_spec(spec_name, config)
     settings = TeacherSettings.from_config(config)
-    sizes = _sizes(spec_name, spec, config)
+    sizes = _sizes(spec_name, spec, config, mode)
     blocks = list(require(config, f"skills.{spec_name}.teacher_features"))
     k = len(spec.outcome_names)
     width = (sizes["window_width"] if "window" in blocks else 0) + len(spec.action_feature_names) + k
-    requests = (_requests("dev", sizes["context_rows"], sizes["dev_rows"], width, k, settings)
+    requests = (_requests("dev", sizes["context_rows"], sizes["dev_rows"], width, k, settings)  # none at 0 dev rows
                 + _requests("dream", sizes["context_rows"], sizes["dream_situations"] * sizes["n_actions"], width, k,
                             settings))
     applies = settings.n_estimators == 8 and settings.model_path.startswith("v3.5")
@@ -338,6 +405,7 @@ def quote_run(declaration: Any, config: Mapping[str, Any]) -> dict[str, Any]:
         "problems": [],
         "skill": resolved["skill"],
         "spec": spec_name,
+        "mode": mode,
         "estimate": {
             "episodes": int(sum(episodes.values())),
             "episodes_by_step": episodes,
@@ -378,21 +446,25 @@ def _child_env() -> dict[str, str]:
 
 
 def start_run(
-    declaration: Any, config: Mapping[str, Any], *, confirm_billing: bool, run_id: str | None = None
+    declaration: Any, config: Mapping[str, Any], *, confirm_billing: bool, run_id: str | None = None,
+    mode: str = "full",
 ) -> dict[str, Any]:
     """Validate, make the run directory, write its files and start the worker detached; returns at once.
 
-    Returns {"run_id", "pid" (the worker process), "runs_dir" (observed.runs_dir), "run_dir", "events", "result",
-    "status", "log"} (paths as str).
+    mode "full" (default) or "fast" (move and ramp only: attempts, dream, teach without dev, train, run_test).
+
+    Returns {"run_id", "mode", "pid" (the worker process), "runs_dir" (observed.runs_dir), "run_dir", "events",
+    "result", "status", "log"} (paths as str).
 
     Raises:
         DeclarationError: the declaration is invalid.
-        ValueError:       run_id invalid, or its directory exists already; the spec has no chain.
+        ValueError:       run_id invalid, or its directory exists already; the spec has no chain; mode unknown or
+                          "fast" for dodge_vision.
         TypeError:        confirm_billing is not a bool.
     """
     if not isinstance(confirm_billing, bool):
         raise TypeError(f"confirm_billing must be a bool; got {confirm_billing!r}")
-    plan, resolved = _plan(declaration, config, run_id, confirm_billing)
+    plan, resolved = _plan(declaration, config, run_id, confirm_billing, mode)
     run_id, run_dir = plan["run_id"], Path(plan["run_dir"])
     try:
         run_dir.mkdir(parents=True, exist_ok=False)
@@ -408,6 +480,7 @@ def start_run(
         "declaration": declaration,
         "resolved": resolved,
         "confirm_billing": confirm_billing,
+        "mode": plan["mode"],
         "started_utc": started,
         "steps": plan["steps"],
         "recorded_only": plan["recorded_only"],
@@ -415,8 +488,8 @@ def start_run(
         "config_digest": digest,
     }))
     status = _write_status(run_dir, {
-        "run_id": run_id, "skill": plan["skill"], "spec": plan["spec"], "state": "running", "step": None,
-        "returncode": None, "steps_done": [], "history": [],
+        "run_id": run_id, "skill": plan["skill"], "spec": plan["spec"], "mode": plan["mode"], "state": "running",
+        "step": None, "returncode": None, "steps_done": [], "history": [],
     })
     argv = [sys.executable, "-m", _SELF, "_worker", "--run", run_id, "--runs-dir", str(run_dir.parent)]
     if os.name == "nt":
@@ -434,6 +507,7 @@ def start_run(
     atomic_write_text(run_dir / "worker.json", _dumps({"pid": process.pid, "argv": argv, "started_utc": started}))
     return {
         "run_id": run_id,
+        "mode": plan["mode"],
         "pid": process.pid,
         "runs_dir": str(run_dir.parent),
         "run_dir": str(run_dir),
@@ -538,6 +612,29 @@ def _exec_argv(argv: Sequence[str], config_path: Path) -> list[str]:
     return [sys.executable, "-m", _SELF, "_exec", "--config", str(config_path), argv[2], *argv[3:]]
 
 
+def _write_timing(run_dir: Path, run_id: str, spec: str, mode: str, history: Sequence[Mapping[str, Any]]) -> None:
+    """Merge the top-level "timing" of the finished steps into <run_dir>/result.json (every other key is kept)."""
+    steps = {entry["step"]: entry["wall_s"] for entry in history}
+    context = _read_json(run_dir / "context" / "rows.json") or {}
+    timing = {
+        "mode": mode,
+        "learn_s": round(sum(s for name, s in steps.items() if name in _LEARN_STEPS), 3),
+        "evaluate_s": round(sum(s for name, s in steps.items() if name not in _LEARN_STEPS), 3),
+        "learn_steps": [name for name in steps if name in _LEARN_STEPS],
+        "steps": steps,
+        "attempts": context.get("n_attempts"),
+        "context_rows_note": None if "n_attempts" in context else "full chain: every candidate of every context scenario",
+        "machine_note": "one laptop, CPU only",
+        "cpu_count": os.cpu_count(),
+        "clock": "wall clock of each step's process (interpreter start-up, imports and worker pools included)",
+    }
+    path = run_dir / "result.json"
+    result = _read_json(path) or {"run_id": run_id, "skill": spec}
+    result["timing"] = timing
+    result["updated_utc"] = _now()
+    atomic_write_text(path, _dumps(result))
+
+
 def _worker(run_id: str, runs_dir: str) -> int:
     from learned_judgment.observed import EXIT_REFUSED, EventLog
 
@@ -555,11 +652,14 @@ def _worker(run_id: str, runs_dir: str) -> int:
             _write_status(run_dir, status, state="running", step=last, returncode=None)
             print(f"[run_skill {started}] step {index + 1}/{len(steps)} {last}: {subprocess.list2cmdline(step['argv'])}",
                   flush=True)
+            clock = time.perf_counter()
             # Explicit std handles: the step writes into run.log like the worker (no console handle to inherit).
             code = subprocess.call(_exec_argv(step["argv"], run_dir / "config.yaml"), cwd=ROOT, env=_child_env(),
                                    stdin=subprocess.DEVNULL, stdout=sys.stdout.fileno(), stderr=sys.stderr.fileno())
-            print(f"[run_skill {_now()}] step {last} exit {code}", flush=True)
-            status["history"].append({"step": last, "returncode": code, "started_utc": started, "finished_utc": _now()})
+            wall_s = round(time.perf_counter() - clock, 3)
+            print(f"[run_skill {_now()}] step {last} exit {code} after {wall_s} s", flush=True)
+            status["history"].append({"step": last, "returncode": code, "started_utc": started, "finished_utc": _now(),
+                                      "wall_s": wall_s})
             if code != 0:
                 state = "refused" if last == "teach" and code == EXIT_REFUSED else "failed"
                 if (last, code) in _EXIT_REASONS:
@@ -571,6 +671,10 @@ def _worker(run_id: str, runs_dir: str) -> int:
         status["reason"] = f"the worker failed: {error!r}"
         raise
     finally:
+        try:
+            _write_timing(run_dir, run_id, record["resolved"]["spec"], record.get("mode", "full"), status["history"])
+        except Exception as error:  # the timing must never hide the run's own state
+            status["timing_error"] = repr(error)
         _write_status(run_dir, status, state=state, step=last, returncode=code)
         events.emit(_EVENT_STEP.get(last, "evaluate"), state, data={
             "source": "run_skill", "run_state": state, "command": last, "returncode": code,
@@ -610,6 +714,7 @@ def _parser() -> argparse.ArgumentParser:
         group = sub.add_mutually_exclusive_group(required=True)
         group.add_argument("--declaration", help="the declaration as JSON text")
         group.add_argument("--declaration-file", help="a file holding the declaration as JSON")
+        sub.add_argument("--mode", choices=MODES, default="full", help="full (default) or fast (move and ramp only)")
 
     plan = commands.add_parser("plan", help="the command chain of a declaration (no side effect)")
     declared(plan)
@@ -642,11 +747,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     config = load_config(args.config) if args.config else load_config()
     try:
         if args.command == "plan":
-            out = plan_run(_declaration(args), config, run_id=args.run)
+            out = plan_run(_declaration(args), config, run_id=args.run, mode=args.mode)
         elif args.command == "quote":
-            out = quote_run(_declaration(args), config)
+            out = quote_run(_declaration(args), config, mode=args.mode)
         elif args.command == "start":
-            out = start_run(_declaration(args), config, confirm_billing=args.confirm_billing, run_id=args.run)
+            out = start_run(_declaration(args), config, confirm_billing=args.confirm_billing, run_id=args.run,
+                            mode=args.mode)
         elif args.command == "status":
             out = run_status(args.run, config)
         else:

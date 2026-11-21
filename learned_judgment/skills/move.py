@@ -49,7 +49,13 @@ Files of the command line, one directory per call (the observed.py array contrac
     run.json    records (per scenario: the physics rule and the student) and summary per method and kind
 
     python -m learned_judgment.skills.move rows --split {context|dev|test} --out DIR [--n N]
+    python -m learned_judgment.skills.move attempts --out DIR [--n N]
     python -m learned_judgment.skills.move dream --out DIR [--n N]
+
+attempts (the fast run's context, MISSION.md's 10-40 attempts) runs ONE candidate per context scenario, N default
+observed.move.fast_attempts: with probability engine.attempt_exploration_fraction a uniform candidate, else the physics
+rule (collect_attempts). rows.npz / rows.json as rows (one row per scenario); rows.json adds "collection": "attempts",
+n_attempts, exploration_fraction, attempt_sources and per scenario "attempt".
     python -m learned_judgment.skills.move run --student DIR --split {context|dev|test} --out DIR [--n N] [--run RUN]
 
 run with --run RUN also merges the UI keys (seeds, scenario_ids, metrics, paired) and a section "closed_loop_<split>"
@@ -107,6 +113,7 @@ __all__ = [
     "MoveSpec",
     "build_observed_spec",
     "candidate_command",
+    "collect_attempts",
     "collect_dream",
     "collect_rows",
     "decode_features",
@@ -676,6 +683,73 @@ def collect_rows(config: Mapping[str, Any], split: str, out_dir: str | Path, n: 
     return meta
 
 
+def _exploration_fraction(config: Mapping[str, Any]) -> float:
+    key = "engine.attempt_exploration_fraction"
+    fraction = _value(config, key)
+    if not 0.0 <= fraction <= 1.0:
+        raise ConfigError(f"config.yaml key {key!r} is a probability and must lie in [0, 1]; got {fraction}")
+    return fraction
+
+
+def collect_attempts(config: Mapping[str, Any], out_dir: str | Path, n: int | None = None) -> dict[str, Any]:
+    """Attempts-style context (MISSION.md: about 10-40 attempts per skill): n scenarios of the context split (default
+    observed.move.fast_attempts), ONE episode each; writes <out_dir>/rows.npz and rows.json in the rows contract (one
+    row per scenario) and returns the meta.
+
+    Scenario i's candidate, the mix of engine.collect.exploration_actions: u = np.random.default_rng(
+    np.random.SeedSequence([runtime.seed, SPLIT_CODES["context"], i])).random(2); u[0] <
+    engine.attempt_exploration_fraction -> candidate min(floor(u[1] x C), C - 1) (uniform), else the physics rule
+    (physics_choice). attempt_seed i as in collect_rows, so a row equals that candidate's row of collect_rows.
+    """
+    n = _count("n", require(config, f"{_OBSERVED}.fast_attempts") if n is None else n)
+    fraction = _exploration_fraction(config)
+    spec = build_observed_spec(config)
+    c = len(spec.action_names)
+    seed = int(require(config, "runtime.seed"))
+    scenarios = _split_plan(config, "context", n)
+    rule = physics_choice(config, np.stack([scenario_features(config, s["kind"], s["target"]) for s in scenarios]))
+    for scenario, physics_action in zip(scenarios, rule):
+        u = np.random.default_rng(np.random.SeedSequence([seed, SPLIT_CODES["context"], scenario["scenario_id"]])).random(2)
+        explore = bool(u[0] < fraction)
+        action = min(int(math.floor(u[1] * c)), c - 1) if explore else int(physics_action)
+        scenario["attempt"] = {"source": "explore" if explore else "physics", "action": action,
+                               "action_name": spec.action_names[action], "physics_action": int(physics_action)}
+    print(f"attempts: {n} context scenarios, one episode each (exploration fraction {fraction})", flush=True)
+    start = time.perf_counter()
+    with _pool(config) as pool:
+        results = _map(pool, [(s, "attempt", s["attempt"]["action"]) for s in scenarios], "attempts:")
+    wall_s = time.perf_counter() - start
+
+    results = sorted(results, key=lambda r: r["scenario_id"])
+    scenario_index = np.array([r["scenario_id"] for r in results], dtype=np.int64)
+    action = np.array([r["action"] for r in results], dtype=np.int64)
+    features = np.array([r["features"] for r in results], dtype=np.float32).reshape(-1, len(FEATURE_NAMES))
+    measured = np.array([[r["measured"][k] for k in OUTCOME_NAMES] for r in results], dtype=np.float64)
+    physics = physics_guess(config, features, action)
+    for scenario, r in zip(scenarios, results):
+        scenario["attempt"].update(error_units=r["error_units"], fall=int(r["measured"]["fall"]))
+    meta = _meta(config, "context", scenarios, len(results))
+    sources = Counter(s["attempt"]["source"] for s in scenarios)
+    meta.update(
+        collection="attempts", n_attempts=n, exploration_fraction=fraction,
+        attempt_sources={"explore": sources.get("explore", 0), "physics": sources.get("physics", 0)}, wall_s=wall_s,
+    )
+    meta["seeds"]["attempt_choice"] = ("np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code, "
+                                       "scenario_id])).random(2): u[0] < exploration_fraction -> candidate "
+                                       "min(floor(u[1] * C), C - 1), else physics_choice")
+    _write(Path(out_dir), "rows", meta, scenario_index=scenario_index, decision_time_s=np.zeros(len(results)),
+           action=action, features=features, physics=physics, measured=measured,
+           target=np.array([r["target"] for r in results], dtype=np.float64),
+           error_units=np.array([r["error_units"] for r in results], dtype=np.float64),
+           final=np.array([[r["final"][k] for k in ("forward_m", "sideways_m", "yaw_change_rad")] for r in results],
+                          dtype=np.float64).reshape(-1, 3))
+    print(f"rows {len(results)} (one per attempt); kinds {meta['kind_counts']}; sources {meta['attempt_sources']}; "
+          f"falls {int(measured[:, 2].sum())}")
+    print(f"wall time {wall_s:.1f} s for {len(results)} episodes (pool start-up included)")
+    print(f"wrote {Path(out_dir) / 'rows.npz'} and rows.json", flush=True)
+    return meta
+
+
 def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None = None) -> dict[str, Any]:
     """Write <out_dir>/dream.npz and dream.json without a simulator; return the meta.
 
@@ -885,6 +959,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     rows.add_argument("--split", required=True, choices=("context", "dev", "test"))
     rows.add_argument("--out", required=True, help="output directory")
     rows.add_argument("--n", type=int, help="scenarios (default observed.move.<split>_scenarios)")
+    attempts = commands.add_parser("attempts", help="context split, ONE episode per scenario (explore or physics rule)")
+    attempts.add_argument("--out", required=True, help="output directory")
+    attempts.add_argument("--n", type=int, help="attempts (default observed.move.fast_attempts)")
     dream = commands.add_parser("dream", help="dream situations sampled like the scenarios (no simulator)")
     dream.add_argument("--out", required=True, help="output directory")
     dream.add_argument("--n", type=int, help="situations (default observed.move.dream_situations)")
@@ -898,6 +975,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     config = load_config()
     if args.command == "rows":
         collect_rows(config, args.split, args.out, args.n)
+    elif args.command == "attempts":
+        collect_attempts(config, args.out, args.n)
     elif args.command == "dream":
         collect_dream(config, args.out, args.n)
     else:

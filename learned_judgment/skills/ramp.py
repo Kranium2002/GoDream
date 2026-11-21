@@ -52,7 +52,13 @@ Files of the command line, one directory per call (the observed.py array contrac
     run.json    records (per scenario: the nominal pass-through and the student) and summary per method
 
     python -m learned_judgment.skills.ramp rows --split {context|dev|test} --out DIR [--n N]
+    python -m learned_judgment.skills.ramp attempts --out DIR [--n N]
     python -m learned_judgment.skills.ramp dream --out DIR [--n N]
+
+attempts (the fast run's context, MISSION.md's 10-40 attempts) runs ONE episode per context scenario, N default
+observed.ramp.fast_attempts: with probability engine.attempt_exploration_fraction a uniform candidate, else the physics
+rule at the decision (collect_attempts); a scenario without a decision gives no row. rows.json adds "collection":
+"attempts", n_attempts, exploration_fraction, attempt_sources and per scenario "attempt".
     python -m learned_judgment.skills.ramp run --student DIR --split {context|dev|test} --out DIR [--n N] [--run RUN]
 
 run also appends "evaluate" events to <observed.runs_dir>/<RUN>/events.jsonl and merges into its result.json the UI
@@ -102,6 +108,7 @@ __all__ = [
     "RampSpec",
     "SlopeDetector",
     "build_observed_spec",
+    "collect_attempts",
     "collect_dream",
     "collect_rows",
     "features_in_units",
@@ -111,6 +118,7 @@ __all__ = [
     "normalise_features",
     "nose_up_deg",
     "objective",
+    "physics_choice",
     "physics_guess",
     "run_episode",
     "run_student",
@@ -571,7 +579,9 @@ def run_episode(
             features = normalise_features(config, [float(detector.filtered), pitch, rate, float(speed)])
             state.update(decided=True, features=features, decision_t=t)
             if policy is not None:
-                action = policy(features.copy())
+                # A policy with takes_decision_time (the attempts' physics rule) also gets the decision time.
+                takes_time = getattr(policy, "takes_decision_time", False) is True
+                action = policy(features.copy(), t) if takes_time else policy(features.copy())
                 if isinstance(action, bool) or not isinstance(action, (int, np.integer)) or not 0 <= action < c:
                     raise ValueError(f"policy must return a candidate index in [0, {c}); got {action!r}")
                 state["action"] = int(action)
@@ -706,6 +716,16 @@ def objective(config: Mapping[str, Any], predicted: OutcomeDistribution) -> np.n
     )
 
 
+def physics_choice(config: Mapping[str, Any], features: np.ndarray, remaining_s: Sequence[float] | np.ndarray) -> np.ndarray:
+    """(n,) the physics rule: argmax over the candidates of the objective of the physics guess as a point mass."""
+    array = np.asarray(features)
+    remaining = np.asarray(remaining_s, dtype=np.float64)
+    n, c = array.shape[0], len(_candidates(config).names)
+    physics = physics_guess(config, np.repeat(array, c, axis=0), np.tile(np.arange(c), n), np.repeat(remaining, c))
+    levels = np.asarray(require(config, "engine.quantile_levels"), dtype=np.float64)
+    return np.argmax(objective(config, OutcomeDistribution.point(OUTCOME_NAMES, physics, levels)).reshape(n, c), axis=1)
+
+
 @dataclass(frozen=True)
 class RampSpec:
     """What learners and scorers need of ramp (not a SkillSpec; the registry does not load it).
@@ -802,9 +822,33 @@ def _worker_init(config: Mapping[str, Any], student_dir: str | None) -> None:
     _WORKER["student"] = None if student_dir is None else _StudentPolicy(student_dir, config)
 
 
+class _AttemptPolicy:
+    """A context attempt's choice at the decision: the drawn candidate when exploring (explore_index), else the physics
+    rule (physics_choice with remaining time episode_duration_s - decision time)."""
+
+    takes_decision_time = True
+
+    def __init__(self, config: Mapping[str, Any], explore_index: int | None) -> None:
+        self.config, self.explore_index = config, explore_index
+        self.duration = _positive(config, f"{_ROOT}.episode_duration_s")
+
+    def __call__(self, features: np.ndarray, decision_time_s: float) -> int:
+        if self.explore_index is not None:
+            return int(self.explore_index)
+        remaining = max(self.duration - float(decision_time_s), 0.0)
+        return int(physics_choice(self.config, np.asarray(features)[None, :], [remaining])[0])
+
+
 def _episode_task(task: tuple) -> dict[str, Any]:
-    """(scenario, policy) with policy an int (constant candidate), "student" or "nominal"; the trace is dropped."""
+    """(scenario, policy) with policy an int (constant candidate), "student", "nominal" or ("attempt", explore index
+    or None); the trace is dropped."""
     scenario, which = task
+    if isinstance(which, tuple):
+        result = run_episode(_WORKER["world"], scenario, scenario["scenario_id"],
+                             _AttemptPolicy(_WORKER["world"].config, which[1]))
+        result.pop("trace")
+        result["policy"] = "attempt"
+        return result
     if which == "nominal":
         policy = None
     elif which == "student":
@@ -975,6 +1019,77 @@ def collect_rows(config: Mapping[str, Any], split: str, out_dir: str | Path, n: 
     print("detection: " + json.dumps(meta["detection"]))
     print(f"rows {len(ordered)} from {len(by_scenario)} situations; slip reported by the world: {meta['slip']['reported_by_world']}")
     print(f"wall time {wall_s:.1f} s for {episodes} episodes: {wall_s / max(episodes, 1):.3f} s per episode")
+    print(f"wrote {Path(out_dir) / 'rows.npz'} and rows.json", flush=True)
+    return meta
+
+
+def collect_attempts(config: Mapping[str, Any], out_dir: str | Path, n: int | None = None) -> dict[str, Any]:
+    """Attempts-style context (MISSION.md: about 10-40 attempts per skill): n scenarios of the context split (default
+    observed.ramp.fast_attempts), ONE episode each; writes <out_dir>/rows.npz and rows.json in the rows contract (one
+    row per scenario that reached a decision; a scenario without one gives no row, as in collect_rows) and returns the
+    meta.
+
+    Scenario i's candidate, the mix of engine.collect.exploration_actions: u = np.random.default_rng(
+    np.random.SeedSequence([runtime.seed, SPLIT_CODES["context"], i])).random(2); u[0] <
+    engine.attempt_exploration_fraction -> candidate min(floor(u[1] x C), C - 1) (uniform), else the physics rule
+    (physics_choice on the features observed at the decision, remaining time episode_duration_s - decision time).
+    """
+    n = _count("n", require(config, f"{_OBSERVED}.fast_attempts") if n is None else n)
+    key = "engine.attempt_exploration_fraction"
+    fraction = _value(config, key)
+    if not 0.0 <= fraction <= 1.0:
+        raise ConfigError(f"config.yaml key {key!r} is a probability and must lie in [0, 1]; got {fraction}")
+    spec = build_observed_spec(config)
+    c = len(spec.action_names)
+    duration = _positive(config, f"{_ROOT}.episode_duration_s")
+    seed = int(require(config, "runtime.seed"))
+    scenarios = _split_plan(config, "context", n)
+    if any(INCLINE_KEY in s["situation"] for s in scenarios):
+        _require_incline()
+    tasks = []
+    for scenario in scenarios:
+        u = np.random.default_rng(np.random.SeedSequence([seed, SPLIT_CODES["context"], scenario["scenario_id"]])).random(2)
+        explore = bool(u[0] < fraction)
+        scenario["attempt"] = {"source": "explore" if explore else "physics"}
+        tasks.append((scenario, ("attempt", min(int(math.floor(u[1] * c)), c - 1) if explore else None)))
+    print(f"attempts: {n} context scenarios, one episode each (exploration fraction {fraction})", flush=True)
+    start = time.perf_counter()
+    with _pool(config) as pool:
+        results = _map(pool, tasks, "attempts:")
+    wall_s = time.perf_counter() - start
+
+    decided = sorted((r for r in results if r["features"] is not None), key=lambda r: r["scenario_id"])
+    scenario_index = np.array([r["scenario_id"] for r in decided], dtype=np.int64)
+    action = np.array([r["action"] for r in decided], dtype=np.int64)
+    features = np.array([r["features"] for r in decided], dtype=np.float32).reshape(-1, len(FEATURE_NAMES))
+    decision_time_s = np.array([r["decision_time_s"] for r in decided], dtype=np.float64)
+    measured = np.array([[r["measured"][name] for name in OUTCOME_NAMES] for r in decided], dtype=np.float64)
+    measured = measured.reshape(-1, len(OUTCOME_NAMES))
+    physics = physics_guess(config, features, action, np.maximum(duration - decision_time_s, 0.0))
+    for scenario, r in zip(scenarios, results):
+        scenario["detection"] = {key: r[key] for key in (
+            "entered", "entry_time_s", "decision_time_s", "entry_latency_s", "modes", "ramp_start_m", "ramp_end_m",
+            "commands_changed_on_flat")}
+        scenario["detection"]["decided"] = r["features"] is not None
+        scenario["attempt"]["action"] = r["action"]
+    meta = _meta(config, "context", scenarios, len(decided))
+    meta["detection"] = _detection(results)
+    reported = [r["slip_reported"] for r in results]
+    meta["slip"] = {"reported_by_world": bool(reported) and all(reported),
+                    "note": "slip_m is foot_slip_m of finish_episode; 0.0 in every episode where the world does not "
+                            f"report it ({reported.count(False)} of {len(reported)} episodes)"}
+    meta["scoring_source"] = _SCORING_SOURCE
+    sources = Counter(s["attempt"]["source"] for s in scenarios)
+    meta.update(collection="attempts", n_attempts=n, exploration_fraction=fraction, wall_s=wall_s,
+                attempt_sources={"explore": sources.get("explore", 0), "physics": sources.get("physics", 0)})
+    meta["seeds"]["attempt_choice"] = ("np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code, "
+                                       "scenario_id])).random(2): u[0] < exploration_fraction -> candidate "
+                                       "min(floor(u[1] * C), C - 1), else physics_choice at the decision")
+    _write(Path(out_dir), "rows", meta, scenario_index=scenario_index, decision_time_s=decision_time_s, action=action,
+           features=features, physics=physics, measured=measured)
+    print("detection: " + json.dumps(meta["detection"]))
+    print(f"rows {len(decided)} from {n} attempts; sources {meta['attempt_sources']}")
+    print(f"wall time {wall_s:.1f} s for {len(results)} episodes (pool start-up included)")
     print(f"wrote {Path(out_dir) / 'rows.npz'} and rows.json", flush=True)
     return meta
 
@@ -1223,6 +1338,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     rows.add_argument("--split", required=True, choices=("context", "dev", "test"))
     rows.add_argument("--out", required=True, help="output directory")
     rows.add_argument("--n", type=int, help="scenarios (default observed.ramp.<split>_scenarios)")
+    attempts = commands.add_parser("attempts", help="context split, ONE episode per scenario (explore or physics rule)")
+    attempts.add_argument("--out", required=True, help="output directory")
+    attempts.add_argument("--n", type=int, help="attempts (default observed.ramp.fast_attempts)")
     dream = commands.add_parser("dream", help="dream situations sampled over the feature ranges (no simulator)")
     dream.add_argument("--out", required=True, help="output directory")
     dream.add_argument("--n", type=int, help="situations (default observed.ramp.dream_situations)")
@@ -1236,6 +1354,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     config = load_config()
     if args.command == "rows":
         collect_rows(config, args.split, args.out, args.n)
+    elif args.command == "attempts":
+        collect_attempts(config, args.out, args.n)
     elif args.command == "dream":
         collect_dream(config, args.out, args.n)
     else:
