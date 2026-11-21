@@ -1,0 +1,7 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+  learned_judgment.students.measure: imported in 5.33 s; public: ['DREAM_SOURCES', 'RECORD_FORMAT', 'agreement_with_dream', 'dream_source', 'measure_decision_latency', 'measure_operations', 'student_record', 'write_record']
+  torch_in_sys_modules=False snntorch_in_sys_modules=False
+  [ok] learned_judgment.students.measure imports (exit 0)
+  [ok] learned_judgment.students.measure leaves torch and snntorch unimported
+
+CHECK RESULT: 2 assertions held, 0 failed 

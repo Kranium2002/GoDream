@@ -1,0 +1,58 @@
+﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+
+settings: students.snn with max_steps=30 evaluate_every_steps=10; shared_skills=['fx_alpha', 'fx_beta', 'fx_gamma', 'fx_delta', 'fx_wide'] width=6 (fixture)
+
+== construction refusals ==
+  [ok] create with config.yaml as is -> ConfigError: config.yaml key 'students.snn.shared_feature_width' is null: it must be set before this step can run
+  [ok] create with students.shared_snn false -> ValueError: config.yaml students.shared_snn is not true: no shared spiking student is configured
+  [ok] create with students.kind 'mlp' -> ValueError: config.yaml students.kind is 'mlp'; the shared student is a spiking network ('snn')
+  [ok] create without students.snn.rehearsal_fraction -> ConfigError: config.yaml has no key 'students.snn.rehearsal_fraction'
+  [ok] rehearsal_fraction 0.0 -> ValueError: students.snn.rehearsal_fraction must lie in (0, 1) so that the new skill and every earlier skill get rows in each batch; got 0.0
+  [ok] rehearsal_fraction 1.0 -> ValueError: students.snn.rehearsal_fraction must lie in (0, 1) so that the new skill and every earlier skill get rows in each batch; got 1.0
+  [ok] a dotted skill name -> ValueError: students.snn.shared_skills[1] must be an identifier (it names a network head); got 'dodge.v2'
+  [ok] duplicate skill names -> ValueError: skills must be a non-empty list of unique names; got ('fx_alpha', 'fx_alpha')
+  [ok] feature_width 6.0 -> ValueError: students.snn.shared_feature_width must be an integer; got 6.0
+  [ok] feature_width 0 -> ValueError: feature_width must be >= 1; got 0
+  [ok] settings given as a dict -> TypeError: settings must be SNNSettings; got dict
+
+== add_skill and decide refusals on an empty student (before any training) ==
+  [ok] a skill not in shared_skills (fx_omega) -> ValueError: skill 'fx_omega' is not one of the shared network's skills ['fx_alpha', 'fx_beta', 'fx_gamma', 'fx_delta', 'fx_wide'] (students.snn.shared_skills); the one-hot skill ID i
+  [ok] an encoded width above shared_feature_width (fx_wide: 7 > 6) -> ValueError: skill 'fx_wide' encodes its situation into 7 columns but students.snn.shared_feature_width is 6
+  [ok] rehearsal='yes' -> ValueError: rehearsal must be True or False; got 'yes'
+  [ok] base_seed -1 -> ValueError: base_seed must be a non-negative integer; got -1
+  [ok] fx_beta's dreams for fx_alpha -> ValueError: DreamSet.skill 'fx_beta' does not match the spec's 'fx_alpha'
+  [ok] points_per_dim (5, 7) instead of (7, 5) -> ValueError: dream row 0: the dream's 35 candidates are not the grid spec.candidate_actions(situation, points_per_dim=[5, 7]) gives (35 candidates); train with the points_per_dim the 
+  [ok] a single dream row -> ValueError: 1 dream rows leave no training rows after holding out 1 (validation_fraction 0.1)
+  [ok] decide_index on an empty student -> ValueError: skill 'fx_alpha' has not been added yet; skills held: []
+  [ok] save an empty student -> ValueError: this shared student holds no skill yet; there is nothing to save
+  [ok] every refusal above happened before training: nothing held, torch and snntorch never imported
+
+== a TrainingError leaves the student unchanged (learning_rate 1e-300, 30 steps) ==
+  [ok] TrainingError with report (best_step 0): the trained network's validation loss 1.2294536062129595 is not below its loss at initialisation 1.2294536062129595 (ste
+  [ok] after the TrainingError the student is still empty
+
+== guard rails on a student holding fx_alpha (30 steps) ==
+  [ok] adding fx_alpha a second time -> ValueError: skill 'fx_alpha' was already added (position 0 of ['fx_alpha']); each skill is added once
+  [ok] decide_index for fx_beta (shared, not added) -> ValueError: skill 'fx_beta' has not been added yet; skills held: ['fx_alpha']
+  [ok] decide_index for fx_omega (not shared) -> ValueError: skill 'fx_omega' is not one of the shared skills; skills held: ['fx_alpha']
+  [ok] decide_index with NaN -> ValueError: fx_alpha: situations contain non-finite values (first at row 4, feature 'fx_a_speed'); the student refuses to decide on them
+  [ok] decide with inf -> ValueError: fx_alpha: situations contain non-finite values (first at row 2, feature 'fx_a_offset'); the student refuses to decide on them
+  [ok] operation_counts with NaN -> ValueError: fx_alpha: situations contain non-finite values (first at row 4, feature 'fx_a_speed'); the student refuses to decide on them
+  [ok] decide_index with 2 columns -> ValueError: fx_alpha: situations must have shape (n, 3); got (20, 2)
+  [ok] decide with fx_beta's spec -> ValueError: skill 'fx_beta' has not been added yet; skills held: ['fx_alpha']
+  [ok] decide with an fx_alpha spec whose speed range changed -> ValueError: spec 'fx_alpha' encodes its situation differently from the encoder its head was trained with (situation variables, ranges or levels changed)
+
+== a failure after training leaves the student as it was ==
+  [ok] add fx_beta with a failure injected after fit -> RuntimeError: FIXTURE failure injected after training
+  [ok] after the failure: same skills held, network digests, records and decisions
+  [ok] the next add (torch model rebuilt from the committed state) matches a student that never failed
+
+== tampered files are refused on load ==
+  [ok] the untouched copy loads
+  [ok] a changed model_state.npz -> ValueError: <tmp>\state: model_state.npz does not match the sha256 in the manifest
+  [ok] fx_beta's network arrays in place of fx_alpha's -> ValueError: <tmp>\network\networks\fx_alpha.npz does not match the digest recorded in <tmp>\network\networks\fx_alpha.json
+  [ok] a changed stored dream set -> ValueError: <tmp>\dreams\dreams\fx_alpha.npz does not match the sha256 recorded in <tmp>\dreams\dreams\fx_alpha.json
+  [ok] a manifest of another format -> ValueError: <tmp>\format\manifest.json is not a learned-judgment/shared-spiking-student/v1 manifest
+  [ok] temporary directory removed
+
+CHECK RESULT: 41 assertions held, 0 failed 

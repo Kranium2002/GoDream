@@ -1,0 +1,22 @@
+﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+
+workers: max_steps=150 (config 1500), torch_threads=1 (config); seeds 11, 11, 12
+  process pid=30848 seed=11 exit=0
+    after fx_alpha: steps_run=150 best_step=150 best_validation_loss=0.0425938161599954 threads=1 digests(16)={'fx_alpha': 'c3d4cdbf013d60af'}
+    after fx_beta: steps_run=150 best_step=150 best_validation_loss=0.05800013636916636 threads=1 digests(16)={'fx_alpha': '9e8e9dfb85c59fbf', 'fx_beta': 'fb0da60c4d9b867e'}
+    after fx_gamma: steps_run=150 best_step=150 best_validation_loss=0.03062279942026562 threads=1 digests(16)={'fx_alpha': 'f7fd86804e7707d9', 'fx_beta': '3403f66abc106a47', 'fx_gamma': '6bd071e14fc671f8'}
+  [ok] worker for seed 11 finished
+  process pid=16656 seed=11 exit=0
+    after fx_alpha: steps_run=150 best_step=150 best_validation_loss=0.0425938161599954 threads=1 digests(16)={'fx_alpha': 'c3d4cdbf013d60af'}
+    after fx_beta: steps_run=150 best_step=150 best_validation_loss=0.05800013636916636 threads=1 digests(16)={'fx_alpha': '9e8e9dfb85c59fbf', 'fx_beta': 'fb0da60c4d9b867e'}
+    after fx_gamma: steps_run=150 best_step=150 best_validation_loss=0.03062279942026562 threads=1 digests(16)={'fx_alpha': 'f7fd86804e7707d9', 'fx_beta': '3403f66abc106a47', 'fx_gamma': '6bd071e14fc671f8'}
+  [ok] worker for seed 11 finished
+  process pid=53240 seed=12 exit=0
+    after fx_alpha: steps_run=150 best_step=150 best_validation_loss=0.0363998292340954 threads=1 digests(16)={'fx_alpha': '4fe140a3259e3c5e'}
+    after fx_beta: steps_run=150 best_step=150 best_validation_loss=0.058339109868623 threads=1 digests(16)={'fx_alpha': 'a003ce8ffeda5437', 'fx_beta': 'ba81afa5028b5479'}
+    after fx_gamma: steps_run=150 best_step=150 best_validation_loss=0.029656095197732893 threads=1 digests(16)={'fx_alpha': 'f580c2fc83fe5be1', 'fx_beta': '04a4638b9a02a818', 'fx_gamma': '822d5b02e9aee6b8'}
+  [ok] worker for seed 12 finished
+  [ok] same seed in two separate processes -> identical digests of every skill's view after every add
+  [ok] different seed -> different digests for every skill
+
+CHECK RESULT: 5 assertions held, 0 failed 

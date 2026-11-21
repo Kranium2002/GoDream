@@ -1,0 +1,102 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+
+config.yaml: e_mac_pj=4.6 e_ac_pj=0.9 bootstrap {'n_resamples': 9999, 'confidence_level': 0.95, 'method': 'BCa'}
+  [ok] the fixture encoder is exactly the identity
+
+== hand spike counts per step, through snn_core.forward_with_spikes ==
+  snn_core per-step counts (layer 0, rows = steps): [[2, 1, 2], [2, 2, 1], [2, 1, 2]]
+  [ok] per-step spike counts equal the hand trace
+
+== case s1,s2,s3 ==
+  measured spikes per decision [[6.0], [4.0], [5.0]] | hand [6.0, 4.0, 5.0]
+  measured synaptic ops [12.0, 8.0, 10.0] | hand [12.0, 8.0, 10.0]
+  firing rate [0.5555555555555556] (hand 0.555556); break-even 1.703704 (hand 1.703704); never fire [0] (hand 0); fire every step [1] (hand 1)
+  energy (estimate, pJ): main 36.6000 (hand 36.6000); with neuron updates 123.6000 (hand 123.6000); dense 55.2000 (hand 55.2000)
+  synaptic-ops interval [8.0, 12.0] method_used BCa fallback None
+  main-energy interval [34.8000, 38.4000] method_used BCa
+  [ok] spikes per decision = hand
+  [ok] synaptic ops per decision = hand spikes x fan-out 2
+  [ok] fan-out, layer sizes and T
+  [ok] first-layer MACs 6, neuron updates 15, dense reference MACs 12
+  [ok] firing rate = hand mean spikes / (H T)
+  [ok] never-fire and fire-every-step neurons = hand
+  [ok] break-even rate = e_mac / (e_ac T)
+  [ok] the three energy estimates and the main/dense ratio = hand formulas with config.yaml constants
+  [ok] the estimate used the config.yaml constants
+  [ok] synaptic ops interval lies within [min, max] of the per-decision values and records n, resamples, seed
+  [ok] main energy interval lies within [min, max] of the per-decision values and records n, resamples, seed
+  [ok] labelled 'estimate' with energy.CAVEATS
+  [ok] per-neuron replica logits identical to snn_core
+
+== case s1,s2 ==
+  measured spikes per decision [[6.0], [4.0]] | hand [6.0, 4.0]
+  measured synaptic ops [12.0, 8.0] | hand [12.0, 8.0]
+  firing rate [0.5555555555555556] (hand 0.555556); break-even 1.703704 (hand 1.703704); never fire [1] (hand 1); fire every step [1] (hand 1)
+  energy (estimate, pJ): main 36.6000 (hand 36.6000); with neuron updates 123.6000 (hand 123.6000); dense 55.2000 (hand 55.2000)
+  synaptic-ops interval [8.0, 12.0] method_used BCa fallback None
+  main-energy interval [34.8000, 38.4000] method_used BCa
+  [ok] spikes per decision = hand
+  [ok] synaptic ops per decision = hand spikes x fan-out 2
+  [ok] fan-out, layer sizes and T
+  [ok] first-layer MACs 6, neuron updates 15, dense reference MACs 12
+  [ok] firing rate = hand mean spikes / (H T)
+  [ok] never-fire and fire-every-step neurons = hand
+  [ok] break-even rate = e_mac / (e_ac T)
+  [ok] the three energy estimates and the main/dense ratio = hand formulas with config.yaml constants
+  [ok] the estimate used the config.yaml constants
+  [ok] synaptic ops interval lies within [min, max] of the per-decision values and records n, resamples, seed
+  [ok] main energy interval lies within [min, max] of the per-decision values and records n, resamples, seed
+  [ok] labelled 'estimate' with energy.CAVEATS
+  [ok] per-neuron replica logits identical to snn_core
+
+== case s1,s1 ==
+  measured spikes per decision [[6.0], [6.0]] | hand [6.0, 6.0]
+  measured synaptic ops [12.0, 12.0] | hand [12.0, 12.0]
+  firing rate [0.6666666666666666] (hand 0.666667); break-even 1.703704 (hand 1.703704); never fire [1] (hand 1); fire every step [2] (hand 2)
+  energy (estimate, pJ): main 38.4000 (hand 38.4000); with neuron updates 126.3000 (hand 126.3000); dense 55.2000 (hand 55.2000)
+  synaptic-ops interval [12.0, 12.0] method_used percentile fallback "BCa interval was not finite (degenerate bootstrap distribution); recomputed with method='percentile' from the same seed"
+  main-energy interval [38.4000, 38.4000] method_used percentile
+  [ok] spikes per decision = hand
+  [ok] synaptic ops per decision = hand spikes x fan-out 2
+  [ok] fan-out, layer sizes and T
+  [ok] first-layer MACs 6, neuron updates 15, dense reference MACs 12
+  [ok] firing rate = hand mean spikes / (H T)
+  [ok] never-fire and fire-every-step neurons = hand
+  [ok] break-even rate = e_mac / (e_ac T)
+  [ok] the three energy estimates and the main/dense ratio = hand formulas with config.yaml constants
+  [ok] the estimate used the config.yaml constants
+  [ok] synaptic ops interval lies within [min, max] of the per-decision values and records n, resamples, seed
+  [ok] main energy interval lies within [min, max] of the per-decision values and records n, resamples, seed
+  [ok] labelled 'estimate' with energy.CAVEATS
+  [ok] per-neuron replica logits identical to snn_core
+  [ok] identical decisions: BCa is not finite, the percentile fallback is recorded and gives [12, 12]
+
+== two hidden layers (random FIXTURE weights) against an independent scalar re-implementation ==
+  layer sizes [2, 5, 4, 3], fan-out [4, 3], mean spikes per layer [8.075, 4.3], rates [0.4037, 0.2687], never fire [0, 0] (scalar [0, 0]), fire every step [0, 0] (scalar [0, 0])
+  [ok] spikes per decision and layer = scalar re-implementation
+  [ok] synaptic ops = layer-1 spikes x 4 + layer-2 spikes x 3 (fan-out = width of the layer fed)
+  [ok] first-layer MACs 10, neuron updates 48, dense reference MACs 42
+  [ok] never-fire and fire-every-step counts per layer = scalar re-implementation
+  [ok] firing rate per layer = mean spikes / (H_l T)
+
+== input guards ==
+  [ok] one situation (bootstrap needs two) -> ValueError: situations must have shape (n >= 2, S=2); got (1, 2)
+  [ok] unknown bootstrap method -> ValueError: method must be one of ('BCa', 'percentile', 'basic'); got 'normal'
+  [ok] non-finite situation -> ValueError: situations contain non-finite values (first at row 1, feature 'fx_a')
+  [ok] wrong situation width -> ValueError: situations must have shape (n >= 1, S=2); got (3, 3)
+
+== dream_source ==
+  [ok] physics_only method, no requests -> physics_only
+  [ok] a model method without requests -> local_residual_model
+  [ok] request hashes -> provider_backed_teacher
+  [ok] three documented sources
+  [ok] physics_only with request hashes -> ValueError: a 'physics_only' dream cannot name provider requests; got 1 request hashes
+
+== latency of the hand network (mechanics only; n_decisions from config.yaml) ==
+  median 383.5 us p95 491.2 us over 1000 decisions; torch_free_process=True single_row_vs_batch_differing=0
+  [ok] the latency path ran without torch in the process
+  [ok] n_decisions from config, cycling 3 situations
+  [ok] 0 < median <= p95
+  [ok] single-row decisions equal the batched decisions
+
+CHECK RESULT: 60 assertions held, 0 failed 

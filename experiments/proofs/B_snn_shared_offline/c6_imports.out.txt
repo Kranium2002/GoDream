@@ -1,0 +1,6 @@
+﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+  learned_judgment.students.shared_snn: imported in 1.30 s; exports ['MANIFEST_FORMAT', 'STUDENT_KIND', 'SharedSNNStudent']; torch_in_sys_modules=False snntorch_in_sys_modules=False
+  [ok] learned_judgment.students.shared_snn imports (exit 0)
+  [ok] learned_judgment.students.shared_snn leaves torch and snntorch unimported
+
+CHECK RESULT: 2 assertions held, 0 failed 
