@@ -1,0 +1,4 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+row 0 neuron 12: batched current np.float64(0.7435616904494211), single-row current np.float64(0.7435616904494212)
+decide(batch of 500)[0] = 0; decide_one(row 0) = 1; differ = True
+spikes of row 0: batched 10, single 11

@@ -1,0 +1,11 @@
+mujoco 3.3.6; opt.timestep=0.002
+geom  0 name='floor'  body='world'     priority=0 friction=[1.0, 0.005, 0.0001] condim=3 solmix=1.0
+geom 14 name=''       body='base_link' priority=0 friction=[0.4, 0.005, 0.0001] condim=1 solmix=1.0
+geom 15 name=''       body='base_link' priority=0 friction=[0.4, 0.005, 0.0001] condim=1 solmix=1.0
+geom 16 name=''       body='base_link' priority=0 friction=[0.4, 0.005, 0.0001] condim=1 solmix=1.0
+geom 28 name='FL'     body='FL_calf'   priority=1 friction=[0.4, 0.02, 0.01] condim=6 solmix=1.0
+geom 40 name='FR'     body='FR_calf'   priority=1 friction=[0.4, 0.02, 0.01] condim=6 solmix=1.0
+geom 52 name='RL'     body='RL_calf'   priority=1 friction=[0.4, 0.02, 0.01] condim=6 solmix=1.0
+geom 64 name='RR'     body='RR_calf'   priority=1 friction=[0.4, 0.02, 0.01] condim=6 solmix=1.0
+subtree mass of base_link (whole robot) = 15.206408 kg
+exit=0

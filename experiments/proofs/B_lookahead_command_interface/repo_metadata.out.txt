@@ -1,0 +1,11 @@
+Eximius-Labs/efferent license=Apache-2.0 redirect_full_name=Eximius-Labs/efferent
+fan-ziqi/rl_sar license=Apache-2.0 redirect_full_name=fan-ziqi/rl_sar
+fan-ziqi/rl_sar_zoo license=null redirect_full_name=fan-ziqi/rl_sar_zoo
+fan-ziqi/robot_lab license=Apache-2.0 redirect_full_name=fan-ziqi/robot_lab
+OpenRobotLab/HIMLoco license=NOASSERTION redirect_full_name=InternRobotics/HIMLoco
+iit-DLSLab/Quadruped-PyMPC license=BSD-3-Clause redirect_full_name=iit-DLSLab/Quadruped-PyMPC
+iit-DLSLab/gym-quadruped license=null redirect_full_name=iit-DLSLab/gym-quadruped
+unitreerobotics/unitree_mujoco license=BSD-3-Clause redirect_full_name=unitreerobotics/unitree_mujoco
+pypi efferent latest: 0.5.0 | license: Apache-2.0 | requires_python: >=3.10 | project_urls: {'Changelog': 'https://github.com/Eximius-Labs/efferent/blob/main/CHANGELOG.md', 'Homepage': 'https://github.com/Eximius-Labs/efferent', 'Issues': 'https://github.com/Eximius-Labs/efferent/issues', 'Repository': 'https://github.com/Eximius-Labs/efferent'}
+unitree_mujoco submodule 1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d 2026-09-07 21:21:09 +0800 Merge pull request #131 from keeprobot/main
+exit=0

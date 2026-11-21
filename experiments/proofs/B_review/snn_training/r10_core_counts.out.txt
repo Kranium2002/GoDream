@@ -1,0 +1,6 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+sizes (5, 12, 7): logits identical across paths True; trains->counts equal True; spikes/decision equal True; synops equal True; first_layer_macs 60 (hand 60); neuron_updates 114 (hand 114); dense_reference_macs 144 (hand 144); firing rate [0.2903] (hand [0.2903])
+  save/load: digest equal True; decisions equal True
+sizes (5, 12, 9, 7): logits identical across paths True; trains->counts equal True; spikes/decision equal True; synops equal True; first_layer_macs 60 (hand 60); neuron_updates 168 (hand 168); dense_reference_macs 231 (hand 231); firing rate [0.2462, 0.0829] (hand [0.2462, 0.0829])
+  save/load: digest equal True; decisions equal True
+torch imported: False

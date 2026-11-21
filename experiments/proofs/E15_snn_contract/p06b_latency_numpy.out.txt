@@ -1,0 +1,11 @@
+BLAS: [('openblas', '0.3.34.237.2', 22)]
+numpy h32     T5   f32: median     61.7 us  p95    141.1 us | f64: median     61.9 us  p95    112.0 us
+numpy h32     T10  f32: median    103.1 us  p95    116.0 us | f64: median    106.2 us  p95    167.8 us
+numpy h32     T25  f32: median    226.2 us  p95    397.9 us | f64: median    234.0 us  p95    400.6 us
+numpy h64     T5   f32: median     62.5 us  p95    108.6 us | f64: median     62.8 us  p95    163.4 us
+numpy h64     T10  f32: median    109.7 us  p95    241.8 us | f64: median    106.2 us  p95    189.7 us
+numpy h64     T25  f32: median    240.2 us  p95    431.0 us | f64: median    243.6 us  p95    422.2 us
+numpy h64x64  T5   f32: median    101.9 us  p95    119.7 us | f64: median    103.7 us  p95    209.7 us
+numpy h64x64  T10  f32: median    179.3 us  p95    221.1 us | f64: median    188.1 us  p95    313.8 us
+numpy h64x64  T25  f32: median    413.5 us  p95    737.5 us | f64: median    426.9 us  p95    727.0 us
+'torch' in sys.modules: False

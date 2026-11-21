@@ -1,0 +1,6 @@
+scale=  0.1 thr= 1.0: mean rate 0.042; rate==0 0.763; rate==1 0.000; binary 0.763; graded (0<r<1) 0.237
+scale=  1.0 thr= 1.0: mean rate 0.171; rate==0 0.618; rate==1 0.039; binary 0.657; graded (0<r<1) 0.343
+scale=  3.0 thr= 1.0: mean rate 0.350; rate==0 0.542; rate==1 0.256; binary 0.798; graded (0<r<1) 0.202
+scale= 10.0 thr= 1.0: mean rate 0.453; rate==0 0.513; rate==1 0.420; binary 0.933; graded (0<r<1) 0.067
+scale=  1.0 thr= 0.1: mean rate 0.441; rate==0 0.527; rate==1 0.411; binary 0.938; graded (0<r<1) 0.062
+scale=  1.0 thr= 5.0: mean rate 0.013; rate==0 0.898; rate==1 0.000; binary 0.898; graded (0<r<1) 0.102

@@ -1,0 +1,1406 @@
+====================================================================================================
+[Horowitz ISSCC 2014 sec.5-6 text (DRAM, 45nm Fig.1.1.9, 70pJ/instr, cache 20pJ)] source=doi:10.1109/ISSCC.2014.6757323 file=horowitz_gwern.layout.txt lines=115-156
+----------------------------------------------------------------------------------------------------
+normal mode, and low power/battery mode. For mobile processors, the
+power-supply voltage is even more complex. Since these systems are con-                AMAE minimization must also take into account the DRAM energy of the sys-
+cerned about total energy usage (a.k.a. battery life), they need to do computa-        tem. DRAM power is generally left out of most processor power analysis,
+tion as efficiently as possible, that is at as low a voltage as possible, while still  since it is off-die, but must be included in any computing-system analysis. The
+meeting performance targets. As a result, these systems support a large num-           energy cost of a DRAM access (1 to 2nJ) is a couple of orders-of-magnitude
+ber of frequencies and supply voltages at which they can run, and have a num-          higher than the cost of an internal cache access or functional operation (10pJ).
+ber of control loops which set the supply voltages and frequencies. This tech-         Part of this high cost comes from the very energy-inefficient I/O that DRAM
+nique is referred to as DVFS (dynamic voltage and frequency scaling). In sys-          systems use [8], which not only takes over 20pJ/bit, but also require static
+tems which dissipate static power, the optimal frequency selection becomes a           power to keep the I/O active. This static power makes the effective cost/bit
+little more complex, since slower operation increases the energy/operation             even higher, especially for efficient computation, which minimizes the number
+when static power is present,                                                          of memory accesses. One hopes that this interface power problem can be
+                                                                                       resolved soon, since very efficient I/O has been demonstrated by many differ-
+Parallelism alone is not going to allow computing performance to scale; this is        ent companies [9], but changing standards can be difficult. Yet even when the
+apparent from the graph in Figure 1.1.5 which shows diminishing returns at             I/O is improved, the energy cost of a DRAM access will still be large (10pJ/bit,
+both extremes. As we try to lower energy, we soon need to forgo large per-             0.6nJ/8B) compared to a core processor operation, since requests and data
+formance factors for small energy savings. Said differently, once we have              still must travel a large distance on the processor and memory chips to reach
+moved off the "bleeding edge", the energy gain for going even slower is mod-           this efficient I/O. Thus, much work still needs to be done in this area to find
+est. The same is true for supply voltage. This means that as we scale tech-            ways to minimize this energy, or at least minimize it for specific kinds of
+nology, reducing device switching capacitances, we still get an energy saving          access patterns.
+since everything is smaller. Thus, a 2� linear shrink will reduce energy by 2�,
+which should allow the number of cores to increase by a similar amount, if we          6. Gaining Efficiency through Specialization
+run each core at the same frequency as they run today. If the intrinsic gate
+speed improves, small additional performance gain might be possible (by low-           Given the energy costs of the memory system, and the constraints on both
+ering supply to save a little more energy). Note that this scenario is growing         parallelism and technology scaling, it might seem like there is not much room
+the number of cores at half the rate possible from device scaling. This is much        for energy improvement. Yet there are numerous examples of specialized
+less performance scaling than we are used to, since a 2� shrink no longer              hardware which is 2 to 3 orders-of-magnitude more efficient than a processor-
+enables 4� the number of cores on the same die area.                                   based solution as shown in Figure 1.1.8 [10]. The key to understanding how
+                                                                                       much energy saving is available is to look at the energy costs for the funda-
+Yet even this slow performance scaling might be somewhat optimistic since it           mental operations of the application. It is critical to consider both the compu-
+ignores the energy cost of the memory system that is attached to the proces-           tation and the communication (memory accesses) that are required. The data
+sor. As shown below in Section 5, this memory-system energy can dwarf the              for various operations in a 45nm technology are shown in Figure 1.1.9, which
+energy of an efficient processor.                                                      also gives the energy breakdown of a simple in-order processor. These num-
+                                                                                       bers make two things very clear: First, the programmable nature of a proces-
+                                                                                       sor has high energy overhead, 70pJ/instruction, vs. a few pJ for an operation.
+                                                                                       Fetching the instruction, and clocking the state registers that keep the data
+                                                                                       organized, add a significant cost. Second, if high energy efficiency is required,
+
+                                                                                       DIGEST OF TECHNICAL PAPERS �       11
+
+ISSCC 2014 / SESSION 1 / PLENARY / 1.1
+
+the application must have very good data locality, since a cache fetch is 20pJ.     systems, to hardware generators such as Chisel [11] and Genesis 2 [12] to
+====================================================================================================
+[Horowitz ISSCC 2014 Fig.1.1.9 caption (table body is font-shifted; see horowitz_fig119_decoded.stdout.txt)] source=doi:10.1109/ISSCC.2014.6757323 file=horowitz_gwern.layout.txt lines=315-332
+----------------------------------------------------------------------------------------------------
+                                                                                                                                    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 1D7. M1a8rko1v9ic 2/0Slide
+
+                                                                             Figure 1.1.8: Energy efficiency of specialized processing, from [10].
+
+,QWHJHU    )3      S-                                    0HPRU\        ELW
+
+$GG        )$GG    S-                                    &DFKH         S-
+                                                                        S-
+   ELW S-     ELW  S-                                       .%         S-
+  ELW S-      ELW  S-                                      .%          Q-
+0XOW       )0XOW                                            0%
+   ELW S-     ELW                                        '5$0
+  ELW S-      ELW
+
+           Instruction Energy Breakdown
+
+           25pJ  6pJ              Control                              70pJ
+
+====================================================================================================
+[Han et al. NIPS 2015 Sec.1 + Figure 1 energy table] source=arXiv:1506.02626v3 file=han2015.layout.txt lines=40-74
+----------------------------------------------------------------------------------------------------
+                                        While these large neural networks are very powerful, their size consumes considerable storage,
+                                        memory bandwidth, and computational resources. For embedded mobile applications, these resource
+                                        demands become prohibitive. Figure 1 shows the energy cost of basic arithmetic and memory
+                                        operations in a 45nm CMOS process. From this data we see the energy per connection is dominated
+                                        by memory access and ranges from 5pJ for 32 bit coefficients in on-chip SRAM to 640pJ for 32bit
+                                        coefficients in off-chip DRAM [7]. Large networks do not fit in on-chip storage and hence require
+                                        the more costly DRAM accesses. Running a 1 billion connection neural network, for example, at
+                                        20Hz would require (20Hz)(1G)(640pJ) = 12.8W just for DRAM access - well beyond the power
+                                        envelope of a typical mobile device. Our goal in pruning networks is to reduce the energy required to
+                                        run such large networks so they can run in real time on mobile devices. The model size reduction
+                                        from pruning also facilitates storage and transmission of mobile applications incorporating DNNs.
+
+                                                                                                   1
+
+                                                    Relative Energy Cost
+
+Operation             Energy [pJ] Relative Cost
+
+32 bit int ADD        0.1  1
+                           9
+32 bit float ADD      0.9  10
+                           31
+32 bit Register File  1    37
+                           50
+32 bit int MULT       3.1  6400
+
+32 bit float MULT     3.7
+
+32 bit SRAM Cache     5
+
+32 bit DRAM Memory 640
+
+                                                 1  10 100 1000 10000
+
+Figure 1: Energy table for 45nm CMOS process [7]. Memory access is 3 orders of magnitude more
+====================================================================================================
+[Han et al. NIPS 2015 reference [7]] source=arXiv:1506.02626v3 file=han2015.layout.txt lines=507-507
+----------------------------------------------------------------------------------------------------
+      document recognition. Proceedings of the IEEE, 86(11):2278�2324, 1998.
+====================================================================================================
+[DIET-SNN Sec.5 Energy efficiency (Table 3 caption, Eq.16-18)] source=arXiv:2008.03658v3 / doi:10.1109/TNNLS.2021.3111897 file=dietsnn.txt lines=466-572
+----------------------------------------------------------------------------------------------------
+
+other spiking networks. The authors in Wu et al. (2019b) achieved convergence in 12 timesteps with
+
+a special input encoding layer, but the extra overhead may affect the overall latency and energy.
+
+5 ENERGY EFFICIENCY
+
+In ANN, each operation computes a dot-product involving one floating-point (FP) multiplication and one FP addition (MAC), whereas, in SNN, each operation is only one FP addition due to binary spikes. The computations in SNN implemented on neuromorphic hardware are event-driven (Davies et al., 2018; Frady et al., 2020). Therefore, in the absence of spikes, there are no computations and no
+
+6
+
+
+Table 3: ANN vs DIET-SNN compute energy. Each operation in ANN (SNN) consumes 4.6pJ (0.9pJ). The input layer in DIET-SNN is non-spiking, so it's energy is same as ANN. Column-5 shows the ratio of #operations in input layer to the total #operations in the network.
+
+Architecture (timesteps)
+VGG6 (T=5) VGG16 (T=5) VGG16 (T=5) VGG16 (T=5) ResNet20 (T=5) ResNet20 (T=5)
+
+Dataset
+
+Normalized Normalized #OPANN (a) #OPSNN (b)
+
+CIFAR10
+
+1.0
+
+0.14
+
+CIFAR10
+
+1.0
+
+0.39
+
+CIFAR100 1.0
+
+0.40
+
+ImageNet 1.0
+
+0.41
+
+CIFAR10
+
+1.0
+
+0.76
+
+CIFAR100 1.0
+
+0.72
+
+#OP layer 1 Total #OP
+
+(c)
+
+0.029 0.005 0.005 0.006 0.013 0.013
+
+ANN / DIET-SNN
+
+Energy
+
+(
+
+a4.6 c4.6+(1-c)b0.9
+
+)
+
+18
+
+12.4
+
+12.1
+
+11.7
+
+6.3
+
+6.6
+
+active energy is consumed. We computed the energy cost/operation for ANNs and SNNs in 45nm CMOS technology. The energy cost for 32-bit ANN MAC operation (4.6pJ) is 5.1� more than SNN addition operation (0.9pJ) (Horowitz, 2014). These numbers may vary for different technologies, but generally, in most technologies, the addition operation is much cheaper than the multiplication operation. In ANN, the number of operations/layer is defined by
+
+#OPANN =
+
+kw � kh � cin � hout � wout � cout, fin � fout,
+
+Convolution layer Fully-connected layer
+
+(16)
+
+where kw(kh) is kernel width (height), cin(cout) is the number of input (output) channels, hout(wout) is the height (width) of the output feature map, and fin(fout) is the number of input (output) features. The number of operations/layer in iso-architecture SNN is specified by
+
+#OPSNN = SpikeRatel � #OPANN
+
+(17)
+
+SpikeRatel
+
+=
+
+#T otalSpikesl over all inference #N euronsl
+
+timesteps
+
+(18)
+
+where SpikeRatel is the total spikes in layer l over all timesteps averaged over the number of neurons in layer l. A spike rate of 1 (every neuron fired once) implies that the number of operations for ANN
+
+====================================================================================================
+[DIET-SNN Sec.5 data-movement caveat] source=arXiv:2008.03658v3 file=dietsnn.txt lines=577-577
+----------------------------------------------------------------------------------------------------
+VGG16 during inference is around 1.6 (Fig. 2(a)), indicating that DIET-SNN is more energy-efficient
+====================================================================================================
+[Spikformer App. C.2 Eq.21-24] source=arXiv:2209.15425v2 (ICLR 2023) file=spikformer.layout.txt lines=1072-1112
+----------------------------------------------------------------------------------------------------
+C.1 TRAINING
+
+Unlike the standard ViT, Dropout and Droppath are not applied in Spikformer. We remove the layer
+
+norm before each self-attention and MLP block, and add batch norm after each linear layer instead.
+In all Spikformer models, the hidden dimension of MLP blocks is 4 � D, where D is the embedding
+dimension. As in Eq. (20), we select the Sigmoid function as the surrogate function with  = 4.
+
+                       Sigmoid(x)  =  1  +     1                                     (20)
+                                            exp (-x)
+
+For DVS128 Gesture, we place a 1D max-pooling layer after Q and K to increase the density of
+the data, which improves the accuracy from 97.9% to 98.3% in 16 time steps. We set the threshold
+voltage Vth of the spike neuron layer after QKTV  s to 0.5, while the others are set to 1.
+
+C.2 THEORETICAL SYNAPTIC OPERATION AND ENERGY CONSUMPTION CALCULATION
+
+The calculation of theoretical energy consumption requires first calculating the synaptic operations:
+
+                       SOPs(l) = f r � T � FLOPs(l)                                  (21)
+
+where l is a block/layer in Spikformer, f r is the firing rate of the input spike train of the block/layer
+and T is the simulation time step of spike neuron. FLOPs(l) refers to floating point operations of
+l, which is the number of multiply-and-accumulate (MAC) operations. And SOPs is the number
+of spike-based accumulate (AC) operations. We estimate the theoretical energy consumption of
+
+Spikformer according to (Kundu et al., 2021b; Hu et al., 2021b; Horowitz, 2014; Kundu et al., 2021a;
+
+Yin et al., 2021; Panda et al., 2020; Yao et al., 2022). We assume that the MAC and AC operations are
+implemented on the 45nm hardware [12], where EMAC = 4.6pJ and EAC = 0.9pJ. The theoretical
+energy consumption of Spikformer is calculated:
+
+ESpikf ormer = EMAC � FL1SNN Conv
+
+                       N                    M                   L
+
+              + EAC �       SOPnSNN Conv +       SOPm SNN FC +       SOPlSSA         (22)
+
+                       n=2                  m=1                 l=1
+
+                                   16
+====================================================================================================
+[Spike-driven Transformer Sec.4 energy text + Table 1] source=arXiv:2307.01694v1 (NeurIPS 2023) file=sdt.layout.txt lines=435-470
+----------------------------------------------------------------------------------------------------
+We provide a new scheme that performs element-wise multiplication between QS, KS, VS. Since all
+elements in spike tensors are either 0 or 1, element multiplication is equivalent to a mask operation
+with no energy consumption. Mask operations can be implemented in neuromorphic chips through
+addressing algorithms [48] or AND logic operations [4].
+
+Energy Consumption Comparison. The times of floating-point operations (FLOPs) is often used
+to estimate the computational burden in ANNs, where almost all FLOPs are MAC. Under the same
+architecture, the energy cost of SNN can be estimated by combining the spike firing rate R and
+simulation timestep T if the FLOPs of ANN is known. Table 1 shows the energy consumption of
+Conv, self-attention, and MLP modules of the same scale in vanilla and our Spike-driven Transformer.
+
+5 Experiments
+
+We evaluate our method on both static datasets ImageNet [76], CIFAR-10/100 [77], and neuromorphic
+datasets CIFAR10-DVS [78], DVS128 Gesture [79].
+Experimental Setup on ImageNet. For the convenience of comparison, we generally continued
+the experimental setup in [20]. The input size is set to 224 � 224. The batch size is set to 128 or
+
+6
+
+Table 1: Energy evaluation. F LConv and F LMLP represent the FLOPs of the Conv and MLP models
+
+in the ANNs, respectively. RC, RM , R, R denote the spike firing rates (the proportion of non-zero
+elements in the spike matrix) in various spike matrices. We give the strict definitions and calculation
+methods of these indicators in the Supplementary due to space constraints.
+
+     SPS        First Conv           Vanilla     Spike-driven Transformer
+Self-attention  Other Conv    Transformer [51]           (This work)
+
+     MLP          Q, K, V     EMAC � F LConv     EMAC � T � RC � F LConv
+                f (Q, K, V )  EMAC � F LConv      EAC � T � RC � F LConv
+
+                   Scale       EMAC � 3N D2         EAC � T � R � 3N D2
+                  Softmax      EMAC � 2N 2D           EAC � T � R � N D
+                   Linear
+                                   EM � N 2                     -
+====================================================================================================
+[Spike-driven Transformer Supp. S1 energy details] source=arXiv:2307.01694v1 file=sdt.layout.txt lines=1098-1131
+----------------------------------------------------------------------------------------------------
+      and hybridization. Frontiers in Neuroscience, 14:653, 2020.
+
+[93] Mark Horowitz. 1.1 computing's energy problem (and what we can do about it). In 2014 IEEE
+      International Solid-State Circuits Conference Digest of Technical Papers (ISSCC), pages 10�14.
+      IEEE, 2014.
+
+[94] Guillermo Gallego, Tobi Delbr�ck, Garrick Orchard, Chiara Bartolozzi, Brian Taba, Andrea
+      Censi, Stefan Leutenegger, Andrew J. Davison, J�rg Conradt, Kostas Daniilidis, and Davide
+      Scaramuzza. Event-based vision: A survey. IEEE Transactions on Pattern Analysis and
+      Machine Intelligence, 44(1):154�180, 2022.
+
+[95] Ramprasaath R Selvaraju, Michael Cogswell, Abhishek Das, Ramakrishna Vedantam, Devi
+      Parikh, and Dhruv Batra. Grad-cam: Visual explanations from deep networks via gradient-based
+      localization. In Proceedings of the IEEE international conference on computer vision, pages
+      618�626, 2017.
+
+                                                          15
+
+S1 Energy Consumption Analysis Details
+
+We show the theoretical energy consumption estimation method of the proposed Spike-driven
+Transformer in Table 1 of the main text. Compared to the vanilla Transformer counterpart, the spiking
+version requires information on timesteps T and spike firing rates (R). Therefore, we only need to
+evaluate the FLOPs of the vanilla Transformer, and T and R are known, we can get the theoretical
+energy consumption of spike-driven Transformer.
+
+The FLOPs of the n-th Conv layer in ANNs [90] are:
+
+F LConv = (kn)2 � hn � wn � cn-1 � cn,                                               (S1)
+
+where kn is the kernel size, (hn, wn) is the output feature map size, cn-1 and cn are the input and
+output channel numbers, respectively. The FLOPs of the m-th MLP layer in ANNs are:
+
+F LMLP = im � om,                                                                    (S2)
+====================================================================================================
+[Kundu et al. WACV 2021 Sec.4.3, Eq.11-13, Table 3-4] source=doi:10.1109/WACV48630.2021.00400 file=kundu_wacv.layout.txt lines=444-560
+----------------------------------------------------------------------------------------------------
+
+                                                                            3958
+
+Figure 6. Plot of test accuracy versus epochs with different target densities for (a) ResNet12 on CIFAR-10, (b) VGG11 on CIFAR-100, and
+(c) VGG16 on Tiny-ImageNet. The SNN training is done with reduced time steps.
+
+   Authors      Training Architecture Compress-      Accuracy  Time   Table 3. Convolutional layer FLOPs for ANN and SNN models
+                                                        (%)    steps
+  Cao et al.    type                   ion ratio
+  (2015) [4]                                           77.43   400
+ Sengupta et                Dataset : CIFAR-10         91.55   2500
+al. (2019)[37]                                         90.53
+   Wu et al.    ANN-SNN     3 CONV,     1�             91.13    12    Model                   FLOPs of a CONV layer l
+ (2019) [44]    conversion   2 linear                  92.02   100
+ Rathi et al.   ANN-SNN     VGG16       1�             89.53   200    AN N    Variable             Value
+ (2020) [36]    conversion                             87.38          SNN    F LlANN
+ Deng et al.    Surrogate   5 CONV,     1�             91.29     8           F LSl NN         (kl)2 � Hol � Wol � Col � Cil
+  (2020) [8]                 2 linear                  90.15     8                            (kl)2 � Hol � Wol � Col � Cil � l
+ Deng et al.     gradient   VGG16       1�                     100                       Hol -1 Wol -1 Col -1 Cil -1 kl -1
+  (2020) [8]      Hybrid                1�             57.83   100    SN NC F LSl NNC (  x=0  y=0  p=0    n=0                    kl -1
+  This work       training  11 layer    1�             64.98                                                              i=0    j=0
+                   STBP       CNN                                8
+ Deng et al.      training              4�                     120                            nl ,x+i,y+j � mpl ,n,i,j )
+  (2020) [8]       STBP     11 layer
+  This work       training    CNN      2.5�
+                Hybrid SL              33.4�
+                            VGG16
+
+                            Dataset : CIFAR-100
+
+                STBP        11 layer             2�
+
+                training    CNN
+
+                Hybrid SL VGG11                  4�
+
+Table 2. Performance comparison of the proposed hybrid SL with
+state-of-the-art deep SNNs on CIFAR-10 and CIFAR-100.
+
+4.3. Analysis of Energy Consumption                                   Figure 7. Average spiking activity generated at each layer of
+                                                                      VGG16 while classifying over the test set of CIFAR-10 for model
+4.3.1 Spiking Activity                                                having parameter density (d) of 1.0 and 0.03.
+
+To model energy consumption, we assume a generated SNN                4.3.2 Measure of FLOPs and Computation Energy
+spike consumes a fixed amount of energy [5]. Based on this
+assumption, earlier works [36, 37] have adopted the average           Consider a convolutional layer l with weight tensor Wl 
+spiking activity (also known as average spike count) of an            Rkl�kl�Cil�Col takes an input activation tensor Al 
+SNN layer l, denoted l, as a measure of compute-energy of             RHil�Wil�Cil , where Hil, Wil, kl, Cil and Col are input height,
+the model. In particular, l is computed as the ratio of the           width, filter height (or width), channel size, and number of
+total spike count in T steps over all the neurons of the layer        filters, respectively. This section quantifies the energy asso-
+l to the total number of neurons in that layer. Thus lower            ciated with producing the corresponding output activation
+the spiking activity the better is the energy efficiency.             map Ol  RHol �Wol�Col for a standard ANN, an uncom-
+                                                                      pressed SNN, and finally a compressed SNN.
+   Fig. 7 shows the per-image average number of spikes for
+each layer with uncompressed and compressed (d = 0.03)                   The number of FLOPS needed for layer l of a standard
+VGG16 while classifying on CIFAR-10 over 100 time steps.              ANN, denoted F LAl NN , is easy to calculate and shown
+As we can see, the spiking activity for all the layers reduces        in row 1 of Table 3 [22, 23]. The formula can be easily
+significantly with compression. For example, the average              adjusted for an uncompressed SNN in which each neuron
+spike count of the 11th convolutional layer of the uncom-             spike in layer l triggers a weight accumulation across each
+pressed model is 11.7. For the compressed variant the value           of its connected post-synaptic neurons in layer l+1, denoted
+is only 0.44. In particular, the spiking activity of the un-          as F LSl NN in Table 3.
+compressed model can increase from 1.3� to 25.4� across
+different layers of the SNN.                                             For a compressed SNN model, however, the calculation
+                                                                      is complicated by the fact that the presence of spikes at a
+
+                                                                      3959
+
+Figure 8. Comparison of ANN to SNN in terms of FLOPs and normalized compute energy for VGG16 with different parameter density to
+classify (a) CIFAR-10, (b) CIFAR-100, and (c) Tiny-ImageNet.
+
+pre-synaptic neuron triggers accumulations in a subset of           than a comparable uncompressed ANN.6 For CIFAR-100
+                                                                    and Tiny-ImageNet with SNN compression, the energy-
+post-synaptic neurons due to sparsity. In particular, we as-        efficiency can reach up to 10.8� and 5.2�, respectively,
+                                                                    as opposed to ANN models having similar parameters.
+sume that masked weights are not accumulated via inex-
+                                                                    Table 4. Estimated energy costs for various operations in 45 nm
+pensive zero-gating logic and the resulting calculation for         CMOS process at 0.9 V [18]
+F LSl NNC is shown in row 3 of Table 3, assuming a stride
+value of 1. Here, nl ,x+i,y+j represents total spike count                Serial No.  Operation            Energy (pJ)
+accumulated over T time steps at the (x + i, y + j)th in-
+put activation map element in the nth channel and mpl ,n,i,j              1. 32-bit multiplication int     3.1
+represents the mask for weight of location (i, j) in the nth
+channel of the pth filter. mlp,n,i,j = 0, if wpl ,n,i,j = 0 and 1,        2.          32-bit addition int  0.1
+otherwise.
+                                                                          3.          32-bit MAC           3.2 (#1 + #2)
+   For ANNs, FLOPs are dominated by the total multiply
+                                                                          4.          32-bit AC            0.1 (#2)
+accumulate (MAC) operation of the CONV and linear lay-
+                                                                    5. Conclusions
+ers. On the other hand, for SNNs, the FLOPs are limited to
+                                                                       This paper proposes a hybrid sparse-learning approach
+accumulates (ACs) as the spikes are binary and thus simply          for generating compressed deep SNN models that have re-
+                                                                    duced spiking activity and thus high energy efficiency. In
+indicate which weights need to be accumulated at the post-          particular, we first use a novel attention-guided ANN com-
+                                                                    pression, then convert the ANN to an SNN by sequentially
+synaptic neurons. Thus the inference compute energy at the          fixing the firing threshold of each layer, and finally training
+                                                                    the SNN using a sparse-learning based approach that starts
+CONV layers for the models can be quantified as                     with the compressed ANN weights. The generated sparse
+                                                                    SNNs have compression ratios of up to 33.4� with negligi-
+                     L       (11)                                   ble drop in accuracy. Moreover, the reduced time steps to
+                             (12)                                   perform inference further reduces the average spiking activ-
+EANN = ( F LlANN ) � EMAC    (13)                                   ity of the models required for classification. Compared to
+                                                                    unpruned and iso-parameter ANNs, our generated SNNs are
+                    l=1                                             up to 38.7� and 12.2� more energy efficient, respectively,
+                                                                    with no significant drop in accuracy.
+                         L
+                                                                    References
+   ESNN = ( F LlSNN ) � EAC
+                                                                     [1] Guillaume Bellec, David Kappel, Wolfgang Maass, and
+                        l=1                                               Robert Legenstein. Deep rewiring: Training very sparse deep
+                                                                          networks. arXiv preprint arXiv:1711.05136, 2017.
+                       L
+                                                                     [2] Guillaume Bellec, Darjan Salaj, Anand Subramoney, Robert
+ESNNC = ( F LSl NNC ) � EAC                                               Legenstein, and Wolfgang Maass. Long short-term memory
+                                                                          and learning-to-learn in networks of spiking neurons. arXiv
+                     l=1                                                  preprint arXiv:1803.09574, 2018.
+
+====================================================================================================
+[Kim et al. ICASSP 2022 Sec.3.4-4] source=arXiv:2202.03133v2 / doi:10.1109/ICASSP43922.2022.9747906 file=kim_rate_direct.txt lines=170-206
+----------------------------------------------------------------------------------------------------
+
+framework [23]. We set the total number of epochs to 60, 100, and 100 for MNIST, CIFAR10, and CIFAR100, respectively. During training, we utilize step-wise learning rate scheduling with a decay factor of 10 at 50% and 75% of the total epochs. We train the networks with Adam optimizer with an initial learning rate 1e - 4. For LIF neuron, we set time constant m and threshold  to 2 and 1, respectively.
+3.4. Accuracy comparison Fig. 2 shows the accuracy of rate-encoded SNN and directencoded SNN with respect to the number of timesteps. From the experimental results, we observe the following: (1) In general, direct coding brings higher accuracy than rate coding especially with small number of timesteps. (2) As the ratecoded SNN is trained with larger number of timesteps, the performance gap between the two coding decreases. (3) As the dataset and network architecture gets more complicated, the performance gap between the two coding increases. The reason for higher performance of direct-coded SNNs is a trainable input coding layer (Fig. 1(b)). The weights of the coding layer are trained for minimizing cross-entropy loss, providing optimal float amplitude.
+3.5. Robustness studies We compare the robustness of rate-coded and direct-coded SNNs against adversarial attacks. For this work, we consider two adversarial attacks. FGSM attack [15] is a single-step attack based on backward gradients. For the input image x, adversarial image xadv is generated by adding the sign of
+
+
+Table 1. Energy expended by rate-encoded and direct-encoded SNNs on an Eyeriss platform normalized with respect to the energy of 1 MAC operation. We use 10 timesteps for both architectures.
+
+Scheme Rate coding Direct coding
+
+Normalized energy/image
+
+MLP/MNIST VGG5/CIFAR10
+
+8.58E+06
+
+2.73E+07
+
+2.26E+07
+
+4.22E+07
+
+Fig. 4. A pictorial representation of a PE in a 16-bit Eyeriss platform for SNN evaluation.
+
+gradients scaled by :
+
+xadv = x + sign(x(L(x, ytrue))),
+
+(5)
+
+where, ytrue stands for the ground-truth label. Projected Gradient Descent (PGD) attack [19] is an iterative adversarial attack characterized by parameters, such as, maximum perturbation , perturbation step size  and the number of iterations n. Higher values of ,  and n denote stronger PGD attacks. In our experiments, we represent the configuration of PGD as [ , , n]. In Fig. 3, we compare the robustness of SNNs with rate coding and direct coding on two architectures (i.e., MLP and VGG5). Note, for generating adversarial examples for SNNs with rate coding, we use the method proposed by [16]. Interestingly, we find that rate-coded SNNs have higher adversarial robustness approximately up to 20% higher accuracy compared to direct-coded SNNs. This is because the Poisson generator function is non-differentiable, therefore the gradient has to be approximated, making the attack ineffective.
+
+3.6. Energy-efficiency of two coding schemes
+To assess the energy costs incurred by the two coding schemes, we evaluate our MLP and VGG5 SNNs on a 16-bit Eyeriss platform (65 nm CMOS technology) using an output stationary dataflow. Eyeriss follows a von-Neumann mode of neural computation widely adopted in modern accelerators [18, 25]. It enables us to optimize over different design choices such as, type of dataflow, computation reuse and skipping zero computations. A representation of a processing element (PE) for the evaluation of SNNs on Eyeriss has been depicted in Fig. 4. Rate-encoded SNNs also involve a digital circuit for achieving the Poisson rate coding that is also accounted for in our energy evaluation [6]. Table 1 shows the normalized energy values per image for the SNNs, wherein we find that rate coding yields less energy cost than direct coding by  50%. Here, all the measured energy values are normalized with respect to a 16-bit Multiply-and-Accumulate (MAC) operation. Primarily, it is due to the fact that the first layer of the direct-encoded SNNs has 16-bit data precision and thus, incurs greater computational costs with respect to the rate-encoded SNNs having
+
+binary spike trains as inputs. Note, the first layer mainly contributes to the total energy cost as deep layers yield highly sparse spike activation. Moreover, in the standard Eyeriss architecture, direct coding requires the same full-precision inputs and weights for the first layer to be repeatedly fetched T times to perform corresponding MAC operations (where, T is total number of timesteps) that add significantly to the energy expenditure. On the other hand, rate-encoded SNNs with a sparse distribution of input spikes help reduce the computations and hence, energy expenditure on the Eyeriss platform. In order to circumvent the repetition of the full-precision first layer computations in direct-encoded SNNs, we need to modify the standard Eyeriss PE to facilitate digital shift operations for the partial sums generated during MAC. The modification will alleviate repeated fetches of the same inputs and weights from the spads (or registers) as well as the cost of multiply operation for multiple time-steps.
+4. CONCLUSION AND DISCUSSION
+====================================================================================================
+[Dampfhoffer et al. TETCI abstract + intro] source=doi:10.1109/TETCI.2022.3214509 (HAL cea-03852141 accepted version) file=dampfhoffer.txt lines=20-27
+----------------------------------------------------------------------------------------------------
+
+Abstract--Spiking Neural Networks (SNNs) hold the promise of lower energy consumption in embedded hardware due to their spike-based computations compared to traditional Artificial Neural Networks (ANNs). The relative energy efficiency of this emerging technology compared to traditional digital hardware has not been fully explored. Many studies do not consider memory accesses, which account for an important fraction of the energy consumption, use na�ive ANN hardware implementations, or lack generality. In this paper, we compare the relative energy efficiency of classical digital implementations of ANNs with novel event-based SNN implementations based on variants of the Integrate and Fire (IF) model. We provide a theoretical upper bound on the relative energy efficiency of ANNs, by computing the maximum possible benefit from ANN data reuse and sparsity. We also use the Eyeriss ANN accelerator as a case study. We show that the simpler IF model is more energy-efficient than the Leaky IF and temporal continuous synapse models. Moreover, SNNs with the IF model can compete with efficient ANN implementations when there is a very high spike sparsity, i.e. between 0.15 and 1.38 spikes per synapse per inference, depending on the ANN implementation. Our analysis shows that hybrid ANN-SNN architectures, leveraging a SNN eventbased approach in layers with high sparsity and ANN parallel processing for the others, are a promising new path for further energy savings.
+Index Terms--Spiking neural networks, neuromorphic hardware, deep neural network accelerators, energy efficiency.
+I. INTRODUCTION
+Artificial Neural Networks (ANNs) can solve difficult tasks and Deep Neural Networks (DNNs) are now widely used in a variety of applications such as image recognition [1], speech recognition [2] or medical diagnosis [3]. However their hardware implementation in general-purpose processors (CPUs or GPUs) is inefficient in terms of energy consumption. Therefore, researchers are focusing on designing energyefficient specialized hardware with spatial architectures. An entirely different approach is to use bio-inspired Spiking Neural Networks (SNNs) instead of ANNs. SNNs closely mimick the communication and computation in the brain. They communicate information via temporal events (spikes), and the computation in a neuron consists in accumulating the spikes, weighted by synaptic connections, into a membrane potential and firing an output spike when the potential reaches a threshold. Therefore, they require only accumulate (AC) operations. They have temporal dynamics, meaning the inference phase is performed over a certain period of time in which neurons can fire several spikes, this latency depending on the required
+
+network accuracy. ANNs, on the other hand, perform multiplyand-accumulate (MAC) operations between input activations (iacts) and weights on a layer-by-layer basis. SNN communication and event-based computation (i.e. only when there is an input spike) can be leveraged in dedicated neuromorphic hardware, such as the large-scale architectures Truenorth [4], Loihi [5], DYNAPs [6] and FPGA implementations [7], [8].
+While SNN event-based implementations naturally benefit from spike sparsity, ANN implementations present other advantages. Indeed, an efficient dataflow (i.e. scheduling of ANN computations and mapping across Processing Elements (PEs) [9]), can optimize the data reuse (locally reusing data in several MACs) such that memory accesses are minimized, reducing the energy consumption. SNN event-based implementations can not leverage data reuse due to the non-flexible and non-predictable order of computations driven by spikes. Moreover, ANNs can also leverage the sparsity of iacts via data compression and logic to skip unnecessary MAC operations [10].
+====================================================================================================
+[Dampfhoffer et al. scope] source=doi:10.1109/TETCI.2022.3214509 file=dampfhoffer.txt lines=44-44
+----------------------------------------------------------------------------------------------------
+In ANN-like execution, spikes must be stored, but it offers more opportunities for data reuse and allows spatially folded architectures as in ANNs. For instance, ref. [20] proposes an output stationary dataflow where neurons are mapped to PEs to minimize the energy consumption of reading and writing the neurons state. This comes at the cost of storing the spikes in a FIFO during the computation of a layer, which must be further sorted to respect the computation order constraints. In [21], [22], input spikes are stored as ANN activations with only 0 and 1 values, but with an additional temporal dimension (representing SNN temporal dynamics). Therefore, they can process all spikes of a layer in parallel and use a weight stationary or output stationary dataflow. However, they must also store spikes in tensors whose size depends on the temporal resolution.
+====================================================================================================
+[Dampfhoffer et al. Eq.2, Eq.4 context, Eq.7, Table I] source=doi:10.1109/TETCI.2022.3214509 file=dampfhoffer.layout.txt lines=186-262
+----------------------------------------------------------------------------------------------------
+   In ANNs, the output of a neuron is defined as:                              potential (state) of the neuron. We do not need to read the input
+                                                                               value as it is a spike and thus it communicates directly the
+                                                                               addresses of the corresponding weight and neuron state. Then
+                                                                               the weight is simply added to the state with an AC operation.
+                                                                               We assume that, in the event the spikes must be buffered, this
+                                                                               energy is included in the communication, which is ignored
+                                                                               here. In SNNs, a synapse can receive several spikes. Hence, the
+                                                                               energy associated to a SNN synapse must be multiplied by the
+                                                                               average number of spikes received per synapse (Nspikes/syn).
+                                                                               We obtain the total energy:
+
+                                                                               EIF +inst = Nsyn � Nspikes/syn � (ERweight       (4)
+
+                                                                                               +ERstate + EWstate + EAC )
+
+yi = ( xj wij + bi)  (1)                                                          2) LIF neuron and instantaneous synapse (LIF+inst): Its
+                                                                               dynamics (without the reset) is described as:
+j
+
+yi is the output activation (oact) of neuron i, bi its bias, xj                m  dVi  (t)  =  -Vi(t)  +         wij (t - tjr)  (5)
+is the iact from presynaptic neuron j, and wij is the synaptic                    dt
+weight between neurons i and j.  is an activation function,                                               jr
+such as ReLU. Therefore, the ANN atomic operation is the
+synaptic operation, which corresponds to a MAC operation.                      This corresponds to an exponentially decaying membrane po-
+Note that the number of synapses (Nsyn) is different from the                  tential with time constant m. The evolution of the membrane
+number of weights (especially in convolutional architectures                   potential with time can be also described in an iterative
+where weights are reused in multiple synapses). We start by                    formulation:
+considering a na�ive ANN implementation : for each MAC,
+we must read the iact, weight and current partial sum (psum),                  Vit  =  Vit-1   �           1  +     wij tj      (6)
+and write back the updated psum [9]. Therefore, ERx (respec-                                      exp(- )
+tively EWx) being the energy of the read (respectively write)                                                    j
+operation on the x data, the total energy for the ANN is:                                                 m
+
+EANN = Nsyn � (ERiact + ERweight + ERpsum (2)                                  In this model, the states of neurons are updated at each
+                                    +EWpsum + EMAC )                           timestep. Therefore, in equation (4) we must add the energy
+                                                                               for updating the state for all neurons (Nneur) and all timesteps
+                                                                               (T is the number of timesteps in one inference), corresponding
+                                                                               to: reading the state, multiplying it with a constant, and writing
+                                                                               back the result. We obtain the total energy by combining the
+
+                                                                                                                        4
+
+operations performed at each incoming spike, from (4), and at                                        TABLE I
+each timestep:                                                    NORMALIZED ENERGY COST RELATIVE TO A MAC OPERATION.
+
+ELIF +inst = Nsyn � Nspikes/syn � (ERweight                       CMOS Techno. (data precision) EAC EMAC ER/W ER/W reg
+
+                   +ERstate + EWstate + EAC ) (7)                  45nm (8 bit) [14] (Section II) 0.13x   1x  5.4x   /
+                                                                  65nm (16 bit) [26] (Section III) 0.06x  1x   6x   1x
+
++Nneur � T � (ERstate + EWstate + EMAC )
+
+Another strategy is to update the states only when neces-         D. Comparison of SNN models
+sary, i.e. when there is an incoming spike to the neuron
+(using an additional variable to record the last spike time),        We now compare the energy efficiency of the different SNN
+as proposed in [25]. However we found that in recent SNN          models described in the previous subsection. We choose 8 bit
+algorithms, the update at each timestep is more efficient, as     Fixed Point data format as it is commonly used for inference
+Nsyn � Nspikes/syn is large compared to Nneur � T , as will       in DNN accelerators [10]. We consider a spatially expanded
+be seen in Section II-E. Moreover, the energy of updating the     architecture for both ANNs and SNNs using SRAMs as on-
+states when there is an incoming spike is higher than updating    chip memory, with energy ratios for compute and memory
+at a timestep (as in addition we must compute the total decay     in CMOS 45nm from [14] (see Table I). For LIF+inst and
+from the last to the current input spike).                        IF+cont models, for which there is an energy associated with
+                                                                  both neuron and synapse, we assume Nspikes/syn = 1, we
+   3) IF neuron and continuous synapse (IF+cont): SNNs            consider T = 10 and T = 500, and we use the VGG16
+with temporal coding, for instance Time-to-First-Spike (TTFS)     topology to compute Nsyn and Nneur.
+coding, require continuous synapses to track the spike tim-
+ings [7]. The equations of the IF+cont model (without the            The relative energy consumption of the memory and com-
+reset) are:                                                       pute associated with synapse operations (at each spike) and
+                                                                  neuron operations (at each timestep) of the different SNN
+                              dVi    (t)  =  Ii(t)                models is presented in Fig. 2. We observe that, in all models,
+                              dt                                  the energy cost of compute is very small compared to the one
+                                                             (8)  of memory. In SNN IF+inst compared to ANN, the energy
+s  dIi  (t)     =  -Ii(t)  +         wij (t - tjr)                associated with computation is smaller due to the replacement
+   dt                                                             of the MAC by the AC operation. For the LIF+inst and
+                              jr                                  IF+cont models, the overhead associated with the updates
+                                                                  of neurons at each timestep is negligible if the number of
+Ii(t) is the input current state variable of neuron i at time t.  timesteps is small (T = 10) but becomes important if the
+====================================================================================================
+[Dampfhoffer et al. Sec.II-E encoding-layer note and 1.38 bound] source=doi:10.1109/TETCI.2022.3214509 file=dampfhoffer.txt lines=265-269
+----------------------------------------------------------------------------------------------------
+Energy efficiency
+4.6x 1.1x 2.7x 0.4x 1.7x 3.6x 1.3x 0.3x 1.4x 3.4x
+
+In addition, the relative energy efficiency of SNN models with updates at each timestep compared to ANNs also depends on the ratio Nsyn/Nneur. This ratio depends on the network topology. For instance, in the more recent MobileNet topology, this ratio is 3x lower than in the AlexNet topology. The energy efficiency of the different SNN models compared to ANNs (= EANN /ESNN ) depending on the number of timesteps is shown in Fig. 3, for a given Nspikes/syn. The results are shown for the AlexNet, VGG16 and MobileNet topologies, having Nsyn/Nneur = 2.9x103, 1.7x103, 9.4x102, respectively. We see that, in topologies with a low ratio Nsyn/Nneur (such as MobileNet), the energy efficiency of the LIF+inst and IF+cont models decreases more rapidly with the number of timesteps compared to topolgies with a higher ratio (such as VGG16 or AlexNet).
+E. Application to SNN algorithms
+====================================================================================================
+[Dampfhoffer et al. Table III target sparsity] source=doi:10.1109/TETCI.2022.3214509 file=dampfhoffer.layout.txt lines=540-575
+----------------------------------------------------------------------------------------------------
+study. Therefore, if we consider only the benefits due to
+sparse PEs with non-pruned networks, the energy efficiency is
+only improved by x1.15 (x1.06) for the AlexNet (MobileNet)
+topology from the v1 to the v2. Indeed, the iacts sparsity
+alone compensate slightly the overhead of the sparse PEs
+logic and the compression of non-sparse data. Therefore, we
+consider that the target sparsity in the SNN must be x1.15
+(for the AlexNet topology) lower compared to the one obtained
+considering Eyeriss v1, and thus becomes Nspikes/syn = 0.37.
+
+                                                                             9
+
+Fig. 7. SNN IF+inst energy efficiency relative to ANN (=EANN /ESNN )         Fig. 8. Normalized layer-wise spike activity of different DNNs with different
+as a function of Nspikes/syn for the different ANN models considered, using  training methods and datasets. (a) VGG16 from conversion pre-training with
+AlexNet topology in Eyeriss v1 and v2 models.                                spiking backpropagation fine-tuning [12] on ImageNet. (b) ResNet34 from
+                                                                             conversion [33] on ImageNet. (c) VGG16 from conversion pre-training with
+                                                                             spiking backpropagation fine-tuning [12] on CIFAR10. (d) VGG9 with spiking
+                                                                             backpropagation training [11] on CIFAR10.
+
+                                     TABLE III                               last 12 in a SNN would result in a hybrid ANN-SNN imple-
+TARGET SPARSITY FOR THE SNN IF+inst MODEL TO BE AT LEAST AS                  mentation 1.2x more energy-efficient than the ANN Eyeriss
+                                                                             v2 implementation. Note that we used the ANN reuse factors
+                            EFFICIENT AS THE ANN                             and iact sparsity in Eyeriss for VGG16, as the ResNet34
+                                                                             topology was not implemented. The efficiency of hybrid ANN-
+ANN accelerator model (Section)                                Nspikes/syn   SNN architectures increases with SNN algorithms having a
+                                                                             lower spike activity. For instance, the SNN implementation
+Worst case ANN: Baseline (II)                                        1.38    of the VGG16 proposed in [12] (shown in Fig. 8a), using an
+Ideal reuse (III-A)                                                  0.28    encoding layer, is 1.1x more energy-efficient than the ANN
+Best case ANN: Ideal reuse + iact sparsity (III-A)                   0.15    Eyeriss v2 implementation. However, when implementing the
+Eyeriss v1: reuse + iact sparsity (III-B1)                           0.42    first 6 layers in an ANN, the hybrid ANN-SNN implemen-
+Eyeriss v2: reuse + iact sparsity + data compression (III-B2)        0.37    tation would be 1.3x more energy-efficient than the ANN
+                                                                             Eyeriss v2 implementation. Indeed, the last 10 layers in SNN
+AlexNet topology (non-pruned) is used in Eyeriss v1 and v2 cases.            implementation are 2.2x more energy-efficient compared to
+                                                                             their ANN implementation due to their high spike sparsity
+Therefore, hybrid ANN-SNN implementations, i.e. a network                    (Nspikes/syn = 0.21).
+with ANN and SNN layers, become of interest. A conversion
+====================================================================================================
+[Dampfhoffer et al. conclusion] source=doi:10.1109/TETCI.2022.3214509 file=dampfhoffer.txt lines=414-414
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+[Davidson & Furber 2021 Eq.1-2 and result] source=doi:10.3389/fnins.2021.651141 file=davidson.txt lines=126-171
+----------------------------------------------------------------------------------------------------
+� For each target neuron:
+� Retrieval of one item from a list of synaptic connections, from local weight memory, EretrieveWeight.
+� Retrieve neural state for that neuron from state memory, EgetState.
+� Multiply activation by weight, Emultiply. � Add product to the neuron state, EstateAdd. � Writeback neuron state to state memory, EwriteState.
+The total energy consumed depends on the number of resident target neurons, NmeanTargets to which the pre-synaptic neuron connects. The size, NactivationBits and number of set bits, NsetBits in the activation will also affect the energy consumed in the multiplier, which would typically be Booth encoded (He and Chang, 2008).
+
+Thus we can express the total energy, EtotalANN , consumed in the processing of a single incoming activation as:
+
+EtotalANN = EbroadcastActivation + EretrieveWeights +
+
+NmeanTargets � [EgetState + Emultiplication + EAddition
+
++ EwriteState]
+
+(1)
+
+The read, multiply, and writeback operations each consume about 300 fJ and these occur for each target neuron in the pipeline.
+For the spiking network the cost is the same per incoming event except that there is no multiplication step and the initial energy cost of transmitting the spike, EbroadcastSpike, will be lower since it requires fewer bits. However, the entire cost of processing this event will occur for each spike. If the mean number of spikes required to represent an activation is NmeanSpikes, then the total energy cost per received neuron output for the spiking network, EtotalSNN , is:
+
+EtotalSNN = NmeanSpikes � (EbroadcastSpike + EretrieveWeights)
+
++ NmeanSpikes � NmeanTargets � (EgetState + EAddition
+
++ EwriteState)
+
+(2)
+
+To quantify the two models we draw on energy consumption estimates from post-layout analysis of the data for the SpiNNaker2 development using TSMC 22FDX technology assuming average process at room temperature (H�ppner et al., 2019; H�ppner et al., 2020). All energy estimates take account of both dynamic switching power and leakage. A single 32-bit read access to 2K word SRAM costs 296 fJ, while a 32 � 8 bit multiplyaccumulate costs 293 fJ. We will assume that the write back cost to the SRAM is approximately the same as the read and that a 32-bit addition costs one fifth the cost of the MAC operation. To simplify the discussion, let E represent the adder energy cost (approx 60 fJ), thus the multiply costs 5E, SRAM read 5E, and SRAM writeback E. We shall use the SRAM cost for both weight and neuron state accesses.
+The broadcast energy will be highly dependent on the implementation. We will neglect it for this reason, which benefits the SNN over the ANN since this cost is borne more times in the former than in the latter.
+In the ANN case the weight retrieval costs 5E and the loop over each target costs 5E + 5E + E + E = 12E. This cost occurs NmeanTargets times.
+In the SNN case, the loop for each arriving spike over each target costs 5E + E + E = 7E. This cost also occurs NmeanTargets times for each arriving spike.
+For the SNN energy to be lower than the ANN for this technology would require the expected number of spikes used to transmit an output to be <12E/7E or 1.72. At this low level of activity, the coding of outputs using spikes is arguably no longer a rate-based code. This is our result.
+
+5. DISCUSSION
+
+The argument presented above focuses on the fundamental computation in the ANN and SNN cases. It suggests that only
+
+Frontiers in Neuroscience | www.frontiersin.org
+
+5
+
+April 2021 | Volume 15 | Article 651141
+
+
+Davidson and Furber
+
+====================================================================================================
+[Lemaire et al. state of the art on metrics] source=arXiv:2210.13107v1 / doi:10.1007/978-3-031-30105-6_48 file=lemaire.txt lines=36-37
+----------------------------------------------------------------------------------------------------
+for small topologies, but observed the opposite using larger CNNs. Once more, the conclusions depended on the studied case and could not be generalized. Albeit encouraging, those results are not sufficient to draw general conclusions regarding the savings offered by event-based processing, since they depend on the selected application, network hyper-parameters and hardware targets. Therefore, another approach consists in comparing both coding domains through estimation metrics, taking a step back to produce more general conclusions.
+4) Comparisons based on metrics: Most energy consumption metrics are based on the number of synaptic operations: accumulations (ACC) in the SNN and multiplicationaccumulations (MAC) in the FNN. Those models have limitations: energy consumption is assimilated to the energy consumption of synaptic operations [12], thus other factors (such as neuron addressing in multiplexed architecture or memory accesses) are often neglected. Moreover, the models usually do not take into account some specific mechanisms, like membrane potential leakage, reset and biases integration. In [11], the authors proposed a metric based on synaptic operations only, and found great energy consumption savings for the SNN (up to 126� more efficient than the FNN baseline). In [4] the authors demonstrated that such simplistic metrics were not always coherent with actual energy consumption of circuits on FPGA. When taking memory into account, another team [13] found equivalent energy consumptions for SNNs and FNNs using various topologies on CIFAR10. Additionally, reference [14] measured a theoretical maximum spike rate of 1.72 to guarantee energy savings in the SNN based on a detailed metric, accounting for synaptic operations, memory accesses and activation broadcast. Those energy consumption models are enlightening, but still fail to settle whether event-based processing is sufficient to increase energy efficiency. That is mostly because those metrics are too hardware specific, or do not take all significant sources of energy consumption into account.
+====================================================================================================
+[Lemaire et al. Sec.III-A ops incl. bias/reset/leak] source=arXiv:2210.13107v1 file=lemaire.txt lines=63-65
+----------------------------------------------------------------------------------------------------
+(1)
+
+In FNNs, the integration of dense input matrixes requires a MAC operation for each element of the convolution kernels. That is described in the first row of Eq. 1. Additionally, the integration of synaptic biases as ACC operations, since it does not require multiplication with input activation. There is one bias per output neuron as shown in the second row of Eq. 1.
+====================================================================================================
+[Lemaire et al. Eq.2 FC layer counts (layout)] source=arXiv:2210.13107v1 file=lemaire.layout.txt lines=156-170
+----------------------------------------------------------------------------------------------------
+   2) Fully-connected layers: The same reasoning is applied          layer, each output position matches with read operations for
+to FC layers. For a given layer l the number of input and output     all the weights in all filters associated to all input channels.
+neurons is noted Nin and Nout respectively. The equations            The biases generate additional reads for all output positions
+for the number of MAC and ACC operations attributable to             and all filters. For an FC layer, every weight corresponding to
+synaptic operations in FC layers are summarized in Eq. 2.            all output neurons Nout and all inputs Nin. The biases cause
+                                                                     additional read for all output neurons.
+
+MACFFNC-Nl = Nin � Nout                                              RdP aramCFNonNv =(Cin � Wkernel � Hkernel + 1)
+
+ACCFFCN-Nl = Nout                                                                       �Cout � Wout � Hout           (6)
+MACFSCN-Nl = Nout � T
+                                                           (2)       RdP aramFFCNN =(Nin + 1) � Nout
+
+ACCSFCN-Nl = l - 1 � Nin � Nout + T � Nout                              In an spiking Conv layer, all received spikes l-1 will trigger
+                                                                     a read for all output filters and all associated output positions
+====================================================================================================
+[Lemaire et al. constants + direct encoding] source=arXiv:2210.13107v1 file=lemaire.txt lines=204-212
+----------------------------------------------------------------------------------------------------
+
+(20)
+
+Where EADD and EMUL are the energy cost of single additions and multiplications respectively.
+The energy consumption of single operations (addition, multiplication and memory accesses) are drawn from the literature [15] for 45nm CMOS technology. For addition and multiplication with 32-bit integers, we use respectively 0.1pJ and 3.1pJ. For SRAM memory accesses, we compute a linear interpolation function based on 3 particular values : 8 kB (10pJ), 32 kB (20pJ) and 1 MB (100pJ). This function enables to compute the energy cost of a memory access knowing the memory size (i.e. knowing the network hyperparameters).
+IV. METHODS
+A. Spike coding
+The role of spike coding is to convert input pixels into spikes, which are in turn transmitted to an SNN for information processing. In the Direct encoding scheme, a spiking neuron (e.g. LIF or IF) located in the first layer (encoding) of the network is fed with a constant or dynamic input through T timesteps. The first layer thus converts the analog input into spike trains. In this paper, we propose three different uses of such encoding which are detailed below.
+
+====================================================================================================
+[Lemaire et al. results/memory dominance] source=arXiv:2210.13107v1 file=lemaire.txt lines=292-294
+----------------------------------------------------------------------------------------------------
+
+�
+
+====================================================================================================
+[Yan et al. (preprint) abstract + conclusion] source=arXiv:2409.08290v3 file=yan2024.txt lines=10-10
+----------------------------------------------------------------------------------------------------
+Abstract--Spiking Neural Networks (SNNs) promise higher energy efficiency over conventional Quantized Artificial Neural Networks (QNNs) due to their event-driven, spike-based computation. However, prevailing energy evaluations often oversimplify, focusing on computational aspects while neglecting critical overheads like comprehensive data movement and memory access. Such simplifications can lead to misleading conclusions regarding the true energy benefits of SNNs. This paper presents a rigorous re-evaluation. We establish a fair baseline by mapping rate-encoded SNNs with T timesteps to functionally equivalent QNNs with log2(T + 1) bits. This ensures both models have comparable representational capacities, as well has similar hardware requirement, enabling meaningful energy comparisons. We introduce a detailed analytical energy model encompassing core computation and data movement. Using this model, we systematically explore a wide parameter space, including intrinsic network characteristics (T , spike rate sr, QNN sparsity , model size N , weight bit-level) and hardware characteristics (memory system and network-on-chip). Our analysis identifies specific operational regimes where SNNs genuinely offer superior energy efficiency. For example, under typical neuromorphic hardware conditions, SNNs with moderate time windows (T  [5, 10]) require an average spike rate (sr) below 6.4% to outperform equivalent QNNs. Furthermore, to illustrate the real-world implications of our findings, we analyze the operational lifetime of a typical smartwatch, showing that an optimized SNN can nearly double its battery life compared to a QNN. These insights guide the design of turely energy-efficient neural network solutions.
+====================================================================================================
+[Yan et al. (preprint) conclusion] source=arXiv:2409.08290v3 file=yan2024.txt lines=1758-1758
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+[Eshraghian et al. Sec.3.1 input encoding] source=arXiv:2109.12894v6 / doi:10.1109/JPROC.2023.3308088 file=eshraghian.txt lines=413-414
+----------------------------------------------------------------------------------------------------
+� LIF neurons are the most commonly used in the deep learning context. They sit in the sweet spot between biological plausibility and practicality. It is relatively straightforward to adopt techniques used in training recurrent neural networks (RNNs) to SNNs, as will be explained in detail in Section 4.
+� IF models are commonly used in low-power neuromorphic hardware (e.g., SynSense's Speck and Xylo systems; BrainChip's Akida). It removes the `multiply' step by  when updating the membrane potential. This simplification is at the cost of treating all historical data in the same way. I.e., an event that occurred 10 seconds in the past will be weighted equally as an event that occurred 1 second in the past.
+====================================================================================================
+[Eshraghian et al. non-spiking data advice] source=arXiv:2109.12894v6 file=eshraghian.txt lines=472-472
+----------------------------------------------------------------------------------------------------
+changes in the visual or audio scene. Some examples of neuromorphic benchmark datasets are described in Table 1. A comprehensive series of neuromorphic-relevant datasets are accounted for in NeuroBench [96]3.
+====================================================================================================
+[Eshraghian et al. Sec.3.2 output decoding + Table 2 losses] source=arXiv:2109.12894v6 file=eshraghian.txt lines=479-534
+----------------------------------------------------------------------------------------------------
+100,800 samples of American sign language recorded with DAVIS. Includes spikes, frames and inertial measurement unit recordings of interior and outdoor scenes. 11 different hand gestures recorded under 3 different lighting conditions. DVS benchmark datasets for object tracking, action recognition, and object recognition. Spikes, frames and optical flow from stereo cameras for indoor and outdoor scenarios. Spiking version of the classic MNIST dataset by converting digits from a screen using saccadic motion. 4 classes of playing cards flipped in rapid succession in front of a DVS. A stereo event camera dataset for driving scenarios.
+
+Audio datasets
+N-TIDIGITS [105] SHD [106] SSC [106]
+
+Speech recordings from the TIDIGITS dataset converted to spikes with a silicon cochlear. Spiking version of the Heidelberg Digits dataset converted using a simulated cochlear model. Spiking version of the Speech Commands dataset converted using a simulated cochlear model.
+
+Practical Note: Input Encoding
+What if you start off with a non-spiking dataset? Applying these input encoding mechanisms will almost always lead to accuracy/performance degradation. Information loss is guaranteed. It is often wiser to apply the preprocessing techniques that are prevalent in the literature; e.g., if you have EEG data, a Fourier transform is often appropriate. Alternatively, SpikeGPT introduced binarized embeddings that `learn' the optimal spike-based encoding of a sequence of input tokens [82]. If you must encode data into spikes, we have found that rate codes do less harm to accuracy/loss minimization than latency codes. In the ideal scenario, your sensor would naturally capture data as spikes rather than having to go through conversion and compression steps.
+3https://neurobench.ai/
+16
+
+
+J. K. ESHRAGHIAN et al., TRAINING SPIKING NEURAL NETWORKS USING LESSONS FROM DEEP LEARNING
+3.2 Output Decoding
+Encoding input data into spikes can be thought of as how the sensory periphery transmits signals to the brain. On the other side of the same coin, decoding these spikes provides insight on how the brain handles these encoded signals. In the context of training an SNN, the encoding mechanism does not constrain the decoding mechanism. Shifting our attention from the input of an SNN, how might we interpret the firing behavior of output neurons?
+1. Rate coding chooses the output neuron with the highest firing rate, or spike count, as the predicted class 2. Latency (or temporal) coding chooses the output neuron that fires first as the predicted class 3. Population coding applies the above coding schemes (typically a rate code) with multiple neurons per class
+3.2.1 Rate Coded Outputs
+Consider a multi-class classification problem, where NC is the number of classes. A non-spiking neural network would select the neuron with the largest output activation as the predicted class. For a rate-coded spiking network, the neuron that fires with the highest frequency is used. As each neuron is simulated for the same number of time steps, simply choose the neuron with the highest spike count (Appendix B.3).
+3.2.2 Latency Coded Outputs
+There are numerous ways a neuron might encode data in the timing of a spike. As in the case with latency-coded inputs, it could be that a neuron representing the correct class fires first. This addresses the energy burden that arises from the multiple spikes needed in rate codes. In hardware, the need for fewer spikes reduces the frequency of memory accesses which is another computational burden in deep learning accelerators. Biologically, does it make sense for neurons to operate on a time to first spike principle? How might we define `first' if our brains are not constantly resetting to some initial, default state? This is quite easy to address conceptually. The idea of a latency or temporal code is motivated by our response to a sudden input stimulus. For example, when viewing a static, unchanging visual scene, the retina undergoes rapid, yet subtle, saccadic motion. The scene projected onto the retina changes every few hundreds of milliseconds. It could very well be the case that the first spike must occur with respect to the reference signal generated by this saccade.
+3.2.3 Rate vs. Latency Code
+Whether neurons encode information as a rate, as latency, or as something wholly different, is a topic of much controversy. We do not seek to crack the neural code here, but instead aim to provide intuition on when SNNs might benefit from one code over the other. Advantages of Rate Codes
+� Error tolerance: if a neuron fails to fire, there are ideally many more spikes to reduce the burden of this error. � More spiking promotes more learning: additional spikes provide a stronger gradient signal for learning
+via error backpropagation. As will be described in Section 4, the absence of spiking can impede learning convergence (more commonly referred to as the `dead neuron problem').
+Advantages of Latency Codes
+� Power consumption: generating and communicating fewer spikes means less dynamic power dissipation in tailored hardware. It also reduces memory access frequency due to sparsity, as a vector-matrix product for an all-zero input vector returns a zero output.
+� Speed: the reaction time of a human is roughly in the ballpark of 250 ms. If the average firing rate of a neuron in the human brain is on the order of 10 Hz (which is likely an overestimation [107]), then one can only process about 2-3 spikes in this reaction time window. In contrast, latency codes rely on a single spike to represent information. This issue with rate codes may be addressed by coupling it with a population code: if a single neuron is limited in its spike count within a brief time window, then just use more neurons [88]. This comes at the expense of further exacerbating the power consumption problem of rate codes.
+The power consumption benefit of latency codes is also supported by observations in biology, where nature optimises for efficiency. Olshausen and Field's work in `What is the other 85% of V1 doing?' methodically demonstrates that rate-coding can only explain, at most, the activity of 15% of neurons in the primary visual cortex (V1) [107]. If our
+17
+
+
+J. K. ESHRAGHIAN et al., TRAINING SPIKING NEURAL NETWORKS USING LESSONS FROM DEEP LEARNING
+
+neurons indiscriminately defaulted to a rate code, this would consume an order of magnitude more energy than a temporal code. The mean firing rate of our cortical neurons must necessarily be rather low, which is supported by temporal codes.
+Lesser explored encoding mechanisms in gradient-based SNNs include using spikes to represent a prediction or reconstruction error [108]. The brain may be perceived as an anticipatory machine that takes action based on its predictions. When these predictions do not match reality, spikes are triggered to update the system.
+Some assert the true code must lie between rate and temporal codes [109], while others argue that the two may co-exist and only differ based on the timescale of observation: rates are observed for long timescales, latency for short timescales [110]. Some reject rate codes entirely [111]. This is one of those instances where a deep learning practitioner might be less concerned with what the brain does, and prefers to focus on what is most useful.
+3.3 Objective Functions
+While it is unlikely that our brains use something as explicit as a cross-entropy loss function, it is fair to say that humans and animals have baseline objectives [112]. Biological variables, such as dopamine release, have been meaningfully related to objective functions from reinforcement learning [113]. Predictive coding models often aim to minimise the information entropy of sensory encodings, such that the brain can actively predict incoming signals and inhibit what it already expects [114]. The multi-faceted nature of the brain's function likely calls for the existence of multiple objectives [115]. How the brain can be optimised using these objectives remains a mystery, though we might be able to gain insight from multi-objective optimisation [116].
+A variety of loss functions can be used to encourage the output layer of a network to fire as a rate or temporal code. The optimal choice is largely unsettled, and tends to be a function of the network hyperparameters and complexity of the task at hand. All objective functions described below have successfully trained networks to competitive results on a variety of datasets, though come with their own trade-offs.
+3.3.1 Spike Rate Objective Functions
+A summary of approaches commonly adopted in supervised learning classification tasks with SNNs to promote the correct neuron class to fire with the highest frequency is provided in Table 2. In general, either the cross-entropy loss or mean square error is applied to the spike count or the membrane potential of the output layer of neurons.
+
+Spike Count
+Membrane Potential
+
+Table 2: Rate-coded objectives
+
+Cross-Entropy Loss
+
+Mean Square Error
+
+Cross-Entropy Spike Rate: The total number of spikes for each neuron in the output layer are accumulated over time into a spike count c  NNC (Equation (27) in Appendix B.3), for NC classes. A multiclass categorical probability distribution is obtained by treating the spike counts as logits in the softmax function. Cross entropy minimisation is used to increase the spike count of the correct class, while suppressing the count of the incorrect classes [99, 117] (Appendix B.4).
+
+Mean Square Spike Rate: The spike counts of both correct and incorrect classes are specified as targets. The mean square errors between the actual and target spike counts for all output classes are summed together. In practice, the target is typically represented as a proportion of the total number of time steps: e.g., the correct class should fire at 80% of all time steps, while incorrect classes should fire 20% of the time [75, 118�120] (Appendix B.5).
+
+====================================================================================================
+[Neftci et al. Sec.IV-B-1 surrogate derivatives] source=arXiv:1901.09948v2 / doi:10.1109/MSP.2019.2931595 file=neftci.txt lines=521-521
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+[Wu et al. AAAI 2019 encoding/decoding] source=arXiv:1809.05793v2 / doi:10.1609/aaai.v33i01.33011311 file=wu2019.txt lines=214-275
+----------------------------------------------------------------------------------------------------
+
+Inferring from Eq. (10), NeuNorm method essentially normalize the neuronal activity by using the input statistics (moving average firing rate). The basic operation is similar with the zero-mean operation in batch normalization. But NeuNorm has different purposes and different data processing ways (normalizing data along the channel dimension rather than the batch dimension). This difference brings several benefits which may be more suitable for SNNs. Firstly, NeuNorm is compatible with neuron model (LIF) without additional operations and friendly for neuromorphic implementation. Besides that, NeuNorm is more bioplausible. Indeed, the biological visual pathways are not independent. The response of retina cells for a particular location in an image is normalized across adjacent cell responses in the same layer (Carandini and Heeger 2012; Mante, Bonin, and Carandini 2008). And inspired by these founding, many similar techniques for exploiting channel features have been successfully applied to visual recognition, such as group normalization (GN) (Wu and He 2018), DOG (Daral 2005) and HOG (Daral 2005). For example, GN divides FMs of the same layer into several groups and normalizes the features within each group also along channel dimension.
+
+Encoding and decoding schemes
+
+To handle various stimulus patterns, SNNs often use abundant coding methods to process the input stimulus. For visual recognition tasks, a popular coding scheme is rate coding. On the input side, the real-valued images are converted into a spike train whose fire rate is proportional to the pixel intensity. The spike sampling is probabilistic, such as following a Bernoulli distribution or a Poisson distribution. On the output side, it counts the firing rate of each neuron in the last layer over given time windows to determine network output. However, the conventional rate coding suffers from long simulation time to reach good performance. To solve this problem, we take a simpler coding scheme to accelerate the simulation without compromising the performance.
+
+Encoding. One requirement for long simulation time is
+
+to reduce the sampling error when converting real-value in-
+
+puts to spike signals. Specifically, given the time window
+
+T , a neuron can represent information by T + 1 levels of
+
+firing
+
+rate,
+
+i.e.
+
+{0,
+
+1 T
+
+,
+
+...,
+
+1}
+
+(normalized).
+
+Obviously,
+
+the
+
+rate coding requires sufficient long window to achieve sat-
+
+isfactory precision. To address this issue, we assign the first
+
+layer as an encoding layer and allow it to receive both spike
+
+and non-spike signals (compatible with various datasets). In
+
+other words, neurons in the encoding layer can process the
+
+even-driven spike train from neuromorphic dataset naturally,
+
+and can also convert real-valued signals from non-spiking
+
+dataset into spike train with enough precision. In this way,
+
+the precision is remained to a great extent without depending
+
+much on the simulation time.
+
+Decoding. Another requirement for long time window is the representation precision of network output. To alleviate it, we adopt a voting strategy (Diehl and Matthew 2015) to decode the network output. We configure the last layer as a voting layer consisting of several neuron populations and each output class is represented by one population. In this way, the burden of representation precision of each neuron in the temporal domain (firing rate in a given time windows) is transferred much to the spatial domain (neuron group coding). Thus, the requirement for long simulation time is significantly reduced. For initialization, we randomly assign a label to each neuron; while during training, the classification result is determined by counting the voting response of all the populations.
+
+In a nutshell, we reduce the demand for long-term window from above two aspects, which in some sense extends the representation capability of SNNs in both input and output sides. We found similar coding scheme is also leveraged by previous work on ANN compression (Tang, Hua, and Wang 2017; Hubara, Soudry, and Ran 2016). It implies that, regardless of the internal lower precision, maintaining the first and last layers in higher precision are important for the convergence and performance.
+
+Overall training implementation
+====================================================================================================
+[Wu et al. AAAI 2019 simulation length] source=arXiv:1809.05793v2 file=wu2019.layout.txt lines=380-392
+----------------------------------------------------------------------------------------------------
+Net are also shown in Appendix, which are for fair compar-
+ison to pre-trained SNN works with similar structure and to                        Fig. 3 shows the comparisons about average runtime per
+demonstrate comparable performance with ANNs, respec-                           epoch, where batch size of 20 is used for simulation. Py-
+tively. It is worth emphasizing that previous work on direct
+
+Table 1: Network structures used for training acceleration.       Figure 4: Influence of network scale. Three different net-
+                           Neuromorphic Dataset                   work scales are defined in Tab.1.
+
+  Small 128C3(Encoding)-AP2-128C3-AP2-512FC-Voting                proposed coding scheme in this work, the simulation length
+  Middle 128C3(Encoding)-128C3-AP2-256-AP2-1024FC-Voting          can be significantly reduced without much accuracy degra-
+  Large 128C3(Encoding)-128C3-AP2-384C3-384C3-AP2-                dation. As shown in Fig. 5, although the longer the simu-
+                                                                  lation windows leads to better results, our method just re-
+              1024FC-512FC-Voting                                 quires a small length (4 - 8) to achieve satisfactory results.
+====================================================================================================
+[PopSAN Sec.2.2 population encoding/decoding] source=arXiv:2010.09635v1 (CoRL 2020) file=popsan.txt lines=58-82
+----------------------------------------------------------------------------------------------------
+
+generated the maximum action-value. For SAC, we trained the PopSAN to predict the mean of the stochastic action distribution, and a deep network to predict its standard deviation. This was done by minimizing the distance between the probability of the action sampled from the predicted distribution and the predicted action-value generated by the trained critic network. For PPO, the PopSAN was trained to predict the mean of the action distribution by optimizing the clipped surrogate loss.
+
+2.2 Population encoding and decoding in PopSAN
+
+We encoded each dimension of the observation and action space into the activities of individual input and output population of spiking neurons. The encoder module converted the continuous observation into spikes in the input populations, and the decoder module decoded the output population activities into real-valued actions.
+For the ith dimension of the N -dimensional observation, si, i  {1...N }, we created a population of neurons, Ei, to encode it. Dropping the i for notational simplicity, the neurons in E had Gaussian receptive fields (�, ). The � were initialized to be evenly distributed in the space of s and  were preset to be large enough to ensure non-zero population activity in the entire space of s.
+
+The encoder module computed the activity of the population E in two phases: It first transformed the observation values into the stimulation strength for each neuron in the population, AE:
+
+AE = EXP (-1/2 � ((s - �)/)2)
+
+(1)
+
+Second, the computed AE was used to generate the spikes of the neurons in E. There are two possible ways to do this: i) Probabilistic encoding, where spikes for all the neurons were generated at each timestep with the probabilities defined by AE; and ii) Deterministic encoding, where the neurons in E were simulated as one-step soft-reset IF neurons, with AE acting as the presynaptic inputs to the neurons. The dynamics of the neurons were governed by the following equation:
+
+v(t) = v(t - 1) + AE
+
+(2)
+
+ok(t) = 1 & vk(t) = vk(t) - (1 - ), if vk(t) > 1 -
+
+where k denotes the index of a neuron in E and is a small constant. For both types of encoders, � and  are task-specific trainable parameters. In our experiments, we employed both types of encoders for the second phase.
+
+The output layer of the SNN comprised of populations of neurons, where a population Di represented dimension i of the M -dimensional action, ai, i  {1...M }. Dropping the i for notational simplicity, the decoder module decoded the activity of the output population, D, into its corresponding real-valued action in two phases: First, after every T timesteps, the spikes of each neuron in D were summed up to obtain the firing rate fr over T . Second, the action a was returned as the weighted sum of the computed fr (Algorithm 1). The receptive fields of the output populations were
+====================================================================================================
+[PopSAN population-size ablations] source=arXiv:2010.09635v1 file=popsan.txt lines=161-165
+----------------------------------------------------------------------------------------------------
+We compared the performance of PopSAN trained using the on-policy and off-policy DRL algorithms against the corresponding deep actor networks. Our method achieved the same level of performance as the deep actor networks across all the tasks for all the DRL algorithms (Fig. 3), indicating that the two approaches are functionally equivalent. The hyperparameters for training can be found in Section 2 of the supplementary material.
+3.2 Benchmarking PopSAN against other SNN design approaches
+We compared our method against the following two recently suggested approaches for integrating SNN with DRL: i) DNN to SNN conversion method (DNN-SNN) in which a deep actor network is trained using the DRL algorithms and is converted to an SNN using weight rescaling [12]. In the converted SNNs, the post-spike membrane potential of the LIF neurons can be set to rest potential (hard-reset; H) or a positive potential to retain information about the previous spikes (soft-reset; S) which demonstrated better performance in a recent study [29]. For implementation details, we direct the readers to Section 3 of the supplementary material. ii) SAN with rate-coded inputs (RateSAN) that uses single neuron representation to encode the inputs and the outputs and is trained using the hybrid learning algorithm [14]. The experiments reported here were performed using the TD3 algorithm.
+The two SNN approaches failed to match the performance of our method even when trained with a value of T that was 5 times higher (Fig. 4; Table 1). This could be because both the SNN approaches had a limited representation capacity; While the DNN-SNN method suffered from loss in precision during conversion, the RateSAN method had an inherent limitation on the representation capacity of individual neurons. This is further supported by the large performance decrease in the Hopper task which has highly unstable dynamics.
+3.3 Learning in neuron populations
+====================================================================================================
+[TabPFN-2.5 report distillation engine] source=arXiv:2511.08667v2 file=tabpfn25.txt lines=31-31
+----------------------------------------------------------------------------------------------------
+� Improved Scalability: We scale the power of in-context learning to datasets of up to 50,000 samples (5x increase over TabPFNv2) and 2,000 features (4x increase), making TFMs viable for a much wider range of real-world problems 1. While TabPFN-2.5 was designed for up to 50,000 rows, we note that this limit is not strict and report strong results on benchmarks with up to 100,000 training samples.
+====================================================================================================
+[TabPFN-2.5 report distillation engine (Sec.3)] source=arXiv:2511.08667v2 file=tabpfn25.txt lines=84-84
+----------------------------------------------------------------------------------------------------
+Tuning custom metrics. TabPFN-2.5 adds new post-processing capabilities that enhance both calibration and metric-specific optimization. Our framework now supports tuning the classifier's decision threshold, enabling direct optimization of metrics beyond accuracy--such as the F1-score--by adjusting the operating point to the desired trade-off between precision and recall. For multiclass classification, it allows to apply temperature scaling to the final softmax outputs to improve probability calibration. This threshold tuning procedure can yield substantial performance improvements (see Appendix H). Unless otherwise noted, however, all classification results in this report are computed using uncalibrated, default scores, without temperature scaling or threshold tuning.
+====================================================================================================
+[TabPFN-2.5 report Sec.4.4] source=arXiv:2511.08667v2 file=tabpfn25.txt lines=167-168
+----------------------------------------------------------------------------------------------------
+
+Figure 3: TabArena-Lite results on classification (left) and regression (right), restricted to datasets with less than 10K training samples and 500 features. Note that tuning for TabPFN-2.5 is only based on 60 random configs compared to 200 for the baselines. The vertical dotted line stands for AutoGluon 1.4 extreme mode tuned for 4 hours, an ensemble of models including TabPFNv2 [31].
+====================================================================================================
+[TabPFN-2.5 report Sec.2.2 RL use] source=arXiv:2511.08667v2 file=tabpfn25.txt lines=51-51
+----------------------------------------------------------------------------------------------------
+� Node Classification in Graphs: Various works [9, 10] represent graph nodes as tabular instances with relational and structural features, directly using tabular foundation models like TabPFN to solve the problem.
+====================================================================================================
+[GEM Sec.2 metrics Eq.2-4] source=arXiv:1706.08840v6 (NIPS 2017) file=1706.08840.layout.txt lines=136-160
+----------------------------------------------------------------------------------------------------
+   on a future task k t. In particular, positive forward transfer is possible when the model is
+   able to perform "zero-shot" learning, perhaps by exploiting the structure available in the
+   task descriptors.
+
+For a principled evaluation, we consider access to a test set for each of the T tasks. After the model
+finishes learning about the task ti, we evaluate its test performance on all T tasks. By doing so, we
+construct the matrix R  RT �T , where Ri,j is the test classification accuracy of the model on task tj
+after observing the last sample from task ti. Letting �b be the vector of test accuracies for each task at
+random initialization, we define three metrics:
+
+                                     1T
+Average Accuracy: ACC =                       RT ,i               (2)
+                                      T
+                                         i=1
+
+                                         1 T -1
+Backward Transfer: BWT =                             RT,i - Ri,i  (3)
+                                        T -1
+                                              i=1
+
+                                       1      T
+                                     T -1
+Forward Transfer: FWT  =                           Ri-1,i - �bi.  (4)
+
+                                              i=2
+====================================================================================================
+[RWalk forgetting measure Eq.3] source=arXiv:1801.10112v3 / doi:10.1007/978-3-030-01252-6_33 file=1801.10112.layout.txt lines=248-270
+----------------------------------------------------------------------------------------------------
+vide any information about forgetting or intransigence profile of the IL algorithm which
+
+would be crucial to judge its behaviour.
+
+Forgetting Measure (F ) We define forgetting for a particular task (or label) as the dif-
+ference between the maximum knowledge gained about the task throughout the learning
+process in the past and the knowledge the model currently has about it. This, in turn,
+gives an estimate of how much the model forgot about the task given its current state.
+Following this, for a classification problem, we quantify forgetting for the j-th task after
+the model has been incrementally trained up to task k > j as:
+
+                           fjk  =      max al,j         -   ak,j  ,  j < k .                              (3)
+
+                                   l{1,��� ,k-1}
+
+Note, fjk  [-1, 1] is defined for j < k as we are interested in quantifying forgetting for
+
+previous tasks. Moreover, by normalizing against the number of tasks seen previously,
+
+the  average  forgetting   at  k-th  task  is  written  as  Fk  =      1  k-1     fjk .  Lower  Fk   implies
+                                                                     k-1  j=1
+
+less forgetting on previous tasks. Here, instead of max one could use expectation or
+====================================================================================================
+[snnTorch Regression Part I: membrane readout note] source=https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_regression_1.html file=snn_tutorial_regression_1.txt lines=120-145
+----------------------------------------------------------------------------------------------------
+1.2 Spiking Neurons in Regression
+Spikes are a type of nonlinearity that can also be used to learn more
+complex regression tasks. But if spiking neurons only emit spikes that
+are represented with 1’s and 0’s, then how might we perform regression?
+I’m glad you asked! Here are a few ideas:
+Use the total number of spikes (a rate-based code)
+Use the time of the spike (a temporal/latency-based code)
+Use the distance between pairs of spikes (i.e., using the interspike
+interval)
+Or perhaps you pierce the neuron membrane with an electrical probe and
+decide to use the membrane potential instead, which is a continuous
+value.
+Note: is it cheating to directly access the membrane potential, i.e.,
+something that is meant to be a ‘hidden state’? At this time, there
+isn’t much consensus in the neuromorphic community. Despite being a
+high precision variable in many models (and thus computationally
+expensive), the membrane potential is commonly used in loss functions
+as it is a more ‘continuous’ variable compared to discrete time steps
+or spike counts. While it costs more in terms of power and latency to
+operate on higher-precision values, the impact might be minor if you
+have a small output layer, or if the output does not need to be
+scaled by weights. It really is a task-specific and hardware-specific
+question.
+2. Setting up the Regression Problem
+2.1 Create Dataset
+Let’s construct a simple toy problem. The following class returns the
+====================================================================================================
+[snnTorch Regression Part I: model definition] source=same URL file=snn_tutorial_regression_1.txt lines=205-257
+----------------------------------------------------------------------------------------------------
+Setting learn_beta=True enables the decay rate beta to be a
+learnable parameter
+Each neuron has a unique, and randomly initialized threshold and
+decay rate
+The output layer has the reset mechanism disabled by setting
+reset_mechanism="none" as we will not use any output spikes
+class Net(torch.nn.Module):
+    """Simple spiking neural network in snntorch."""
+    def __init__(self, timesteps, hidden):
+        super().__init__()
+        self.timesteps = timesteps # number of time steps to simulate the network
+        self.hidden = hidden # number of hidden neurons
+        spike_grad = surrogate.fast_sigmoid() # surrogate gradient function
+        # randomly initialize decay rate and threshold for layer 1
+        beta_in = torch.rand(self.hidden)
+        thr_in = torch.rand(self.hidden)
+        # layer 1
+        self.fc_in = torch.nn.Linear(in_features=1, out_features=self.hidden)
+        self.lif_in = snn.Leaky(beta=beta_in, threshold=thr_in, learn_beta=True, spike_grad=spike_grad)
+        # randomly initialize decay rate and threshold for layer 2
+        beta_hidden = torch.rand(self.hidden)
+        thr_hidden = torch.rand(self.hidden)
+        # layer 2
+        self.fc_hidden = torch.nn.Linear(in_features=self.hidden, out_features=self.hidden)
+        self.lif_hidden = snn.Leaky(beta=beta_hidden, threshold=thr_hidden, learn_beta=True, spike_grad=spike_grad)
+        # randomly initialize decay rate for output neuron
+        beta_out = torch.rand(1)
+        # layer 3: leaky integrator neuron. Note the reset mechanism is disabled and we will disregard output spikes.
+        self.fc_out = torch.nn.Linear(in_features=self.hidden, out_features=1)
+        self.li_out = snn.Leaky(beta=beta_out, threshold=1.0, learn_beta=True, spike_grad=spike_grad, reset_mechanism="none")
+    def forward(self, x):
+        """Forward pass for several time steps."""
+        # Initalize membrane potential
+        mem_1 = self.lif_in.init_leaky()
+        mem_2 = self.lif_hidden.init_leaky()
+        mem_3 = self.li_out.init_leaky()
+        # Empty lists to record outputs
+        mem_3_rec = []
+        # Loop over
+        for step in range(self.timesteps):
+            x_timestep = x[step, :, :]
+            cur_in = self.fc_in(x_timestep)
+            spk_in, mem_1 = self.lif_in(cur_in, mem_1)
+            cur_hidden = self.fc_hidden(spk_in)
+            spk_hidden, mem_2 = self.lif_hidden(cur_hidden, mem_2)
+            cur_out = self.fc_out(spk_hidden)
+            _, mem_3 = self.li_out(cur_out, mem_3)
+            mem_3_rec.append(mem_3)
+        return torch.stack(mem_3_rec)
+Instantiate the network below:
+hidden = 128
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+model = Net(timesteps=num_steps, hidden=hidden).to(device)
+====================================================================================================
+[snnTorch Regression Part II: classification as regression] source=https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_regression_2.html file=snn_tutorial_regression_2.txt lines=94-141
+----------------------------------------------------------------------------------------------------
+1. Classification as Regression
+In conventional deep learning, we often calculate the Cross Entropy Loss
+to train a network to do classification. The output neuron with the
+highest activation is thought of as the predicted class.
+In spiking neural nets, this may be interpreted as the class that fires
+the most spikes. I.e., apply cross entropy to the total spike count (or
+firing frequency). The effect of this is that the predicted class will
+be maximized, while other classes aim to be suppressed.
+The brain does not quite work like this. SNNs are sparsely activated,
+and while approaching SNNs with this deep learning attitude may lead to
+optimal accuracy, it’s important not to ‘overfit’ too much to what the
+deep learning folk are doing. After all, we use spikes to achieve better
+power efficiency. Good power efficiency relies on sparse spiking
+activity.
+In other words, training bio-inspired SNNs using deep learning tricks
+does not lead to brain-like activity.
+So what can we do?
+We will focus on recasting classification problems into regression
+tasks. This is done by training the predicted neuron to fire a given
+number of times, while incorrect neurons are trained to still fire a
+given number of times, albeit less frequently.
+This contrasts with cross-entropy which would try to drive the correct
+class to fire at all time steps, and incorrect classes to not fire at
+all.
+As with the previous tutorial, we can use the mean-square error to
+achieve this. Recall the form of the mean-square error loss:
+\[\mathcal{L}_{MSE} = \frac{1}{n}\sum_{i=1}^n(y_i-\hat{y_i})^2\]
+where \(y\) is the target and \(\hat{y}\) is the predicted
+value.
+To apply MSE to the spike count, assume we have \(n\) output neurons
+in a classification problem, where \(n\) is the number of possible
+classes. \(\hat{y}_i\) is now the total number of spikes the
+\(i^{th}\) output neuron emits over the full simulation runtime.
+Given that we have \(n\) neurons, this means that \(y\) and
+\(\hat{y}\) must be vectors with \(n\) elements, and our loss
+will sum the independent MSE losses of each neuron.
+1.1 A Theoretical Example
+Consider a simulation of 10 time steps. Say we wish for the correct
+neuron class to fire 8 times, and the incorrect classes to fire 2 times.
+Assume \(y_1\) is the correct class:
+\[\begin{split}y = \begin{bmatrix} 8 \\ 2 \\ \vdots \\ 2 \end{bmatrix},  \hat{y} = \begin{bmatrix} y_1 \\ y_2 \\ \vdots \\ y_n \end{bmatrix}\end{split}\]
+The element-wise MSE is taken to generate \(n\) loss components,
+which are all summed together to generate a final loss.
+2. Recurrent Leaky Integrate-and-Fire Neurons
+Neurons in the brain have a ton of feedback connections. And so the SNN
+community have been exploring the dynamics of networks that feed output
+spikes back to the input. This is in addition to the recurrent dynamics
+of the membrane potential.
+====================================================================================================
+[snnTorch Regression Part II: losses] source=same URL file=snn_tutorial_regression_2.txt lines=244-310
+----------------------------------------------------------------------------------------------------
+4. Construct Training Loop
+4.1 Mean Square Error Loss in snntorch.functional
+From snntorch.functional, we call mse_count_loss to set the
+target neuron to fire 80% of the time, and incorrect neurons to fire 20%
+of the time. What it took 10 paragraphs to explain is achieved in one
+line of code:
+loss_function = SF.mse_count_loss(correct_rate=0.8, incorrect_rate=0.2)
+4.2 DataLoader
+Dataloader boilerplate. Let’s just do MNIST, and testing this on
+temporal data is an exercise left to the reader/coder.
+batch_size = 128
+data_path='/tmp/data/mnist'
+# Define a transform
+transform = transforms.Compose([
+            transforms.Resize((28, 28)),
+            transforms.Grayscale(),
+            transforms.ToTensor(),
+            transforms.Normalize((0,), (1,))])
+mnist_train = datasets.MNIST(data_path, train=True, download=True, transform=transform)
+mnist_test = datasets.MNIST(data_path, train=False, download=True, transform=transform)
+# Create DataLoaders
+train_loader = DataLoader(mnist_train, batch_size=batch_size, shuffle=True, drop_last=True)
+test_loader = DataLoader(mnist_test, batch_size=batch_size, shuffle=True, drop_last=True)
+4.3 Train Network
+num_epochs = 5
+optimizer = torch.optim.Adam(params=model.parameters(), lr=1e-3)
+loss_hist = []
+with tqdm.trange(num_epochs) as pbar:
+    for _ in pbar:
+        train_batch = iter(train_loader)
+        minibatch_counter = 0
+        loss_epoch = []
+        for feature, label in train_batch:
+            feature = feature.to(device)
+            label = label.to(device)
+            spk = model(feature.flatten(1)) # forward-pass
+            loss_val = loss_function(spk, label) # apply loss
+            optimizer.zero_grad() # zero out gradients
+            loss_val.backward() # calculate gradients
+            optimizer.step() # update weights
+            loss_hist.append(loss_val.item())
+            minibatch_counter += 1
+            avg_batch_loss = sum(loss_hist) / minibatch_counter
+            pbar.set_postfix(loss="%.3e" % avg_batch_loss)
+5. Evaluation
+test_batch = iter(test_loader)
+minibatch_counter = 0
+loss_epoch = []
+model.eval()
+with torch.no_grad():
+  total = 0
+  acc = 0
+  for feature, label in test_batch:
+      feature = feature.to(device)
+      label = label.to(device)
+      spk = model(feature.flatten(1)) # forward-pass
+      acc += SF.accuracy_rate(spk, label) * spk.size(1)
+      total += spk.size(1)
+print(f"The total accuracy on the test set is: {(acc/total) * 100:.2f}%")
+In the previous tutorial, we tested membrane potential learning. We can
+do the same here by setting the target neuron to reach a membrane
+potential greater than the firing threshold, and incorrect neurons to
+reach a membrane potential below the firing threshold:
+loss_function = SF.mse_membrane_loss(on_target=1.05, off_target=0.2)
+In the above case, we are trying to get the correct neuron to constantly
+sit above the firing threshold.
+Try updating the network and the training loop to make this work.
+====================================================================================================
+[snnTorch Population coding tutorial] source=https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_pop.html file=snn_tutorial_pop.txt lines=60-196
+----------------------------------------------------------------------------------------------------
+mechanism in the primary cortex. One of several reasons is because the
+average neuronal firing rate is roughly \(0.1-1\) Hz, which is far
+slower than the reaction response time of animals and humans.
+But if we pool together multiple neurons and count their spikes
+together, then it becomes possible to measure a firing rate for a
+population of neurons in a very short window of time. Population coding
+adds some credibility to the plausibility of rate-encoding mechanisms.
+In this tutorial, you will:
+Learn how to train a population coded network. Instead of assigning one neuron per class, we will extend this to multiple neurons per class, and aggregate their spikes together.
+!pip install snntorch
+import torch, torch.nn as nn
+import snntorch as snn
+DataLoading
+Define variables for dataloading.
+batch_size = 128
+data_path='/tmp/data/fmnist'
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+Load FashionMNIST dataset.
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+# Define a transform
+transform = transforms.Compose([
+            transforms.Resize((28, 28)),
+            transforms.Grayscale(),
+            transforms.ToTensor(),
+            transforms.Normalize((0,), (1,))])
+fmnist_train = datasets.FashionMNIST(data_path, train=True, download=True, transform=transform)
+fmnist_test = datasets.FashionMNIST(data_path, train=False, download=True, transform=transform)
+# Create DataLoaders
+train_loader = DataLoader(fmnist_train, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(fmnist_test, batch_size=batch_size, shuffle=True)
+Define Network
+Let’s compare the performance of a pair of networks both with and
+without population coding, and train them for one single time step.
+from snntorch import surrogate
+# network parameters
+num_inputs = 28*28
+num_hidden = 128
+num_outputs = 10
+num_steps = 1
+# spiking neuron parameters
+beta = 0.9  # neuron decay rate
+grad = surrogate.fast_sigmoid()
+Without population coding
+Let’s just use a simple 2-layer dense spiking network.
+net = nn.Sequential(nn.Flatten(),
+                    nn.Linear(num_inputs, num_hidden),
+                    snn.Leaky(beta=beta, spike_grad=grad, init_hidden=True),
+                    nn.Linear(num_hidden, num_outputs),
+                    snn.Leaky(beta=beta, spike_grad=grad, init_hidden=True, output=True)
+                    ).to(device)
+With population coding
+Instead of 10 output neurons corresponding to 10 output classes, we will
+use 500 output neurons. This means each output class has 50 neurons
+randomly assigned to it.
+pop_outputs = 500
+net_pop = nn.Sequential(nn.Flatten(),
+                        nn.Linear(num_inputs, num_hidden),
+                        snn.Leaky(beta=beta, spike_grad=grad, init_hidden=True),
+                        nn.Linear(num_hidden, pop_outputs),
+                        snn.Leaky(beta=beta, spike_grad=grad, init_hidden=True, output=True)
+                        ).to(device)
+Training
+Without population coding
+Define the optimizer and loss function. Here, we use the MSE Count Loss,
+which counts up the total number of output spikes at the end of the
+simulation run.
+The correct class has a target firing probability of 100%, and incorrect
+classes are set to 0%.
+import snntorch.functional as SF
+optimizer = torch.optim.Adam(net.parameters(), lr=2e-3, betas=(0.9, 0.999))
+loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0)
+We will also define a simple test accuracy function that predicts the
+correct class based on the neuron with the highest spike count.
+from snntorch import utils
+def test_accuracy(data_loader, net, num_steps, population_code=False, num_classes=False):
+  with torch.no_grad():
+    total = 0
+    acc = 0
+    net.eval()
+    data_loader = iter(data_loader)
+    for data, targets in data_loader:
+      data = data.to(device)
+      targets = targets.to(device)
+      utils.reset(net)
+      spk_rec, _ = net(data)
+      if population_code:
+        acc += SF.accuracy_rate(spk_rec.unsqueeze(0), targets, population_code=True, num_classes=10) * spk_rec.size(1)
+      else:
+        acc += SF.accuracy_rate(spk_rec.unsqueeze(0), targets) * spk_rec.size(1)
+      total += spk_rec.size(1)
+  return acc/total
+Let’s run the training loop. Note that we are only training for
+\(1\) time step. I.e., each neuron only has the opportunity to fire
+once. As a result, we might not expect the network to perform too well
+here.
+from snntorch import backprop
+num_epochs = 5
+# training loop
+for epoch in range(num_epochs):
+    avg_loss = backprop.BPTT(net, train_loader, num_steps=num_steps,
+                          optimizer=optimizer, criterion=loss_fn, time_var=False, device=device)
+    print(f"Epoch: {epoch}")
+    print(f"Test set accuracy: {test_accuracy(test_loader, net, num_steps)*100:.3f}%\n")
+    >> Epoch: 0
+    >> Test set accuracy: 59.421%
+    >> Epoch: 1
+    >> Test set accuracy: 61.889%
+While there are ways to improve single time-step performance, e.g., by
+applying the loss to the membrane potential, one single time-step is
+extremely challenging to train a network competitively using rate codes.
+With population coding
+Let’s modify the loss function to specify that population coding should
+be enabled. We must also specify the number of classes. This means that
+there will be a total of
+\(50~neurons~per~class~=~500~neurons~/~10~classes\).
+loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0, population_code=True, num_classes=10)
+optimizer = torch.optim.Adam(net_pop.parameters(), lr=2e-3, betas=(0.9, 0.999))
+num_epochs = 5
+# training loop
+for epoch in range(num_epochs):
+    avg_loss = backprop.BPTT(net_pop, train_loader, num_steps=num_steps,
+                            optimizer=optimizer, criterion=loss_fn, time_var=False, device=device)
+    print(f"Epoch: {epoch}")
+    print(f"Test set accuracy: {test_accuracy(test_loader, net_pop, num_steps, population_code=True, num_classes=10)*100:.3f}%\n")
+    >> Epoch: 0
+    >> Test set accuracy: 80.501%
+    >> Epoch: 1
+    >> Test set accuracy: 82.690%
+Even though we are only training on one time-step, introducing
+additional output neurons has immediately enabled better performance.
+Conclusion
+The performance boost from population coding may start to fade as the
+number of time steps increases. But it may also be preferable to
+increasing time steps as PyTorch is optimized for handling matrix-vector
+products, rather than sequential, step-by-step operations over time.
+For a detailed tutorial of spiking neurons, neural nets, encoding,
+====================================================================================================
+[snnTorch Tutorial 5: ATan default + membrane CE loss] source=https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_5.html file=snn_tutorial_5.txt lines=170-176
+----------------------------------------------------------------------------------------------------
+approximations. This is commonly known as the surrogate gradient
+approach.
+A variety of options exist to using surrogate gradients, and we will
+dive into more detail on these methods in Tutorial 6.
+The default method in snnTorch (as of v0.6.0) is to smooth the Heaviside function with the arctangent function.
+The backward-pass derivative used is:
+\[\frac{\partial \tilde{S}}{\partial U} \leftarrow \frac{1}{\pi}\frac{1}{(1+[U\pi]^2)}\]
+====================================================================================================
+[snnTorch Tutorial 5: loss loop] source=same URL file=snn_tutorial_5.txt lines=386-420
+----------------------------------------------------------------------------------------------------
+    print_batch_accuracy(data, targets, train=True)
+    print_batch_accuracy(test_data, test_targets, train=False)
+    print("\n")
+7.2 Loss Definition
+The nn.CrossEntropyLoss function in PyTorch automatically handles taking
+the softmax of the output layer as well as generating a loss at the
+output.
+loss = nn.CrossEntropyLoss()
+7.3 Optimizer
+Adam is a robust optimizer that performs well on recurrent networks, so
+let’s use that with a learning rate of \(5\times10^{-4}\).
+optimizer = torch.optim.Adam(net.parameters(), lr=5e-4, betas=(0.9, 0.999))
+7.4 One Iteration of Training
+Take the first batch of data and load it onto CUDA if available.
+data, targets = next(iter(train_loader))
+data = data.to(device)
+targets = targets.to(device)
+Flatten the input data to a vector of size \(784\) and pass it into
+the network.
+spk_rec, mem_rec = net(data.view(batch_size, -1))
+>>> print(mem_rec.size())
+torch.Size([25, 128, 10])
+The recording of the membrane potential is taken across:
+25 time steps
+128 samples of data
+10 output neurons
+We wish to calculate the loss at every time step, and sum these up
+together, as per Equation \((10)\):
+# initialize the total loss value
+loss_val = torch.zeros((1), dtype=dtype, device=device)
+# sum loss at every step
+for step in range(num_steps):
+  loss_val += loss(mem_rec[step], targets)
+>>> print(f"Training loss: {loss_val.item():.3f}")
+Training loss: 60.488

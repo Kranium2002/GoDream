@@ -1,0 +1,21 @@
+REVIEW REPRODUCTION - fixture, not evidence
+
+== hand checks ==
+area 19.25 hand 19.25
+attempts_to_tolerance(0.5) 10 | (0.2) None
+non-monotone curve [1, .4, .9, .9, .9] tol .5 -> 5 (first reach, even though it leaves tolerance)
+p90 of 1..5 4.6 hand 4.6
+regret [0.19999999999999996, 2.3] hand [0.19999999999999996, 2.3]
+
+== cluster bootstrap equals resampling whole situations (percentile, same seed) ==
+module (0.18500403175542315, 0.29471588290991774) | whole-cluster numpy (np.float64(0.18500403175542315), np.float64(0.2947158829099176))
+ratio module (1.103592449297315, 1.0882797198230194, 1.1177100105950948) | numpy (np.float64(1.1035924492973155), np.float64(1.0882797198230192), np.float64(1.117710010595095))
+
+== ratio with losses that are not non-negative ==
+student_teacher_ratio: {'student_mean': -0.4, 'teacher_mean': -0.2, 'n': 4, 'ratio': 2.0}
+paired_ratio_ci estimate/low/high: 2.021292247504877 1.9973450543222653 2.052666851806051 | undefined_reason: None
+sign-crossing denominator -> estimate undefined CI ('undefined', 'undefined') method_used None
+
+== Spearman on a homoscedastic-by-construction spread (MLP baseline) ==
+distinct spread values: 8 range 2.7755575615628914e-17
+spread_error_spearman: {'n': 200, 'rho': -0.031066431809017154, 'pvalue': 0.6623308972225055}

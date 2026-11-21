@@ -1,0 +1,89 @@
+﻿python.exe : D:\BerlinPrior\.venv\Lib\site-packages\sklearn\neural_network\_multilayer_perceptron.py:1775: 
+DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to 
+(n_samples, ), for example using ravel().
+At line:1 char:375
++ ... l_contract; & D:\BerlinPrior\.venv\Scripts\python.exe p01_mlp.py > p0 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\BerlinPrior\... using ravel().:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  y = column_or_1d(y, warn=True)
+sklearn 1.9.0
+SIGNATURE MLPRegressor (self, loss='squared_error', hidden_layer_sizes=(100,), activation='relu', *, solver='adam', alpha=0.0001, batch_size='auto', learning_rate='constant', learning_rate_init=0.001, power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000)
+has partial_fit: True
+partial_fit signature: (self, X, y, sample_weight=None)
+
+== early_stopping=True (adam, default validation_fraction=0.1) at small n ==
+[es n=2] EXC ValueError: The validation set is too small. Increase 'validation_fraction' or the size of your dataset. | warnings=[]
+[es n=3] EXC ValueError: The validation set is too small. Increase 'validation_fraction' or the size of your dataset. | warnings=[]
+[es n=5] EXC ValueError: The validation set is too small. Increase 'validation_fraction' or the size of your dataset. | warnings=[]
+[es n=10] EXC ValueError: The validation set is too small. Increase 'validation_fraction' or the size of your dataset. | warnings=[]
+[es n=20] OK n_iter_=200 len(validation_scores_)=200 best_validation_score_=0.4422908568901266 | warnings=["ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet."]
+[es n=40] OK n_iter_=200 len(validation_scores_)=200 best_validation_score_=0.553185690986669 | warnings=["ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet."]
+[es n=2000] OK n_iter_=111 len(validation_scores_)=111 best_validation_score_=0.9919509614972323 | warnings=[]
+
+== early_stopping with solver=lbfgs (ignored?) ==
+[lbfgs es n=5] OK n_iter_=11 | warnings=[]
+
+== solver lbfgs vs adam, default max_iter, n in {5,10,20,40,2000} ==
+[lbfgs n=5] OK n_iter_=10 | warnings=[]
+[lbfgs n=10] OK n_iter_=15 | warnings=[]
+[lbfgs n=20] OK n_iter_=27 | warnings=[]
+[lbfgs n=40] OK n_iter_=44 | warnings=[]
+[lbfgs n=2000] OK n_iter_=200 | warnings=['ConvergenceWarning: lbfgs failed to converge after 200 iteration(s) (status=1):\nSTOP: TOTAL NO. OF ITERATIONS REACHED LIMIT\n\nIncrease the number of iterations to improve the conver']
+[adam n=5] OK n_iter_=200 | warnings=["ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet."]
+[adam n=10] OK n_iter_=200 | warnings=["ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet."]
+[adam n=20] OK n_iter_=200 | warnings=["ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet."]
+[adam n=40] OK n_iter_=200 | warnings=["ConvergenceWarning: Stochastic Optimizer: Maximum iterations (200) reached and the optimization hasn't converged yet."]
+[adam n=2000] OK n_iter_=118 | warnings=[]
+
+== partial_fit availability per solver ==
+partial_fit solver=lbfgs: OK n_iter_=37 t_=0
+partial_fit solver=adam: OK n_iter_=1 t_=20
+partial_fit solver=sgd: OK n_iter_=1 t_=20
+
+== multi-output y (2-D) ==
+Y.shape (40, 3) predict shape (40, 3) n_outputs_ 3 out_activation_ identity coefs_ shapes [(10, 16), (16, 3)] intercepts_ shapes [(16,), (3,)]
+1-D y predict shape (40,) single row predict shape (1,)
+(n,1) y predict shape (40,)
+
+== determinism: same random_state, same process ==
+lbfgs: digest rs7=03ec20944864b628 rs7again=03ec20944864b628 rs8=7287383ae2733354 same7=True
+adam: digest rs7=5ba45abbb0fb0d2a rs7again=5ba45abbb0fb0d2a rs8=3651f5b9f5f5d392 same7=True
+
+== ConvergenceWarning behaviour ==
+[adam max_iter=5] OK n_iter_=5 | warnings=["ConvergenceWarning: Stochastic Optimizer: Maximum iterations (5) reached and the optimization hasn't converged yet."]
+[lbfgs max_iter=5] OK n_iter_=5 | warnings=['ConvergenceWarning: lbfgs failed to converge after 5 iteration(s) (status=1):\nSTOP: TOTAL NO. OF ITERATIONS REACHED LIMIT\n\nIncrease the number of iterations to improve the converge']
+ConvergenceWarning class path: sklearn.exceptions.ConvergenceWarning
+
+== scaling: Pipeline(StandardScaler, MLP) inside TransformedTargetRegressor(StandardScaler) ==
+fit warnings: []
+TTR predict shape (3 rows, 2 targets): (3, 2) single row: (1, 2)
+pickle bytes 14513 round-trip predict identical: True
+inner mlp access: model.regressor_.named_steps -> ['standardscaler', 'mlpregressor'] transformer_ mean_ (2,)
+TTR 1-D target predict shape: (4,)
+
+== warm_start semantics ==
+warm_start adam: after fit1 n_iter_=50 t_=2000; after fit2 n_iter_=50 t_=4000; first-layer weights changed=True
+  _optimizer object kept across warm_start fits? (has attr): True
+warm_start out-dim change 1->3: EXC ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 1 is different from 3)
+warm_start in-dim change 10->12: EXC ValueError: X has 12 features, but MLPRegressor is expecting 10 features as input.
+partial_fit out-dim change: EXC ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 1 is different from 3)
+warm_start lbfgs: refit continues from previous weights (changed=True), n_iter_ fit1=30 fit2=30
+
+== partial_fit semantics: one epoch per call? ==
+  call 1: n_iter_=1 t_=40 loss_=6.327360
+  call 2: n_iter_=1 t_=80 loss_=6.191241
+  call 3: n_iter_=1 t_=120 loss_=6.084718
+  partial_fit with early_stopping=True:
+   EXC ValueError: partial_fit does not support early_stopping=True
+
+== partial_fit through a Pipeline? ==
+Pipeline has partial_fit: False
+Pipeline.partial_fit EXC AttributeError: 'Pipeline' object has no attribute 'partial_fit'
+TransformedTargetRegressor has partial_fit: False
+
+== dream rehearsal fixture: shared model, one-hot skill id, refit-from-scratch on union vs partial_fit on mixed batches ==
+  fit on A: input dim 11 outputs 2
+  partial_fit on mixed A(dream)+B(real): OK, n_iter_ 1 t_ 24900
+  NOTE fixed input width needed: one-hot for ALL planned skills must be allocated up-front (n_features_in_ cannot grow).

@@ -1,0 +1,4 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+repeat 0: measure_decision_latency median 137.2 us p95 160.4 us | decide(spec, situation) -> command median 215.9 us p95 272.4 us (x1.57) | candidate_actions alone median 25.4 us
+repeat 1: measure_decision_latency median 134.7 us p95 148.7 us | decide(spec, situation) -> command median 214.2 us p95 253.0 us (x1.59) | candidate_actions alone median 25.2 us
+torch imported: False

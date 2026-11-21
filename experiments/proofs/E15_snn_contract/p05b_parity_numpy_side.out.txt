@@ -1,0 +1,9 @@
+=== float64: params dtype float64, beta0 array(0.89999998), thr0 array(1.), T 10 ===
+  batched (1000 inputs): max|logit diff| = 0.000e+00; spike mismatches per layer [0, 0] of [640000, 640000]; argmax agreement 1.0000
+  single-row numpy vs torch batched: max|logit diff| = 0.000e+00; argmax agreement 1.0000
+=== float32: params dtype float32, beta0 array(0.9, dtype=float32), thr0 array(1., dtype=float32), T 10 ===
+  batched (1000 inputs): max|logit diff| = 1.144e-05; spike mismatches per layer [0, 0] of [640000, 640000]; argmax agreement 1.0000
+  single-row numpy vs torch batched: max|logit diff| = 1.144e-05; argmax agreement 1.0000
+  single-row numpy vs single-row torch: max|logit diff| = 9.537e-06; argmax agreement 1.0000
+'torch' in sys.modules: False
+numpy 2.5.5

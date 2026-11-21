@@ -1,0 +1,35 @@
+E15 snn contract - index of executed commands (cwd = this directory unless stated). FIXTURE data only.
+PY_CPU  = C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\snn_probe\venv_cpuidx\Scripts\python.exe  (torch 2.15.0+cpu from download.pytorch.org/whl/cpu via --torch-backend cpu)
+PY_PYPI = ...\snn_probe\venv_pypi\Scripts\python.exe  (torch 2.15.0 from PyPI default)
+Machine: Intel(R) Core(TM) Ultra 7 155H, 16 cores / 22 logical, Windows 11 10.0.26300, CPython 3.13.16, uv 0.13.4.
+
+install / resolver
+  uv pip install --python PY_PYPI numpy==2.5.5 pandas==2.3.3 scikit-learn==1.9.0 scipy==1.18.1      exit 0  p01b_install_pins_venv_pypi.log.txt
+  uv pip install --python PY_PYPI ...pins... torch snntorch                                          exit 0  p01c_install_torch_snntorch_pypi_default.log.txt
+  uv pip install --dry-run --python PY_CPU --index-url https://download.pytorch.org/whl/cpu ...     exit 1  p01d_cpu_index_variants_dryrun.log.txt (numpy==2.5.5 not on that index)
+  uv pip install --dry-run --python PY_CPU --extra-index-url https://download.pytorch.org/whl/cpu   exit 1  p01d (first-index strategy)
+  uv pip install --dry-run --python PY_CPU --torch-backend cpu ...                                   exit 0  p01d
+  uv pip install --python PY_CPU --torch-backend cpu ...pins... torch snntorch                       exit 0  p01e_install_torch_backend_cpu.log.txt
+  PY_x -I p01f_env_report.py (both venvs)                                                            exit 0  p01f_env_report_venv_*.out.txt
+  curl -sSI <both torch wheels>                                                                      exit 0  p01g_wheel_download_sizes.out.txt
+  uv pip install --dry-run --python D:\BerlinPrior\.venv\Scripts\python.exe ... (two variants)       exit 0  p01i_project_venv_dryrun.out.txt (freeze hash identical before/after)
+  uv lock (scratch proj_pypi, proj_cpuidx)                                                           exit 0  p01k_uv_lock_scratch.out.txt, p01k_scratch_*_uv.lock, p01j_scratch_pyproject_*.toml
+  uv sync --locked (scratch proj_cpuidx) + import check                                              exit 0  p01l_uv_sync_scratch_cpuidx.out.txt
+  uv sync --locked --dry-run / --inexact --dry-run (scratch, after adding undeclared tomli)          exit 0  p01n_uv_sync_exact_removal.out.txt
+  comm (project venv packages not declared in pyproject deps)                                        exit 0  p01o_project_venv_undeclared_packages.out.txt
+snnTorch API / dynamics
+  PY_CPU p02_snntorch_api.py                                                                         exit 0  p02_snntorch_api.out.txt / .err.txt
+  PY_CPU p02b_double_spike_dtype.py                                                                  exit 0  p02b_double_spike_dtype.out.txt
+  PY_CPU -W error::SyntaxWarning -m compileall -f -q <copy of snntorch>                              exit 0  p09_snntorch_metadata_and_compile.out.txt
+training (FIXTURE)
+  8x PY_CPU p03_poc_sweep.py <w> 8 p03_runs/worker_<w>.jsonl (parallel; concurrent with p04/p05a)   54/54 rows, stderr empty  p03_runs/, p03_aggregate.out.txt
+  8x PY_CPU p03b_failure_modes.py <w> 8 ...                                                          all exit 0  p03b_runs/, p03b_aggregate.out.txt
+  PY_CPU p03c_regression.py                                                                          exit 0  p03c_regression.out.txt
+  PY_CPU p03d_rate_code_saturation.py                                                                exit 0  p03d_rate_code_saturation.out.txt
+determinism / parity / latency / counts / multi-skill
+  PY_CPU p04_determinism.py {1 1, 1 1, 1 0, 4 1, 16 1, 16 1} (separate processes)                    exit 0  p04_determinism.out.txt
+  PY_CPU p05a_parity_torch_side.py ; PY_CPU p05b_parity_numpy_side.py                                exit 0  p05a_*.out.txt, p05b_*.out.txt
+  PY_CPU p06a_latency_torch.py ; PY_CPU p06b_latency_numpy.py ; p06c_train_step_time.py {1 all,4 one,16 one}  exit 0  p06*.out.txt
+  PY_CPU p07_op_counts.py                                                                            exit 0  p07_op_counts.out.txt
+  PY_CPU p08_multiskill.py                                                                           exit 0  p08_multiskill.out.txt
+Numpy forward (verbatim, no torch): np_forward.py.  Model/training/export code: snn_common.py.

@@ -1,0 +1,31 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+== the reviewer's files are not run results ==
+OK   refuses config.yaml as a run-result file: ValueError: D:\BerlinPrior\config.yaml is not a run-result file: Expecting value: line 1 column 1 (char 0)
+OK   refuses experiments/proofs/B_eval_offline/c6_report.out.txt as a run-result file: ValueError: D:\BerlinPrior\experiments\proofs\B_eval_offline\c6_report.out.txt is not a run-result file: Expecting value: line 1 column 1 (char 0)
+OK   refuses experiments/proofs/B_review/eval/r03_report_provenance.py as a run-result file: ValueError: D:\BerlinPrior\experiments\proofs\B_review\eval\r03_report_provenance.py is not a run-result file: Extra data: line 1 column 3 (char 2)
+OK   refuses a hand-built record instead of a file: TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'dict'
+
+== every config method has a row ==
+OK   no files -> 10 NOT RUN rows, one per evaluation.methods entry: ['oracle', 'physics_only', 'constant_bias', 'gaussian_process', 'gradient_boosting', 'mlp_on_attempts', 'direct_tabpfn', 'teacher', 'snn_per_skill', 'snn_shared']
+
+== write_run_result checks the run manifests ==
+OK   refuses provenance without manifests: ValueError: provenance['manifests'] must list the completed run manifests the metrics come from
+OK   refuses a manifest of another split: ValueError: run manifest C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\runs\fx_dev__teacher.manifest.json has split 'dev'; the result is for 'shift'
+OK   refuses a manifest of another skill: ValueError: run manifest C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\runs\fx_dev__teacher.manifest.json has skill 'fixture'; the result is for 'dodge'
+OK   refuses no manifest of this method and run id: ValueError: no listed manifest is the run of method 'oracle' with run_id 'fx_dev'
+OK   refuses a file that is not a manifest: ValueError: D:\BerlinPrior\config.yaml is not a run manifest: Expecting value: line 1 column 1 (char 0)
+   throwaway run crashed on purpose: throwaway crash at call 5 (file-mechanics check)
+OK   the crashed run's manifest says completed: false
+OK   refuses an incomplete (crashed) run: ValueError: run manifest C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\crashed\fx_crash__teacher.manifest.json is not completed: a result may only come from a com
+OK   no refused result wrote a file
+
+== a valid result, then its run files change ==
+OK   a valid run-result file gives a RUN row with its source file
+OK   refuses a run-result file whose method is not in config evaluation.methods: ValueError: C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\results\my_method.json: skill 'fixture' / method 'my_method' is not in the table's skills / config metho
+OK   refuses a result whose attempt file changed afterwards: ValueError: C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\results\teacher.json: attempt file C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\results\..\runs\fx_dev_
+OK   refuses the same in the final table: ValueError: C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\results\teacher.json: attempt file C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\results\..\runs\fx_dev_
+OK   restoring the attempt file makes the result readable again
+OK   refuses a result whose manifest was deleted: FileNotFoundError: run manifest C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\results\..\runs\fx_dev__teacher.manifest.json does not exist
+OK   refuses a hand-edited result whose digests do not match its run files: ValueError: C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\results\forged.json: manifest C:\Users\vidhu\AppData\Local\Temp\tmpmd8c4klo\results\..\copy\fx_dev__teac
+
+CHECK RESULT: 20 assertions held, 0 failed 

@@ -1,0 +1,51 @@
+utc_now = 2026-11-21T13:35:11+00:00
+tabpfn_client 0.10.1
+usage BEFORE quotes = {"current_usage": 40000, "daily_tokens_used": 40000, "monthly_tokens_used": 40000, "usage_limit": 35000000}
+
+=== required shapes: operation='predict', model/n_estimators resolved by server ===
+(train_rows, query_rows, n_features) -> result
+(5, 8, 6) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 5, "raw_columns": 6, "test_rows": 8, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.06}
+(20, 64, 8) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 20, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.056}
+(40, 64, 8) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.054}
+(40, 256, 10) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 10, "test_rows": 256, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.053}
+(40, 2000, 10) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 10, "test_rows": 2000, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.049}
+(200, 320, 10) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 200, "raw_columns": 10, "test_rows": 320, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.064}
+(40, 10000, 10) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 10, "test_rows": 10000, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.05}
+
+=== dependence on n_estimators, shape (40, 64, 8), predict ===
+n_estimators=1 -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 1}, "rtt_s": 0.051}
+n_estimators=2 -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 2}, "rtt_s": 0.061}
+n_estimators=4 -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 4}, "rtt_s": 0.052}
+n_estimators=8 -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.052}
+
+=== dependence on model_version, shape (40, 64, 8), predict ===
+model_version=v3.5 -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.052}
+model_version=v3.5-fast -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5-fast", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.051}
+model_version=v3 -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.059}
+model_version=v2.6 -> {"estimated_cost": 6656, "pricing_version": "legacy_v2", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v2.6", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.052}
+model_version=v2.5 -> {"estimated_cost": 6656, "pricing_version": "legacy_v2", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v2.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.051}
+
+=== operation='cache_predict' (assumes fit_mode='fit_with_cache' hit), shape (40, 64, 8) ===
+cache_predict -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5", "operation": "cache_predict", "n_estimators": 8}, "rtt_s": 0.062}
+
+=== batching: one request of C candidates vs C requests of 1 ===
+(40, 1, 8) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 1, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.054}
+(40, 16, 8) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 16, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.056}
+   16 x single-row requests = 160000  vs  1 batched request = 10000
+(40, 64, 8) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.053}
+   64 x single-row requests = 640000  vs  1 batched request = 10000
+
+=== minimum-charge probes ===
+(2, 1, 1) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 2, "raw_columns": 1, "test_rows": 1, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.046}
+(5, 1, 6) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 5, "raw_columns": 6, "test_rows": 1, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.054}
+(40, None, 8) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 8, "test_rows": 0, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.048}
+
+=== feature-count dependence at (40, 64, F) ===
+(40, 64, 1) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 1, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.056}
+(40, 64, 6) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 6, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.054}
+(40, 64, 10) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 10, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.061}
+(40, 64, 20) -> {"estimated_cost": 10000, "pricing_version": "quota_v3", "resolved_inputs": {"train_rows": 40, "raw_columns": 20, "test_rows": 64, "model_version": "v3.5", "operation": "predict", "n_estimators": 8}, "rtt_s": 0.05}
+
+usage AFTER quotes = {"current_usage": 40000, "daily_tokens_used": 40000, "monthly_tokens_used": 40000, "usage_limit": 35000000}
+usage unchanged by quotes: True
+DONE (no fit/predict/upload called)

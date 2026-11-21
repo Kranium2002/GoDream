@@ -1,0 +1,16 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+OK   evaluate_actions refuses action outside the declared bounds: actions: rows [0, 1, 2] are outside the bounds of skill 'fixture'
+OK   evaluate_actions refuses noise seeds of the wrong shape: noise_seeds must be an integer array of shape (3,); got int64 (2,)
+OK   evaluate_actions refuses float noise seeds: noise_seeds must be an integer array of shape (3,); got float64 (3,)
+OK   evaluate_actions refuses actions of the wrong width: actions must have shape (3, 2); got (3, 1)
+OK   evaluate_actions refuses an unknown split: split must be one of ('dev', 'test', 'shift', 'context'); got 'validation'
+OK   evaluate_actions refuses a config digest that is not sha256 hex: config_digest must be a lowercase sha256 hex digest (learned_judgment.config.config_digest); got 'abc'
+OK   evaluate_actions refuses a negative base seed: base_seed must be an integer >= 0; got -1
+OK   evaluate_actions refuses an attempt file that is not .jsonl: the attempt file must be a .jsonl file; got 'rows.csv'
+OK   compare_methods validates every method's actions before the first episode: actions of method 'bad': rows [0, 1, 2] are outside the bounds of skill 'fixture'
+OK   the world factory was never called
+OK   no attempt file and no manifest was written
+OK   latency record keys ['cpu_count', 'median_s', 'n_decisions', 'n_inputs', 'p95_s', 'platform', 'processor', 'timer']
+OK   p95 >= median >= 0, n_decisions recorded
+
+CHECK RESULT: 13 assertions held, 0 failed 

@@ -1,0 +1,39 @@
+D:\BerlinPrior\experiments\proofs\B_students_eval_contract\p10_persist.py:80: RuntimeWarning: overflow encountered in cast
+  np.savez(SCR / "t.npz", X=arr.reshape(-1, 1), y=arr[:5].astype(np.float32))
+python 3.13.16 numpy 2.5.5
+
+== JSON float round trip (Python float repr) ==
+bitwise equal all 10006 values incl. subnormal/max/-0.0: True
+json.dumps(-0.0) = -0.0 | loads keeps sign: True
+numpy scalar types in json.dumps: float64 -> 0.1 | float32 TypeError: Object of type float32 is not JSON serializable | int64 TypeError: Object of type int64 is not JSON serializable | bool TypeError: Object of type bool is not JSON serializable 
+np.float32(0.1) -> float() -> json: 0.10000000149011612 (float32 widened; repr of the float64 value)
+ndarray.tolist() gives Python floats; round trip bitwise: True
+
+== NaN / inf in json ==
+default allow_nan=True: [NaN, Infinity, -Infinity] -> loads: [nan, inf]
+allow_nan=False: ValueError Out of range float values are not JSON compliant: nan
+strict loads via parse_constant: non-finite constant NaN
+
+== .npz round trip ==
+keys ['X', 'y'] X bitwise equal (incl. NaN payload, -0.0, inf): True y dtype float32
+object array with allow_pickle=False: ValueError Object arrays cannot be loaded when allow_pickle=False
+np.load default allow_pickle: False
+
+== parquet via pyarrow ==
+finite values bitwise equal (incl -0.0): True | NaN count before/after: 2 2 | NaN payload preserved: False | inf preserved: True
+pa.Table.from_pandas null_count for NaN column: 2 (NaN -> null by default)
+nested dicts with heterogeneous keys -> schema: struct<ball_vx: double, dist: double, speed: double> | missing keys become null: {'ball_vx': None, 'dist': None, 'speed': 0.6}
+parquet append in place: pyarrow.parquet has no append mode; ParquetWriter needs a fixed schema for one open file; new rows => new file/part
+
+== atomic replace on Windows ==
+os.rename over existing: FileExistsError [WinError 183] Cannot create a file when that file already exists: 'D:\\BerlinPrior\\experiments\\proofs\\B_students_eval_contract\\p10_scratch\\cache_entry.json.tmp' -> 'D:\\BerlinPrior\\experiments\\proofs\\B_students_eval_contract\\p10_scratch\\cache_entry.json'
+os.replace over existing: OK -> {"v":2}
+os.replace while target open for read: PermissionError 5 [WinError 5] Access is denied: 'D:\\BerlinPrior\\experiments\\proofs\\B_students_eval_contract\\p10_scratch\\cache_entry.json.tmp' -> 'D:\\BerlinPrior\\experiments\\proofs\\B_students_eval_contract\\p10_scratch\\cache_entry.json'
+retry after close: OK -> {"v":3}
+os.replace into missing dir: FileNotFoundError
+
+== concurrent append: 8 processes x 400 lines of ~930 bytes ==
+  mode=text-a                   rcs={0} lines=2737 parsed_ok=2696 corrupt=41 unique=2696 expected=3200 elapsed=0.60s
+  mode=os-append-single-write   rcs={0} lines=1576 parsed_ok=1367 corrupt=209 unique=1367 expected=3200 elapsed=0.62s
+  mode=locked                   rcs={0} lines=3200 parsed_ok=3200 corrupt=0 unique=3200 expected=3200 elapsed=1.28s
+exit=0

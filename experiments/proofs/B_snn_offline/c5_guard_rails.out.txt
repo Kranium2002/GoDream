@@ -1,0 +1,51 @@
+﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+
+settings: config.yaml students.snn with max_steps=40 evaluate_every_steps=20
+
+== dream / grid / config refusals (before any training) ==
+  [ok] DreamSet of another skill -> ValueError: DreamSet.skill 'fixture_snn_other' does not match the spec's 'fixture_snn'
+  [ok] points_per_dim (5, 7) instead of (7, 5) -> ValueError: dream row 0: the dream's 35 candidates are not the grid spec.candidate_actions(situation, points_per_dim=[5, 7]) gives (35 candidates); train with the points_pe
+  [ok] points_per_dim (7, 6): 42 instead of 35 candidates -> ValueError: dream row 0: the dream's 35 candidates are not the grid spec.candidate_actions(situation, points_per_dim=[7, 6]) gives (42 candidates); train with the points_pe
+  [ok] points_per_dim with one entry -> ValueError: points_per_dim must be 2 integers >= 1; got [7]
+  [ok] points_per_dim with a float -> ValueError: points_per_dim must be 2 integers >= 1; got [7.0, 5]
+  [ok] flat dream scores -> ValueError: score spread is 0: 270 of 270 rows score all 35 candidates identically; the dream gives nothing to learn
+  [ok] a single dream row -> ValueError: 1 dream rows leave no training rows after holding out 1 for validation (validation_fraction 0.1)
+  [ok] negative base seed -> ValueError: base_seed must be a non-negative integer; got -1
+  [ok] engine step with config.yaml as is (no skills.fixture_snn) -> ConfigError: config.yaml has no key 'skills.fixture_snn.candidate_points_per_dim'
+  [ok] engine step with students.per_skill_snn false -> ValueError: config.yaml students.per_skill_snn is not true: no per-skill spiking student is configured
+  [ok] SNNSettings.from_config without students.snn.beta -> ConfigError: config.yaml has no key 'students.snn.beta'
+  [ok] SNNSettings surrogate='relu' -> ValueError: students.snn.surrogate must be one of ('atan', 'fast_sigmoid'); got 'relu'
+  [ok] SNNSettings threshold=0.0 -> ValueError: students.snn.threshold must lie in (0.0, inf); got 0.0
+  [ok] SNNSettings beta=1.5 -> ValueError: students.snn.beta must lie in [0.0, 1.0]; got 1.5
+  [ok] SNNSettings validation_fraction=1.0 -> ValueError: students.snn.validation_fraction must lie in (0.0, 1.0); got 1.0
+  [ok] SNNSettings batch_size=0 -> ValueError: students.snn.batch_size must be >= 1; got 0
+  [ok] SNNSettings hidden_sizes=() -> ValueError: students.snn.hidden_sizes must be a non-empty list of integers; got ()
+  [ok] SNNSettings learn_beta='yes' -> ValueError: students.snn.learn_beta must be true or false; got 'yes'
+  [ok] SNNSettings max_steps=10.5 -> ValueError: students.snn.max_steps must be an integer; got 10.5
+  [ok] SNNSettings spike_rate_penalty=nan -> ValueError: students.snn.spike_rate_penalty must lie in [0.0, inf); got nan
+
+== targets and training-data refusals ==
+  [ok] soft_targets with inf -> ValueError: scores contain non-finite values
+  [ok] fit with a NaN input -> ValueError: tasks['fixture_snn'] inputs contains non-finite values (first at row 3, column 1)
+  [ok] fit with targets not summing to 1 -> ValueError: tasks['fixture_snn'] targets must be non-negative rows summing to 1
+  [ok] fit with sampling summing to 0.5 -> ValueError: sampling weights must sum to 1; got 0.5
+  [ok] fit with an unknown head -> KeyError: "tasks: unknown head 'nobody'; the model's heads are ['fixture_snn']"
+  [ok] fit with wrong input width -> ValueError: tasks['fixture_snn'] inputs must have shape (n >= 1, 4); got (300, 3)
+  [ok] build_model with a dotted head name -> ValueError: a head name must be a Python identifier (no '.'); got 'a.b'
+  [ok] learning_rate 1e-300 -> TrainingError with report (best_step 0): the trained network's validation loss 0.3419031046145856 is not below its loss at initialisation 0.3419031046145856 (steps run: 40; silent h
+
+== a 40-step student for the decision guard rails ==
+  trained: digest dca50c0c625f2f7d..., parity 0 differing decisions
+  [ok] decide_index with NaN -> ValueError: situations contain non-finite values (first at row 4, feature 'fx_speed'); the student refuses to decide on them
+  [ok] decide with inf -> ValueError: situations contain non-finite values (first at row 2, feature 'fx_lateral'); the student refuses to decide on them
+  [ok] operation_counts with NaN -> ValueError: situations contain non-finite values (first at row 4, feature 'fx_speed'); the student refuses to decide on them
+  [ok] decide_index with 2 columns -> ValueError: situations must have shape (n, 3); got (20, 2)
+  [ok] decide with another skill's spec -> ValueError: this student was trained for skill 'fixture_snn', not 'fixture_snn_other'
+  [ok] decide with a spec whose situation range changed -> ValueError: spec 'fixture_snn' encodes its situation differently from the encoder this student was trained with (situation variables, ranges or levels changed)
+  [ok] check_parity accepts the model's own export
+  [ok] check_parity with thresholds x 1.5 -> ParityError: the numpy network does not reproduce the torch model on head 'fixture_snn': spike-count mismatches per layer [464], 6 of 50 decisions differ
+  [ok] check_parity with NaN inputs -> ValueError: encoded_inputs contains non-finite values (first at row 3, column 1)
+  [ok] check_parity with another network's shape -> ValueError: network layers (4, 8, 35) x T=10 are not the model's trunk plus head 'fixture_snn': (4, 64, 35) x T=10
+  [ok] load a network saved without the student kind -> ValueError: <tmp>\not_a_student is not a per_skill_snn file (kind 'something_else')
+
+CHECK RESULT: 39 assertions held, 0 failed 

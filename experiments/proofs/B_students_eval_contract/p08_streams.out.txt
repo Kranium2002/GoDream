@@ -1,0 +1,48 @@
+=== process 1 (PYTHONHASHSEED=1)
+numpy 2.5.5 PYTHONHASHSEED= 1 | builtin hash('dodge/dev/situations') = 8640409726967578516
+SIGNATURE SeedSequence (entropy=None, *, spawn_key=(), pool_size=4, n_children_spawned=0)
+stream base=7 name='dodge/dev/situations'     idx=0: uniform[:3]=[0.10981983363365622 0.1620705555902907  0.6382266321371105 ] ints=[1037767335 1254383664]
+stream base=7 name='dodge/dev/situations'     idx=1: uniform[:3]=[0.983588745472682  0.3678896751575548 0.8272477582104557] ints=[2032538556 1376811118]
+stream base=7 name='dodge/dev/noise'          idx=0: uniform[:3]=[0.21462615727879852 0.17118490577880163 0.8419892169208198 ] ints=[1090133189  394916019]
+stream base=7 name='dodge/test/situations'    idx=0: uniform[:3]=[0.9238976430431862 0.8215567970846949 0.2582957488239219] ints=[2080138885 1947534090]
+stream base=8 name='dodge/dev/situations'     idx=0: uniform[:3]=[0.20939407190589143 0.11568931776769686 0.5944536288651388 ] ints=[2023962981 1543052938]
+
+== SeedSequence semantics ==
+SeedSequence(42).spawn(3) spawn_keys: [(0,), (1,), (2,)] n_children_spawned: 3
+child[1] state == SeedSequence(42, spawn_key=(1,)) state: True
+second spawn() call continues numbering (not repeat): [(3,), (4,)]
+default_rng([1,2]) == Generator(PCG64(SeedSequence([1,2]))): True
+default_rng(SeedSequence) accepted: True
+entropy [7, w...] vs spawn_key: SeedSequence(7, spawn_key=k) != SeedSequence([7, *k]): True
+SeedSequence(-1) -> ValueError: expected non-negative integer
+SeedSequence(1.5) -> TypeError: SeedSequence expects int or sequence of ints for entropy not 1.5
+Generator.spawn available: True -> ['Generator', 'Generator']
+
+== independence sanity (fixture): correlation of 1e6 normals between 2 named streams ==
+pearson r = 0.0018307273618935489
+digest of 1000 draws for xproc compare: c9472850f784f4208f27b6c084833c1f826eb64c35109ed1b823a3c24de5df41
+exit=0
+=== process 2 (PYTHONHASHSEED=2)
+numpy 2.5.5 PYTHONHASHSEED= 2 | builtin hash('dodge/dev/situations') = 2124849597642275049
+SIGNATURE SeedSequence (entropy=None, *, spawn_key=(), pool_size=4, n_children_spawned=0)
+stream base=7 name='dodge/dev/situations'     idx=0: uniform[:3]=[0.10981983363365622 0.1620705555902907  0.6382266321371105 ] ints=[1037767335 1254383664]
+stream base=7 name='dodge/dev/situations'     idx=1: uniform[:3]=[0.983588745472682  0.3678896751575548 0.8272477582104557] ints=[2032538556 1376811118]
+stream base=7 name='dodge/dev/noise'          idx=0: uniform[:3]=[0.21462615727879852 0.17118490577880163 0.8419892169208198 ] ints=[1090133189  394916019]
+stream base=7 name='dodge/test/situations'    idx=0: uniform[:3]=[0.9238976430431862 0.8215567970846949 0.2582957488239219] ints=[2080138885 1947534090]
+stream base=8 name='dodge/dev/situations'     idx=0: uniform[:3]=[0.20939407190589143 0.11568931776769686 0.5944536288651388 ] ints=[2023962981 1543052938]
+
+== SeedSequence semantics ==
+SeedSequence(42).spawn(3) spawn_keys: [(0,), (1,), (2,)] n_children_spawned: 3
+child[1] state == SeedSequence(42, spawn_key=(1,)) state: True
+second spawn() call continues numbering (not repeat): [(3,), (4,)]
+default_rng([1,2]) == Generator(PCG64(SeedSequence([1,2]))): True
+default_rng(SeedSequence) accepted: True
+entropy [7, w...] vs spawn_key: SeedSequence(7, spawn_key=k) != SeedSequence([7, *k]): True
+SeedSequence(-1) -> ValueError: expected non-negative integer
+SeedSequence(1.5) -> TypeError: SeedSequence expects int or sequence of ints for entropy not 1.5
+Generator.spawn available: True -> ['Generator', 'Generator']
+
+== independence sanity (fixture): correlation of 1e6 normals between 2 named streams ==
+pearson r = 0.0018307273618935489
+digest of 1000 draws for xproc compare: c9472850f784f4208f27b6c084833c1f826eb64c35109ed1b823a3c24de5df41
+exit=0

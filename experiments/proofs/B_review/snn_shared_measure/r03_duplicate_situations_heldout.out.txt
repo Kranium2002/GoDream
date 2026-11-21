@@ -1,0 +1,5 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+fx_cat: 300 dream rows, 6 distinct situations; held-out rows 30, of which 30 have a situation that is also a TRAINING row (100%); record 'held_out_in_dream' agreement 1.000
+    record keys about the held-out rows: ['agreement_with_dream_choice', 'fraction_with_zero_dream_regret', 'mean_dream_regret', 'mean_dream_regret_over_spread', 'n_rows'] (no overlap / duplicate count)
+fx_beta: 300 dream rows, 150 distinct situations; held-out rows 30, of which 26 have a situation that is also a TRAINING row (87%); record 'held_out_in_dream' agreement 0.300
+    record keys about the held-out rows: ['agreement_with_dream_choice', 'fraction_with_zero_dream_regret', 'mean_dream_regret', 'mean_dream_regret_over_spread', 'n_rows'] (no overlap / duplicate count)

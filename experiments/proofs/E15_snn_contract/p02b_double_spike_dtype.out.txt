@@ -1,0 +1,3 @@
+spk dtype: torch.float32  mem dtype: torch.float64  graded_spikes_factor dtype: torch.float64
+fc2(spk) -> RuntimeError: mat1 and mat2 must have the same dtype, but got Float and Double
+fc2(spk.to(torch.float64)) OK -> torch.float64

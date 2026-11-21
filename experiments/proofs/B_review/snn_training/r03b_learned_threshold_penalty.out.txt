@@ -1,0 +1,5 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+validation KL of the best constant prediction (mean training target): 0.3394
+learn_threshold, penalty 50: STUDENT RETURNED; best_step=50 val KL 0.8262 -> 0.2585 (constant predictor 0.3394); silent_layers=[] firing_rate=[0.0928]; thresholds=[1.092] betas=[0.9]; distinct decisions on 500 situations = 10; agreement in dream = 0.150
+learn_threshold+learn_beta, penalty 200: STUDENT RETURNED; best_step=50 val KL 0.8262 -> 0.2685 (constant predictor 0.3394); silent_layers=[] firing_rate=[0.0761]; thresholds=[1.091] betas=[0.809]; distinct decisions on 500 situations = 10; agreement in dream = 0.150
+threshold 1000: STUDENT RETURNED; best_step=300 val KL 0.5552 -> 0.3397 (constant predictor 0.3394); silent_layers=[0] firing_rate=[0.0]; thresholds=[1000.0] betas=[0.9]; distinct decisions on 500 situations = 1; agreement in dream = 0.000

@@ -1,0 +1,21 @@
+=== run1 default threads
+threadpools: [('openblas', 22), ('openmp', 22), ('openblas', 22)] OPENBLAS_NUM_THREADS= None
+MLPRegressor.fit signature: (self, X, y, sample_weight=None)
+lbfgs (64, 64): weights_sha256=97a31cf25a9d192c pred_sha256=5d24f2a862f29c3c n_iter_=100
+adam (64, 64): weights_sha256=0f449f6a93576aef pred_sha256=182b1d86cebc2de4 n_iter_=100
+adam (32,): weights_sha256=03974c18bf23974b pred_sha256=9b3ee966d332c876 n_iter_=100
+exit=0
+=== run2 default threads
+threadpools: [('openblas', 22), ('openmp', 22), ('openblas', 22)] OPENBLAS_NUM_THREADS= None
+MLPRegressor.fit signature: (self, X, y, sample_weight=None)
+lbfgs (64, 64): weights_sha256=97a31cf25a9d192c pred_sha256=5d24f2a862f29c3c n_iter_=100
+adam (64, 64): weights_sha256=0f449f6a93576aef pred_sha256=182b1d86cebc2de4 n_iter_=100
+adam (32,): weights_sha256=03974c18bf23974b pred_sha256=9b3ee966d332c876 n_iter_=100
+exit=0
+=== run3 OPENBLAS_NUM_THREADS=1
+threadpools: [('openblas', 1), ('openmp', 22), ('openblas', 1)] OPENBLAS_NUM_THREADS= 1
+MLPRegressor.fit signature: (self, X, y, sample_weight=None)
+lbfgs (64, 64): weights_sha256=d06a52f1dbf54d62 pred_sha256=64fdb60ba755621b n_iter_=100
+adam (64, 64): weights_sha256=cfa20f9f73d597e9 pred_sha256=e4e9fb65e58965d5 n_iter_=100
+adam (32,): weights_sha256=03974c18bf23974b pred_sha256=9b3ee966d332c876 n_iter_=100
+exit=0

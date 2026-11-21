@@ -1,0 +1,81 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+== E2: out-of-fold intervals of B4 / B5 on a noisy fixture (numbers are fixture mechanics) ==
+   held-out rows: 2000; true 80% half-width of the fixture noise = 0.0641
+OK   gradient_boosting n=5 seed=0: spread 0.3802 > 0, identical on all rows
+OK   gradient_boosting n=5 seed=1: spread 0.2207 > 0, identical on all rows
+OK   gradient_boosting n=5 seed=2: spread 0.2400 > 0, identical on all rows
+OK   gradient_boosting n=5 seed=3: spread 0.3671 > 0, identical on all rows
+OK   gradient_boosting n=5 seed=4: spread 0.2197 > 0, identical on all rows
+OK   gradient_boosting n=5: mean spread 0.2855 above the old in-sample quantile models 0.0636
+   gradient_boosting  n= 5: held-out cov80 mean 0.644 | spread mean 0.2855 | spread / in-sample spread min 11.3 | old in-sample quantile-model spread mean 0.0636
+OK   gradient_boosting n=10 seed=0: spread 0.3872 > 0, identical on all rows
+OK   gradient_boosting n=10 seed=1: spread 0.1700 > 0, identical on all rows
+OK   gradient_boosting n=10 seed=2: spread 0.3350 > 0, identical on all rows
+OK   gradient_boosting n=10 seed=3: spread 0.2746 > 0, identical on all rows
+OK   gradient_boosting n=10 seed=4: spread 0.2747 > 0, identical on all rows
+OK   gradient_boosting n=10: mean spread 0.2883 above the old in-sample quantile models 0.0958
+   gradient_boosting  n=10: held-out cov80 mean 0.740 | spread mean 0.2883 | spread / in-sample spread min 117.8 | old in-sample quantile-model spread mean 0.0958
+OK   gradient_boosting n=20 seed=0: spread 0.1749 > 0, identical on all rows
+OK   gradient_boosting n=20 seed=1: spread 0.2277 > 0, identical on all rows
+OK   gradient_boosting n=20 seed=2: spread 0.3081 > 0, identical on all rows
+OK   gradient_boosting n=20 seed=3: spread 0.3592 > 0, identical on all rows
+OK   gradient_boosting n=20 seed=4: spread 0.2330 > 0, identical on all rows
+OK   gradient_boosting n=20: mean spread 0.2606 above the old in-sample quantile models 0.1149
+   gradient_boosting  n=20: held-out cov80 mean 0.728 | spread mean 0.2606 | spread / in-sample spread min 27.0 | old in-sample quantile-model spread mean 0.1149
+OK   gradient_boosting n=40 seed=0: spread 0.1667 > 0, identical on all rows
+OK   gradient_boosting n=40 seed=1: spread 0.2519 > 0, identical on all rows
+OK   gradient_boosting n=40 seed=2: spread 0.1341 > 0, identical on all rows
+OK   gradient_boosting n=40 seed=3: spread 0.1379 > 0, identical on all rows
+OK   gradient_boosting n=40 seed=4: spread 0.2227 > 0, identical on all rows
+OK   gradient_boosting n=40: mean spread 0.1826 above the old in-sample quantile models 0.1207
+   gradient_boosting  n=40: held-out cov80 mean 0.957 | spread mean 0.1826 | spread / in-sample spread min 10.6 | old in-sample quantile-model spread mean 0.1207
+OK   mlp_on_attempts n=5 seed=0: spread 0.3373 > 0, identical on all rows, >= 10x the old in-sample spread 2.29e-05
+OK   mlp_on_attempts n=5 seed=1: spread 0.1539 > 0, identical on all rows, >= 10x the old in-sample spread 1.21e-05
+OK   mlp_on_attempts n=5 seed=2: spread 0.1416 > 0, identical on all rows, >= 10x the old in-sample spread 1.57e-05
+OK   mlp_on_attempts n=5 seed=3: spread 0.3072 > 0, identical on all rows, >= 10x the old in-sample spread 1.28e-05
+OK   mlp_on_attempts n=5 seed=4: spread 0.2101 > 0, identical on all rows, >= 10x the old in-sample spread 1.03e-05
+   mlp_on_attempts    n= 5: held-out cov80 mean 0.717 | spread mean 0.2300 | spread / in-sample spread min 9041.7
+OK   mlp_on_attempts n=10 seed=0: spread 0.2073 > 0, identical on all rows, >= 10x the old in-sample spread 7.21e-05
+OK   mlp_on_attempts n=10 seed=1: spread 0.1059 > 0, identical on all rows, >= 10x the old in-sample spread 5.33e-05
+OK   mlp_on_attempts n=10 seed=2: spread 0.1724 > 0, identical on all rows, >= 10x the old in-sample spread 1.76e-04
+OK   mlp_on_attempts n=10 seed=3: spread 0.1418 > 0, identical on all rows, >= 10x the old in-sample spread 4.51e-05
+OK   mlp_on_attempts n=10 seed=4: spread 0.1978 > 0, identical on all rows, >= 10x the old in-sample spread 1.00e-05
+   mlp_on_attempts    n=10: held-out cov80 mean 0.775 | spread mean 0.1651 | spread / in-sample spread min 980.6
+OK   mlp_on_attempts n=20 seed=0: spread 0.1294 > 0, identical on all rows, >= 10x the old in-sample spread 1.22e-04
+OK   mlp_on_attempts n=20 seed=1: spread 0.1321 > 0, identical on all rows, >= 10x the old in-sample spread 4.53e-05
+OK   mlp_on_attempts n=20 seed=2: spread 0.1528 > 0, identical on all rows, >= 10x the old in-sample spread 1.02e-04
+OK   mlp_on_attempts n=20 seed=3: spread 0.1271 > 0, identical on all rows, >= 10x the old in-sample spread 2.12e-04
+OK   mlp_on_attempts n=20 seed=4: spread 0.0836 > 0, identical on all rows, >= 10x the old in-sample spread 6.95e-05
+   mlp_on_attempts    n=20: held-out cov80 mean 0.796 | spread mean 0.1250 | spread / in-sample spread min 598.4
+OK   mlp_on_attempts n=40 seed=0: spread 0.1188 > 0, identical on all rows, >= 10x the old in-sample spread 2.60e-04
+OK   mlp_on_attempts n=40 seed=1: spread 0.0771 > 0, identical on all rows, >= 10x the old in-sample spread 2.72e-04
+OK   mlp_on_attempts n=40 seed=2: spread 0.0984 > 0, identical on all rows, >= 10x the old in-sample spread 1.70e-04
+OK   mlp_on_attempts n=40 seed=3: spread 0.1029 > 0, identical on all rows, >= 10x the old in-sample spread 2.28e-04
+OK   mlp_on_attempts n=40 seed=4: spread 0.1060 > 0, identical on all rows, >= 10x the old in-sample spread 3.07e-04
+   mlp_on_attempts    n=40: held-out cov80 mean 0.740 | spread mean 0.1006 | spread / in-sample spread min 283.2
+
+== E2: describe() states how the quantiles are produced; out-of-fold coverage exposed ==
+OK   constant_bias: describe()['quantile_method'] = in-sample empirical quantiles (numpy 'linear', type 7) of the training residuals of each o...
+OK   gaussian_process: describe()['quantile_method'] = Normal(mean, std) of each outcome's Gaussian process (predict with return_std=True, std in...
+OK   gradient_boosting: describe()['quantile_method'] = homoscedastic, out-of-fold: point prediction of the squared-error HistGradientBoostingRegr...
+OK   gradient_boosting: out-of-fold coverage of [(0.25, 0.75), (0.1, 0.9)] per outcome on the training attempts (honesty indicator): [('separation', 0.25, 0.35), ('separation', 0.1, 0.65), ('contact', 0.25, 0.3), ('contact', 0.1, 0.75)]
+OK   gradient_boosting: K = 5 folds recorded
+OK   mlp_on_attempts: describe()['quantile_method'] = homoscedastic, out-of-fold: point prediction of the lbfgs MLPRegressor (standardized featu...
+OK   mlp_on_attempts: out-of-fold coverage of [(0.25, 0.75), (0.1, 0.9)] per outcome on the training attempts (honesty indicator): [('separation', 0.25, 0.45), ('separation', 0.1, 0.7), ('contact', 0.25, 0.45), ('contact', 0.1, 0.6)]
+OK   mlp_on_attempts: K = 5 folds recorded
+OK   DirectTargetAdapter.describe() records its own and the inner model's quantile method
+
+== E8: Spearman on the exactly-constant B5 spread (reviewer case: 20 attempts, 200 query rows) ==
+   distinct spread values: 1; spread_error_spearman -> {'n': 200, 'rho': 'undefined', 'pvalue': 'undefined', 'reason': 'zero range: spread'}
+OK   constant spread -> rho 'undefined' (not a number from rounding)
+OK   heteroscedastic GP spread -> a numeric rho (-0.014; fixture)
+
+== E9: a refit that raises part-way leaves the previous fit intact ==
+OK   GP, 2nd outcome's fit: refit raised, predictions bitwise unchanged, n_train still 20, describe() unchanged
+OK   GP, 2nd outcome's fit: a later successful refit installs the new fit (n_train 40)
+OK   GB, a fold refit: refit raised, predictions bitwise unchanged, n_train still 20, describe() unchanged
+OK   GB, a fold refit: a later successful refit installs the new fit (n_train 40)
+OK   MLP, a fold refit: refit raised, predictions bitwise unchanged, n_train still 20, describe() unchanged
+OK   MLP, a fold refit: a later successful refit installs the new fit (n_train 40)
+
+CHECK RESULT: 61 assertions held, 0 failed 

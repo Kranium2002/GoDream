@@ -1,0 +1,134 @@
+E15 SNN literature - bibliography (primary sources actually opened in this research step)
+Retrieved 2026-11-21. "Opened" = full text downloaded and read via pdftotext/HTML; "metadata" = only
+arXiv/Crossref/CVF record checked. DOIs were confirmed against api.crossref.org (crossref_doi_check.txt).
+PDF SHA-256 of the downloaded copies: downloaded_pdfs_sha256.txt (copies kept outside the repo).
+
+ENERGY CONSTANTS
+[H14]  M. Horowitz, "1.1 Computing's energy problem (and what we can do about it)", ISSCC 2014 Digest of
+       Technical Papers, pp. 10-14, Feb 2014. doi:10.1109/ISSCC.2014.6757323. OPENED (IEEE digest copy at
+       https://gwern.net/doc/cs/hardware/2014-horowitz-2.pdf; Fig. 1.1.9 decoded by decode_horowitz_fig119.py).
+[HAN15] S. Han, J. Pool, J. Tran, W. J. Dally, "Learning both Weights and Connections for Efficient Neural
+       Networks", NIPS 2015. arXiv:1506.02626v3. OPENED (Figure 1, ref [7] = "Mark Horowitz. Energy table for
+       45nm process, Stanford VLSI wiki").
+
+ENERGY-ESTIMATE FORMULAS (SNN papers)
+[DIET] N. Rathi, K. Roy, "DIET-SNN: A Low-Latency Spiking Neural Network With Direct Input Encoding and
+       Leakage and Threshold Optimization", IEEE TNNLS 34(6):3174-3182, 2023. doi:10.1109/TNNLS.2021.3111897.
+       arXiv:2008.03658v3 OPENED (Sec. 5, Eq. 16-18, Table 3).
+[SPK]  Z. Zhou et al., "Spikformer: When Spiking Neural Network Meets Transformer", ICLR 2023.
+       arXiv:2209.15425v2 OPENED (App. C.2, Eq. 21-24). OpenReview forum id frE4fUwz_h.
+[SDT]  M. Yao et al., "Spike-driven Transformer", NeurIPS 2023 (NeurIPS proceedings hash ca0f5358dbadda74b3049711887e9ead).
+       arXiv:2307.01694v1 OPENED (Sec. 4 Table 1; Supp. S1, Eq. S1-S2).
+[KUN]  S. Kundu, G. Datta, M. Pedram, P. A. Beerel, "Spike-Thrift: Towards Energy-Efficient Deep Spiking Neural
+       Networks by Limiting Spiking Activity via Attention-Guided Compression", WACV 2021, pp. 3952-3961 (Crossref) /
+       3953-3962 (CVF copy). doi:10.1109/WACV48630.2021.00400. OPENED (Sec. 4.3, Eq. 11-13, Tables 3-4).
+       https://openaccess.thecvf.com/content/WACV2021/papers/Kundu_Spike-Thrift_Towards_Energy-Efficient_Deep_Spiking_Neural_Networks_by_Limiting_Spiking_WACV_2021_paper.pdf
+[KIM]  Y. Kim, H. Park, A. Moitra, A. Bhattacharjee, Y. Venkatesha, P. Panda, "Rate Coding or Direct Coding:
+       Which One Is Better for Accurate, Robust, and Energy-Efficient Spiking Neural Networks?", ICASSP 2022,
+       pp. 71-75. doi:10.1109/ICASSP43922.2022.9747906. arXiv:2202.03133v2 OPENED (Sec. 3.4-3.6, Table 1).
+
+CRITIQUES / LIMITS OF THE ESTIMATE
+[DAM]  M. Dampfhoffer, T. Mesquida, A. Valentian, L. Anghel, "Are SNNs Really More Energy-Efficient Than ANNs?
+       an In-Depth Hardware-Aware Study", IEEE TETCI 7(3):731-741, 2023 (online 2022).
+       doi:10.1109/TETCI.2022.3214509. OPENED (HAL accepted version cea-03852141v1:
+       https://cea.hal.science/cea-03852141v1/file/Are_SNNs_Really_More_Energy_Efficient_Than_ANNs__An_In_Depth_Hardware_Aware_Study_versionacceptee.pdf;
+       Eq. 2, 4, 7; Tables I-III).
+[DF21] S. Davidson, S. B. Furber, "Comparison of Artificial and Spiking Neural Networks on Digital Hardware",
+       Front. Neurosci. 15:651141, 2021. doi:10.3389/fnins.2021.651141. OPENED (Eq. 1-2, Sec. 4-5).
+[LEM]  E. Lemaire, L. Cordone, A. Castagnetti, P.-E. Novac, J. Courtois, B. Miramond, "An Analytical Estimation
+       of Spiking Neural Networks Energy Efficiency", ICONIP 2022, LNCS pp. 574-587, 2023.
+       doi:10.1007/978-3-031-30105-6_48. arXiv:2210.13107v1 OPENED (Eq. 1-2, 18-20, Sec. III-IV).
+[YAN]  Z. Yan, Z. Bai, K. Tang, W.-F. Wong, "Reconsidering the Energy Efficiency of Spiking Neural Networks
+       Inference from Analytical Perspectives", arXiv:2409.08290v3 (9 Mar 2026). PREPRINT (peer review not
+       verified). OPENED (abstract, conclusion).
+
+ENCODING / READOUT / TRAINING
+[ESH]  J. K. Eshraghian et al., "Training Spiking Neural Networks Using Lessons From Deep Learning",
+       Proc. IEEE 111(9):1016-1054, 2023. doi:10.1109/JPROC.2023.3308088. arXiv:2109.12894v6 OPENED (Sec. 3.1-3.2,
+       Table 2, Sec. 4.3.1).
+[NEF]  E. O. Neftci, H. Mostafa, F. Zenke, "Surrogate Gradient Learning in Spiking Neural Networks",
+       IEEE Signal Processing Magazine 36(6):51-63, 2019. doi:10.1109/MSP.2019.2931595. arXiv:1901.09948v2 OPENED.
+[WU19] Y. Wu, L. Deng, G. Li, J. Zhu, Y. Xie, L. Shi, "Direct Training for Spiking Neural Networks: Faster,
+       Larger, Better", AAAI 2019, 33(01):1311-1318. doi:10.1609/aaai.v33i01.33011311. arXiv:1809.05793v2 OPENED.
+[POP]  G. Tang, N. Kumar, R. Yoo, K. P. Michmizos, "Deep Reinforcement Learning with Population-Coded Spiking
+       Neural Network for Continuous Control", CoRL 2020. arXiv:2010.09635v1 OPENED (Sec. 2.2, Eq. 1-2, Fig. 4-5).
+[HEN]  A. Henkes, J. K. Eshraghian, H. Wessels, "Spiking neural networks for nonlinear regression",
+       arXiv:2210.03515v2. METADATA (cited by snnTorch regression tutorials).
+[SNNT] snnTorch documentation (snntorch 1.0.0 docs, retrieved 2026-11-21):
+       https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_regression_1.html  (Regression with SNNs: Part I)
+       https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_regression_2.html  (Regression with SNNs: Part II)
+       https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_pop.html           (Population Coding in Spiking Neural Nets)
+       https://snntorch.readthedocs.io/en/latest/tutorials/tutorial_5.html             (Tutorial 5 - Training SNNs with snntorch)
+       Repo https://github.com/jeshraghian/snntorch @ 74cc79b411a38378a32e135c52bfdbec593b5cd8 (2026-10-30), MIT;
+       PyPI snntorch 1.0.0, License "MIT License", requires_python ">=3.9".
+
+DISTILLATION INTO SNNs / SNN POLICIES
+[KUS]  R. K. Kushawaha, S. Kumar, B. Banerjee, R. Velmurugan, "Distilling Spikes: Knowledge Distillation in
+       Spiking Neural Networks", arXiv:2005.00288 (2020; ICPR 2020 per later listings - venue NOT verified here).
+       METADATA (SNN teacher -> SNN student).
+[KDS]  Q. Xu, Y. Li, J. Shen, J. K. Liu, H. Tang, G. Pan, "Constructing Deep Spiking Neural Networks From
+       Artificial Neural Networks With Knowledge Distillation", CVPR 2023, pp. 7886-7895. arXiv:2304.05627 OPENED
+       (abstract/intro); CVF bibtex checked.
+[LAS]  D. Hong, J. Shen, Y. Qi, Y. Wang, "LaSNN: Layer-wise ANN-to-SNN Distillation for Effective and Efficient
+       Training in Deep Spiking Neural Networks", arXiv:2304.09101 (2023). METADATA.
+[ESP]  Q. Zhang et al., "ES-Parkour: Advanced Robot Parkour with Bio-inspired Event Camera and Spiking Neural
+       Network", arXiv:2503.09985v2 (2025). OPENED (Fig. 3 ANN->SNN distillation, MSE warm-up). Venue not verified.
+[FSL]  X. Jiang et al., "Fully Spiking Neural Network for Legged Robots", arXiv:2310.05022v3. OPENED (grep only):
+       PopSAN-style SNN trained with DRL + imitation learning; not an ANN-teacher distillation.
+
+TABPFN / TABULAR FOUNDATION MODEL DISTILLATION AND CONTROL
+[T25]  Prior Labs, "TabPFN-2.5: Advancing the State of the Art in Tabular Foundation Models", arXiv:2511.08667v2
+       (5 Feb 2026). OPENED (Sec. 1, 3, 4.4, 6: proprietary distillation engine TabPFN-2.5-as-MLP / -as-TreeEns).
+[TREADME] PriorLabs/TabPFN README @ e1a3550654df04bf8428fd1a2c4e8ebe2d805796 (2026-11-20), lines 124-128:
+       "Fast Inference Mode: A proprietary distillation engine ..." under "Enterprise & Production".
+[TDIS] P. Dissanayake, S. Dutta, "TabDistill: Distilling Transformers into Neural Nets for Few-Shot Tabular
+       Classification", arXiv:2511.05704v2. METADATA.
+[ICD]  J. Ma, V. Thomas, G. Yu, A. Caterini, "In-Context Data Distillation with TabPFN", arXiv:2402.06971. METADATA
+       (distils the training set/context, not the model).
+[MOTH] A. Mueller, C. Curino, R. Ramakrishnan, "MotherNet: Fast Training and Inference via Hyper-Network
+       Transformers", arXiv:2312.08598v2. METADATA.
+[PFM]  A. Tanna et al., "Pocket Foundation Models: Distilling TFMs into CPU-Ready Gradient-Boosted Trees",
+       arXiv:2605.18654 (2026). METADATA.
+[DTH]  A. Tanna et al., "Distilling Tabular Foundation Models for Structured Health Data", arXiv:2605.18702 (2026). METADATA.
+[DEY]  S. Dey, A. Kumar, "Distilling Foundation Models for Agentic What-If Reasoning ...", arXiv:2609.16091 (2026).
+       METADATA (TabPFN teacher -> feed-forward student).
+[ICR]  D. Schiff, O. Lindenbaum, Y. Efroni, "ICR-RL: Deep Reinforcement Learning via In-Context Regression",
+       arXiv:2509.11259v2 ("Accepted to ICML 2026 Main Track" per arXiv comment). METADATA.
+[FIRE] R. T.-Y. Yu, N. Sung, F. Ahmed, "FIRE: Multi-fidelity Regression with Distribution-conditioned In-context
+       Learning using Tabular Foundation Models", arXiv:2601.22371v2 (2026). METADATA (TFM residual correction).
+[TFWM] X. Y. Lee, R. Takase, A. Farahat, "An Evaluation of Tabular Foundation Models as Training-Free World
+       Models", arXiv:2611.11921v1 (9 Nov 2026). METADATA.
+
+SNNs ON TABULAR / UCI-STYLE DATA (search hits, metadata only)
+       arXiv:1904.11367 "A novel method for extracting interpretable knowledge from a spiking neural classifier
+       with time-varying synaptic weights" (population encoding, UCI datasets per search snippet - NOT verified).
+       arXiv:2008.06937 "Supervised Learning with First-to-Spike Decoding in Multilayer Spiking Neural Networks"
+       (Gaussian receptive-field input encoding per search snippet - NOT verified).
+
+CONTINUAL LEARNING / FORGETTING METRICS
+[GEM]  D. Lopez-Paz, M. Ranzato, "Gradient Episodic Memory for Continual Learning", NIPS 2017. arXiv:1706.08840v6
+       OPENED (Sec. 2, Eq. 2-4: ACC, BWT, FWT).
+[RW]   A. Chaudhry, P. K. Dokania, T. Ajanthan, P. H. S. Torr, "Riemannian Walk for Incremental Learning:
+       Understanding Forgetting and Intransigence", ECCV 2018, LNCS pp. 556-572. doi:10.1007/978-3-030-01252-6_33.
+       arXiv:1801.10112v3 OPENED (Eq. 3 forgetting measure).
+[PRO]  M. Proietti, A. Ragno, R. Capobianco, "Memory Replay For Continual Learning With Spiking Neural Networks",
+       IEEE MLSP 2023, pp. 1-6. doi:10.1109/MLSP55844.2023.10285911. METADATA (postprint download blocked).
+[DEQ]  A. Dequino et al., "Compressed Latent Replays for Lightweight Continual Learning on Spiking Neural
+       Networks", IEEE ISVLSI 2024. doi:10.1109/ISVLSI61997.2024.00052. arXiv:2407.03111v2. METADATA (abstract).
+[MIN]  M. F. Minhas et al., "Continual Learning with Neuromorphic Computing: Foundations, Methods, and Emerging
+       Applications", IEEE Access 2025. doi:10.1109/ACCESS.2025.3588665. arXiv:2410.09218v3. METADATA.
+[STA]  M. Gianferrari et al., "STAER: Temporal Aligned Rehearsal for Continual Spiking Neural Network",
+       arXiv:2601.20870 (2026). PREPRINT, METADATA.
+
+SOFTWARE LICENSES / CITATIONS
+[SNNT-LIC] snnTorch LICENSE @ 74cc79b4...: "MIT License / Copyright (c) 2021 Jason K. Eshraghian".
+       Requested citation (README.rst lines 80-101): Eshraghian et al., Proc. IEEE 111(9), Sept 2023 [ESH],
+       bibtex key eshraghian2021training, pages 1016--1054.
+[PT-LIC] pytorch/pytorch LICENSE @ 66fa84cbcb2001a816dc228dbde29ca184ff9d73 (2026-11-21): 3-clause BSD-style
+       ("Redistribution and use in source and binary forms ... 1. ... 2. ... 3. Neither the names of Facebook,
+       Deepmind Technologies, NYU, NEC Laboratories America and IDIAP Research Institute ..."); GitHub API spdx_id
+       "NOASSERTION" (multi-part license file).
+[PT-CIT] CITATION.cff @ same commit: preferred-citation J. Ansel et al., "PyTorch 2: Faster Machine Learning
+       Through Dynamic Python Bytecode Transformation and Graph Compilation", ASPLOS '24 Vol. 2, ACM, pp. 929-947,
+       doi:10.1145/3620665.3640366. Classic paper: A. Paszke et al., "PyTorch: An Imperative Style,
+       High-Performance Deep Learning Library", NeurIPS 2019, arXiv:1912.01703.

@@ -1,0 +1,6 @@
+trained: loss first 4.1957 last-epoch mean 0.516 seconds 31.0
+float32 torch: batched vs single-row logits max|diff| = 1.1444091796875e-05  argmax agree = 1.0
+m64 beta dtype/value: torch.float64 0.8999999761581421
+torch float32 vs float64 argmax agreement: 1.0  spike mismatches f32 vs f64: 0
+hold-out (fixture) agreement f32: 0.728
+saved p05_torch_outputs.npz, p05_params_f32.npz, p05_params_f64.npz, p05_model_f32_state_dict.pt

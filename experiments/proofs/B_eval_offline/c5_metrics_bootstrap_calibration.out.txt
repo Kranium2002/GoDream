@@ -1,0 +1,50 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+== metrics ==
+OK   regression_summary {'mean': 2.0, 'median': 2.0, 'p90': 3.6, 'n': 5}
+OK   rate_with_count {'rate': 0.75, 'count': 3, 'n': 4}
+OK   tolerance_rate {'rate': 0.5, 'count': 2, 'n': 4}
+OK   regret per episode [0.09999999999999998, 2.3, 0.0, 0.21000000000000002] == hand value [0.09999999999999998, 2.3, 0.0, 0.21000000000000002]
+OK   learning_curve_area 65.0 == 65.0
+OK   attempts_to_tolerance(2.0) == 10 (exact <=)
+OK   attempts_to_tolerance(0.5) is None (not reached)
+OK   student_teacher_ratio with zero teacher error -> {'student_mean': 1.5, 'teacher_mean': 0.0, 'n': 2, 'ratio': 'undefined', 'reason': 'teacher mean error is 0'}
+OK   student_teacher_ratio 2.0
+OK   decision_agreement {'rate': 0.5, 'count': 1, 'n': 2}
+
+== bootstrap ==
+     module:    estimate=0.10412631879319832 low=0.09455300983242748 high=0.11430885278144859
+     reference: estimate=np.float64(0.10412631879319832) low=np.float64(0.09455300983242748) high=np.float64(0.11430885278144859)
+OK   percentile CI equals the numpy reference bitwise for the same seed
+OK   BCa on non-degenerate data: method_used=BCa CI=(0.094874, 0.114661)
+OK   per-repeat point estimates and (n_situations, n_repeats) recorded
+OK   same seed -> identical interval
+OK   identical methods: BCa degenerate -> percentile recorded; reason: BCa interval was not finite (degenerate bootstrap distribution); recomputed with method='percentile' from the same seed
+     recorded warnings: ['RuntimeWarning: invalid value encountered in scalar divide', 'DegenerateDataWarning: The BCa confidence interval cannot be calculated. This pr']
+OK   ratio CI defined: 1.103863 (1.093040, 1.116688) via BCa
+OK   zero denominator -> undefined: mean(loss_a) is 0 on the data
+OK   zero denominator in some resamples -> undefined: mean(loss_a) is 0 in 3467 of 9999 bootstrap resamples
+OK   rejects {'method': 'bca'}: method must be one of ('BCa', 'percentile', 'basic'); got 'bca'
+OK   rejects {'seed': -1}: seed must be a non-negative integer; got -1
+
+== calibration (known Gaussian truth, unbounded regression outcome) ==
+OK   unbounded outcome: every interval is interior
+OK   calibrated coverage [0.25, 0.75] = 0.4945 within 0.0141 of 0.5
+OK   too-narrow coverage 0.2646 is below 0.5
+OK   unbounded outcome: every interval is interior
+OK   calibrated coverage [0.1, 0.9] = 0.8010 within 0.0113 of 0.8
+OK   too-narrow coverage 0.4795 is below 0.8
+     chi-square calibrated p=0.116, too narrow p=0; counts [1996, 3042, 5049, 4841, 3088, 1984]
+OK   PIT bin chi-square separates calibrated from too narrow
+OK   continuous outcome: no tied and no merged rows
+OK   bin counts sum to n
+     randomized-PIT KS calibrated p=0.713, too narrow p=0
+OK   randomized-PIT KS separates calibrated from too narrow
+OK   randomized PIT is seeded
+OK   without ties the randomized PIT equals the plain per-bin draw bitwise
+OK   level 0.2 is not an exact member -> rejected (no interpolation): level 0.2 is not exactly one of [0.1, 0.25, 0.5, 0.75, 0.9] (no interpolation)
+OK   level 0.10000000000100001 is not an exact member -> rejected (no interpolation): level 0.10000000000100001 is not exactly one of [0.1, 0.25, 0.5, 0.75, 0.9] (no interpolation)
+OK   calibration module source contains no interpolation call
+OK   constant spread -> {'n': 20, 'rho': 'undefined', 'pvalue': 'undefined', 'reason': 'zero range: spread'}
+OK   monotone relation -> rho 1.0
+
+CHECK RESULT: 37 assertions held, 0 failed 

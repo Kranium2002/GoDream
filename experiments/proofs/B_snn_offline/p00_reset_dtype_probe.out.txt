@@ -1,0 +1,7 @@
+﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+threshold=1.0  snntorch atan  spike dtype=torch.float32 mem dtype=torch.float64 max|mem diff|=0.000e+00 spike mismatches=0 of 160000
+threshold=1.0  cast wrapper   spike dtype=torch.float64 mem dtype=torch.float64 max|mem diff|=0.000e+00 spike mismatches=0 of 160000
+threshold=0.3  snntorch atan  spike dtype=torch.float32 mem dtype=torch.float64 max|mem diff|=1.185e-07 spike mismatches=0 of 160000
+threshold=0.3  cast wrapper   spike dtype=torch.float64 mem dtype=torch.float64 max|mem diff|=0.000e+00 spike mismatches=0 of 160000
+threshold=0.7  snntorch atan  spike dtype=torch.float32 mem dtype=torch.float64 max|mem diff|=9.122e-08 spike mismatches=0 of 160000
+threshold=0.7  cast wrapper   spike dtype=torch.float64 mem dtype=torch.float64 max|mem diff|=0.000e+00 spike mismatches=0 of 160000

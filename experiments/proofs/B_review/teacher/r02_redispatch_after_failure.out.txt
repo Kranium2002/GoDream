@@ -1,0 +1,25 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+== A. cache write fails after a valid billed response ==
+  first run raised: OSError [Errno 28] No space left on device
+  files in cache dir after first run: (none)
+  [A] billable predicts made: 2; provider.prediction_calls_started: 2
+  [A] events: ['dispatch', 'cache_write_failed', 'dispatch', 'completed']
+  [A] dispatch records per key: [2]; tokens_quoted_for_billed_calls: 20000
+
+== B. crash between <key>.npz and <key>.json ==
+  first run interrupted: simulated kill after the .npz was written
+  orphan files: ['2d118d4c84e1....npz']
+  orphan .npz members (complete billed response is on disk): ['request__x_query', 'request__x_train', 'request__y_train', 'response__mean', 'response__median', 'response__mode', 'response__quantiles']
+  RequestCache.get(key) -> None
+  [B] billable predicts made: 2; provider.prediction_calls_started: 2
+  [B] events: ['dispatch', 'cache_write_failed', 'dispatch', 'completed']
+  [B] dispatch records per key: [2]; tokens_quoted_for_billed_calls: 20000
+
+== C. response rejected by validation after the billable predict ==
+  first run raised: ProviderResponseError 'main' output 'mean' has 1 non-finite values
+  anything saved from the billed response: (cache dir not even created)
+  [C] billable predicts made: 2; provider.prediction_calls_started: 2
+  [C] events: ['dispatch', 'provider_error', 'dispatch', 'completed']
+  [C] dispatch records per key: [2]; tokens_quoted_for_billed_calls: 20000
+exit=0
+

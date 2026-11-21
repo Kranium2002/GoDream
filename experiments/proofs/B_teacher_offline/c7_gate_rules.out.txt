@@ -1,0 +1,42 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+== remaining_tokens ==
+  [ok] minimum over the three limit pairs
+  [ok] unreported token pairs are skipped
+  [ok] usage_limit == -1 is unlimited
+  [ok] unlimited usage_limit still bounded by a daily pair
+  [ok] no limit reported raises ProviderResponseError: the usage response reports no token limit
+  [ok] negative daily limit raises ProviderResponseError: usage daily_token_limit=-1 / daily_tokens_used=0 must be non-negative
+  [ok] non-integer counter raises ProviderResponseError: usage usage_limit=10 / current_usage=1.5 are not integers
+  [ok] bool counter raises ProviderResponseError: usage usage_limit=10 / current_usage=True are not integers
+
+== budget_refusal_reasons (exact integer boundaries) ==
+  [ok] all limits met exactly -> no reason
+  [ok] quote one above max_tokens_per_request -> refused: ['quote 10001 exceeds tabpfn.max_tokens_per_request 10000']
+  [ok] project budget not set (None) -> refused: ['tabpfn.project_token_budget is not set; the lead must set it before the first billable request']
+  [ok] already quoted + quote one above the project budget -> refused: ['tokens already quoted for dispatched requests (40001) plus this quote (10000) exceed tabpfn.project_token_budget 50000']
+  [ok] account remaining one below the quote -> refused: ['the account has 9999 tokens left, below the quote 10000']
+  [ok] unlimited account (None) never refuses on remaining tokens
+  [ok] several violations are all reported
+
+== TeacherSettings.from_config ==
+   TeacherSettings(client_version='0.10.1', model_path='v3.5_default', n_estimators=8, random_state=0, quantile_levels=(0.1, 0.25, 0.5, 0.75, 0.9), spread_levels=(0.1, 0.9), multi_outcome_mode='stacked', cache_dir=WindowsPath('D:/BerlinPrior/.cache/tabpfn'), call_log=WindowsPath('D:/BerlinPrior/results/tabpfn_calls.jsonl'), max_tokens_per_request=10000, project_token_budget=35000000, max_query_rows_per_request=32000, lock_timeout_s=120.0, lock_poll_s=0.05, verified_request_limit_per_minute=None, verified_request_limit_per_hour=None)
+  [ok] relative paths resolve against the repository root
+  [ok] lock_poll_s is persistence.replace_pause_s
+  [ok] missing tabpfn.model_path raises ConfigError: config.yaml has no key 'tabpfn.model_path'
+  [ok] null tabpfn.n_estimators raises ConfigError: config.yaml key 'tabpfn.n_estimators' is null: it must be set before this step can run
+  [ok] float random_state 0.0 raises ConfigError: config.yaml key 'tabpfn.random_state' must be an integer; got 0.0
+  [ok] model_path 'auto' (server chooses) raises ConfigError: config.yaml tabpfn/engine settings are invalid: invalid TeacherSettings: model_path must name a pinned model, not 'auto'
+  [ok] spread level not a quantile level raises ConfigError: config.yaml tabpfn/engine settings are invalid: invalid TeacherSettings: spread_levels [0.05] are not members of quantile_levels [0.1, 0.25, 0.5, 0.75, 0.9]
+  [ok] decreasing quantile levels raises ConfigError: config.yaml tabpfn/engine settings are invalid: invalid TeacherSettings: quantile_levels must be strictly increasing inside (0, 1); got [0.5, 0.25]; spread_levels [0.1, 0.9] are not members of quantile_levels [0.5, 0.25]
+  [ok] unknown multi_outcome_mode raises ConfigError: config.yaml tabpfn/engine settings are invalid: invalid TeacherSettings: multi_outcome_mode must be one of ('stacked', 'per_outcome'); got 'joint'
+  [ok] non-integer project budget raises ConfigError: config.yaml key 'tabpfn.project_token_budget' must be null or an integer; got 1.5
+  [ok] missing tabpfn.max_query_rows_per_request raises ConfigError: config.yaml has no key 'tabpfn.max_query_rows_per_request'
+  [ok] row cap 5 (not above the 5 quantile levels) raises ConfigError: config.yaml tabpfn/engine settings are invalid: invalid TeacherSettings: max_query_rows_per_request must exceed the number of quantile levels (5); got 5
+  [ok] null tabpfn.lock_timeout_s raises ConfigError: config.yaml key 'tabpfn.lock_timeout_s' is null: it must be set before this step can run
+  [ok] zero tabpfn.lock_timeout_s raises ConfigError: config.yaml tabpfn/engine settings are invalid: invalid TeacherSettings: lock_timeout_s must be a positive finite number of seconds; got 0.0
+  [ok] missing persistence.replace_pause_s raises ConfigError: config.yaml has no key 'persistence.replace_pause_s'
+  [ok] an integer project budget is read
+  [ok] a null project budget reads as None (refuses every uncached request)
+  [ok] a missing project budget reads as None
+
+RESULT: 0 failed check(s)

@@ -1,0 +1,15 @@
+REVIEW REPRODUCTION - fixture, not evidence
+skill           method status mean_abs_error                                                 mean_abs_error__artifact
+dodge     physics_only    RUN            0.9 D:\BerlinPrior\experiments\proofs\B_review\eval\r03_report_provenance.py
+dodge gaussian_process    RUN            0.5                      experiments/proofs/B_eval_offline/c6_report.out.txt
+dodge          teacher    RUN         0.0123                                                              config.yaml
+
+methods=['teacher'] only -> rows: [['teacher', 'NOT RUN']] | B2 constant_bias / B5 mlp_on_attempts / oracle rows present: False
+
+written markdown:
+| skill | method | status | blocker | mean_abs_error | mean_abs_error__artifact |
+| --- | --- | --- | --- | --- | --- |
+| dodge | physics_only | RUN |  | 0.9 | D:\BerlinPrior\experiments\proofs\B_review\eval\r03_report_provenance.py |
+| dodge | gaussian_process | RUN |  | 0.5 | experiments/proofs/B_eval_offline/c6_report.out.txt |
+| dodge | teacher | RUN |  | 0.0123 | config.yaml |
+

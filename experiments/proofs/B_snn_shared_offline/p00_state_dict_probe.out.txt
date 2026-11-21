@@ -1,0 +1,55 @@
+﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+
+== config settings ==
+  trunk_linears.0.weight                   parameter dtype=torch.float64 shape=(64, 9)
+  trunk_linears.0.bias                     parameter dtype=torch.float64 shape=(64,)
+  trunk_neurons.0.threshold                buffer    dtype=torch.float64 shape=()
+  trunk_neurons.0.graded_spikes_factor     buffer    dtype=torch.float64 shape=()
+  trunk_neurons.0.reset_mechanism_val      buffer    dtype=torch.int64 shape=()
+  trunk_neurons.0.beta                     buffer    dtype=torch.float64 shape=()
+  head_linears.head_a.weight               parameter dtype=torch.float64 shape=(5, 64)
+  head_linears.head_a.bias                 parameter dtype=torch.float64 shape=(5,)
+  head_linears.head_b.weight               parameter dtype=torch.float64 shape=(7, 64)
+  head_linears.head_b.bias                 parameter dtype=torch.float64 shape=(7,)
+  head_neurons.head_a.threshold            buffer    dtype=torch.float64 shape=()
+  head_neurons.head_a.graded_spikes_factor buffer    dtype=torch.float64 shape=()
+  head_neurons.head_a.reset_mechanism_val  buffer    dtype=torch.int64 shape=()
+  head_neurons.head_a.beta                 buffer    dtype=torch.float64 shape=()
+  head_neurons.head_b.threshold            buffer    dtype=torch.float64 shape=()
+  head_neurons.head_b.graded_spikes_factor buffer    dtype=torch.float64 shape=()
+  head_neurons.head_b.reset_mechanism_val  buffer    dtype=torch.int64 shape=()
+  head_neurons.head_b.beta                 buffer    dtype=torch.float64 shape=()
+  'mem' in any key: False
+  npz round trip keeps keys: True; dtypes kept: True
+  load_state_dict(strict=True): <All keys matched successfully>
+  head head_a: rebuilt logits identical: True
+  head head_b: rebuilt logits identical: True
+  train() vs eval() mode gives identical logits: True
+  export of the rebuilt model: layer sizes (9, 64, 7), digest == original export: True
+
+== learn_beta + learn_threshold ==
+  trunk_linears.0.weight                   parameter dtype=torch.float64 shape=(64, 9)
+  trunk_linears.0.bias                     parameter dtype=torch.float64 shape=(64,)
+  trunk_neurons.0.threshold                parameter dtype=torch.float64 shape=()
+  trunk_neurons.0.beta                     parameter dtype=torch.float64 shape=()
+  trunk_neurons.0.graded_spikes_factor     buffer    dtype=torch.float64 shape=()
+  trunk_neurons.0.reset_mechanism_val      buffer    dtype=torch.int64 shape=()
+  head_linears.head_a.weight               parameter dtype=torch.float64 shape=(5, 64)
+  head_linears.head_a.bias                 parameter dtype=torch.float64 shape=(5,)
+  head_linears.head_b.weight               parameter dtype=torch.float64 shape=(7, 64)
+  head_linears.head_b.bias                 parameter dtype=torch.float64 shape=(7,)
+  head_neurons.head_a.threshold            buffer    dtype=torch.float64 shape=()
+  head_neurons.head_a.graded_spikes_factor buffer    dtype=torch.float64 shape=()
+  head_neurons.head_a.reset_mechanism_val  buffer    dtype=torch.int64 shape=()
+  head_neurons.head_a.beta                 buffer    dtype=torch.float64 shape=()
+  head_neurons.head_b.threshold            buffer    dtype=torch.float64 shape=()
+  head_neurons.head_b.graded_spikes_factor buffer    dtype=torch.float64 shape=()
+  head_neurons.head_b.reset_mechanism_val  buffer    dtype=torch.int64 shape=()
+  head_neurons.head_b.beta                 buffer    dtype=torch.float64 shape=()
+  'mem' in any key: False
+  npz round trip keeps keys: True; dtypes kept: True
+  load_state_dict(strict=True): <All keys matched successfully>
+  head head_a: rebuilt logits identical: True
+  head head_b: rebuilt logits identical: True
+  train() vs eval() mode gives identical logits: True
+  export of the rebuilt model: layer sizes (9, 64, 7), digest == original export: True

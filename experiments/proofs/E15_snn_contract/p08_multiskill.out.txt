@@ -1,0 +1,22 @@
+=== pitfall 1: optimizer built before add_skill does not contain the new head ===
+  head B weight changed after opt.step()? False (grad present: True )
+  after opt.add_param_group(new head params): changed? True | Adam state kept for trunk: True
+=== pitfall 2: inactive head drifts under Adam if grads are zero tensors instead of None ===
+  zero_grad(set_to_none=True): head A max|change| while training only B = 0.000e+00
+  zero_grad(set_to_none=False): head A max|change| while training only B = 4.232e-03
+=== pitfall 3: registration ===
+  plain dict heads -> n params 0 state_dict keys []
+  ModuleDict key with '.' -> KeyError 'module name can\'t contain ".", got: dodge.v2'
+=== sequential skills A -> B -> C, without vs with rehearsal (FIXTURE mechanics) ===
+  after A: agree A=0.941
+  rehearsal=False after B: A=0.256, B=0.732
+  rehearsal=False after C: A=0.098, B=0.076, C=0.891
+  rehearsal=True after B: A=0.941, B=0.663
+  rehearsal=True after C: A=0.854, B=0.582, C=0.874
+=== save / load (state_dict + skill spec) ===
+  load into model without heads -> Error(s) in loading state_dict for MultiSkillSNN: ...
+  after add_skill for each stored head: load OK; agreement {'A': 0.854, 'B': 0.582, 'C': 0.874}
+=== .npz export + numpy per-head inference (float64) ===
+  skill A: max|torch-numpy| 0.00e+00, argmax agreement 1.0000, C=64
+  skill B: max|torch-numpy| 0.00e+00, argmax agreement 1.0000, C=30
+  skill C: max|torch-numpy| 0.00e+00, argmax agreement 1.0000, C=48

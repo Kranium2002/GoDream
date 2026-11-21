@@ -224,7 +224,46 @@ skills:
     status: primary
     attempts_per_skill_target: [10, 40]
     supported_action_schema: null  # Filled only after command-interface verification.
-    objective_weights: null  # Preregister and tune on dev data.
+    # Candidate grid resolution per action dimension, in action order: side velocity, start delay, hold duration.
+    candidate_points_per_dim: [9, 4, 3]
+    # Action space. Names of the command fields follow Person A's answer (HANDOFF_PERSON_A.md); they are looked up
+    # in the verified command schema, and the SkillSpec refuses to build until that schema is verified.
+    action:
+      side_velocity_field: vel_y  # Sideways speed; its sign picks the dodge side. Range: the field's verified range.
+      forward_velocity_field: vel_x  # Held at the dog's forward speed during the whole episode.
+      yaw_rate_field: yaw_rate  # Held at 0 during the whole episode.
+      start_delay_s: [0.0, 0.6]  # Wait after the decision instant before the dodge command. Starting value; tune on dev.
+      hold_duration_s: [0.2, 1.0]  # How long the dodge command is held. Starting value; tune on dev.
+    episode_duration_s: null  # Total simulated time per attempt; set with Person A's ball flight times.
+    # Observed situation ranges. Person A publishes the ball ranges with the throw model; all null until then.
+    situation_ranges:
+      ball_rel_x_m: null
+      ball_rel_y_m: null
+      ball_rel_z_m: null
+      ball_vel_x_m_s: null
+      ball_vel_y_m_s: null
+      ball_vel_z_m_s: null
+      dog_forward_speed_m_s: null
+      declared_payload_kg: [0.0, 3.6]  # Payload 0-3 kg with a declared label up to 20% wrong (MISSION.md).
+    declared_surfaces: null  # Level names of the declared floor type, from Person A's presets.
+    # Constants of the physics guess (a straight-line dog and a ballistic ball). The residual model absorbs the rest.
+    physics:
+      gravity_m_s2: 9.81  # MuJoCo model default, config runtime.
+      assumed_latency_s: 0.15  # Command latency the formula assumes; the true latency is hidden (0.05-0.3 s).
+      time_step_s: 0.02  # Step of the closest-approach search; equals the 50 Hz control period.
+      collision_softness_m: 0.05  # Width of the logistic that turns predicted clearance into a collision probability.
+      body_half_length_m: null  # Half length of the trunk along x, from the verified Go2 model.
+      body_radius_m: null  # Radius of the capsule around the trunk, from the verified Go2 model.
+      base_height_m: null  # Height of the base above the floor while trotting, from a verified run.
+    # Risk-aware objective, higher is better. Starting weights, fixed before any data; tune on dev data only.
+    objective_weights:
+      collision: 10.0  # Per unit of predicted collision probability.
+      fall: 10.0  # Per unit of predicted fall probability.
+      separation: 1.0  # Per metre of the low predictive quantile of closest separation, up to separation_cap_m.
+      separation_cap_m: 0.5
+      contact_margin_m: 0.02  # Clearance below this counts as contact when reading the separation distribution.
+      motion: 0.5  # Per metre of commanded sideways travel (speed x hold time).
+      recovery: 0.5  # Per second of predicted recovery time.
     confidence_threshold: null  # Select on dev data.
   brake:
     status: planned
@@ -237,17 +276,49 @@ skills:
 
 engine:
   candidate_batch_size: null  # Determine with verified API limits and dev runs.
+  quantile_levels: [0.1, 0.25, 0.5, 0.75, 0.9]  # Predictive quantiles requested from every residual model.
+  spread_levels: [0.1, 0.9]  # Predictive spread = half the width between these two levels.
+  multi_outcome_mode: stacked  # stacked: one request for all outcomes; per_outcome: one request per outcome. Compare on dev.
+  spec_validation:
+    probe_situations: 16
+    probe_points_per_dim: 3
+  attempt_exploration_fraction: 0.5  # Share of context attempts using a random candidate instead of the physics action; choose on dev.
+  attempts_dir: results/attempts  # Append-only attempt rows, one JSON Lines file per run.
+  dreams_dir: results/dreams
   dreams_per_skill_initial: 2000
   confidence_thresholds_by_skill: null
   adaptation_context_policy: null  # Compare all/recent/world-ID on dev sets.
+  adaptation_recent_window: null  # Attempts kept by the recent-only policy; choose on dev.
 
 evaluation:
   dev_situations_per_skill: 100
   test_situations_per_skill: 100
+  shift_situations_per_preset: 100  # Independent shift set per world preset (03_METRICS.md).
+  test_access_log: results/test_access_log.jsonl  # Every read of a sealed test split is appended here.
   oracle_situations_per_skill: 100
   minimum_seeds: 3
   preferred_seeds: 5
   context_attempt_counts: [0, 5, 10, 20, 40]
+  adaptation_new_attempt_counts: [0, 5, 10, 15, 20]
+  recovery_tolerance_fraction: 0.2  # Recovered = within 20% of pre-shift error (03_METRICS.md).
+  dream_counts: [100, 1000, 2000, 10000]
+  coverage_intervals: [[0.25, 0.75], [0.1, 0.9]]  # 50% and 80% central intervals; members of engine.quantile_levels.
+  bootstrap_resamples: 9999
+  bootstrap_confidence_level: 0.95
+  bootstrap_method: BCa  # Falls back to percentile, and records it, when BCa is degenerate.
+  latency_decisions: 1000
+  reliability_bins: 10  # Probability bins of the reliability table for binary outcomes.
+  methods:  # Every method of 03_METRICS.md; the final table shows NOT RUN for each one without a saved result.
+    - oracle
+    - physics_only
+    - constant_bias
+    - gaussian_process
+    - gradient_boosting
+    - mlp_on_attempts
+    - direct_tabpfn
+    - teacher
+    - snn_per_skill
+    - snn_shared
 
 tabpfn:
   client_version: "0.10.1"
@@ -263,9 +334,71 @@ tabpfn:
   verified_request_limit_per_minute: null
   verified_request_limit_per_hour: null
   current_usage: null  # Read live before a billable run; never hardcode.
+  # Model settings below are pinned so the server cannot change them silently; all enter the cache key.
+  model_path: v3.5_default  # Server default family on 2026-11-21 (E7 proof p2_auth_usage.txt).
+  n_estimators: 8  # Server default and cap for v3.5 (E7 proof p3_cost_estimates.txt).
+  random_state: 0
+  cache_dir: .cache/tabpfn  # Git-ignored. One entry per request hash: request, response, quote, usage.
+  call_log: results/tabpfn_calls.jsonl  # One line per call or cache hit; never contains credentials.
+  max_tokens_per_request: 10000  # Refuse an uncached request quoted above this (10000 = minimum charge, E7).
+  max_query_rows_per_request: 32000  # Larger query sets are split into requests of at most this many rows. 32000 rows at 40 training rows still quoted the minimum charge (E7 proof p3b_cost_scaling.txt).
+  lock_timeout_s: 120  # How long a process waits for another process using the same cache before giving up.
+  project_token_budget: 35000000  # Total tokens this project may spend. Set by the lead on 2026-11-21: the allowance Prior Labs gave for the track.
+
+persistence:  # Retry of the atomic file move on Windows, where an open reader blocks os.replace (proof p10_persist).
+  replace_attempts: 10
+  replace_pause_s: 0.05
+
+baselines:  # Starting settings from the B-contract proofs; change only from dev results.
+  gaussian_process:
+    n_restarts_optimizer: 5
+    constant_value_bounds: [0.001, 1000.0]
+    length_scale_bounds: [0.01, 1000.0]
+    noise_level_bounds: [0.000001, 10.0]
+    min_attempts: 2  # Raises at 0 rows and is overconfident at 1 row (proof p04_gp).
+  gradient_boosting:
+    max_iter: 200
+    learning_rate: 0.05
+    max_leaf_nodes: 4
+    min_samples_leaf: 2  # The library default of 20 gives a constant model below 40 rows (proof p05_gb).
+    min_attempts: 5
+    interval_folds: 5  # Predictive quantiles come from out-of-fold errors (review finding: in-sample intervals were far too narrow).
+  mlp_on_attempts:
+    hidden_layer_sizes: [64, 64]
+    alpha: 0.0001
+    max_iter: 2000
+    min_attempts: 5
+    interval_folds: 5  # Predictive quantiles come from out-of-fold errors (review finding: in-sample intervals collapsed to a point).
 
 students:
-  per_skill_mlp: true
-  shared_mlp: true
+  kind: snn  # The only student is a spiking neural network (decision 2026-11-21).
+  per_skill_snn: true
+  shared_snn: true
   dream_rehearsal: true
-  snn_enabled: false
+  snn:  # Starting values from the E15 fixture proofs (mechanics only, not results). Tune on dev data only.
+    hidden_sizes: [64]  # Compare 16/32/64 and one/two layers on dev (E11).
+    time_steps: 10  # Literature uses about 4-8 for direct encoding; proofs ran 5/10/25.
+    beta: 0.9  # Membrane leak of the hidden layers.
+    threshold: 1.0
+    readout_beta: 0.9
+    learn_beta: false
+    learn_threshold: false
+    surrogate: atan  # snnTorch default surrogate gradient.
+    surrogate_alpha: 2.0
+    target_temperature: 0.5  # Dream scores are divided by (temperature x their typical spread) before the softmax target.
+    spike_rate_penalty: 0.0  # Weight of the mean firing rate in the loss; raises sparsity when above 0.
+    learning_rate: 0.002
+    batch_size: 64
+    max_steps: 1500
+    validation_fraction: 0.1
+    evaluate_every_steps: 100
+    patience_evaluations: 5  # Stop after this many evaluations without a better validation loss.
+    torch_threads: 1  # Training was bitwise reproducible at 1 and 4 threads, not at 16 (proof p04_determinism).
+    shared_skills: [dodge, brake, turn, ramp]  # Fixed order of the shared network's skill ID.
+    shared_feature_width: null  # Encoded situation width reserved per skill in the shared network; set when the specs exist.
+    rehearsal_fraction: 0.5  # Share of each shared-network batch drawn from earlier skills' stored dreams.
+    energy:  # Estimate only. Horowitz, ISSCC 2014, Fig. 1.1.9, 45 nm 0.9 V, doi:10.1109/ISSCC.2014.6757323.
+      precision: fp32
+      e_mac_pj: 4.6  # 32-bit float multiply 3.7 pJ + add 0.9 pJ.
+      e_ac_pj: 0.9  # 32-bit float add.
+      source: "Horowitz, ISSCC 2014, Fig. 1.1.9 (45 nm, 0.9 V), doi:10.1109/ISSCC.2014.6757323"

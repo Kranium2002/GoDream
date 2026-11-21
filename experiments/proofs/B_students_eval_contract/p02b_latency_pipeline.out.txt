@@ -1,0 +1,6 @@
+max abs diff numpy-folded vs TTR.predict: 0.0 max rel diff: 0.0
+TTR(Pipeline) predict 1 row  med/p95 us: (np.float64(992.6), np.float64(1639.3))
+numpy folded fwd 1 row      med/p95 us: (np.float64(35.0), np.float64(44.2))
+TTR(Pipeline) predict 64 rows med/p95 us: (np.float64(1076.8), np.float64(1923.1))
+numpy folded fwd 64 rows      med/p95 us: (np.float64(130.0), np.float64(256.2))
+exit=0

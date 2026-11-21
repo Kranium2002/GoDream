@@ -1,0 +1,12 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+(b) decide with side-speed bounds [-0.3, 0.3] instead of [-0.6, 0.6]: NO ERROR
+    rows whose chosen action differs from the trained grid's action: 78 / 200
+    distinct side speeds trained grid -> [np.float64(-0.6), np.float64(-0.4), np.float64(-0.2), np.float64(0.0), np.float64(0.2), np.float64(0.4), np.float64(0.6)]
+    distinct side speeds changed spec -> [np.float64(-0.3), np.float64(-0.2), np.float64(-0.1), np.float64(0.0), np.float64(0.1), np.float64(0.2), np.float64(0.3)]
+    changed / original side speed on rows with a side step: [np.float64(0.5)]
+(c) decide with the categorical side levels swapped: NO ERROR
+    first 6 decoded sides, trained levels: ['right', 'left', 'right', 'right', 'left', 'right']
+    first 6 decoded sides, swapped levels: ['left', 'right', 'left', 'left', 'right', 'left']
+    rows whose decoded side flips: 200 / 200
+(d) meta['student'] keys stored with a trained student: ['action_names', 'encoder', 'n_candidates', 'points_per_dim', 'situation_variables', 'skill']
+    action bounds or levels recorded there: False

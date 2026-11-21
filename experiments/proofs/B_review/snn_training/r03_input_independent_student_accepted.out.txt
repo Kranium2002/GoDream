@@ -1,0 +1,5 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+control (config values, penalty 0): STUDENT RETURNED; best_step=300 val loss 0.8262 -> 0.0654; silent_layers=[] firing_rate=[0.2329]; distinct decisions on 500 situations = 17; agreement in dream = 0.210; mean spikes/decision = 146.30
+spike_rate_penalty 5: STUDENT RETURNED; best_step=100 val loss 0.8262 -> 0.2468; silent_layers=[] firing_rate=[0.0525]; distinct decisions on 500 situations = 8; agreement in dream = 0.130; mean spikes/decision = 32.36
+spike_rate_penalty 50: STUDENT RETURNED; best_step=50 val loss 0.8262 -> 0.2538; silent_layers=[] firing_rate=[0.1033]; distinct decisions on 500 situations = 12; agreement in dream = 0.190; mean spikes/decision = 64.29
+threshold 1000: STUDENT RETURNED; best_step=300 val loss 0.5552 -> 0.3397; silent_layers=[0] firing_rate=[0.0]; distinct decisions on 500 situations = 1; agreement in dream = 0.000; mean spikes/decision = 0.00

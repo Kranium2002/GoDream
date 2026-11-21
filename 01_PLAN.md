@@ -20,7 +20,7 @@ Every skill follows the same path:
 2. Fit TabPFN to residual = measured outcome − physics_guess from situation, action, and physics guess.
 3. Score candidate outcomes, including uncertainty, with that SkillSpec's objective. Send all candidates in one batched TabPFN request and choose the best.
 4. Dream over sampled situations; keep decisions passing a confidence threshold fixed on dev data.
-5. Distill to a per-skill MLP, then to a shared MLP with skill ID and dream rehearsal.
+5. Train a per-skill spiking neural network (SNN) inside the dream, then a shared SNN with skill ID and dream rehearsal. The SNN is the only student. It learns decisions from dreamed outcomes; it is not a copy of the PFN.
 6. Add actual attempts after a world shift; add new skills through new SkillSpecs without engine-specific branches.
 
 ## Phase order and hard gates
@@ -41,7 +41,7 @@ Person B owns the generic engine and SkillSpecs. Build DODGE first after Phase 1
 
 ### Phase 4 — Dreams, students, adaptation
 
-Start with 2,000 dreams per skill, selecting confidence thresholds on dev sets. Train one MLP per skill, then a shared MLP with dream rehearsal. Test continual learning in DODGE → BRAKE → TURN → RAMP sequence. After a world change, measure actual attempts required for recovery. SNN is optional only after the required system passes.
+Start with 2,000 dreams per skill, selecting confidence thresholds on dev sets. Train one SNN per skill, then a shared SNN with dream rehearsal. Test continual learning in DODGE → BRAKE → TURN → RAMP sequence. After a world change, measure actual attempts required for recovery. The SNN is the only student; no MLP student is built.
 
 ### Phase 5 — Course demonstration
 
@@ -82,7 +82,7 @@ Each SkillSpec contains name, description, situation features/types/ranges, 1–
 - The selected Go2 policy passes Phase 1 with recorded evidence.
 - DODGE uses the real simulated ball and Go2, and actual tests show the complete state → decision → supported command → measured outcome path.
 - TabPFN teacher and request cache pass a real provider check within the reviewed API budget.
-- Physics-only, constant-bias, teacher, per-skill MLP, and shared MLP results are computed from the same preregistered dev situations; all hypotheses and failures are reported.
+- Physics-only, constant-bias, teacher, per-skill SNN, and shared SNN results are computed from the same preregistered dev situations; all hypotheses and failures are reported.
 - No critical acceptance item is OPEN. No report contains invented or placeholder pass results.
 
 Submission is Sunday 22 November 2026 at 17:45 (confirm on site); pitches at 19:00. Gates are relative to kickoff; keep T−8h evaluation, T−5h feature freeze, and T−3h backup/rehearsal milestones.

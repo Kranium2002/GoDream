@@ -1,0 +1,26 @@
+[project]
+name = "scratch-snn-probe"
+version = "0.1.0"
+description = "throwaway copy for resolver test"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "numpy>=2.0,<3",
+    "pandas>=2.2,<3",
+    "scikit-learn>=1.6,<2",
+    "PyYAML>=6,<7",
+    "tabpfn-client==0.10.1",
+    "python-dotenv==1.2.4",
+    "torch==2.15.0",
+    "snntorch==1.0.0",
+]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]

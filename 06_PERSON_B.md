@@ -4,7 +4,7 @@ You own the learned high-level decisions. Read MISSION.md and all four numbered 
 
 ## Research before each slice
 
-Before implementation, send an UltraCode research agent one bounded verification task. Prioritize the pinned tabpfn-client APIs, categorical inputs, residual/quantile outputs, batch behavior, cost/usage calls, cache semantics, MLP behavior at small sample sizes, and evaluation calculations. Require primary source links, exact package/version/API names, minimal proof command/output, limitations, and pass/fail recommendation. Research agents do not edit production files. If UltraCode is unavailable, use an independent research agent or primary-source verification and record the substitution.
+Before implementation, send an UltraCode research agent one bounded verification task. Prioritize the pinned tabpfn-client APIs, categorical inputs, residual/quantile outputs, batch behavior, cost/usage calls, cache semantics, SNN (snnTorch) behavior at small sample sizes, and evaluation calculations. Require primary source links, exact package/version/API names, minimal proof command/output, limitations, and pass/fail recommendation. Research agents do not edit production files. If UltraCode is unavailable, use an independent research agent or primary-source verification and record the substitution.
 
 Never treat a package name, README, type hint, or mock call as proof that the actual operation works. Test signatures and output shapes before making production code depend on them. If a real provider request is required, first inspect current usage and estimated cost. A billable request is not the first test of a guessed signature.
 
@@ -13,7 +13,7 @@ Never treat a package name, README, type hint, or mock call as proof that the ac
 - skills/** — one SkillSpec per skill; DODGE first.
 - learned_judgment/engine/** — generic collect, teacher, decide, dream, distill, and adapt pipeline.
 - learned_judgment/teacher.py — real TabPFN provider, batching, uncertainty, disk request/response cache, and call/cost log.
-- learned_judgment/students/** — per-skill MLP first, then shared MLP with skill ID/dream rehearsal; SNN only after required work passes.
+- learned_judgment/students/** — per-skill SNN first, then shared SNN with skill ID/dream rehearsal. The SNN is the only student; no MLP student is built.
 - learned_judgment/eval/** — fixed splits, real-run harness, metrics, bootstrap, and evaluation reports.
 - experiments/** and results/** — actual experiment logs, result tables, and figures.
 - PREREGISTRATION.md — freeze criteria and record dated exploratory amendments separately.
@@ -61,9 +61,9 @@ Mark each criterion PASS only with executed evidence; otherwise mark OPEN / NOT 
 - Actual TabPFN request/response behavior, categorical handling, quantile shapes, cost quote, and usage check match verified documentation and a real small provider request.
 - An identical real provider request is served from the persistent cache without a second prediction request; changed inputs/settings produce a new cache key.
 - Teacher candidate scores use one batched request and are computed from physics guess plus actual predicted residual distribution.
-- Per-skill and shared MLPs train on actual teacher dreams and are evaluated on actual Go2 MuJoCo episodes. Small-sample failures are recorded, not hidden.
+- Per-skill and shared SNNs train on actual teacher dreams and are evaluated on actual Go2 MuJoCo episodes, with spikes, synaptic operations, and latency measured. Small-sample failures are recorded, not hidden.
 - Fixed dev/test/shift splits and seeds follow 03_METRICS.md. Test data is untouched until final evaluation.
-- The DODGE end-to-end run computes physics-only, constant-bias, teacher, and MLP metrics from the same actual dev situations and ball throws.
+- The DODGE end-to-end run computes physics-only, constant-bias, teacher, and SNN-student metrics from the same actual dev situations and ball throws.
 - A fresh Python 3.13 environment installs the declared packages and runs the documented module commands.
 
 ## No fake tests, reports, or performance

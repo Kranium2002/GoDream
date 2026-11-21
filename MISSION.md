@@ -14,7 +14,7 @@ Everything runs in simulation on CPU-only laptops. There is no physical robot de
 2. **TabPFN learns the residual:** measured outcome minus physics prediction, from observed situation, candidate action, and physics prediction.
 3. **The engine decides:** score bounded supported command candidates in one batched TabPFN call, combine physics and predicted residual, account for uncertainty through the SkillSpec objective, and choose the best command.
 4. **TabPFN dreams:** generate decisions for many sampled situations and keep decisions passing a confidence threshold selected on dev data.
-5. **Small students copy the teacher:** train an MLP per skill first, then a shared MLP with skill ID and dream rehearsal. SNN is a stretch goal only after the required project passes.
+5. **The SNN learns inside the dream:** the physics guess corrected by the PFN is the dream world. For each dreamed situation it predicts the outcome of every candidate command, and a spiking neural network (SNN) is trained there to choose the best one. Train one SNN per skill first, then a shared SNN with skill ID and dream rehearsal. The SNN is the only student; no MLP student is built. The SNN is not a copy of the PFN: it never learns the PFN's predictions, only decisions.
 6. **The engine adapts:** add actual simulator attempts after payload, floor, slope, motor strength, or latency changes. Add skills as SkillSpecs, not engine branches.
 
 Use about 10–40 attempts per skill. The primary demo shows the dog initially colliding with or failing to evade a simulated ball, then improving its dodge decision from attempts.
@@ -39,7 +39,7 @@ The exact Layer 2 fields, ranges, units, signs, and update rate must come from t
 
 One file per skill under skills/. A SkillSpec contains: name and description; observed situation features, types, and ranges; bounded 1–3 dimensional candidate action space using only supported commands; outcome type (regression, classification, or both); physics_guess(situation, action); risk-aware objective(predicted_outcome_distribution); episode(world, situation, action) returning measured outcome; and documentation of relevant hidden effects.
 
-The generic engine provides collect, teacher, decide, dream, distill, and adapt. Skill-specific logic lives in SkillSpecs. Score a candidate set in one batched TabPFN request and include the physics action among candidates.
+The generic engine provides collect, teacher, decide, dream, train-in-dream, and adapt. Skill-specific logic lives in SkillSpecs. Score a candidate set in one batched TabPFN request and include the physics action among candidates.
 
 Shared attempt row:
 
@@ -67,15 +67,16 @@ Per skill, ENV_REPORT.md records measured physics-only error and oracle noise fl
 5. RAMP: climb a ramp; choose approach speed. Measure success/slip/fall and elapsed time.
 6. KICK (stretch): move a ball to a target; choose speed and approach angle. Measure target error and success.
 
-For every skill, validate its spec, measure the physics-only baseline, compare the teacher on dev data, then train and measure the MLP student. Do not start a later skill while a required Go2 or DODGE gate is unresolved.
+For every skill, validate its spec, measure the physics-only baseline, compare the teacher on dev data, then train and measure the SNN student. Do not start a later skill while a required Go2 or DODGE gate is unresolved.
 
 ## Students and continual learning
 
-- Start with one MLP per skill.
-- Then train one shared MLP with skill ID and dream rehearsal across skills.
+- The only student is a spiking neural network (SNN). No MLP student is built.
+- Start with one SNN per skill.
+- Then train one shared SNN with skill ID and dream rehearsal across skills.
 - Measure old skills after adding each new skill in sequence: DODGE → BRAKE → TURN → RAMP.
 - Test whether world ID or a payload/surface table helps a new skill learn faster; report either result.
-- SNN is optional research. It must not delay or replace Go2, DODGE, evaluation, or the shared-student path.
+- The SNN student does not replace or bypass the Go2, DODGE, or evaluation gates. It trains on actual teacher dreams and is measured on actual Go2 MuJoCo episodes, with spike counts, synaptic operations, and time steps reported. Energy is an estimate.
 
 ## Evaluation
 
@@ -83,7 +84,7 @@ Freeze PREREGISTRATION.md before tuning. Use independent dev, final test, and sh
 
 Per skill report regression error or classification success/fall rate, skill-specific tolerance rate, regret versus oracle, learning curves at 0/5/10/20/40 attempts, recovery after world changes, interval coverage, dream fidelity in the true simulator, latency, API usage, and limitations.
 
-Baselines: oracle, physics only, constant residual bias, Gaussian-process and gradient-boosting residuals, MLP on actual attempts, direct TabPFN without physics features, residual teacher, per-skill MLP, shared MLP, and SNN only if actually completed.
+Baselines: oracle, physics only, constant residual bias, Gaussian-process and gradient-boosting residuals, MLP on actual attempts, direct TabPFN without physics features, residual teacher, per-skill SNN, and shared SNN.
 
 results/final_table.md has one row per skill × method. Save learning curves per skill, adaptation and continual-learning results, and RESULTS.md with each preregistered hypothesis marked supported, not supported, or inconclusive.
 
@@ -108,7 +109,7 @@ Course: walk → dodge a thrown ball → turn through a gate → climb a ramp �
 | H+6 | Generic engine integrated with primary DODGE SkillSpec; actual simulator attempts and first teacher comparison |
 | H+9 | BRAKE and TURN run through verified commands |
 | H+12 | RAMP and dashboard showing actual MuJoCo episodes and per-skill results |
-| T−14h | Optional SNN attempt, maximum six hours |
+| T−14h | SNN student (per skill, then shared) trained on actual teacher dreams and measured |
 | T−8h | Final evaluation |
 | T−5h | Feature freeze |
 | T−3h | Backup video, slides, and two rehearsals |

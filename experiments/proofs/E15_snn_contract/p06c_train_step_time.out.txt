@@ -1,0 +1,14 @@
+threads= 1 hidden=(32,)     T= 5:    2.8 ms/step (batch 64)
+threads= 1 hidden=(32,)     T=10:    5.0 ms/step (batch 64)
+threads= 1 hidden=(32,)     T=25:   11.5 ms/step (batch 64)
+threads= 1 hidden=(64,)     T= 5:    3.0 ms/step (batch 64)
+threads= 1 hidden=(64,)     T=10:    5.1 ms/step (batch 64)
+threads= 1 hidden=(64,)     T=25:   12.5 ms/step (batch 64)
+threads= 1 hidden=(64, 64)  T= 5:    4.5 ms/step (batch 64)
+threads= 1 hidden=(64, 64)  T=10:    8.2 ms/step (batch 64)
+threads= 1 hidden=(64, 64)  T=25:   20.5 ms/step (batch 64)
+exit=0
+threads= 4 hidden=(64, 64)  T=10:    8.9 ms/step (batch 64)
+exit=0
+threads=16 hidden=(64, 64)  T=10:   14.4 ms/step (batch 64)
+exit=0

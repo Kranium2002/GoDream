@@ -1,0 +1,262 @@
+=== go2.xml ===
+mujoco.__version__ = 3.3.6
+opt.timestep = 0.002
+opt.integrator = 0 (mjINT_EULER)
+opt.cone = 1 (mjCONE_ELLIPTIC), opt.impratio = 100.0
+opt.gravity = [0.0, 0.0, -9.81]
+nq=19 nv=18 nu=12 nbody=18 njnt=13 ngeom=56 nsensor=41 nsensordata=52 nkey=1
+-- bodies (id, name, parentid, mass) --
+  body  0 'world'        parent=0 mass=0
+  body  1 'base_link'    parent=0 mass=6.921
+  body  2 'FL_hip'       parent=1 mass=0.678
+  body  3 'FL_thigh'     parent=2 mass=1.152
+  body  4 'FL_calf'      parent=3 mass=0.241352
+  body  5 'FL_foot'      parent=4 mass=0
+  body  6 'FR_hip'       parent=1 mass=0.678
+  body  7 'FR_thigh'     parent=6 mass=1.152
+  body  8 'FR_calf'      parent=7 mass=0.241352
+  body  9 'FR_foot'      parent=8 mass=0
+  body 10 'RL_hip'       parent=1 mass=0.678
+  body 11 'RL_thigh'     parent=10 mass=1.152
+  body 12 'RL_calf'      parent=11 mass=0.241352
+  body 13 'RL_foot'      parent=12 mass=0
+  body 14 'RR_hip'       parent=1 mass=0.678
+  body 15 'RR_thigh'     parent=14 mass=1.152
+  body 16 'RR_calf'      parent=15 mass=0.241352
+  body 17 'RR_foot'      parent=16 mass=0
+-- joints (id, name, type, qposadr, range) --
+  jnt  0 ''                 mjJNT_FREE   qposadr=0 range=[0.0, 0.0] limited=False
+  jnt  1 'FL_hip_joint'     mjJNT_HINGE  qposadr=7 range=[-1.0472, 1.0472] limited=True
+  jnt  2 'FL_thigh_joint'   mjJNT_HINGE  qposadr=8 range=[-1.5708, 3.4907] limited=True
+  jnt  3 'FL_calf_joint'    mjJNT_HINGE  qposadr=9 range=[-2.7227, -0.83776] limited=True
+  jnt  4 'FR_hip_joint'     mjJNT_HINGE  qposadr=10 range=[-1.0472, 1.0472] limited=True
+  jnt  5 'FR_thigh_joint'   mjJNT_HINGE  qposadr=11 range=[-1.5708, 3.4907] limited=True
+  jnt  6 'FR_calf_joint'    mjJNT_HINGE  qposadr=12 range=[-2.7227, -0.83776] limited=True
+  jnt  7 'RL_hip_joint'     mjJNT_HINGE  qposadr=13 range=[-1.0472, 1.0472] limited=True
+  jnt  8 'RL_thigh_joint'   mjJNT_HINGE  qposadr=14 range=[-0.5236, 4.5379] limited=True
+  jnt  9 'RL_calf_joint'    mjJNT_HINGE  qposadr=15 range=[-2.7227, -0.83776] limited=True
+  jnt 10 'RR_hip_joint'     mjJNT_HINGE  qposadr=16 range=[-1.0472, 1.0472] limited=True
+  jnt 11 'RR_thigh_joint'   mjJNT_HINGE  qposadr=17 range=[-0.5236, 4.5379] limited=True
+  jnt 12 'RR_calf_joint'    mjJNT_HINGE  qposadr=18 range=[-2.7227, -0.83776] limited=True
+-- free joints: [(0, '', 'base_link')]
+-- geoms (id, name, body, type, contype, conaffinity, group, size) [visual group-2 meshes omitted] --
+  geom  5 name=''       body='base_link' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1881, 0.04675, 0.057] pos=[0.0, 0.0, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom  6 name=''       body='base_link' type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.05, 0.045, 0.0] pos=[0.285, 0.0, 0.01] friction=[0.4, 0.005, 0.0001] condim=1
+  geom  7 name=''       body='base_link' type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.047, 0.0, 0.0] pos=[0.293, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 10 name=''       body='FL_hip'   type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.046, 0.02, 0.0] pos=[0.0, 0.08, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 13 name=''       body='FL_thigh' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1065, 0.01225, 0.017] pos=[0.0, 0.0, -0.1065] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 16 name=''       body='FL_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.012, 0.06, 0.0] pos=[0.008, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 17 name=''       body='FL_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.011, 0.0325, 0.0] pos=[0.02, 0.0, -0.148] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 19 name='FL'     body='FL_calf'  type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.022, 0.0, 0.0] pos=[-0.002, 0.0, -0.213] friction=[0.4, 0.02, 0.01] condim=6
+  geom 22 name=''       body='FR_hip'   type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.046, 0.02, 0.0] pos=[0.0, -0.08, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 25 name=''       body='FR_thigh' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1065, 0.01225, 0.017] pos=[0.0, 0.0, -0.1065] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 28 name=''       body='FR_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.013, 0.06, 0.0] pos=[0.01, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 29 name=''       body='FR_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.011, 0.0325, 0.0] pos=[0.02, 0.0, -0.148] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 31 name='FR'     body='FR_calf'  type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.022, 0.0, 0.0] pos=[-0.002, 0.0, -0.213] friction=[0.4, 0.02, 0.01] condim=6
+  geom 34 name=''       body='RL_hip'   type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.046, 0.02, 0.0] pos=[0.0, 0.08, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 37 name=''       body='RL_thigh' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1065, 0.01225, 0.017] pos=[0.0, 0.0, -0.1065] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 40 name=''       body='RL_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.013, 0.06, 0.0] pos=[0.01, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 41 name=''       body='RL_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.011, 0.0325, 0.0] pos=[0.02, 0.0, -0.148] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 43 name='RL'     body='RL_calf'  type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.022, 0.0, 0.0] pos=[-0.002, 0.0, -0.213] friction=[0.4, 0.02, 0.01] condim=6
+  geom 46 name=''       body='RR_hip'   type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.046, 0.02, 0.0] pos=[0.0, -0.08, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 49 name=''       body='RR_thigh' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1065, 0.01225, 0.017] pos=[0.0, 0.0, -0.1065] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 52 name=''       body='RR_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.013, 0.06, 0.0] pos=[0.01, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 53 name=''       body='RR_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.011, 0.0325, 0.0] pos=[0.02, 0.0, -0.148] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 55 name='RR'     body='RR_calf'  type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.022, 0.0, 0.0] pos=[-0.002, 0.0, -0.213] friction=[0.4, 0.02, 0.01] condim=6
+  (omitted 33 non-colliding visual geoms)
+-- actuators (index, name, joint, ctrlrange, ctrllimited, gear0) --
+  act  0 'FR_hip'    joint='FR_hip_joint'   ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  1 'FR_thigh'  joint='FR_thigh_joint' ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  2 'FR_calf'   joint='FR_calf_joint'  ctrlrange=[-45.43, 45.43] ctrllimited=True gear0=1.0
+  act  3 'FL_hip'    joint='FL_hip_joint'   ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  4 'FL_thigh'  joint='FL_thigh_joint' ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  5 'FL_calf'   joint='FL_calf_joint'  ctrlrange=[-45.43, 45.43] ctrllimited=True gear0=1.0
+  act  6 'RR_hip'    joint='RR_hip_joint'   ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  7 'RR_thigh'  joint='RR_thigh_joint' ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  8 'RR_calf'   joint='RR_calf_joint'  ctrlrange=[-45.43, 45.43] ctrllimited=True gear0=1.0
+  act  9 'RL_hip'    joint='RL_hip_joint'   ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act 10 'RL_thigh'  joint='RL_thigh_joint' ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act 11 'RL_calf'   joint='RL_calf_joint'  ctrlrange=[-45.43, 45.43] ctrllimited=True gear0=1.0
+-- sensors (index, name, dim, adr) --
+  sens  0 'FR_hip_pos'     dim=1 adr=0
+  sens  1 'FR_thigh_pos'   dim=1 adr=1
+  sens  2 'FR_calf_pos'    dim=1 adr=2
+  sens  3 'FL_hip_pos'     dim=1 adr=3
+  sens  4 'FL_thigh_pos'   dim=1 adr=4
+  sens  5 'FL_calf_pos'    dim=1 adr=5
+  sens  6 'RR_hip_pos'     dim=1 adr=6
+  sens  7 'RR_thigh_pos'   dim=1 adr=7
+  sens  8 'RR_calf_pos'    dim=1 adr=8
+  sens  9 'RL_hip_pos'     dim=1 adr=9
+  sens 10 'RL_thigh_pos'   dim=1 adr=10
+  sens 11 'RL_calf_pos'    dim=1 adr=11
+  sens 12 'FR_hip_vel'     dim=1 adr=12
+  sens 13 'FR_thigh_vel'   dim=1 adr=13
+  sens 14 'FR_calf_vel'    dim=1 adr=14
+  sens 15 'FL_hip_vel'     dim=1 adr=15
+  sens 16 'FL_thigh_vel'   dim=1 adr=16
+  sens 17 'FL_calf_vel'    dim=1 adr=17
+  sens 18 'RR_hip_vel'     dim=1 adr=18
+  sens 19 'RR_thigh_vel'   dim=1 adr=19
+  sens 20 'RR_calf_vel'    dim=1 adr=20
+  sens 21 'RL_hip_vel'     dim=1 adr=21
+  sens 22 'RL_thigh_vel'   dim=1 adr=22
+  sens 23 'RL_calf_vel'    dim=1 adr=23
+  sens 24 'FR_hip_torque'  dim=1 adr=24
+  sens 25 'FR_thigh_torque' dim=1 adr=25
+  sens 26 'FR_calf_torque' dim=1 adr=26
+  sens 27 'FL_hip_torque'  dim=1 adr=27
+  sens 28 'FL_thigh_torque' dim=1 adr=28
+  sens 29 'FL_calf_torque' dim=1 adr=29
+  sens 30 'RR_hip_torque'  dim=1 adr=30
+  sens 31 'RR_thigh_torque' dim=1 adr=31
+  sens 32 'RR_calf_torque' dim=1 adr=32
+  sens 33 'RL_hip_torque'  dim=1 adr=33
+  sens 34 'RL_thigh_torque' dim=1 adr=34
+  sens 35 'RL_calf_torque' dim=1 adr=35
+  sens 36 'imu_quat'       dim=4 adr=36
+  sens 37 'imu_gyro'       dim=3 adr=40
+  sens 38 'imu_acc'        dim=3 adr=43
+  sens 39 'frame_pos'      dim=3 adr=46
+  sens 40 'frame_vel'      dim=3 adr=49
+-- sites --
+  site 0 'imu' body='base_link'
+-- keyframes --
+  key 0 'home' qpos=[0.0, 0.0, 0.27, 1.0, 0.0, 0.0, 0.0, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8] ctrl=[0.0, 0.9, -1.8, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8]
+
+=== scene.xml ===
+mujoco.__version__ = 3.3.6
+opt.timestep = 0.002
+opt.integrator = 0 (mjINT_EULER)
+opt.cone = 1 (mjCONE_ELLIPTIC), opt.impratio = 100.0
+opt.gravity = [0.0, 0.0, -9.81]
+nq=19 nv=18 nu=12 nbody=18 njnt=13 ngeom=65 nsensor=41 nsensordata=52 nkey=1
+-- bodies (id, name, parentid, mass) --
+  body  0 'world'        parent=0 mass=0
+  body  1 'base_link'    parent=0 mass=6.921
+  body  2 'FL_hip'       parent=1 mass=0.678
+  body  3 'FL_thigh'     parent=2 mass=1.152
+  body  4 'FL_calf'      parent=3 mass=0.241352
+  body  5 'FL_foot'      parent=4 mass=0
+  body  6 'FR_hip'       parent=1 mass=0.678
+  body  7 'FR_thigh'     parent=6 mass=1.152
+  body  8 'FR_calf'      parent=7 mass=0.241352
+  body  9 'FR_foot'      parent=8 mass=0
+  body 10 'RL_hip'       parent=1 mass=0.678
+  body 11 'RL_thigh'     parent=10 mass=1.152
+  body 12 'RL_calf'      parent=11 mass=0.241352
+  body 13 'RL_foot'      parent=12 mass=0
+  body 14 'RR_hip'       parent=1 mass=0.678
+  body 15 'RR_thigh'     parent=14 mass=1.152
+  body 16 'RR_calf'      parent=15 mass=0.241352
+  body 17 'RR_foot'      parent=16 mass=0
+-- joints (id, name, type, qposadr, range) --
+  jnt  0 ''                 mjJNT_FREE   qposadr=0 range=[0.0, 0.0] limited=False
+  jnt  1 'FL_hip_joint'     mjJNT_HINGE  qposadr=7 range=[-1.0472, 1.0472] limited=True
+  jnt  2 'FL_thigh_joint'   mjJNT_HINGE  qposadr=8 range=[-1.5708, 3.4907] limited=True
+  jnt  3 'FL_calf_joint'    mjJNT_HINGE  qposadr=9 range=[-2.7227, -0.83776] limited=True
+  jnt  4 'FR_hip_joint'     mjJNT_HINGE  qposadr=10 range=[-1.0472, 1.0472] limited=True
+  jnt  5 'FR_thigh_joint'   mjJNT_HINGE  qposadr=11 range=[-1.5708, 3.4907] limited=True
+  jnt  6 'FR_calf_joint'    mjJNT_HINGE  qposadr=12 range=[-2.7227, -0.83776] limited=True
+  jnt  7 'RL_hip_joint'     mjJNT_HINGE  qposadr=13 range=[-1.0472, 1.0472] limited=True
+  jnt  8 'RL_thigh_joint'   mjJNT_HINGE  qposadr=14 range=[-0.5236, 4.5379] limited=True
+  jnt  9 'RL_calf_joint'    mjJNT_HINGE  qposadr=15 range=[-2.7227, -0.83776] limited=True
+  jnt 10 'RR_hip_joint'     mjJNT_HINGE  qposadr=16 range=[-1.0472, 1.0472] limited=True
+  jnt 11 'RR_thigh_joint'   mjJNT_HINGE  qposadr=17 range=[-0.5236, 4.5379] limited=True
+  jnt 12 'RR_calf_joint'    mjJNT_HINGE  qposadr=18 range=[-2.7227, -0.83776] limited=True
+-- free joints: [(0, '', 'base_link')]
+-- geoms (id, name, body, type, contype, conaffinity, group, size) [visual group-2 meshes omitted] --
+  geom  0 name='floor'  body='world'    type=mjGEOM_PLANE   contype=1 conaff=1 group=0 size=[0.0, 0.0, 0.05] pos=[0.0, 0.0, 0.0] friction=[1.0, 0.005, 0.0001] condim=3
+  geom  1 name=''       body='world'    type=mjGEOM_BOX     contype=1 conaff=1 group=0 size=[0.1, 2.0, 0.04] pos=[1.2, 0.0, 0.04] friction=[1.0, 0.005, 0.0001] condim=3
+  geom  2 name=''       body='world'    type=mjGEOM_BOX     contype=1 conaff=1 group=0 size=[0.1, 2.0, 0.04] pos=[1.6, 0.0, 0.04] friction=[1.0, 0.005, 0.0001] condim=3
+  geom  3 name=''       body='world'    type=mjGEOM_BOX     contype=1 conaff=1 group=0 size=[0.2, 2.0, 0.15] pos=[2.3, 0.0, 0.02] friction=[1.0, 0.005, 0.0001] condim=3
+  geom  4 name=''       body='world'    type=mjGEOM_BOX     contype=1 conaff=1 group=0 size=[0.22, 2.0, 0.3] pos=[2.6, 0.0, 0.02] friction=[1.0, 0.005, 0.0001] condim=3
+  geom  5 name=''       body='world'    type=mjGEOM_BOX     contype=1 conaff=1 group=0 size=[0.23, 2.0, 0.45] pos=[2.8, 0.0, 0.02] friction=[1.0, 0.005, 0.0001] condim=3
+  geom  6 name=''       body='world'    type=mjGEOM_BOX     contype=1 conaff=1 group=0 size=[0.24, 2.0, 0.6] pos=[3.0, 0.0, 0.02] friction=[1.0, 0.005, 0.0001] condim=3
+  geom  7 name=''       body='world'    type=mjGEOM_BOX     contype=1 conaff=1 group=0 size=[0.25, 2.0, 0.75] pos=[3.2, 0.0, 0.02] friction=[1.0, 0.005, 0.0001] condim=3
+  geom  8 name=''       body='world'    type=mjGEOM_BOX     contype=1 conaff=1 group=0 size=[0.26, 2.0, 0.9] pos=[3.4, 0.0, 0.02] friction=[1.0, 0.005, 0.0001] condim=3
+  geom 14 name=''       body='base_link' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1881, 0.04675, 0.057] pos=[0.0, 0.0, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 15 name=''       body='base_link' type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.05, 0.045, 0.0] pos=[0.285, 0.0, 0.01] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 16 name=''       body='base_link' type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.047, 0.0, 0.0] pos=[0.293, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 19 name=''       body='FL_hip'   type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.046, 0.02, 0.0] pos=[0.0, 0.08, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 22 name=''       body='FL_thigh' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1065, 0.01225, 0.017] pos=[0.0, 0.0, -0.1065] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 25 name=''       body='FL_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.012, 0.06, 0.0] pos=[0.008, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 26 name=''       body='FL_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.011, 0.0325, 0.0] pos=[0.02, 0.0, -0.148] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 28 name='FL'     body='FL_calf'  type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.022, 0.0, 0.0] pos=[-0.002, 0.0, -0.213] friction=[0.4, 0.02, 0.01] condim=6
+  geom 31 name=''       body='FR_hip'   type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.046, 0.02, 0.0] pos=[0.0, -0.08, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 34 name=''       body='FR_thigh' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1065, 0.01225, 0.017] pos=[0.0, 0.0, -0.1065] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 37 name=''       body='FR_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.013, 0.06, 0.0] pos=[0.01, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 38 name=''       body='FR_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.011, 0.0325, 0.0] pos=[0.02, 0.0, -0.148] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 40 name='FR'     body='FR_calf'  type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.022, 0.0, 0.0] pos=[-0.002, 0.0, -0.213] friction=[0.4, 0.02, 0.01] condim=6
+  geom 43 name=''       body='RL_hip'   type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.046, 0.02, 0.0] pos=[0.0, 0.08, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 46 name=''       body='RL_thigh' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1065, 0.01225, 0.017] pos=[0.0, 0.0, -0.1065] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 49 name=''       body='RL_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.013, 0.06, 0.0] pos=[0.01, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 50 name=''       body='RL_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.011, 0.0325, 0.0] pos=[0.02, 0.0, -0.148] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 52 name='RL'     body='RL_calf'  type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.022, 0.0, 0.0] pos=[-0.002, 0.0, -0.213] friction=[0.4, 0.02, 0.01] condim=6
+  geom 55 name=''       body='RR_hip'   type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.046, 0.02, 0.0] pos=[0.0, -0.08, 0.0] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 58 name=''       body='RR_thigh' type=mjGEOM_BOX     contype=1 conaff=1 group=3 size=[0.1065, 0.01225, 0.017] pos=[0.0, 0.0, -0.1065] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 61 name=''       body='RR_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.013, 0.06, 0.0] pos=[0.01, 0.0, -0.06] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 62 name=''       body='RR_calf'  type=mjGEOM_CYLINDER contype=1 conaff=1 group=3 size=[0.011, 0.0325, 0.0] pos=[0.02, 0.0, -0.148] friction=[0.4, 0.005, 0.0001] condim=1
+  geom 64 name='RR'     body='RR_calf'  type=mjGEOM_SPHERE  contype=1 conaff=1 group=3 size=[0.022, 0.0, 0.0] pos=[-0.002, 0.0, -0.213] friction=[0.4, 0.02, 0.01] condim=6
+  (omitted 33 non-colliding visual geoms)
+-- actuators (index, name, joint, ctrlrange, ctrllimited, gear0) --
+  act  0 'FR_hip'    joint='FR_hip_joint'   ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  1 'FR_thigh'  joint='FR_thigh_joint' ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  2 'FR_calf'   joint='FR_calf_joint'  ctrlrange=[-45.43, 45.43] ctrllimited=True gear0=1.0
+  act  3 'FL_hip'    joint='FL_hip_joint'   ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  4 'FL_thigh'  joint='FL_thigh_joint' ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  5 'FL_calf'   joint='FL_calf_joint'  ctrlrange=[-45.43, 45.43] ctrllimited=True gear0=1.0
+  act  6 'RR_hip'    joint='RR_hip_joint'   ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  7 'RR_thigh'  joint='RR_thigh_joint' ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act  8 'RR_calf'   joint='RR_calf_joint'  ctrlrange=[-45.43, 45.43] ctrllimited=True gear0=1.0
+  act  9 'RL_hip'    joint='RL_hip_joint'   ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act 10 'RL_thigh'  joint='RL_thigh_joint' ctrlrange=[-23.7, 23.7] ctrllimited=True gear0=1.0
+  act 11 'RL_calf'   joint='RL_calf_joint'  ctrlrange=[-45.43, 45.43] ctrllimited=True gear0=1.0
+-- sensors (index, name, dim, adr) --
+  sens  0 'FR_hip_pos'     dim=1 adr=0
+  sens  1 'FR_thigh_pos'   dim=1 adr=1
+  sens  2 'FR_calf_pos'    dim=1 adr=2
+  sens  3 'FL_hip_pos'     dim=1 adr=3
+  sens  4 'FL_thigh_pos'   dim=1 adr=4
+  sens  5 'FL_calf_pos'    dim=1 adr=5
+  sens  6 'RR_hip_pos'     dim=1 adr=6
+  sens  7 'RR_thigh_pos'   dim=1 adr=7
+  sens  8 'RR_calf_pos'    dim=1 adr=8
+  sens  9 'RL_hip_pos'     dim=1 adr=9
+  sens 10 'RL_thigh_pos'   dim=1 adr=10
+  sens 11 'RL_calf_pos'    dim=1 adr=11
+  sens 12 'FR_hip_vel'     dim=1 adr=12
+  sens 13 'FR_thigh_vel'   dim=1 adr=13
+  sens 14 'FR_calf_vel'    dim=1 adr=14
+  sens 15 'FL_hip_vel'     dim=1 adr=15
+  sens 16 'FL_thigh_vel'   dim=1 adr=16
+  sens 17 'FL_calf_vel'    dim=1 adr=17
+  sens 18 'RR_hip_vel'     dim=1 adr=18
+  sens 19 'RR_thigh_vel'   dim=1 adr=19
+  sens 20 'RR_calf_vel'    dim=1 adr=20
+  sens 21 'RL_hip_vel'     dim=1 adr=21
+  sens 22 'RL_thigh_vel'   dim=1 adr=22
+  sens 23 'RL_calf_vel'    dim=1 adr=23
+  sens 24 'FR_hip_torque'  dim=1 adr=24
+  sens 25 'FR_thigh_torque' dim=1 adr=25
+  sens 26 'FR_calf_torque' dim=1 adr=26
+  sens 27 'FL_hip_torque'  dim=1 adr=27
+  sens 28 'FL_thigh_torque' dim=1 adr=28
+  sens 29 'FL_calf_torque' dim=1 adr=29
+  sens 30 'RR_hip_torque'  dim=1 adr=30
+  sens 31 'RR_thigh_torque' dim=1 adr=31
+  sens 32 'RR_calf_torque' dim=1 adr=32
+  sens 33 'RL_hip_torque'  dim=1 adr=33
+  sens 34 'RL_thigh_torque' dim=1 adr=34
+  sens 35 'RL_calf_torque' dim=1 adr=35
+  sens 36 'imu_quat'       dim=4 adr=36
+  sens 37 'imu_gyro'       dim=3 adr=40
+  sens 38 'imu_acc'        dim=3 adr=43
+  sens 39 'frame_pos'      dim=3 adr=46
+  sens 40 'frame_vel'      dim=3 adr=49
+-- sites --
+  site 0 'imu' body='base_link'
+-- keyframes --
+  key 0 'home' qpos=[0.0, 0.0, 0.27, 1.0, 0.0, 0.0, 0.0, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8] ctrl=[0.0, 0.9, -1.8, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8, 0.0, 0.9, -1.8]
+
+exit=0

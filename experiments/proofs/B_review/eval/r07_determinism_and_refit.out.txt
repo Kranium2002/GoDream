@@ -1,0 +1,14 @@
+REVIEW REPRODUCTION - fixture, not evidence
+
+(a) threadpools: [('blas', 22), ('blas', 22), ('openmp', 22)]
+   gradient_boosting  n=400: openmp default vs 1 bitwise True, default vs 4 bitwise True, max|diff| 0
+   gaussian_process   n=40: openmp default vs 1 bitwise True, default vs 4 bitwise True, max|diff| 0
+   mlp_on_attempts    n=40: openmp default vs 1 bitwise True, default vs 4 bitwise True, max|diff| 0
+
+(b) refit that raises part-way (failure injected into the 2nd outcome's GP fit)
+   refit raised: injected: kernel not positive definite
+   model still predicts after the failed refit: True | n_train reported: 20
+   predictions changed although no new model was installed: True max|diff| 1.2970602385718606
+
+(c) ratio CI when the denominator mean is near 0 and changes sign across resamples
+   estimate 19.857840728548286 low -16.81774744899909 high 2113.8397181422542 method BCa undefined_reason None

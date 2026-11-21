@@ -1,0 +1,13 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+== stacked ==
+  billable predicts: 1 | events: ['dispatch', 'completed', 'cache_hit']
+  free usage/quote reads on the repeated call: 0
+  request keys of the two calls: ['d0c9744b']
+  repeated call returns identical arrays: True
+== per_outcome ==
+  billable predicts: 2 | events: ['dispatch', 'completed', 'dispatch', 'completed', 'cache_hit', 'cache_hit', 'cache_hit', 'cache_hit']
+  free usage/quote reads on the repeated call: 0
+  request keys of the two calls: ['7d1fe9cb', 'd9505eb3', '7d1fe9cb']
+  repeated call returns identical arrays: True
+exit=0
+

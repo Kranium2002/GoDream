@@ -7,12 +7,16 @@ dependencies = [
     "numpy>=2.0,<3",
     "pandas>=2.2,<3",
     "scikit-learn>=1.6,<2",
+    "scipy>=1.15,<2",
+    "threadpoolctl>=3,<4",
     "PyYAML>=6,<7",
     "tabpfn-client==0.10.1",
     "python-dotenv==1.2.4",
     "efferent==0.5.0",
     "mujoco==3.11.0",
     "onnxruntime==1.32.0",
+    "torch==2.15.0",
+    "snntorch==1.0.0",
 ]
 
 [tool.pytest.ini_options]
@@ -21,6 +25,15 @@ testpaths = ["tests"]  # never collect (and so import) third-party test files un
 
 [tool.uv]
 package = false
+
+# CPU-only PyTorch on every platform (verified in experiments/proofs/E15_snn_contract).
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
 
 [dependency-groups]
 dev = [

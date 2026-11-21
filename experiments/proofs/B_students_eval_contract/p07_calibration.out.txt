@@ -1,0 +1,33 @@
+SIGNATURE spearmanr (a, b=None, axis=0, nan_policy='propagate', alternative='two-sided')
+SIGNATURE kstest (rvs, cdf, args=(), N=20, alternative='two-sided', method='auto', *, axis=0, nan_policy='propagate', keepdims=False)
+SIGNATURE mean_pinball_loss (y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput='uniform_average')
+
+spearmanr result type SignificanceResult statistic 0.6290996398559423 pvalue 9.927679700201296e-07 | r[0]==statistic: True | has .correlation: True
+spearmanr constant input -> nan nan warnings: ['ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.']
+spearmanr n=2 -> -0.9999999999999999 nan
+spearmanr with NaN, default nan_policy='propagate' -> nan | nan_policy='omit' -> 1.0
+
+== mean_pinball_loss ==
+alpha=0.1: sklearn=0.216667 manual=0.216667
+alpha=0.5: sklearn=0.416667 manual=0.416667
+alpha=0.9: sklearn=0.616667 manual=0.616667
+default alpha: 0.5 | alpha=0.5 equals 0.5*MAE: True
+2-D multioutput default ('uniform_average'): 1.4333333333333333 raw_values: [0.61666667 2.25      ]
+
+== interval coverage + PIT from finite quantile levels ==
+calibrated  cov50=0.5000 cov80=0.8016 PIT mean=0.4993 frac(PIT in [.1,.9])=0.8016 KS stat=0.0463 p=1.22e-37 | pinball {np.float64(0.1): 0.11166, np.float64(0.25): 0.20134, np.float64(0.5): 0.25264, np.float64(0.75): 0.20064, np.float64(0.9): 0.11097}
+too-wide    cov50=0.8239 cov80=0.9898 PIT mean=0.4994 frac(PIT in [.1,.9])=0.9898 KS stat=0.1660 p=0 | pinball {np.float64(0.1): 0.08188, np.float64(0.25): 0.12002, np.float64(0.5): 0.12638, np.float64(0.75): 0.12009, np.float64(0.9): 0.08189}
+too-narrow  cov50=0.2651 cov80=0.4793 PIT mean=0.5001 frac(PIT in [.1,.9])=0.4793 KS stat=0.1998 p=0 | pinball {np.float64(0.1): 0.28397, np.float64(0.25): 0.42927, np.float64(0.5): 0.5071, np.float64(0.75): 0.42786, np.float64(0.9): 0.28062}
+kstest result fields: ['statistic', 'pvalue', 'statistic_location', 'statistic_sign']
+NOTE PIT from 5 quantiles is exact only at knots; linear interpolation between knots of a Gaussian is approximate, so KS on PIT for a perfectly calibrated model is NOT exactly uniform at large n (see calibrated KS above).
+reference exact-CDF PIT for calibrated fixture KS: 0.004662505813182061
+kstest alternative explicit form: stats.kstest(pit, stats.uniform.cdf) -> 0.004662505813182061
+
+== exact alternatives that do not depend on interpolation ==
+SIGNATURE chisquare (f_obs, f_exp=None, ddof=0, axis=0, *, sum_check=True, nan_policy='propagate', keepdims=False)
+calibrated  bin fractions=[0.0997 0.1516 0.2499 0.25   0.1501 0.0987] expected=[0.1  0.15 0.25 0.25 0.15 0.1 ] chisq=0.68 p=0.984 | randomized-PIT KS=0.0043 p=0.856
+too-wide    bin fractions=[0.005  0.0836 0.4142 0.4097 0.0822 0.0052] expected=[0.1  0.15 0.25 0.25 0.15 0.1 ] chisq=9000.85 p=0 | randomized-PIT KS=0.1625 p=0
+too-narrow  bin fractions=[0.26   0.1064 0.1364 0.1286 0.1078 0.2608] expected=[0.1  0.15 0.25 0.25 0.15 0.1 ] chisq=12989.15 p=0 | randomized-PIT KS=0.1609 p=0
+
+crossing quantiles fixture: np.sort per row before use; monotonic check: True
+exit=0

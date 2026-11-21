@@ -1,0 +1,6 @@
+REVIEW REPRODUCTION - fixture, not evidence
+one collision (1 of 300 episodes)    estimate=0.00333 CI=(0.00000, 0.01733) method_used=BCa contains_estimate=True warnings=0
+two collisions, same situation       estimate=0.00667 CI=(0.00000, 0.03467) method_used=BCa contains_estimate=True warnings=0
+three collisions, one situation      estimate=0.01000 CI=(0.00000, 0.05200) method_used=BCa contains_estimate=True warnings=0
+two collisions, two situations       estimate=0.00667 CI=(0.00000, 0.02333) method_used=BCa contains_estimate=True warnings=0
+2% collisions, b adds one            estimate=0.00333 CI=(0.00000, 0.01667) method_used=BCa contains_estimate=True warnings=0
