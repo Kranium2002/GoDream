@@ -428,3 +428,25 @@ Read your 17:33 entry: good news, and thank you for the fix. My blocker entry ab
 - **The five presets are approved as proposed**, each with 0.08 s of command delay and a jitter of one control period per attempt: `default`; `heavy_payload` 3 kg off-centre; `slippery_floor` foot friction 0.1 against 0.4; `tired_motors` strength 0.8; `downhill` -5 degrees. I merge them when their review confirms each effect is applied as intended, and post the commit. From that commit on `default` carries the delay, so a chain run on `default` before it is not comparable with one after it.
 - **The chat uses Claude through the Anthropic API**, called from the interface's server; the key stays in a local file on the laptop.
 - With the presets merged, `declared_surfaces` becomes `[default, slippery]`, and `world.declared_payload_kg` and `world.declared_surface` exist as attributes.
+
+## 2026-11-21 17:41 UTC — B to A
+
+**DODGE ran end to end on your ball. `person-b` is at `beab1d9`.** Development run, `default` preset, one world, one seed, your code at `c4a35eb`. Command: `.venv\Scripts\python.exe experiments\proofs\B_dodge_real\dodge_chain.py --preset default [--watch]`; `--replay <output directory>` opens your viewer on a recorded throw.
+
+| Decides | Collisions on 100 unseen throws | Falls | Mean closest distance | Mean commanded sideways travel |
+|---|---|---|---|---|
+| physics_only | 1 | 0 | 0.31 m | 0.45 m |
+| teacher (40 attempts) | 1 | 0 | 0.41 m | 0.63 m |
+| snn_per_skill | 5 | 0 | 0.50 m | 0.88 m |
+
+**The finding, plainly: DODGE in this world does not need learning yet.** With the ball's exact position and velocity given at the throw and no hidden effects, the formula's own decision avoids 99 of 100 throws. The teacher cannot improve on that; the SNN (not converged at its step limit) is worse. The lead saw this too and asked: is the dog only computing from given values, and can it use onboard sensors instead?
+
+**B-4. What can make DODGE need learning. Please tell me what you can deliver and when:**
+1. **Hidden effects and presets** (your review in progress): delay, payload, friction, motor strength. I will re-run the chain per preset as soon as they are merged; that is the first answer.
+2. **Harder throws:** shorter flights or faster balls. Today the dog has 0.6 to 1.6 s; a full sidestep needs about 0.5 s. What would the throw model give with flights of 0.35 to 0.8 s?
+3. **Sensed ball state instead of exact state (the lead's question).** The Go2 model we use has only an IMU, joint sensors and the trunk's frame position and velocity (go2.xml lines 77 and 277 to 282); nothing in it can see a ball. A simulated sensor on the trunk would be an addition to the scene: for example rays cast from a head-mounted point with a limited field of view and range at a fixed scan rate (`mj_ray` or rangefinder sensors), the ball's position from the hits and its velocity from two scans. The decision instant then becomes the first detection, and the situation holds the estimates, not the truth. Is this something you can add, and how long would it take? On my side it needs an episode in two phases (observe, then decide and act), which I can build.
+
+**D-1 and D-2, short answers (details when you confirm you want it):**
+- **D-1. Yes, a skill can be built from a declaration.** I would add a `DeclaredSpec` built from data: situation features with unit, range and source; action dimensions with range, grid points and the command field or timing role; a schedule of segments (each command value a constant, a situation feature or an action dimension; each duration a constant, an action dimension or "the rest"); outcomes defined over the measurements your `finish_episode` returns; objective weights; success rule; episode length. No code from the model is executed. It needs your generic measurements to exist first.
+- **D-2. Formula templates, plus a neutral guess.** I can maintain templates (first-order sideways response, ballistic ball against the trunk capsule, stopping distance, constant-speed approach) that a declaration selects and parameterises. A skill can also run with a neutral guess (a constant per outcome); it is then labelled as learning without a formula. I will not evaluate free-form expressions.
+- D-3 to D-7: yes in principle; I will answer in detail after the lead decides on B-4, because that decision changes what DODGE observes.
