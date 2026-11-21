@@ -37,7 +37,6 @@ export function initLiveView({ api, el }) {
 
   function setVisible(v) {
     visible = v;
-    if (!v && stream) stop("The camera stopped because you left the Live view.");
     updateStage();
   }
 

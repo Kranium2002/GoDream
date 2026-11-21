@@ -5,6 +5,7 @@ import { attachProblems, catalogueRows, findSkill, isValid, specRows } from "./s
 import { canStart, INITIAL_RUN, runStep } from "./run.js";
 import { initLiveView } from "./live-view.js";
 import { initLearnView } from "./learn-view.js";
+import { initRobotStage } from "./robot-stage.js";
 
 const api = createApi((url, init) => fetch(url, init));
 const $ = (id) => document.getElementById(id);
@@ -25,21 +26,42 @@ const CAP_LABELS = { drive: "Drive the dog", head_camera: "Head camera", scenari
 const live = initLiveView({ api, el });
 const learn = initLearnView({ api, el });
 
-// ---- areas -------------------------------------------------------------------------------------------------------
-const AREAS = ["teach", "learn", "live"];
-function showArea(moveFocus) {
-  const name = AREAS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "teach";
-  for (const a of AREAS) {
-    $(a).hidden = a !== name;
-    const link = document.querySelector(`[data-area="${a}"]`);
-    if (a === name) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
+// ---- the robot stage and the sections below it --------------------------------------------------------------
+const stage = initRobotStage({ api });
+const wide = matchMedia("(min-width: 1000px)");
+
+// Streams load only while their section is on screen; the camera itself is the person's to start and stop.
+const watched = { robot: (v) => stage.setVisible(v), learn: (v) => learn.setVisible(v), live: (v) => live.setVisible(v) };
+const io = new IntersectionObserver((entries) => {
+  for (const e of entries) watched[e.target.id]?.(e.isIntersecting);
+}, { threshold: 0.05 });
+for (const id of Object.keys(watched)) io.observe($(id));
+
+// "Teach it anything" fades the chat in over the scene; the dog moves aside so both stay visible.
+function setDock(open) {
+  const dock = $("dock");
+  $("teach-open").setAttribute("aria-expanded", String(open));
+  document.body.classList.toggle("dock-open", open);
+  if (open) {
+    dock.hidden = false;
+    requestAnimationFrame(() => dock.classList.add("is-in"));
+    $("msg").focus();
+  } else {
+    dock.classList.remove("is-in");
+    dock.hidden = true;
+    $("teach-open").focus();
   }
-  live.setVisible(name === "live");
-  learn.setVisible(name === "learn");
-  if (moveFocus) $(`${name}-h`).focus();
+  placeDog();
 }
-addEventListener("hashchange", () => showArea(true));
-showArea(false);
+function placeDog() {
+  const open = !$("dock").hidden;
+  stage.setShift(wide.matches ? (open ? -0.42 : 0.32) : 0);
+}
+wide.addEventListener("change", placeDog);
+placeDog();
+$("teach-open").addEventListener("click", () => setDock(true));
+$("teach-close").addEventListener("click", () => setDock(false));
+$("dock").addEventListener("keydown", (e) => { if (e.key === "Escape") setDock(false); });
 
 // ---- connection, state, capabilities ---------------------------------------------------------------------------
 let capabilities = [];
@@ -82,10 +104,13 @@ function renderCapabilities() {
   }
 }
 
+let reconnecting = false;
 function connectEvents() {
   const source = new EventSource("/api/events");
   source.onopen = () => {
     setConnection(true, "Server connected");
+    if (reconnecting) stage.onRobotChanged(); // the world may have been rebuilt while the connection was down
+    reconnecting = true;
     loadState(); // after a reconnect too: anything may have changed while the connection was down
   };
   source.onerror = () => {
@@ -103,6 +128,8 @@ function connectEvents() {
     handle(data);
   });
   forward("run", (d) => learn.onRunEvent(d));
+  forward("pose", (d) => stage.onPose(d));
+  forward("robot", () => stage.onRobotChanged());
   forward("observation", (d) => learn.onObservation(d));
   forward("infer", (d) => learn.onInfer(d));
   source.addEventListener("notice", (e) => {

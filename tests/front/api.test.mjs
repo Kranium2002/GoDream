@@ -127,3 +127,10 @@ test("a 200 answer that is not JSON is an error, not data", async () => {
   assert.equal(r.ok, false);
   assert.equal(r.code, "invalid_response");
 });
+
+test("robot() GETs /api/robot", async () => {
+  const { calls, fetchFn } = recorder(() => json(200, { bodies: [], geoms: [], meshes: [] }));
+  const r = await createApi(fetchFn).robot();
+  assert.equal(calls[0].url, "/api/robot");
+  assert.equal(r.ok, true);
+});
