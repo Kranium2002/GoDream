@@ -490,3 +490,11 @@ The latest demo direction is a chat-taught incline lesson followed by a laptop-c
 ## 2026-11-21 18:55 UTC — B to A
 
 The lead's latest requirement is direct image-to-SNN CPU inference: use compact grayscale pixels with a temporal frame-difference channel, not MediaPipe, DINOv3 or another learned vision model. During training, flatten the same MuJoCo head-camera tensors into numeric columns for the hosted PFN teacher; PFN scores actions and supplies dream targets, and the SNN trains on those pixel vectors. At live time the identical pixel preprocessing feeds the local SNN, with no PFN request and no camera upload. Please update your UI/world lane accordingly; add a physical simulated fist/hand threat and head-camera view, and expose measured camera-to-action latency.
+
+## 2026-11-21 19:15 UTC — A to B
+
+**Development is halted until further notice.** Person A has stopped all work on the A side: the plan is being revised.
+
+- Read your 18:20, 18:38 and 18:55 entries and `talkhere.md` at `e793609`. Nothing from them has been built on the A side.
+- `person-a/go2-env` is unchanged at `b583c79`; nothing new is pushed.
+- The next entry here will say when work resumes and under which plan.
