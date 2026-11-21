@@ -1,39 +1,43 @@
-﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
 
 settings: config.yaml students.snn with max_steps=400 (config value 1500)
-  {'hidden_sizes': [64], 'time_steps': 10, 'beta': 0.9, 'threshold': 1.0, 'readout_beta': 0.9, 'learn_beta': False, 'learn_threshold': False, 'surrogate': 'atan', 'surrogate_alpha': 2.0, 'target_temperature': 0.5, 'spike_rate_penalty': 0.0, 'learning_rate': 0.002, 'batch_size': 64, 'max_steps': 400, 'validation_fraction': 0.1, 'evaluate_every_steps': 100, 'patience_evaluations': 5, 'torch_threads': 1}
+  {'hidden_sizes': [64], 'time_steps': 10, 'beta': 0.9, 'threshold': 1.0, 'readout_beta': 0.9, 'learn_beta': False, 'learn_threshold': False, 'surrogate': 'atan', 'surrogate_alpha': 2.0, 'target_temperature': 0.5, 'target_spread': 'global_median', 'spike_rate_penalty': 0.0, 'learning_rate': 0.002, 'adam_beta1': 0.9, 'adam_beta2': 0.999, 'adam_eps': 1e-08, 'weight_decay': 0.0, 'batch_size': 64, 'max_steps': 400, 'validation_fraction': 0.1, 'evaluate_every_steps': 100, 'patience_evaluations': 5, 'torch_threads': 1, 'parity_logit_tolerance': 1e-09, 'out_of_range': 'error'}
 fixture dream: 1000 rows x 35 candidates, grid (7, 5)
 
 == check 2: train inside the fixture dream ==
-  train_in_dream wall time incl. torch import: 10.8 s
-  steps_run=400 best_step=400 stopped_early=False wall_seconds=8.0 threads=1 versions={'torch': '2.15.0+cpu', 'snntorch': '1.0.0', 'numpy': '2.5.5', 'python': '3.13.16'}
-  validation total curve: [(0, 0.8502), (100, 0.1324), (200, 0.0734), (300, 0.049), (400, 0.0358)]
-  train loss curve: [(100, 0.2374), (200, 0.1077), (300, 0.0671), (400, 0.0479)]
-  hidden firing rate per layer: initial [0.1876] final [0.2424]; dead [0.0] saturated [0.0] silent layers []
+  train_in_dream wall time incl. torch import: 17.0 s
+  steps_run=400 best_step=400 stopped_early=False wall_seconds=12.1 threads=1 versions={'torch': '2.15.0+cpu', 'snntorch': '1.0.0', 'numpy': '2.5.5', 'python': '3.13.16'}
+  validation total curve: [(0, 0.7824), (100, 0.1485), (200, 0.0859), (300, 0.0594), (400, 0.0417)]
+  train loss curve: [(100, 0.2412), (200, 0.1118), (300, 0.0704), (400, 0.0509)]
+  hidden firing rate per layer: initial [0.1719] final [0.2204]; dead [0.03125] saturated [0.0] silent layers []
   [ok] training ran
-  [ok] restored validation loss 0.0358 < initial 0.8502
-  parity report: {'n_inputs_checked': 100, 'max_abs_logit_difference': 2.220446049250313e-15, 'spike_count_mismatches_per_layer': [0], 'spike_count_cells_per_layer': 1000, 'total_spikes_per_layer_torch': [15512], 'total_spikes_per_layer_numpy': [15512], 'decisions_differing': 0, 'decision_agreement': 1.0}
-  [ok] numpy vs torch: zero spike-count mismatches per layer
-  [ok] numpy vs torch: identical decisions on the validation rows
-  [ok] max |logit difference| 2.22e-15 is at float64 rounding level (< 1e-12)
-  MECHANICS numbers on the fixture dream's validation rows (inside the dream, not the simulator):
-    {'n_rows': 100, 'agreement_with_dream_choice': 0.32, 'fraction_with_zero_dream_regret': 0.76, 'mean_dream_regret': 0.004382279740296422, 'mean_dream_regret_over_spread': 0.02522957744492464}
-  [ok] decide_index on the validation rows reproduces the stored agreement and regret
+  [ok] restored validation loss 0.0417 < initial 0.7824
+  parity report: {'n_inputs_checked': 1000, 'logit_tolerance': 1e-09, 'max_abs_logit_difference': 1.7763568394002505e-15, 'spike_train_mismatches_per_layer': [0], 'spike_train_cells_per_layer': [640000], 'total_spikes_per_layer_torch': [143973], 'total_spikes_per_layer_numpy': [143973], 'decisions_differing': 0, 'decision_agreement': 1.0, 'decide_one_vs_batch_differing': 0, 'decide_one_vs_torch_differing': 0, 'rows': 'every training and early-stopping row of the dream'}
+  [ok] parity was checked on all 1000 dream rows (training and early stopping)
+  [ok] numpy vs torch: zero spike-train mismatches per neuron and step
+  [ok] numpy vs torch: identical batched decisions on every row
+  [ok] per-decision path decide_one: identical to the batched and the torch decisions on every row
+  [ok] max |logit difference| 1.78e-15 <= parity_logit_tolerance 1e-09 (config)
+  MECHANICS numbers on the fixture dream's EARLY-STOPPING rows (inside the dream, not held out):
+    {'label': 'inside the dream, on the early-stopping rows: the optimiser never trained on them, but they chose the restored weights, so these numbers are optimistic and NOT held out', 'n_rows': 100, 'agreement_with_dream_choice': 0.31, 'fraction_with_zero_dream_regret': 0.69, 'mean_dream_regret': 0.005632236603793543, 'mean_dream_regret_over_spread': 0.03259399855751159, 'spread_definition': "median population std of the training rows' scores (dream.training_row_spread)"}
+  [ok] the in-dream numbers are labelled as early-stopping rows, not held out
+  [ok] 100 rows carry the stored early-stopping digests = n_rows
+  [ok] decide_index on the early-stopping rows reproduces the stored agreement and regret
   [ok] decide_index -> int64 (500,)
   [ok] every index lies in [0, 35)
   [ok] decide -> (500, 2)
   [ok] every decided action is inside the declared action bounds
   [ok] decide = candidate_actions(situation, points_per_dim)[decide_index]
-  MECHANICS numbers on 500 new fixture situations scored by the same fixture objective: agreement 0.328, zero-regret share 0.716, mean regret 0.0058 (0.034 spreads)
-  operation counts (fixture): layer sizes (4, 64, 35), T=10, mean spikes per layer [148.63], firing rate [0.2322]
+  MECHANICS numbers on 500 new fixture situations scored by the same fixture objective: agreement 0.276, zero-regret share 0.710, mean regret 0.0053 (0.031 spreads)
+  operation counts (fixture): layer sizes (4, 64, 35), T=10, mean spikes per layer [148.12], firing rate [0.2314]
   [ok] operation_counts covers every decision
 
 == check 2b: threshold 0.3 (not exact in float32), learned beta and threshold, fast_sigmoid ==
   settings: as above with threshold=0.3 learn_beta=True learn_threshold=True surrogate=fast_sigmoid max_steps=150
-  learned (exported) betas (0.8773813256270995,) thresholds (0.3416848640604351,)
-  parity report: {'n_inputs_checked': 100, 'max_abs_logit_difference': 1.7763568394002505e-15, 'spike_count_mismatches_per_layer': [0], 'spike_count_cells_per_layer': 1000, 'total_spikes_per_layer_torch': [24740], 'total_spikes_per_layer_numpy': [24740], 'decisions_differing': 0, 'decision_agreement': 1.0}
+  learned (exported) betas (0.8790579630474494,) thresholds (0.34140818562900116,)
+  parity report: {'n_inputs_checked': 1000, 'logit_tolerance': 1e-09, 'max_abs_logit_difference': 1.7763568394002505e-15, 'spike_train_mismatches_per_layer': [0], 'spike_train_cells_per_layer': [640000], 'total_spikes_per_layer_torch': [240958], 'total_spikes_per_layer_numpy': [240958], 'decisions_differing': 0, 'decision_agreement': 1.0, 'decide_one_vs_batch_differing': 0, 'decide_one_vs_torch_differing': 0, 'rows': 'every training and early-stopping row of the dream'}
   [ok] the threshold was learned (moved away from 0.3)
-  [ok] parity holds with a learned float64 threshold
+  [ok] parity (spike trains, decisions, decide_one) holds with a learned float64 threshold
   [ok] max |logit difference| 1.78e-15 is at float64 rounding level (< 1e-12)
 
 == check 4: save / load ==
@@ -43,9 +47,10 @@ fixture dream: 1000 rows x 35 candidates, grid (7, 5)
   [ok] loaded decide_index = trained decide_index
   [ok] loaded decide = trained decide
   [ok] grid and encoder survive the round trip
-  [ok] meta (validation numbers) survives the round trip
+  [ok] meta (early-stopping numbers) survives the round trip
+  [ok] loaded decide_index_one (per-decision path) = trained decide_index on every situation
   fresh-process worker output:
-    FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+    FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
     worker: loaded skill=fixture_snn digest_matches=True decisions=500
     worker: decisions_identical=True
     worker: torch_in_sys_modules=False snntorch_in_sys_modules=False
@@ -54,4 +59,4 @@ fixture dream: 1000 rows x 35 candidates, grid (7, 5)
   [ok] fresh process: loading and deciding did not import torch
   [ok] temporary directory removed
 
-CHECK RESULT: 26 assertions held, 0 failed 
+CHECK RESULT: 31 assertions held, 0 failed 

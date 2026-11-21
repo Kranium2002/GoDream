@@ -1,4 +1,4 @@
-﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
 first-layer current (D=4): max |torch - numpy| = 0.000e+00, bitwise equal True
 readout current (64 spikes -> 35): max |torch - numpy| = 3.331e-16, bitwise equal False
 torch BLAS: ['- Intel(R) oneAPI Math Kernel Library Version 2026.2-Product Build 20260915 for Intel(R) 64 architecture applications']

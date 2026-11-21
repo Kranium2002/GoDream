@@ -1,24 +1,36 @@
 FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
 == crash, then the same command again ==
 OK   the throwaway run crashed at episode 7: throwaway crash at call 7 (file-mechanics check)
 OK   rows on disk after the crash: 6
 OK   the crashed run's manifest exists, lists 12 planned episodes and says completed: false
-OK   a rerun into the same attempt file is refused: C:\Users\vidhu\AppData\Local\Temp\tmp3azvyizb\dev_run__physics_only.jsonl already exists: a run never appends to or replaces an earlier run'
+OK   a rerun into the same attempt file is refused: C:\Users\vidhu\AppData\Local\Temp\tmpjzw6m942\dev_run__physics_only.jsonl already exists: a run never appends to or replaces an earlier run'
 OK   the attempt file still holds the 6 crashed rows (nothing appended)
 OK   another split with the same run_id is refused (FileExistsError)
 OK   an existing manifest alone also refuses the run
-OK   no policy was asked for actions before the refusal (a billed teacher would not be called)
+OK   no policy was asked for actions and no world was built before the refusal (a billed teacher would not be called)
 
-== a complete run: manifest before the first episode, completed after the last ==
-OK   the manifest existed (completed: false) before the first episode
-OK   after the last episode: completed true, finished_utc set
-OK   manifest fields {'run_id': 'dev_run', 'row_run_id': 'dev_run/physics_only', 'method': 'physics_only', 'skill': 'fixture', 'split': 'dev', 'world_preset': 'default', 'base_seed': 7, 'n_situations': 4, 'n_repeats': 3, 'config_digest': 'e5218e2101c562245c71cfef69bb8578f6ce7e70e6531fff5f2000139f9ba146', 'started_utc': '2026-11-21T00:00:00+00:00', 'attempt_file': 'dev_run__physics_only.jsonl'}
-OK   episodes list (situation index, repeat, seed) in run order == the row order of the attempt file
-OK   returned shapes (n, R) and (n, R, K)
+== a complete run: manifest before the first episode, one fresh world per method, attempt seeds ==
+OK   world_factory called once per method, each time with the world seed: [11, 11]
+OK   every episode of a method ran in that method's one world
+OK   the second method got a fresh world built from the same world seed
+OK   spec.episode received the attempt seeds in plan order, identical for both methods
+OK   physics_only: the manifest existed (completed: false) when its first episode ran
+OK   physics_only: after the last episode: completed true, finished_utc set
+OK   physics_only: manifest fields incl. world_seed {'run_id': 'dev_run', 'row_run_id': 'dev_run/physics_only', 'method': 'physics_only', 'skill': 'fixture', 'split': 'dev', 'world_preset': 'default', 'base_seed': 7, 'world_seed': 11, 'n_situations': 4, 'n_repeats': 3, 'config_digest': '1d48080181d850bd0daa90a609e66477f17690d5d2a03e730bcb674cb465b91d', 'started_utc': '2026-11-21T00:00:00+00:00', 'attempt_file': 'dev_run__physics_only.jsonl'}
+OK   physics_only: episodes list (situation index, repeat, attempt seed) == the row order and row seeds of the attempt file
+OK   physics_only: returned shapes (n, R) and (n, R, K)
+OK   constant_bias: the manifest existed (completed: false) when its first episode ran
+OK   constant_bias: after the last episode: completed true, finished_utc set
+OK   constant_bias: manifest fields incl. world_seed {'run_id': 'dev_run', 'row_run_id': 'dev_run/constant_bias', 'method': 'constant_bias', 'skill': 'fixture', 'split': 'dev', 'world_preset': 'default', 'base_seed': 7, 'world_seed': 11, 'n_situations': 4, 'n_repeats': 3, 'config_digest': '1d48080181d850bd0daa90a609e66477f17690d5d2a03e730bcb674cb465b91d', 'started_utc': '2026-11-21T00:00:00+00:00', 'attempt_file': 'dev_run__constant_bias.jsonl'}
+OK   constant_bias: episodes list (situation index, repeat, attempt seed) == the row order and row seeds of the attempt file
+OK   constant_bias: returned shapes (n, R) and (n, R, K)
 
-== evaluate_actions ==
-OK   evaluate_actions writes a completed manifest recording repeat 2 for every episode
+== evaluate_actions: one given world, attempt seeds, world seed in the manifest ==
+OK   evaluate_actions writes a completed manifest recording world seed 23 and repeat 2 for every episode
+OK   every episode ran in the given world with its own attempt seed
 OK   evaluate_actions refuses an existing attempt file
-OK   the refused rerun appended nothing
+OK   the refused rerun appended nothing and ran no episode
+OK   a v1 manifest is refused with its reason: C:\Users\vidhu\AppData\Local\Temp\tmpjzw6m942\single\old.manifest.json is a learned_judgment.run_manifest/v1 manifest, which is no longer read: its ep
 
-CHECK RESULT: 16 assertions held, 0 failed 
+CHECK RESULT: 27 assertions held, 0 failed 

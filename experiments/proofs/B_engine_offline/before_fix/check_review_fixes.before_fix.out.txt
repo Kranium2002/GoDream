@@ -1,0 +1,46 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+numpy 2.5.5 | python 3.13.16
+
+== G1 collect() checks the verified command schema before the world is stepped ==
+  [FAILED] collect refuses a schema without the spec's command field raised TypeError instead of SkillSpecError: collect() got an unexpected keyword argument 'attempt_seeds'
+  [FAILED] collect refuses a schema narrower than the spec's action range raised TypeError instead of SkillSpecError: collect() got an unexpected keyword argument 'attempt_seeds'
+  [FAILED] collect refuses a schema with another unit raised TypeError instead of SkillSpecError: collect() got an unexpected keyword argument 'attempt_seeds'
+  [ok] no episode was reached and no attempt file was written
+
+== G-seed collect(): one world per run, one attempt seed per attempt, all inputs validated first ==
+  [FAILED] section 'G-seed' ran without an unexpected exception: TypeError: collect() got an unexpected keyword argument 'attempt_seeds'
+
+== G2 the stored physics guess is re-checked against the current spec ==
+  [FAILED] section 'G2' ran without an unexpected exception: TypeError: append_rows() got an unexpected keyword argument 'spec'
+
+== G3 every provider request hash of every decision is recorded ==
+  [FAILED] section 'G3' ran without an unexpected exception: AttributeError: 'DreamSet' object has no attribute 'request_groups'. Did you mean: 'request_hashes'?
+
+== G5 exploration_actions: row i does not depend on n ==
+  [FAILED] fraction 0.5: exploration_actions(n=20) == first 20 rows of n=40 (13/20 rows equal)
+  [FAILED] fraction 1.0: exploration_actions(n=20) == first 20 rows of n=40 (1/20 rows equal)
+  [FAILED] one draw rng.random((n, 2)): column 0 = explore flag, column 1 = candidate pick
+  [FAILED] the stream position after the call is exactly n x 2 uniforms
+
+== G6 append_rows re-validates every row immediately before writing ==
+  [FAILED] section 'G6' ran without an unexpected exception: TypeError: append_rows() got an unexpected keyword argument 'spec'
+
+== G7 (run_id, seed) names one real attempt ==
+  [FAILED] section 'G7' ran without an unexpected exception: TypeError: append_rows() got an unexpected keyword argument 'spec'
+
+== G11 world-id layout through build_layout with required hidden value names ==
+  [FAILED] section 'G11' ran without an unexpected exception: AttributeError: module 'learned_judgment.engine.adapt' has no attribute 'world_id_layout'
+
+== G13 recovery_attempts: first, sustained, threshold, zero pre-shift error ==
+  [FAILED] a one-off dip: first 5, sustained None, threshold 1.2 -> 5
+  [FAILED] section 'G13' ran without an unexpected exception: TypeError: 'int' object is not subscriptable
+
+== G-index a situation index maps to the same situation at every n ==
+  [ok] split 'dev': situation i is the same for n=10 and n=100 (10/10 rows bitwise equal)
+  [ok] split 'shift': situation i is the same for n=10 and n=100 (10/10 rows bitwise equal)
+  [ok] split 'context': situation i is the same for n=10 and n=100 (10/10 rows bitwise equal)
+  [ok] ... and so is its per-episode seed
+  [ok] the 100-dream situations are the first 100 of the 1000-dream set
+
+checks: 21 run, 6 held, 15 failed
+NOT RUN: collect() and the harness with Person A's Go2World (it does not exist yet; never called with a stand-in world); any TabPFN request (none has been made)

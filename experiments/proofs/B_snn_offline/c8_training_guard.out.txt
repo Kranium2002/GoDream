@@ -1,0 +1,26 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+== constant_predictor_loss (pure function) ==
+  [ok] mean target [0.75, 0.25], validation [1, 0]: 0.287682072451781 = log(4/3)
+  [ok] a mean target with zero mass where a validation row has mass -> inf
+  [ok] equals torch's batch-mean KL of the constant log(mean) prediction (0.341626803293 vs 0.341626803293)
+
+== a silent hidden layer (threshold 1000.0) ==
+  [ok] train_in_dream with a threshold no input reaches -> TrainingError: hidden layer(s) [0] emit no spike on the validation rows: the decisions cannot depend on the situation
+  report: best_step 300, validation loss 0.5268 -> 0.3396, constant prediction {'fixture_snn': 0.34027754597871523}, silent layers (0,), firing rate (0.0,)
+  [ok] the report names hidden layer 0 as silent (firing rate 0)
+  [ok] the old guard alone (restored loss below initialisation) would have accepted this network
+  (the constant-prediction guard alone would NOT refuse it here: restored 0.339620 vs constant 0.340278 on the early-stopping rows; the silent-layer guard does)
+
+== an input-independent network (every encoded input identical) ==
+  [ok] fit on identical inputs, validated on its own training targets -> TrainingError: head 'fixture_snn': the restored validation loss 0.315814706463426 is not below 0.3157883849377813, the loss of the best constant prediction (the head's mean training target): the network does no better than ignoring the
+  report: validation loss 0.563016 -> 0.315815 (best_step 100); constant prediction {'fixture_snn': 0.3157883849377813}; silent layers ()
+  [ok] the old guard alone would have accepted it (loss fell below initialisation)
+  [ok] restored loss >= constant-prediction loss: refused by the new guard
+
+== a network that uses the situation passes ==
+  per head: restored {'fixture_snn': 0.11269766950140134} < constant {'fixture_snn': 0.34027754597871523}; silent layers []
+  [ok] the stored training report shows the restored loss below the constant prediction and no silent layer
+  [ok] the report states the acceptance rule
+
+CHECK RESULT: 11 assertions held, 0 failed 

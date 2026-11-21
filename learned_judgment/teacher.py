@@ -218,7 +218,7 @@ class TeacherSettings:
     max_tokens_per_request, project_token_budget and the verified request limits (the gate),
     max_query_rows_per_request (each chunk's rows are keyed), lock_timeout_s and lock_poll_s.
 
-    lock_poll_s is ``persistence.replace_pause_s``: the pause between attempts on a file another
+    lock_poll_s is ``tabpfn.lock_poll_s``: the pause between attempts on a file another
     process holds, used here between attempts on the cache lock.
     """
 
@@ -302,7 +302,7 @@ class TeacherSettings:
 
     @classmethod
     def from_config(cls, config: Mapping[str, Any]) -> "TeacherSettings":
-        """Read ``tabpfn.*``, ``engine.*`` and ``persistence.replace_pause_s`` with :func:`require`;
+        """Read ``tabpfn.*`` and ``engine.*`` with :func:`require`;
         ``tabpfn.project_token_budget`` and ``tabpfn.verified_request_limit_per_minute`` /
         ``_per_hour`` with :func:`optional` (a null budget refuses every uncached request; a null
         limit is not enforced and every dispatch record says so).
@@ -372,7 +372,7 @@ class TeacherSettings:
                 project_token_budget=optional_integer("tabpfn.project_token_budget"),
                 max_query_rows_per_request=integer("tabpfn.max_query_rows_per_request"),
                 lock_timeout_s=seconds("tabpfn.lock_timeout_s"),
-                lock_poll_s=seconds("persistence.replace_pause_s"),
+                lock_poll_s=seconds("tabpfn.lock_poll_s"),
                 verified_request_limit_per_minute=optional_integer("tabpfn.verified_request_limit_per_minute"),
                 verified_request_limit_per_hour=optional_integer("tabpfn.verified_request_limit_per_hour"),
             )

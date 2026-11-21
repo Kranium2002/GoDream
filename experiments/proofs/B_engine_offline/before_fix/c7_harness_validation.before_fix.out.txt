@@ -1,0 +1,25 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+FAIL evaluate_actions refuses action outside the declared bounds with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses attempt seeds of the wrong shape with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses float attempt seeds with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses repeated attempt seeds with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses negative attempt seeds with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses a negative world seed with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses a float world seed with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses actions of the wrong width with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses an unknown split with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses a config digest that is not sha256 hex with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses a negative base seed with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses a clock without a UTC offset with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses an attempt file that is not .jsonl with ValueError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses a command schema without the spec's command field (G1) with SkillSpecError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses a command schema narrower than the spec's action range (G1) with SkillSpecError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+FAIL evaluate_actions refuses a command schema with another unit (G1) with SkillSpecError; got TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+OK   evaluate_actions refuses a command schema that is not a CommandSchema (G1): TypeError: evaluate_actions() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+Traceback (most recent call last):
+  File "C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\engine_lane_snapshots\before_fix\experiments\proofs\B_eval_offline\c7_harness_validation.py", line 136, in <module>
+    compare(policies={"ok": lambda s: actions, "bad": lambda s: actions + np.array([[1.0, 0.0]])})
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\engine_lane_snapshots\before_fix\experiments\proofs\B_eval_offline\c7_harness_validation.py", line 133, in compare
+    return compare_methods(spec, policies, **arguments)
+TypeError: compare_methods() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?

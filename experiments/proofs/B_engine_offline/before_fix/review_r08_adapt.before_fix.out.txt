@@ -1,0 +1,9 @@
+REVIEW REPRODUCTION - fixture, not evidence
+1. curve {0: 3.0, 5: 1.15, 10: 2.4, 15: 2.6, 20: 2.5} pre-shift 1.0, tol 0.2 -> recovery_attempts = 5
+2. pre-shift 0.0, curve {0: 0.3, 5: 0.02, 10: 0.01, 20: 0.01} -> None
+3. pre=0.1 error=0.12 threshold=0.12 -> 5
+3. pre=0.3 error=0.36 threshold=0.36 -> 5
+3. pre=0.7 error=0.84 threshold=0.84 -> 5
+3. pre=1.1 error=1.32 threshold=1.32 -> 5
+3. pre=2.3 error=2.76 threshold=2.76 -> 5
+4. world_id levels ('default', 'heavy_payload', 'slippery_floor', 'tired_motors', 'downhill') column for ['downhill'] -> [[4.0]]

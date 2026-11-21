@@ -1,0 +1,43 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+settings: config.yaml students.snn with max_steps=150 evaluate_every_steps=50
+
+== the stored record ==
+  action_records: [{'name': 'fx_side_speed', 'kind': 'float', 'unit': 'm/s', 'low': -0.6, 'high': 0.6, 'levels': [], 'role': 'command', 'command_field': 'fixture_vy', 'command_values': []}, {'name': 'fx_delay', 'kind': 'float', 'unit': 's', 'low': 0.0, 'high': 0.4, 'levels': [], 'role': 'timing', 'command_field': None, 'command_values': []}]
+  [ok] meta['student']['action_records'] holds every field ['name', 'kind', 'unit', 'low', 'high', 'levels', 'role', 'command_field', 'command_values'] of every action dimension
+  [ok] grid probe = 16 distinct training situations (at most 16)
+  [ok] the probe is the FIRST distinct training situations, in row order
+  [ok] stored grid digest 3deb3f44b9570eeb... = candidate_grid_sha256(spec, probe, points_per_dim)
+
+== the unchanged spec decides ==
+  [ok] decide with the training spec -> (50, 2) actions
+  [ok] check_spec accepts a fresh instance of the same spec
+
+== changed specs are refused (GridMismatchError, a ValueError) ==
+  [ok] side-speed bounds [-0.3, 0.3] instead of [-0.6, 0.6] (decide) -> GridMismatchError: spec 'fixture_snn': action dimension 0 ('fx_side_speed') has low -0.3; the student was trained with -0.6; output k of the student would stand for a different command, so it refuses to decide (retrain it inside a dream of
+  [ok] GridMismatchError is a ValueError
+  [ok] same change through decide_one -> GridMismatchError: spec 'fixture_snn': action dimension 0 ('fx_side_speed') has low -0.3; the student was trained with -0.6; output k of the student would stand for a different command, so it refuses to decide (retrain it inside a dream of
+  [ok] same change through check_spec -> GridMismatchError: spec 'fixture_snn': action dimension 0 ('fx_side_speed') has low -0.3; the student was trained with -0.6; output k of the student would stand for a different command, so it refuses to decide (retrain it inside a dream of
+  [ok] another command field ('fixture_vx') -> GridMismatchError: spec 'fixture_snn': action dimension 0 ('fx_side_speed') has command_field 'fixture_vx'; the student was trained with 'fixture_vy'; output k of the student would stand for a different command, so it refuses to decide (re
+  [ok] same action dimensions, candidate_actions reversed (only the grid digest can see it) -> GridMismatchError: spec 'fixture_snn': candidate_actions over the 16 stored probe situations at points_per_dim [7, 5] differs from the grid the student was trained on (digest df801cd0c06c1a31... instead of 3deb3f44b9570eeb...); the student
+  [ok] (the reversed-grid spec has identical action records: the digest is what refuses it)
+  [ok] an action renamed -> GridMismatchError: spec 'fixture_snn': action dimension 0 ('fx_side_speed') has name 'fx_side'; the student was trained with 'fx_side_speed'; output k of the student would stand for a different command, so it refuses to decide (retrain it 
+  [ok] an action dimension removed -> GridMismatchError: spec 'fixture_snn': 1 action dimensions instead of the trained 2; output k of the student would stand for a different command, so it refuses to decide (retrain it inside a dream of the current spec)
+  [ok] another skill name (ValueError, not a grid change) -> ValueError: this student was trained for skill 'fixture_snn', not 'fixture_other'
+  [ok] decide_index (no spec, grid indices only) gives the indices decide(spec) mapped through the grid
+
+== categorical command dimension ==
+  [ok] the categorical-side student decides (15 candidates)
+  [ok] (swapping levels leaves the numeric grid, and so its digest, unchanged: the record must catch it)
+  [ok] levels swapped (left <-> right) -> GridMismatchError: spec 'fixture_side': action dimension 0 ('fx_side') has levels ['right', 'stay', 'left']; the student was trained with ['left', 'stay', 'right']; output k of the student would stand for a different command, so it refuses
+  [ok] command values changed only -> GridMismatchError: spec 'fixture_side': action dimension 0 ('fx_side') has command_values [0.4, 0.0, -0.4]; the student was trained with [0.5, 0.0, -0.5]; output k of the student would stand for a different command, so it refuses to decide
+
+== load-then-decide ==
+  [ok] loaded student decides as before with the training spec
+  [ok] loaded student, side-speed bounds changed -> GridMismatchError: spec 'fixture_snn': action dimension 0 ('fx_side_speed') has low -0.3; the student was trained with -0.6; output k of the student would stand for a different command, so it refuses to decide (retrain it inside a dream of
+  [ok] loaded student, reversed grid -> GridMismatchError: spec 'fixture_snn': candidate_actions over the 16 stored probe situations at points_per_dim [7, 5] differs from the grid the student was trained on (digest df801cd0c06c1a31... instead of 3deb3f44b9570eeb...); the student
+  [ok] a file whose stored grid digest was changed -> GridMismatchError: spec 'fixture_snn': candidate_actions over the 16 stored probe situations at points_per_dim [7, 5] differs from the grid the student was trained on (digest 3deb3f44b9570eeb... instead of 0000000000000000...); the student
+  [ok] a file in the old layout (no action records, no grid digest) -> ValueError: meta['student'] is not a learned-judgment/student-record/v2 record (missing ['action_records', 'candidate_grid', 'format', 'out_of_range', 'situations_seen'], format None); a student without its action records and candid
+  [ok] temporary directory removed
+
+CHECK RESULT: 27 assertions held, 0 failed 

@@ -80,7 +80,7 @@ settings = TeacherSettings.from_config(config)
 print("  ", settings)
 # No check here relies on the value config.yaml holds for the budget (it is 35000000 since 2026-11-21).
 check("relative paths resolve against the repository root", settings.cache_dir == ROOT / ".cache" / "tabpfn")
-check("lock_poll_s is persistence.replace_pause_s", settings.lock_poll_s == float(config["persistence"]["replace_pause_s"]))
+check("lock_poll_s is tabpfn.lock_poll_s", settings.lock_poll_s == float(config["tabpfn"]["lock_poll_s"]))
 
 
 def edited(path: str, value):
@@ -109,7 +109,7 @@ for label, path, value in [
     ("row cap 5 (not above the 5 quantile levels)", "tabpfn.max_query_rows_per_request", 5),
     ("null tabpfn.lock_timeout_s", "tabpfn.lock_timeout_s", None),
     ("zero tabpfn.lock_timeout_s", "tabpfn.lock_timeout_s", 0),
-    ("missing persistence.replace_pause_s", "persistence.replace_pause_s", KeyError),
+    ("missing tabpfn.lock_poll_s", "tabpfn.lock_poll_s", KeyError),
 ]:
     raises(label, ConfigError, lambda p=path, v=value: TeacherSettings.from_config(edited(p, v)))
 check("an integer project budget is read", TeacherSettings.from_config(edited("tabpfn.project_token_budget", 30000)).project_token_budget == 30000)

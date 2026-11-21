@@ -1,7 +1,8 @@
 """Check 5: guard rails of the per-skill spiking student and its training module.
 
 FIXTURE CHECK - mechanics only. Refused with clear errors: a DreamSet from another skill, a
-wrong points_per_dim, too few or flat dream rows, invalid settings, a missing config key,
+wrong points_per_dim, too few or flat dream rows, invalid settings (including target_spread,
+out_of_range, the Adam settings and parity_logit_tolerance), a missing config key,
 non-finite inputs (to targets, fit, check_parity, decide_index, decide, operation_counts), a
 spec whose name or situation encoding differs from the trained one, a wrong saved-file kind.
 Also exercised: ParityError on a deliberately altered network and TrainingError when training
@@ -12,7 +13,7 @@ Run from the repository root:
     .venv\\Scripts\\python.exe experiments\\proofs\\B_snn_offline\\c5_guard_rails.py
 """
 
-print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 import copy  # noqa: E402
 import dataclasses  # noqa: E402
@@ -58,7 +59,7 @@ checks.raises("points_per_dim with a float", ValueError, lambda: train(points=(7
 flat = dataclasses.replace(dreams, scores=np.zeros_like(dreams.scores))
 checks.raises("flat dream scores", ValueError, lambda: train(dreams_=flat), "score spread is 0")
 single = fixture_dreams(spec, config, 1)
-checks.raises("a single dream row", ValueError, lambda: train(dreams_=single), "leave no training rows")
+checks.raises("a single dream row", ValueError, lambda: train(dreams_=single), "leaves no training rows")
 checks.raises("negative base seed", ValueError, lambda: SNNStudent.train_in_dream(spec, dreams, settings=settings, points_per_dim=FIXTURE_POINTS_PER_DIM, base_seed=-1), "base_seed")
 checks.raises(
     "engine step with config.yaml as is (no skills.fixture_snn)",
@@ -82,14 +83,22 @@ for field, value, needle in (
     ("learn_beta", "yes", "students.snn.learn_beta"),
     ("max_steps", 10.5, "students.snn.max_steps"),
     ("spike_rate_penalty", float("nan"), "students.snn.spike_rate_penalty"),
+    ("target_spread", "median", "students.snn.target_spread"),
+    ("out_of_range", "ignore", "students.snn.out_of_range"),
+    ("adam_beta1", 1.0, "students.snn.adam_beta1"),
+    ("adam_beta2", -0.1, "students.snn.adam_beta2"),
+    ("adam_eps", 0.0, "students.snn.adam_eps"),
+    ("weight_decay", -1e-4, "students.snn.weight_decay"),
+    ("parity_logit_tolerance", -1e-9, "students.snn.parity_logit_tolerance"),
+    ("parity_logit_tolerance", float("inf"), "students.snn.parity_logit_tolerance"),
 ):
     checks.raises(f"SNNSettings {field}={value!r}", ValueError, lambda f=field, v=value: dataclasses.replace(settings, **{f: v}), needle)
 
 print("\n== targets and training-data refusals ==")
-checks.raises("soft_targets with inf", ValueError, lambda: soft_targets(np.array([[1.0, np.inf]]), temperature=1.0, spread=1.0), "non-finite")
+checks.raises("soft_targets with inf", ValueError, lambda: soft_targets(np.array([[1.0, np.inf]]), temperature=1.0, target_spread="global_median", spread=1.0), "non-finite")
 encoder = InputEncoder.from_variables(spec.situation)
 inputs = encoder.encode(dreams.situations)
-targets = soft_targets(dreams.scores, temperature=settings.target_temperature, spread=1.0)
+targets = soft_targets(dreams.scores, temperature=settings.target_temperature, target_spread="global_median", spread=1.0)
 model = snn_train.build_model(encoder.width, {spec.name: dreams.n_candidates}, settings, seed=1)
 bad_inputs = inputs.copy()
 bad_inputs[3, 1] = np.nan
@@ -152,13 +161,16 @@ altered = SpikingNetwork(
 )
 parity_model = snn_train.build_model(encoder.width, {spec.name: dreams.n_candidates}, settings, seed=2)
 exported = snn_train.export_network(parity_model, spec.name)
-checks.expect(snn_train.check_parity(parity_model, spec.name, exported, inputs[:50])["decisions_differing"] == 0, "check_parity accepts the model's own export")
+tolerance = settings.parity_logit_tolerance
+checks.expect(snn_train.check_parity(parity_model, spec.name, exported, inputs[:50], logit_tolerance=tolerance)["decisions_differing"] == 0, "check_parity accepts the model's own export")
 altered_export = dataclasses.replace(exported, thresholds=tuple(value * 1.5 for value in exported.thresholds))
-checks.raises("check_parity with thresholds x 1.5", ParityError, lambda: snn_train.check_parity(parity_model, spec.name, altered_export, inputs[:50]), "spike-count mismatches")
-checks.raises("check_parity with NaN inputs", ValueError, lambda: snn_train.check_parity(parity_model, spec.name, exported, bad_inputs), "non-finite")
+checks.raises("check_parity with thresholds x 1.5", ParityError, lambda: snn_train.check_parity(parity_model, spec.name, altered_export, inputs[:50], logit_tolerance=tolerance), "spike-train mismatches")
+checks.raises("check_parity with NaN inputs", ValueError, lambda: snn_train.check_parity(parity_model, spec.name, exported, bad_inputs, logit_tolerance=tolerance), "non-finite")
 checks.raises("check_parity with another network's shape", ValueError, lambda: snn_train.check_parity(parity_model, spec.name, altered.__class__(
     hidden_weights=(np.zeros((8, 4)),), hidden_biases=(np.zeros(8),), betas=(0.9,), thresholds=(1.0,),
-    readout_weight=np.zeros((35, 8)), readout_bias=np.zeros(35), readout_beta=0.9, time_steps=10), inputs[:5]), "not the model's trunk")
+    readout_weight=np.zeros((35, 8)), readout_bias=np.zeros(35), readout_beta=0.9, time_steps=10), inputs[:5], logit_tolerance=tolerance), "not the model's trunk")
+checks.raises("check_parity with a negative logit tolerance", ValueError, lambda: snn_train.check_parity(parity_model, spec.name, exported, inputs[:5], logit_tolerance=-1.0), "logit_tolerance")
+checks.raises("check_parity without a logit tolerance", TypeError, lambda: snn_train.check_parity(parity_model, spec.name, exported, inputs[:5]), "logit_tolerance")
 
 scratch = Path(tempfile.mkdtemp(prefix="b_snn_offline_c5_"))
 checks.redactions[str(scratch)] = "<tmp>"

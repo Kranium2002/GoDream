@@ -14,7 +14,7 @@ Run from the repository root:
     .venv\\Scripts\\python.exe experiments\\proofs\\B_snn_offline\\p00_reset_dtype_probe.py
 """
 
-print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 import numpy as np  # noqa: E402
 import snntorch as snn  # noqa: E402

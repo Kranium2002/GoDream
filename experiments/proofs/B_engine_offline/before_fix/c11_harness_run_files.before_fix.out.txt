@@ -1,0 +1,12 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+== crash, then the same command again ==
+FAIL crash and rerun: unexpected TypeError: compare_methods() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+
+== a complete run: manifest before the first episode, one fresh world per method, attempt seeds ==
+FAIL complete run: unexpected TypeError: compare_methods() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?
+
+== evaluate_actions: one given world, attempt seeds, world seed in the manifest ==
+FAIL evaluate_actions: unexpected TypeError: evaluate_actions() got an unexpected keyword argument 'attempt_seeds'
+
+CHECK RESULT: 0 assertions held, 3 failed ["crash and rerun: unexpected TypeError: compare_methods() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?", "complete run: unexpected TypeError: compare_methods() got an unexpected keyword argument 'world_seed'. Did you mean 'world_preset'?", "evaluate_actions: unexpected TypeError: evaluate_actions() got an unexpected keyword argument 'attempt_seeds'"]

@@ -10,11 +10,19 @@ targets are soft distributions over candidates built from the dreamed scores
 This is the only module that imports ``torch`` and ``snntorch``, and it imports them lazily
 inside functions: importing this module, loading a saved network or deciding never imports
 torch. Decisions run in plain numpy (:mod:`learned_judgment.students.snn_core`), and
-:func:`check_parity` verifies, on the inputs it is given (the per-skill student passes its
-validation rows), that the numpy network emits the same spike counts and the same decisions
-as the torch model. Logits agree to float64 rounding, not bitwise: torch (MKL) and numpy
-(OpenBLAS) sum the readout matmul in different orders (experiments/proofs/B_snn_offline/
+:func:`check_parity` verifies, on the inputs it is given (the per-skill student passes every
+training and early-stopping row), that the numpy network emits the same spike train for every
+neuron at every step, the same decisions, and logits within
+``students.snn.parity_logit_tolerance`` of the torch model, and that the deployed per-decision
+path (``SpikingNetwork.decide_one``, one row at a time) makes the same decisions as the batched
+path. Logits agree to float64 rounding, not bitwise: torch (MKL) and numpy (OpenBLAS) sum the
+readout matmul in different orders (experiments/proofs/B_snn_offline/
 p01_matmul_rounding_probe.out.txt, c2_end_to_end.out.txt).
+
+:func:`fit` refuses (``TrainingError``) a network whose restored validation loss is not below
+its loss at initialisation, not below the loss of the best constant prediction (the head's mean
+training target), or that has a hidden layer emitting no spike on the validation rows: such a
+network decides without looking at the situation.
 
 Model (float64 throughout; ``D`` encoded inputs, ``H_l`` hidden widths, ``C_head`` candidates)::
 
@@ -53,8 +61,10 @@ import numpy as np
 
 from learned_judgment.config import require
 from learned_judgment.students.snn_core import SpikingNetwork
+from learned_judgment.students.targets import TARGET_SPREADS
 
 __all__ = [
+    "OUT_OF_RANGE_POLICIES",
     "SURROGATES",
     "ParityError",
     "SNNSettings",
@@ -62,6 +72,7 @@ __all__ = [
     "TrainingReport",
     "build_model",
     "check_parity",
+    "constant_predictor_loss",
     "export_network",
     "fit",
     "is_spiking_model",
@@ -70,6 +81,9 @@ __all__ = [
 ]
 
 SURROGATES = ("atan", "fast_sigmoid")
+# What a deployed student does with a situation feature outside its declared range:
+# "error" refuses to decide and names the feature; "clip" clips it into the range and counts it.
+OUT_OF_RANGE_POLICIES = ("error", "clip")
 _ROW_SUM_TOLERANCE = 1e-9  # structural: a soft-target row must be a probability distribution
 _SAMPLING_SUM_TOLERANCE = 1e-9  # structural: sampling weights must form a distribution
 
@@ -143,15 +157,26 @@ class SNNSettings:
         learn_threshold:      learn the hidden layers' threshold (one scalar per layer).
         surrogate:            "atan" or "fast_sigmoid" (snnTorch surrogate gradients).
         surrogate_alpha:      atan's alpha, or fast_sigmoid's slope; > 0.
-        target_temperature:   soft-target temperature in units of the dream's score spread; > 0.
+        target_temperature:   soft-target temperature in units of the score scale; > 0.
+        target_spread:        score scale of the soft targets: "global_median" (one scale, the
+                              median row spread of the training rows) or "per_row" (each row's
+                              own spread); see learned_judgment.students.targets.
         spike_rate_penalty:   weight of the mean hidden firing rate in the loss; >= 0.
         learning_rate:        Adam learning rate; > 0.
+        adam_beta1, adam_beta2: Adam's moment decay rates, each in [0, 1).
+        adam_eps:             Adam's denominator term; > 0.
+        weight_decay:         Adam's L2 weight decay (torch.optim.Adam, added to the gradient); >= 0.
         batch_size:           rows per optimizer step.
         max_steps:            optimizer steps at most.
-        validation_fraction:  share of dream rows held out for early stopping, in (0, 1).
+        validation_fraction:  share of distinct dreamed situations kept for early stopping, in (0, 1).
         evaluate_every_steps: validation-loss evaluation interval in optimizer steps.
         patience_evaluations: evaluations without a better total validation loss before stopping.
         torch_threads:        torch.set_num_threads during training (reproducible at 1 and 4).
+        parity_logit_tolerance: largest allowed |logit difference| between the torch model and the
+                              exported numpy network in :func:`check_parity`; >= 0.
+        out_of_range:         what the deployed student does with a situation feature outside its
+                              declared range: "error" (refuse, naming the feature) or "clip"
+                              (clip into the range and count the clipped values).
     """
 
     hidden_sizes: tuple[int, ...]
@@ -164,14 +189,21 @@ class SNNSettings:
     surrogate: str
     surrogate_alpha: float
     target_temperature: float
+    target_spread: str
     spike_rate_penalty: float
     learning_rate: float
+    adam_beta1: float
+    adam_beta2: float
+    adam_eps: float
+    weight_decay: float
     batch_size: int
     max_steps: int
     validation_fraction: float
     evaluate_every_steps: int
     patience_evaluations: int
     torch_threads: int
+    parity_logit_tolerance: float
+    out_of_range: str
 
     def __post_init__(self) -> None:
         problems: list[str] = []
@@ -215,6 +247,25 @@ class SNNSettings:
             "learning_rate": _float(
                 problems, "learning_rate", self.learning_rate, low=0.0, high=math.inf, low_open=True, high_open=True
             ),
+            "adam_beta1": _float(
+                problems, "adam_beta1", self.adam_beta1, low=0.0, high=1.0, low_open=False, high_open=True
+            ),
+            "adam_beta2": _float(
+                problems, "adam_beta2", self.adam_beta2, low=0.0, high=1.0, low_open=False, high_open=True
+            ),
+            "adam_eps": _float(problems, "adam_eps", self.adam_eps, low=0.0, high=math.inf, low_open=True, high_open=True),
+            "weight_decay": _float(
+                problems, "weight_decay", self.weight_decay, low=0.0, high=math.inf, low_open=False, high_open=True
+            ),
+            "parity_logit_tolerance": _float(
+                problems,
+                "parity_logit_tolerance",
+                self.parity_logit_tolerance,
+                low=0.0,
+                high=math.inf,
+                low_open=False,
+                high_open=True,
+            ),
             "batch_size": _int(problems, "batch_size", self.batch_size, 1),
             "max_steps": _int(problems, "max_steps", self.max_steps, 1),
             "validation_fraction": _float(
@@ -232,6 +283,12 @@ class SNNSettings:
         }
         if self.surrogate not in SURROGATES:
             problems.append(f"students.snn.surrogate must be one of {SURROGATES}; got {self.surrogate!r}")
+        if self.target_spread not in TARGET_SPREADS:
+            problems.append(f"students.snn.target_spread must be one of {TARGET_SPREADS}; got {self.target_spread!r}")
+        if self.out_of_range not in OUT_OF_RANGE_POLICIES:
+            problems.append(
+                f"students.snn.out_of_range must be one of {OUT_OF_RANGE_POLICIES}; got {self.out_of_range!r}"
+            )
         if problems:
             raise ValueError("; ".join(problems))
         for name, value in normalized.items():
@@ -474,22 +531,44 @@ def _finite_matrix(name: str, value: Any, width: int | None = None) -> np.ndarra
     return array
 
 
-def check_parity(model: Any, head: str, network: SpikingNetwork, encoded_inputs: np.ndarray) -> dict[str, Any]:
+def check_parity(
+    model: Any, head: str, network: SpikingNetwork, encoded_inputs: np.ndarray, *, logit_tolerance: float
+) -> dict[str, Any]:
     """Run the torch model and the numpy network on the same encoded inputs (n, D).
 
-    Returns a JSON-serializable report: max abs logit difference, spike-count mismatches per
-    hidden layer (cells = one (step, input) pair; a cell mismatches when the number of neurons
-    of that layer firing at that step differs), and decision agreement.
+    Compared, on every row:
+
+    * spike trains: for every hidden layer l, the (T, n, H_l) 0/1 train of every neuron at
+      every step (torch spikes against ``SpikingNetwork.forward_with_spike_trains``);
+    * logits (n, C): ``max |torch - numpy|`` must not exceed ``logit_tolerance``
+      (config: students.snn.parity_logit_tolerance);
+    * decisions: argmax of the torch logits against the batched numpy decisions;
+    * the deployed per-decision path: ``network.decide_one(row)`` for each row (D,) alone
+      against the batched numpy decisions and against torch.
+
+    Args:
+        logit_tolerance: >= 0, finite.
+
+    Returns:
+        A JSON-serializable report of every comparison (counts of mismatching cells,
+        differing decisions, the largest logit difference and the tolerance).
 
     Raises:
-        ParityError if any spike count or any decision differs.
-        ValueError if the network's structure is not the model's trunk plus ``head``.
+        ParityError if any spike-train cell, any batched decision or any per-decision result
+        differs, or the logit difference exceeds the tolerance (``error.report`` holds the report).
+        ValueError if the network's structure is not the model's trunk plus ``head``, or for
+        non-finite inputs or an invalid tolerance.
     """
     import torch
 
     _require_model(model)
     if head not in model.head_linears:
         raise KeyError(f"unknown head {head!r}; heads: {list(model.head_linears)}")
+    if isinstance(logit_tolerance, bool) or not isinstance(logit_tolerance, (int, float, np.integer, np.floating)):
+        raise ValueError(f"logit_tolerance must be a number; got {logit_tolerance!r}")
+    tolerance = float(logit_tolerance)
+    if not (math.isfinite(tolerance) and tolerance >= 0.0):
+        raise ValueError(f"logit_tolerance must be finite and >= 0; got {tolerance}")
     inputs = _finite_matrix("encoded_inputs", encoded_inputs, network.n_inputs)
     expected = (model.n_inputs, *model.hidden_sizes, model.heads[head])
     if network.layer_sizes != expected or network.time_steps != model.time_steps:
@@ -500,26 +579,46 @@ def check_parity(model: Any, head: str, network: SpikingNetwork, encoded_inputs:
     with torch.no_grad():
         torch_logits, torch_spikes = model(torch.as_tensor(inputs, dtype=torch.float64), head, record=True)
     torch_logits = torch_logits.numpy()
-    torch_counts = np.stack([np.rint(layer.sum(dim=2).numpy()).astype(np.int64) for layer in torch_spikes])
-    numpy_logits, numpy_counts = network.forward_with_spikes(inputs)
-    mismatches = [int(np.sum(torch_counts[layer] != numpy_counts[layer])) for layer in range(len(model.hidden_sizes))]
+    torch_trains = [layer.numpy() for layer in torch_spikes]  # (T, n, H_l) float64 0.0 / 1.0
+    numpy_logits, numpy_trains = network.forward_with_spike_trains(inputs)
+    layers = range(len(model.hidden_sizes))
+    train_mismatches = [int(np.sum(torch_trains[layer] != numpy_trains[layer])) for layer in layers]
     torch_decisions = np.argmax(torch_logits, axis=1)  # first maximum on ties, as torch.argmax
     numpy_decisions = np.argmax(numpy_logits, axis=1)
+    single_decisions = np.array([network.decide_one(row) for row in inputs], dtype=np.int64)
     differing = int(np.sum(torch_decisions != numpy_decisions))
+    single_vs_batch = int(np.sum(single_decisions != numpy_decisions))
+    single_vs_torch = int(np.sum(single_decisions != torch_decisions))
+    max_logit_difference = float(np.max(np.abs(torch_logits - numpy_logits)))
     report = {
         "n_inputs_checked": int(inputs.shape[0]),
-        "max_abs_logit_difference": float(np.max(np.abs(torch_logits - numpy_logits))),
-        "spike_count_mismatches_per_layer": mismatches,
-        "spike_count_cells_per_layer": int(model.time_steps * inputs.shape[0]),
-        "total_spikes_per_layer_torch": [int(value) for value in torch_counts.sum(axis=(1, 2))],
-        "total_spikes_per_layer_numpy": [int(value) for value in numpy_counts.sum(axis=(1, 2))],
+        "logit_tolerance": tolerance,
+        "max_abs_logit_difference": max_logit_difference,
+        "spike_train_mismatches_per_layer": train_mismatches,
+        "spike_train_cells_per_layer": [int(train.size) for train in numpy_trains],
+        "total_spikes_per_layer_torch": [int(np.rint(train.sum())) for train in torch_trains],
+        "total_spikes_per_layer_numpy": [int(train.sum(dtype=np.int64)) for train in numpy_trains],
         "decisions_differing": differing,
         "decision_agreement": float(np.mean(torch_decisions == numpy_decisions)),
+        "decide_one_vs_batch_differing": single_vs_batch,
+        "decide_one_vs_torch_differing": single_vs_torch,
     }
-    if any(mismatches) or differing:
+    problems = []
+    if any(train_mismatches):
+        problems.append(f"spike-train mismatches per layer {train_mismatches}")
+    if differing:
+        problems.append(f"{differing} of {inputs.shape[0]} batched decisions differ")
+    if single_vs_batch or single_vs_torch:
+        problems.append(
+            f"the per-decision path (decide_one) differs from the batched decisions on {single_vs_batch} rows "
+            f"and from torch on {single_vs_torch} rows"
+        )
+    if not max_logit_difference <= tolerance:  # also catches a NaN difference
+        problems.append(f"max |logit difference| {max_logit_difference!r} exceeds the tolerance {tolerance!r}")
+    if problems:
         raise ParityError(
-            f"the numpy network does not reproduce the torch model on head {head!r}: spike-count mismatches "
-            f"per layer {mismatches}, {differing} of {inputs.shape[0]} decisions differ",
+            f"the numpy network does not reproduce the torch model on head {head!r} ({inputs.shape[0]} rows): "
+            + "; ".join(problems),
             report,
         )
     return report
@@ -542,6 +641,10 @@ class TrainingReport:
         stopped_early:                stopped by patience before ``max_steps``.
         initial_validation_loss:      total validation loss at initialisation.
         best_validation_loss:         total validation loss of the restored weights.
+        best_validation_loss_per_head: {head: validation KL of the restored weights}.
+        constant_predictor_validation_loss: {head: validation KL of the best constant prediction,
+                                      the head's mean training target; inf when that mean gives
+                                      zero probability to a candidate a validation row targets}.
         train_loss_curve:             ((step, mean training loss since the previous evaluation), ...).
         validation_loss_curve:        ((step, {head: validation KL}), ...), step 0 = initialisation.
         validation_total_curve:       ((step, sampling-weighted total), ...).
@@ -551,7 +654,7 @@ class TrainingReport:
         dead_fraction_per_layer:      neurons that never fire on any validation input at any step.
         saturated_fraction_per_layer: neurons that fire at every step on every validation input.
         silent_layers:                hidden layers that emit no spike at all on the validation
-                                      inputs (reported, never hidden).
+                                      inputs (fit raises TrainingError when there is one).
         wall_seconds, seed, torch_threads, versions {torch, snntorch, numpy, python}, optimizer.
     """
 
@@ -564,6 +667,8 @@ class TrainingReport:
     stopped_early: bool
     initial_validation_loss: float
     best_validation_loss: float
+    best_validation_loss_per_head: dict[str, float]
+    constant_predictor_validation_loss: dict[str, float]
     train_loss_curve: tuple[tuple[int, float], ...]
     validation_loss_curve: tuple[tuple[int, dict[str, float]], ...]
     validation_total_curve: tuple[tuple[int, float], ...]
@@ -586,6 +691,11 @@ class TrainingReport:
                 "share of the batch, plus spike_rate_penalty x mean hidden firing rate; early stopping on the "
                 "sampling-weighted validation KL"
             ),
+            "acceptance": (
+                "the restored weights must have a total validation KL below initialisation, a validation KL per "
+                "head below that of the head's mean training target (the best constant prediction), and spikes "
+                "in every hidden layer on the validation rows; otherwise fit raises TrainingError"
+            ),
             "heads": list(self.heads),
             "sampling": dict(self.sampling),
             "n_train_rows": dict(self.n_train_rows),
@@ -595,6 +705,12 @@ class TrainingReport:
             "stopped_early": self.stopped_early,
             "initial_validation_loss": self.initial_validation_loss,
             "best_validation_loss": self.best_validation_loss,
+            "best_validation_loss_per_head": dict(self.best_validation_loss_per_head),
+            "constant_predictor_validation_loss": {
+                head: (value if math.isfinite(value) else None)
+                for head, value in self.constant_predictor_validation_loss.items()
+            },
+            "constant_predictor_validation_loss_null_means": "infinite",
             "train_loss_curve": [[step, value] for step, value in self.train_loss_curve],
             "validation_loss_curve": [[step, dict(values)] for step, values in self.validation_loss_curve],
             "validation_total_curve": [[step, value] for step, value in self.validation_total_curve],
@@ -718,6 +834,27 @@ def spike_statistics(model: Any, inputs_by_head: Mapping[str, Any]) -> dict[str,
     }
 
 
+def constant_predictor_loss(train_targets: np.ndarray, validation_targets: np.ndarray) -> float:
+    """Validation KL of the best constant prediction learned from the training rows.
+
+    The constant prediction is the mean training target p = mean over rows of
+    ``train_targets`` (n_train, C). Returns ``sum_i sum_c q_ic (log q_ic - log p_c) / n_val``
+    over ``validation_targets`` q (n_val, C), the same batch-mean KL that
+    :func:`validation_losses` reports for a network (terms with q_ic = 0 count 0). Returns inf
+    when p gives zero probability to a candidate that a validation row targets.
+    """
+    train = np.asarray(train_targets, dtype=np.float64)
+    validation = np.asarray(validation_targets, dtype=np.float64)
+    if train.ndim != 2 or validation.ndim != 2 or train.shape[1] != validation.shape[1] or validation.shape[0] < 1:
+        raise ValueError(
+            f"train_targets (n, C) and validation_targets (m >= 1, C) must share C; got {train.shape} and {validation.shape}"
+        )
+    mean = train.mean(axis=0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        terms = np.where(validation > 0.0, validation * (np.log(validation) - np.log(mean)), 0.0)
+    return float(terms.sum() / validation.shape[0])
+
+
 def _versions() -> dict[str, str]:
     import snntorch
     import torch
@@ -743,7 +880,8 @@ def fit(
 
     Args:
         tasks:      {head: (encoded inputs (n, D), soft targets (n, C_head))} training rows.
-        validation: the same layout for every head in ``tasks``: held-out rows for early stopping.
+        validation: the same layout for every head in ``tasks``: the early-stopping rows (never
+                    trained on, but they choose the restored weights, so they are not held out).
         sampling:   {head: share of each batch}, > 0 and summing to 1 (``{head: 1.0}`` for one head).
         settings:   batch size, learning rate, step limits, penalty and threads.
         seed:       batch order (seeded ``torch.Generator``) and ``torch.manual_seed`` inside a
@@ -754,16 +892,20 @@ def fit(
     permutations, so a head with fewer rows than its share repeats rows within a batch). The
     loss is, per head present, KL(target || softmax(logits)) averaged over that head's rows,
     weighted by the head's share of the batch, plus ``spike_rate_penalty`` x the mean hidden
-    firing rate of the batch; one Adam step follows. Gradients are reset to ``None`` so a head
-    absent from a batch is not moved by Adam. Every ``evaluate_every_steps`` steps (and after
-    the last step) the validation KL per head is evaluated; training stops at ``max_steps`` or
-    after ``patience_evaluations`` evaluations without a lower sampling-weighted total, and the
-    best weights are restored. Torch threads and the deterministic-algorithms flag are set
-    for the run and restored afterwards.
+    firing rate of the batch; one Adam step follows (``learning_rate``, ``adam_beta1``,
+    ``adam_beta2``, ``adam_eps`` and ``weight_decay`` from the settings). Gradients are reset to
+    ``None`` so a head absent from a batch is not moved by Adam. Every ``evaluate_every_steps``
+    steps (and after the last step) the validation KL per head is evaluated; training stops at
+    ``max_steps`` or after ``patience_evaluations`` evaluations without a lower
+    sampling-weighted total, and the best weights are restored. Torch threads and the
+    deterministic-algorithms flag are set for the run and restored afterwards.
 
     Raises:
-        TrainingError if a loss becomes non-finite, or if the restored network's validation
-        loss is not below its loss at initialisation (``error.report`` holds the report).
+        TrainingError if a loss becomes non-finite, or if the restored network (a) has a total
+        validation loss that is not below its loss at initialisation, (b) has, for some head, a
+        validation loss that is not below :func:`constant_predictor_loss` of that head (its mean
+        training target evaluated on its validation rows), or (c) has a hidden layer that emits
+        no spike on the validation rows. ``error.report`` holds the report in cases (a)-(c).
     """
     import torch
     import torch.nn.functional as functional
@@ -832,7 +974,13 @@ def fit(
             stale_evaluations = 0
             stopped_early = False
             interval_losses: list[float] = []
-            optimizer = torch.optim.Adam(model.parameters(), lr=settings.learning_rate)
+            optimizer = torch.optim.Adam(
+                model.parameters(),
+                lr=settings.learning_rate,
+                betas=(settings.adam_beta1, settings.adam_beta2),
+                eps=settings.adam_eps,
+                weight_decay=settings.weight_decay,
+            )
             penalise = settings.spike_rate_penalty > 0.0
             step = 0
             model.train()
@@ -897,6 +1045,10 @@ def fit(
         torch.set_num_threads(previous_threads)
         torch.use_deterministic_algorithms(previous_deterministic, warn_only=previous_warn_only)
 
+    best_losses = next(dict(losses) for curve_step, losses in validation_curve if curve_step == best_step)
+    constant_losses = {
+        head: constant_predictor_loss(train_data[head][1], validation_data[head][1]) for head in heads
+    }
     report = TrainingReport(
         heads=heads,
         sampling=shares,
@@ -907,6 +1059,8 @@ def fit(
         stopped_early=stopped_early,
         initial_validation_loss=initial_total,
         best_validation_loss=best_total,
+        best_validation_loss_per_head=best_losses,
+        constant_predictor_validation_loss=constant_losses,
         train_loss_curve=tuple(train_curve),
         validation_loss_curve=tuple(validation_curve),
         validation_total_curve=tuple(total_curve),
@@ -921,10 +1075,24 @@ def fit(
         versions=_versions(),
         optimizer=optimizer_record,
     )
+    problems = []
     if not best_total < initial_total:
-        raise TrainingError(
+        problems.append(
             f"the trained network's validation loss {best_total} is not below its loss at initialisation "
-            f"{initial_total} (steps run: {step}; silent hidden layers: {list(report.silent_layers)})",
-            report,
+            f"{initial_total} (steps run: {step})"
         )
+    for head in heads:
+        if not best_losses[head] < constant_losses[head]:
+            problems.append(
+                f"head {head!r}: the restored validation loss {best_losses[head]} is not below "
+                f"{constant_losses[head]}, the loss of the best constant prediction (the head's mean training "
+                "target): the network does no better than ignoring the situation"
+            )
+    if report.silent_layers:
+        problems.append(
+            f"hidden layer(s) {list(report.silent_layers)} emit no spike on the validation rows: the decisions "
+            "cannot depend on the situation"
+        )
+    if problems:
+        raise TrainingError("; ".join(problems), report)
     return report

@@ -1,14 +1,16 @@
 """Check 1: learned_judgment.students.targets on a fixture dream built by the real engine.
 
-FIXTURE CHECK - mechanics only. Soft targets sum to 1, sharpen as the temperature falls, and
-their argmax is the dream's choice; dream_regret is 0 exactly for the dream's best candidates
-and positive otherwise; flat scores and invalid arguments are refused. No file is written.
+FIXTURE CHECK - mechanics only. Soft targets with target_spread "global_median" (one score scale,
+the score_spread) sum to 1, sharpen as the temperature falls, and their argmax is the dream's
+choice; dream_regret is 0 exactly for the dream's best candidates and positive otherwise; flat
+scores and invalid arguments are refused. The "per_row" scale is checked in c10_target_spread.py.
+No file is written.
 
 Run from the repository root:
     .venv\\Scripts\\python.exe experiments\\proofs\\B_snn_offline\\c1_targets.py
 """
 
-print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 import sys  # noqa: E402
 
@@ -40,7 +42,7 @@ checks.raises("1-D scores", ValueError, lambda: score_spread(np.zeros(4)), "shap
 
 print("\n== soft_targets ==")
 temperature = float(require(config, "students.snn.target_temperature"))
-targets = soft_targets(scores, temperature=temperature, spread=spread)
+targets = soft_targets(scores, temperature=temperature, target_spread="global_median", spread=spread)
 checks.expect(targets.shape == (n, c), f"shape {targets.shape}")
 row_error = float(np.max(np.abs(targets.sum(axis=1) - 1.0)))
 checks.expect(row_error <= 1e-12, f"rows sum to 1 (max |sum - 1| = {row_error:.2e}) at config temperature {temperature}")
@@ -49,10 +51,10 @@ checks.expect(bool(np.array_equal(np.argmax(targets, axis=1), dreams.chosen)), "
 checks.expect(bool(np.array_equal(np.argmax(targets, axis=1), np.argmax(scores, axis=1))), "argmax of every row = argmax of the scores")
 
 temperatures = [4.0, 2.0, 1.0, 0.5, 0.25, 0.1]
-max_probs = [soft_targets(scores, temperature=t, spread=spread).max(axis=1) for t in temperatures]
+max_probs = [soft_targets(scores, temperature=t, target_spread="global_median", spread=spread).max(axis=1) for t in temperatures]
 entropies = []
 for t in temperatures:
-    q = soft_targets(scores, temperature=t, spread=spread)
+    q = soft_targets(scores, temperature=t, target_spread="global_median", spread=spread)
     entropies.append(float(np.mean(-np.sum(np.where(q > 0, q * np.log(np.where(q > 0, q, 1.0)), 0.0), axis=1))))
 means = [float(m.mean()) for m in max_probs]
 print("  mechanics numbers (fixture): temperature -> mean max target probability, mean entropy (nats)")
@@ -62,9 +64,9 @@ checks.expect(all(b > a for a, b in zip(means, means[1:])), "mean max probabilit
 checks.expect(all(bool(np.all(b >= a)) for a, b in zip(max_probs, max_probs[1:])), "every row's max probability is non-decreasing as the temperature falls")
 checks.expect(all(b < a for a, b in zip(entropies, entropies[1:])), "mean entropy falls strictly as the temperature falls")
 for bad in (0.0, -1.0, float("nan"), float("inf")):
-    checks.raises(f"temperature {bad}", ValueError, lambda bad=bad: soft_targets(scores, temperature=bad, spread=spread), "temperature")
-checks.raises("spread 0", ValueError, lambda: soft_targets(scores, temperature=1.0, spread=0.0), "spread")
-checks.raises("non-finite scores", ValueError, lambda: soft_targets(np.array([[0.0, np.inf]]), temperature=1.0, spread=1.0), "non-finite")
+    checks.raises(f"temperature {bad}", ValueError, lambda bad=bad: soft_targets(scores, temperature=bad, target_spread="global_median", spread=spread), "temperature")
+checks.raises("spread 0", ValueError, lambda: soft_targets(scores, temperature=1.0, target_spread="global_median", spread=0.0), "spread")
+checks.raises("non-finite scores", ValueError, lambda: soft_targets(np.array([[0.0, np.inf]]), temperature=1.0, target_spread="global_median", spread=1.0), "non-finite")
 
 print("\n== dream_regret ==")
 regret_chosen = dream_regret(scores, dreams.chosen)

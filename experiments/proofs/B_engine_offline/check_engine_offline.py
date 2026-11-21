@@ -16,7 +16,7 @@ Exit code 0 means every check below held; 1 means at least one failed.
 
 from __future__ import annotations
 
-print("FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 import dataclasses
 import struct
@@ -30,7 +30,13 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))  # repository root
 
 from learned_judgment.config import load_config, require
-from learned_judgment.engine.adapt import recovery_attempts, select_context, world_id_column, world_id_variable
+from learned_judgment.engine.adapt import (
+    recovery_attempts,
+    select_context,
+    world_id_column,
+    world_id_layout,
+    world_id_variable,
+)
 from learned_judgment.engine.collect import exploration_actions
 from learned_judgment.engine.decide import PHYSICS_ONLY, decide_batch
 from learned_judgment.engine.dream import (
@@ -97,8 +103,8 @@ class FixtureToySpec(SkillSpec):
     def objective(self, predicted):  # noqa: ANN001
         return -np.abs(predicted.median_of("fx_error")) - predicted.mean_of("fx_fail") - predicted.spread_of("fx_error")
 
-    def episode(self, world, situation, action):  # noqa: ANN001
-        raise RuntimeError("the fixture spec has no episode; collect() is NOT RUN in this script")
+    def episode(self, world, situation, action, attempt_seed):  # noqa: ANN001
+        raise RuntimeError("the fixture spec has no episode; collect() with a world is NOT RUN in this script")
 
     def loss(self, measured: np.ndarray) -> np.ndarray:
         return np.abs(measured[:, 0])
@@ -166,6 +172,7 @@ config = load_config()
 LEVELS = tuple(require(config, "engine.quantile_levels"))
 SPREAD = tuple(require(config, "engine.spread_levels"))
 PRESETS = tuple(require(config, "world.presets").keys())
+HIDDEN = tuple(require(config, "world.hidden_effects").keys())
 POINTS = [3, 3]  # fixture grid resolution (the real value is skills.<skill>.candidate_points_per_dim)
 SEED = 7  # fixture base seed for the named streams of this script
 TS = "2026-11-21T12:00:00+00:00"
@@ -228,13 +235,13 @@ def run() -> None:
         rows = []
         for index, (distance, speed) in enumerate(awkward):
             rows.append(build_real_row(
-                spec, run_id="fx-run", seed=SEED, world_preset=PRESETS[index % len(PRESETS)],
+                spec, run_id="fx-run", seed=SEED + 1 + index, world_preset=PRESETS[index % len(PRESETS)],
                 situation=np.array([distance, float(index % 2)]), action=np.array([speed, 0.5]),
                 measured_outcome={"fx_error": -1e-300 * (index + 1), "fx_fail": float(index % 2)}, timestamp_utc=TS,
             ))
         attempts = tmp / "attempts" / "fixture.jsonl"
-        append_rows(attempts, [row])
-        append_rows(attempts, rows)
+        append_rows(attempts, [row], spec=spec)
+        append_rows(attempts, rows, spec=spec)
         back = read_rows(attempts, spec=spec)
         check("JSONL round trip returns equal rows", back == [row, *rows])
         check("JSONL round trip is bitwise for every float", all(float_bits(a) == float_bits(b) for a, b in zip(back, [row, *rows])))
@@ -247,7 +254,7 @@ def run() -> None:
         raises("read_rows rejects NaN", ValueError, lambda: read_rows(bad), "non-finite JSON constant NaN")
         bad.write_bytes(attempts.read_bytes()[:-5])
         raises("read_rows rejects an incomplete last line", ValueError, lambda: read_rows(bad), "incomplete")
-        raises("append_rows refuses to append after an incomplete line", ValueError, lambda: append_rows(bad, [row]), "incomplete line")
+        raises("append_rows refuses to append after an incomplete line", ValueError, lambda: append_rows(bad, [row], spec=spec), "incomplete line")
         other = FixtureToySpec()
         other.name = "fixture_other"
         raises("read_rows(spec=...) rejects a row of another skill", ValueError, lambda: read_rows(attempts, spec=other), "belongs to skill")
@@ -267,7 +274,7 @@ def run() -> None:
         raises("a real row without a measured outcome is rejected", ValueError,
                lambda: dataclasses.replace(row, measured_outcome=None), "needs measured_outcome")
         dream_file = tmp / "dream_rows.jsonl"
-        append_rows(dream_file, [dream_row])
+        append_rows(dream_file, [dream_row], spec=spec)
         check("dream row JSONL round trip", read_rows(dream_file, spec=spec) == [dream_row])
 
         # ---------------------------------------------------------------- check 2
@@ -277,11 +284,11 @@ def run() -> None:
         actions = np.column_stack([np.linspace(0.0, 1.0, 6), np.linspace(0.0, 0.5, 6)])
         measured_arr = np.column_stack([np.linspace(-0.3, 0.4, 6), np.array([0, 1, 0, 1, 1, 0], dtype=np.float64)])
         real_rows = [
-            build_real_row(spec, run_id="fx-run", seed=SEED, world_preset=PRESETS[i % 2], situation=situations[i],
+            build_real_row(spec, run_id="fx-run", seed=100 + i, world_preset=PRESETS[i % 2], situation=situations[i],
                            action=actions[i], measured_outcome=dict(zip(spec.outcome_names, measured_arr[i])), timestamp_utc=TS)
             for i in range(6)
         ]
-        arrays = rows_to_arrays(spec, real_rows)
+        arrays = rows_to_arrays(spec, real_rows, on_physics_mismatch="error")
         check("shapes (6,2) (6,2) (6,2) (6,2) (6,2)", [a.shape for a in (arrays.situations, arrays.actions, arrays.physics,
               arrays.measured, arrays.residuals)] == [(6, 2)] * 5)
         check("situations/actions/measured equal the inputs exactly",
@@ -291,12 +298,13 @@ def run() -> None:
         check("residuals == measured - physics exactly", np.array_equal(arrays.residuals, arrays.measured - arrays.physics))
         check("world_presets in row order", arrays.world_presets == [PRESETS[i % 2] for i in range(6)])
         path2 = tmp / "attempts" / "fixture2.jsonl"
-        append_rows(path2, real_rows)
-        arrays_back = rows_to_arrays(spec, read_rows(path2))
+        append_rows(path2, real_rows, spec=spec)
+        arrays_back = rows_to_arrays(spec, read_rows(path2), on_physics_mismatch="error")
         check("arrays identical after a JSONL round trip", all(np.array_equal(getattr(arrays, f), getattr(arrays_back, f))
               for f in ("situations", "actions", "physics", "measured", "residuals")))
-        check("zero rows give (0, width) arrays", rows_to_arrays(spec, []).residuals.shape == (0, 2))
-        raises("rows_to_arrays refuses dream rows", ValueError, lambda: rows_to_arrays(spec, [*real_rows, dream_row]), "only real rows")
+        check("zero rows give (0, width) arrays", rows_to_arrays(spec, [], on_physics_mismatch="error").residuals.shape == (0, 2))
+        raises("rows_to_arrays refuses dream rows", ValueError,
+               lambda: rows_to_arrays(spec, [*real_rows, dream_row], on_physics_mismatch="error"), "only real rows")
 
         # ---------------------------------------------------------------- check 3
         section("3. exploration_actions: reproducible, in bounds, fraction 0.0 = physics-only")
@@ -334,7 +342,8 @@ def run() -> None:
               np.array_equal(dreams.situations, spec.sample_situations(stream_rng(SEED, "fixture/dreams/situations"), 50)))
         check("physics only: chosen == physics_choice and chosen_spread == 0",
               np.array_equal(dreams.chosen, dreams.physics_choice) and bool(np.all(dreams.chosen_spread == 0.0)))
-        check("physics only: no request hash", dreams.request_hashes == () and bool(np.all(dreams.request_index == -1)))
+        check("physics only: no request hash", dreams.request_hashes == () and dreams.request_groups == ()
+              and bool(np.all(dreams.request_group == -1)))
         same = dreams_from_decisions(spec, decide_batch(spec, dreams.situations, model=None, layout=layout, points_per_dim=POINTS,
                                      quantile_levels=LEVELS, spread_levels=SPREAD, method=PHYSICS_ONLY), spread_levels=SPREAD)
         check("dreams_from_decisions(decide_batch(...)) equals dream() on the same situations",
@@ -352,7 +361,7 @@ def run() -> None:
         check("dream_rows actions are the chosen actions",
               np.array_equal(np.stack([spec.encode_action(r.action) for r in rows_d]), dreams.chosen_actions))
         dream_file2 = tmp / "dreams.jsonl"
-        append_rows(dream_file2, rows_d)
+        append_rows(dream_file2, rows_d, spec=spec)
         check("dream rows JSONL round trip", read_rows(dream_file2, spec=spec) == rows_d)
         # ---------------------------------------------------------------- check 4b
         section("4b. fit_residual_model + model-backed dream() with the production ConstantBiasResidual "
@@ -361,22 +370,26 @@ def run() -> None:
             print(f"  NOT RUN: learned_judgment.eval.baselines.ConstantBiasResidual did not import: {BASELINE_IMPORT_ERROR}")
         else:
             model = ConstantBiasResidual(layout, LEVELS, SPREAD, seed=SEED)
-            fitted = fit_residual_model(spec, model, real_rows, layout)
+            fitted = fit_residual_model(spec, model, real_rows, layout, on_physics_mismatch="error")
             probe = build_features(layout, arrays.situations, arrays.actions, physics=arrays.physics)
             fitted_dist = fitted.predict_residual_distribution(probe)
             check("fit_residual_model returns the fitted model, trained on all 6 rows", fitted is model and model.n_train == 6)
             check("targets were the stored residuals: constant mean == residuals.mean(axis=0) exactly",
                   np.array_equal(fitted_dist.mean[0], arrays.residuals.mean(axis=0)))
             raises("fit_residual_model refuses zero rows", ValueError,
-                   lambda: fit_residual_model(spec, ConstantBiasResidual(layout, LEVELS, SPREAD, seed=SEED), [], layout), "no attempts")
+                   lambda: fit_residual_model(spec, ConstantBiasResidual(layout, LEVELS, SPREAD, seed=SEED), [], layout,
+                                              on_physics_mismatch="error"), "no attempts")
             raises("fit_residual_model refuses dream rows", ValueError,
-                   lambda: fit_residual_model(spec, ConstantBiasResidual(layout, LEVELS, SPREAD, seed=SEED), [*real_rows, dream_row], layout),
+                   lambda: fit_residual_model(spec, ConstantBiasResidual(layout, LEVELS, SPREAD, seed=SEED), [*real_rows, dream_row], layout,
+                                              on_physics_mismatch="error"),
                    "only real rows")
             raises("fit_residual_model refuses a layout of another skill", ValueError,
-                   lambda: fit_residual_model(spec, ConstantBiasResidual(layout, LEVELS, SPREAD, seed=SEED), real_rows, build_layout(other)),
+                   lambda: fit_residual_model(spec, ConstantBiasResidual(layout, LEVELS, SPREAD, seed=SEED), real_rows, build_layout(other),
+                                              on_physics_mismatch="error"),
                    "layout skill")
             direct_layout = build_layout(spec, include_physics=False)
-            direct = fit_residual_model(spec, ConstantBiasResidual(direct_layout, LEVELS, SPREAD, seed=SEED), real_rows, direct_layout)
+            direct = fit_residual_model(spec, ConstantBiasResidual(direct_layout, LEVELS, SPREAD, seed=SEED), real_rows, direct_layout,
+                                        on_physics_mismatch="error")
             check("a layout without a physics block fits (direct baseline layout)", direct.n_train == 6)
 
             dreams_m = dream(spec, fitted, layout, n_dreams=30, rng=stream_rng(SEED, "fixture/dreams/model"), points_per_dim=POINTS,
@@ -389,7 +402,7 @@ def run() -> None:
                   np.array_equal(dreams_m.chosen_median, np.clip(dreams_m.chosen_physics + fitted_dist.median[0],
                                                                  spec.outcome_low, spec.outcome_high)))
             check("a model without last_request_hash records no request", dreams_m.request_hashes == ()
-                  and bool(np.all(dreams_m.request_index == -1)))
+                  and dreams_m.request_groups == () and bool(np.all(dreams_m.request_group == -1)))
             check("keep_confident at exactly the constant spread keeps every row; just below keeps none",
                   keep_confident(dreams_m, float(spread_primary)).n_rows == 30
                   and keep_confident(dreams_m, float(np.nextafter(spread_primary, 0.0))).n_rows == 0)
@@ -400,16 +413,17 @@ def run() -> None:
                                  quantile_levels=LEVELS, spread_levels=SPREAD, method=PHYSICS_ONLY), "disagree")
 
             world_var = world_id_variable(PRESETS)
-            layout_w = build_layout(spec, extra=(world_var,))
+            layout_w = world_id_layout(spec, PRESETS, hidden_value_names=HIDDEN, include_physics=True)
             fitted_w = fit_residual_model(spec, ConstantBiasResidual(layout_w, LEVELS, SPREAD, seed=SEED), real_rows, layout_w,
-                                          extra=world_id_column(real_rows, world_var))
+                                          on_physics_mismatch="error", extra=world_id_column(real_rows, world_var))
             dreams_w = dream(spec, fitted_w, layout_w, n_dreams=10, rng=stream_rng(SEED, "fixture/dreams/world"), points_per_dim=POINTS,
                              quantile_levels=LEVELS, spread_levels=SPREAD, method="constant_bias",
                              extra=world_id_column([PRESETS[1]] * 10, world_var))
             check("world-id layout: fit with an extra column and dream with a declared world id", dreams_w.n_rows == 10
                   and fitted_w.n_train == 6)
             raises("world-id layout without the extra block", ValueError,
-                   lambda: fit_residual_model(spec, ConstantBiasResidual(layout_w, LEVELS, SPREAD, seed=SEED), real_rows, layout_w),
+                   lambda: fit_residual_model(spec, ConstantBiasResidual(layout_w, LEVELS, SPREAD, seed=SEED), real_rows, layout_w,
+                                              on_physics_mismatch="error"),
                    "needs a extra block")
 
         # ---------------------------------------------------------------- check 5
@@ -418,13 +432,14 @@ def run() -> None:
         meta = {"config_digest": "fixture", "seed": SEED, "n_dreams": 50}
         save_dreams(store, dreams, meta)
         loaded, meta_back = load_dreams(store)
-        fields = ("situations", "candidates", "scores", "chosen", "physics_choice", "chosen_spread", "request_index",
+        fields = ("situations", "candidates", "scores", "chosen", "physics_choice", "chosen_spread", "request_group",
                   "chosen_physics", "chosen_mean", "chosen_median", "chosen_outcome_spread")
         check("save/load arrays are bitwise identical (bytes and dtype)",
               all(getattr(loaded, f).tobytes() == getattr(dreams, f).tobytes() and getattr(loaded, f).dtype == getattr(dreams, f).dtype
                   for f in fields))
         check("save/load names, provenance and meta", meta_back == meta and loaded.outcome_names == dreams.outcome_names
-              and loaded.spread_levels == dreams.spread_levels and loaded.method == dreams.method)
+              and loaded.spread_levels == dreams.spread_levels and loaded.method == dreams.method
+              and loaded.request_hashes == dreams.request_hashes and loaded.request_groups == dreams.request_groups)
         check("only the .npz and .json are left (no temp files)", sorted(p.name for p in store.parent.iterdir()) == ["fixture.json", "fixture.npz"])
         store.write_bytes(store.read_bytes() + b"x")
         raises("load_dreams detects arrays that do not match the recorded sha256", ValueError, lambda: load_dreams(store), "sha256")
@@ -462,16 +477,18 @@ def run() -> None:
         check("world_id_column -> (6, 1) level indices", column.shape == (6, 1) and column[:, 0].tolist() == [0.0, 1.0] * 3)
         check("world_id_column accepts preset names", world_id_column(list(PRESETS[::-1]), variable)[:, 0].tolist() == [4.0, 3.0, 2.0, 1.0, 0.0])
         raises("undeclared preset", ValueError, lambda: world_id_column(["moon"], variable), "not one of")
-        layout_w = build_layout(spec, extra=(variable,))
+        layout_w = world_id_layout(spec, PRESETS, hidden_value_names=HIDDEN, include_physics=True)
         features = build_features(layout_w, arrays.situations, arrays.actions, physics=arrays.physics, extra=column)
         check("layout with world_id: features (6, 7), world_id column categorical", features.shape == (6, 7)
               and layout_w.categorical_indices == (1, 6))
 
         curve = {0: 2.0, 5: 1.3, 10: 1.19, 15: 1.0, 20: 1.1}
-        check("recovery_attempts: threshold 1.0*(1+0.2) -> 10", recovery_attempts(curve, 1.0, 0.2) == 10)
-        check("recovery_attempts: exact boundary counts (1.25 <= 1.0*(1+0.25))", recovery_attempts({0: 3.0, 5: 1.25}, 1.0, 0.25) == 5)
-        check("recovery_attempts: not reached -> None", recovery_attempts({0: 3.0, 5: 2.0}, 1.0, 0.2) is None)
-        check("recovery_attempts: smallest count, not first key", recovery_attempts({20: 1.0, 10: 1.1, 0: 5.0}, 1.0, 0.2) == 10)
+        check("recovery_attempts: threshold 1.0*(1+0.2) -> first 10, sustained 10",
+              recovery_attempts(curve, 1.0, 0.2) == {"first": 10, "sustained": 10, "threshold": 1.2, "pre_shift_error_is_zero": False})
+        check("recovery_attempts: exact boundary counts (1.25 <= 1.0*(1+0.25))", recovery_attempts({0: 3.0, 5: 1.25}, 1.0, 0.25)["first"] == 5)
+        check("recovery_attempts: not reached -> None, None",
+              [recovery_attempts({0: 3.0, 5: 2.0}, 1.0, 0.2)[key] for key in ("first", "sustained")] == [None, None])
+        check("recovery_attempts: smallest count, not first key", recovery_attempts({20: 1.0, 10: 1.1, 0: 5.0}, 1.0, 0.2)["first"] == 10)
         raises("recovery_attempts: negative count", ValueError, lambda: recovery_attempts({-5: 1.0}, 1.0, 0.2), "int >= 0")
         raises("recovery_attempts: empty", ValueError, lambda: recovery_attempts({}, 1.0, 0.2), "empty")
 

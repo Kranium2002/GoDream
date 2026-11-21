@@ -1,4 +1,4 @@
-FIXTURE CHECK - utility test only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
 numpy 2.5.5 | python 3.13.16
 config quantile_levels (0.1, 0.25, 0.5, 0.75, 0.9) spread_levels (0.1, 0.9) presets ('default', 'heavy_payload', 'slippery_floor', 'tired_motors', 'downhill')
 
@@ -46,7 +46,7 @@ config quantile_levels (0.1, 0.25, 0.5, 0.75, 0.9) spread_levels (0.1, 0.9) pres
   [ok] every action inside the spec bounds
   [ok] every action is one of its situation's candidates
   [ok] exploration_fraction 0.0 equals the physics-only choice
-  rows differing from physics-only at fraction 0.5: 20/40 (fixture observation, not a metric)
+  rows differing from physics-only at fraction 0.5: 19/40 (fixture observation, not a metric)
   [ok] exploration_fraction 1.0 stays on the candidate grids
   [ok] another stream index gives a different draw
   [ok] exploration_fraction outside [0, 1] -> ValueError: exploration_fraction is a probability and must lie in [0, 1]; got 1.5
@@ -75,7 +75,7 @@ config quantile_levels (0.1, 0.25, 0.5, 0.75, 0.9) spread_levels (0.1, 0.9) pres
   [ok] chosen_median == clip(chosen_physics + model median residual, outcome bounds)
   [ok] a model without last_request_hash records no request
   [ok] keep_confident at exactly the constant spread keeps every row; just below keeps none
-  fixture observation: constant spread of fx_error = np.float64(0.6556769518934501); chosen != physics in 26/30 dreams (not a metric)
+  fixture observation: constant spread of fx_error = np.float64(0.68984842520654); chosen != physics in 20/30 dreams (not a metric)
   [ok] model given with the physics-only label -> ValueError: method 'physics_only' and model given disagree
   [ok] world-id layout: fit with an extra column and dream with a declared world id
   [ok] world-id layout without the extra block -> ValueError: the layout needs a extra block of shape (6, 1)
@@ -103,15 +103,12 @@ config quantile_levels (0.1, 0.25, 0.5, 0.75, 0.9) spread_levels (0.1, 0.9) pres
   [ok] world_id_column accepts preset names
   [ok] undeclared preset -> ValueError: item 0: world preset 'moon' is not one of ('default', 'heavy_payload', 'slippery_floor', 'tired_motors', 'down
   [ok] layout with world_id: features (6, 7), world_id column categorical
-  [ok] recovery_attempts: threshold 1.0*(1+0.2) -> 10
+  [ok] recovery_attempts: threshold 1.0*(1+0.2) -> first 10, sustained 10
   [ok] recovery_attempts: exact boundary counts (1.25 <= 1.0*(1+0.25))
-  [ok] recovery_attempts: not reached -> None
+  [ok] recovery_attempts: not reached -> None, None
   [ok] recovery_attempts: smallest count, not first key
   [ok] recovery_attempts: negative count -> ValueError: attempt count -5 must be an int >= 0
   [ok] recovery_attempts: empty -> ValueError: errors_by_new_attempts is empty
 
 checks: 92 run, 92 held, 0 failed
 NOT RUN: collect() (needs Person A's Go2World; never called with a stand-in world); dream() with the TabPFN teacher (no real TabPFN prediction has been made)
-
-# command (repo root): .venv\Scripts\python.exe experiments\proofs\B_engine_offline\check_engine_offline.py
-# exit code: 0

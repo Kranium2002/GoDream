@@ -1,0 +1,41 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+  overlay learned_judgment/students/snn.py: committed version (19638 bytes; working tree 55437 bytes)
+  overlay learned_judgment/students/snn_train.py: committed version (46669 bytes; working tree 56421 bytes)
+  overlay learned_judgment/students/targets.py: committed version (4696 bytes; working tree 8025 bytes)
+  overlay learned_judgment/engine/train_in_dream.py: committed version (2707 bytes; working tree 3253 bytes)
+  [ok] the overlay imports its own (committed) snn.py: <tmp>\learned_judgment\students\snn.py
+
+== decision checks on the committed (old) lane code ==
+  [ok] c7_grid_mismatch.py (S1 grid mismatch) fails on the old code (exit 1): ImportError: cannot import name 'ACTION_RECORD_KEYS' from 'learned_judgment.students.snn' (<tmp>\learned_judgment\students\snn.py)
+  [ok] c8_training_guard.py (S2 training guard) fails on the old code (exit 1): ImportError: cannot import name 'constant_predictor_loss' from 'learned_judgment.students.snn_train' (<tmp>\learned_judgment\students\snn_train.py)
+  [ok] c9_parity.py (S3/S4 parity and decide_one) fails on the old code (exit 1): AttributeError: 'SNNSettings' object has no attribute 'parity_logit_tolerance'
+  [ok] c10_target_spread.py (S5 target spread) fails on the old code (exit 1): ImportError: cannot import name 'TARGET_SPREADS' from 'learned_judgment.students.targets' (<tmp>\learned_judgment\students\targets.py)
+  [ok] c11_adam_settings.py (S6 Adam settings) fails on the old code (exit 1): AttributeError: 'SNNSettings' object has no attribute 'adam_beta1'
+  [ok] c12_out_of_range.py (S7 out of range) fails on the old code (exit 1): ImportError: cannot import name 'OutOfRangeError' from 'learned_judgment.students.snn' (<tmp>\learned_judgment\students\snn.py)
+  [ok] c13_split_and_digests.py (M2/M4 split by situation, digests) fails on the old code (exit 1): ImportError: cannot import name 'situation_digests' from 'learned_judgment.students.snn' (<tmp>\learned_judgment\students\snn.py)
+  [ok] c14_deployed_student.py (M1 DeployedStudent, early-stopping labels) fails on the old code (exit 1): ImportError: cannot import name 'DeployedStudent' from 'learned_judgment.students.snn' (<tmp>\learned_judgment\students\snn.py)
+
+== the same scenarios through the OLD API (c18_old_probe.py): the old code accepts each defect ==
+  [ok] the old-API probe ran (exit 0)
+  [ok] OLD S1: DEFECT decide under side-speed bounds [-0.3, 0.3] returned actions with no error (18 of 50 commands changed)
+  [ok] OLD S1b: DEFECT decide with the categorical side levels swapped returned actions with no error
+  [ok] OLD S2: DEFECT a student with silent layers [0] was returned; 1 distinct decision(s) on 50 situations
+  [ok] OLD S3: DEFECT check_parity accepted a mis-exported readout_beta on 1 row (max |logit difference| 0.653)
+  [ok] OLD S3b: DEFECT check_parity accepted a network with permuted hidden neurons (equal spike counts, different spike trains)
+  [ok] OLD S3c: DEFECT train_in_dream checked parity on 40 of 400 rows
+  [ok] OLD S4: DEFECT SNNStudent has no per-decision path and parity never ran decide_one
+  [ok] OLD S5: DEFECT small-scale rows get mean max target 0.0289 (uniform 0.0286); no per-row scale exists
+  [ok] OLD S6: DEFECT SNNSettings has no Adam fields; the optimizer ran with {'name': 'Adam', 'lr': 0.002, 'betas': [0.9, 0.999], 'eps': 1e-08, 'weight_decay': 0.0} (torch defaults)
+  [ok] OLD S7: DEFECT decide_index on fx_speed = 9.0 (declared [2, 6]) returned a decision with no error or count
+  [ok] OLD M2: DEFECT the row split of a dream with every situation twice puts 72 of 80 early-stopping situations also among the training rows
+  [ok] OLD M4: DEFECT meta['student'] keys ['action_names', 'encoder', 'n_candidates', 'points_per_dim', 'situation_variables', 'skill']: no per-situation digests
+  [ok] OLD M1: DEFECT no DeployedStudent: deciding exists only on SNNStudent with its own InputEncoder
+  [ok] OLD labels: DEFECT in-dream numbers stored as 'validation_in_dream' (early-stopping rows, not labelled as such)
+
+== capability checks on the committed (old) lane code (reported, not asserted) ==
+  c15_two_layers_engine.py: exit 1; first failure: [FAILED] parity: spike trains of both layers compared on every row, zero mismatches
+  c16_spike_rate_penalty.py: exit 0; passes on the old code too
+  c17_multi_head_fit.py: exit 1; first failure: TypeError: soft_targets() got an unexpected keyword argument 'target_spread'
+  [ok] temporary directory removed
+
+CHECK RESULT: 25 assertions held, 0 failed 

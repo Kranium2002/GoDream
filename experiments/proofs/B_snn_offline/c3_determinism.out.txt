@@ -1,11 +1,11 @@
-﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
 
 workers: max_steps=150 (config 1500), torch_threads=1 (config); seeds 11, 11, 12
-  process pid=48284 exit=0: RESULT base_seed=11 digest=9c05faf4d3724c71a8f5aa40b4cbed789205fe933debc047952d47f563c0ebe3 steps_run=150 best_step=150 best_validation_loss=0.10174477899220971 init_seed=2351017682 train_seed=2673137959
+  process pid=13128 exit=0: RESULT base_seed=11 digest=d906f860c0356fe832d9c0681d3257e7f969a45420ea6c5a461367bd836b7e11 steps_run=150 best_step=150 best_validation_loss=0.101656723278734 init_seed=2351017682 train_seed=2673137959
   [ok] worker for seed 11 finished
-  process pid=48064 exit=0: RESULT base_seed=11 digest=9c05faf4d3724c71a8f5aa40b4cbed789205fe933debc047952d47f563c0ebe3 steps_run=150 best_step=150 best_validation_loss=0.10174477899220971 init_seed=2351017682 train_seed=2673137959
+  process pid=34068 exit=0: RESULT base_seed=11 digest=d906f860c0356fe832d9c0681d3257e7f969a45420ea6c5a461367bd836b7e11 steps_run=150 best_step=150 best_validation_loss=0.101656723278734 init_seed=2351017682 train_seed=2673137959
   [ok] worker for seed 11 finished
-  process pid=44120 exit=0: RESULT base_seed=12 digest=40686f078df13c03f6a856ba4fbb9f84c017ad9cbceac6f1eefffbd158701417 steps_run=150 best_step=150 best_validation_loss=0.09070026790021961 init_seed=2674260802 train_seed=1121773762
+  process pid=52540 exit=0: RESULT base_seed=12 digest=dbae54f8b7be095e81dfad2e81ef2c5a6acfa4d89192a34f581ceea509c5b01a steps_run=150 best_step=150 best_validation_loss=0.09756548248222138 init_seed=2674260802 train_seed=1121773762
   [ok] worker for seed 12 finished
   [ok] same seed in two separate processes -> identical network digest
   [ok] different seed -> different network digest

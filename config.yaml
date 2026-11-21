@@ -222,7 +222,8 @@ skills:
     # Constants of the physics guess (a straight-line dog and a ballistic ball). The residual model absorbs the rest.
     physics:
       gravity_m_s2: 9.81  # MuJoCo model default, config runtime.
-      assumed_latency_s: 0.15  # Command latency the formula assumes; the true latency is hidden (0.05-0.3 s).
+      assumed_latency_s: 0.05  # Delay before sideways speed starts to change. Starting value from Person A's standstill step traces (messages log, 2026-11-21); the true latency is hidden (0.05-0.3 s).
+      response_time_s: 0.3  # Time constant of the first-order rise of sideways speed after that delay; same source. A step response while trotting would replace both.
       time_step_s: 0.02  # Step of the closest-approach search; equals the 50 Hz control period.
       collision_softness_m: 0.05  # Width of the logistic that turns predicted clearance into a collision probability.
       body_half_length_m: null  # Half length of the trunk along x, from the verified Go2 model.
@@ -316,6 +317,7 @@ tabpfn:
   max_tokens_per_request: 10000  # Refuse an uncached request quoted above this (10000 = minimum charge, E7).
   max_query_rows_per_request: 32000  # Larger query sets are split into requests of at most this many rows. 32000 rows at 40 training rows still quoted the minimum charge (E7 proof p3b_cost_scaling.txt).
   lock_timeout_s: 120  # How long a process waits for another process using the same cache before giving up.
+  lock_poll_s: 0.05  # Pause between attempts to take the cache lock.
   project_token_budget: 35000000  # Total tokens this project may spend. Set by the lead on 2026-11-21: the allowance Prior Labs gave for the track.
 
 persistence:  # Retry of the atomic file move on Windows, where an open reader blocks os.replace (proof p10_persist).
@@ -367,7 +369,15 @@ students:
     evaluate_every_steps: 100
     patience_evaluations: 5  # Stop after this many evaluations without a better validation loss.
     torch_threads: 1  # Training was bitwise reproducible at 1 and 4 threads, not at 16 (proof p04_determinism).
-    shared_skills: [dodge, brake, turn, ramp]  # Fixed order of the shared network's skill ID.
+    adam_beta1: 0.9  # Adam settings, stated here instead of left to the library's defaults.
+    adam_beta2: 0.999
+    adam_eps: 1.0e-8
+    weight_decay: 0.0
+    target_spread: global_median  # global_median: one score scale for all dreams; per_row: each dream's own scale. Compare on dev.
+    parity_logit_tolerance: 1.0e-9  # Largest allowed difference between the trained model's and the deployed network's outputs.
+    out_of_range: error  # A situation outside the declared ranges: error refuses to decide; clip clips it and counts it.
+    shared_skill_slots: 8  # Skill slots reserved in the shared network's input; a skill takes the next free slot when it is added.
+    shared_retention_fraction: 0.1  # Share of each skill's dreams kept only for measuring retention; never trained on and never used for early stopping.
     shared_feature_width: null  # Encoded situation width reserved per skill in the shared network; set when the specs exist.
     rehearsal_fraction: 0.5  # Share of each shared-network batch drawn from earlier skills' stored dreams.
     energy:  # Estimate only. Horowitz, ISSCC 2014, Fig. 1.1.9, 45 nm 0.9 V, doi:10.1109/ISSCC.2014.6757323.

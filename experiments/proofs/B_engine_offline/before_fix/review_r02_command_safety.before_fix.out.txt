@@ -1,0 +1,6 @@
+REVIEW REPRODUCTION - fixture, not evidence
+A. validate_spec rejects it: action 'rv_side' uses command field 'rv_vx_UNVERIFIED', which is not in the verified schema ['rv_vy']
+B. decide_batch accepted it; candidate rv_side values: [-5.0, 0.0, 5.0]
+C. exploration_actions accepted it; rv_side values: [5.0, 0.0, 0.0, 5.0, 0.0, 5.0]
+D. collect: spec.episode reached with action {'rv_side': 5.0, 'rv_delay': 0.2} (world would be stepped now)
+E. validate_spec rejects: ActionDim 'rv_side': a categorical command dimension needs one finite command value per level; action 'rv_side' needs one command value per level inside the verified range [-1.0, 1.0] of 'rv_vy'; got []

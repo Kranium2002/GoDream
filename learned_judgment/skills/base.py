@@ -30,6 +30,8 @@ __all__ = [
     "UnverifiedCommandSchemaError",
     "Variable",
     "World",
+    "check_command_binding",
+    "command_binding_problems",
     "decode_row",
     "encode_row",
     "validate_spec",
@@ -60,7 +62,8 @@ class Variable:
     """One observed situation feature.
 
     kind "float":       requires finite ``low < high`` (unit-bearing range of the feature).
-    kind "categorical": requires ``levels`` (>= 2 unique strings); encoded as level index.
+    kind "categorical": requires ``levels`` (>= 1 unique strings); encoded as level index.
+                        A single level is a declared feature that is constant for now.
     """
 
     name: str
@@ -86,8 +89,8 @@ class Variable:
             if self.levels:
                 found.append(f"{label}: float variables must not declare levels")
         elif self.kind == "categorical":
-            if len(self.levels) < 2 or len(set(self.levels)) != len(self.levels):
-                found.append(f"{label}: categorical variables need >= 2 unique levels")
+            if len(self.levels) < 1 or len(set(self.levels)) != len(self.levels):
+                found.append(f"{label}: categorical variables need >= 1 unique levels")
             if self.low is not None or self.high is not None:
                 found.append(f"{label}: categorical variables must not declare low/high")
         else:
@@ -108,16 +111,30 @@ class ActionDim(Variable):
                     inside that field's verified range.
     role "timing":  the value says when / for how long a verified command is issued
                     (seconds); it has no command field of its own.
+
+    A categorical command dimension must list ``command_values``: the value sent through
+    ``command_field`` for each level, in level order, so that every level can be checked
+    against the verified range.
     """
 
     role: Literal["command", "timing"] = "command"
     command_field: str | None = None
+    command_values: tuple[float, ...] = ()
 
     def problems(self) -> list[str]:
         found = super().problems()
         label = f"ActionDim {self.name!r}"
         if self.role == "command" and not self.command_field:
             found.append(f"{label}: role 'command' needs a command_field")
+        if self.role == "command" and self.kind == "categorical":
+            values_ok = len(self.command_values) == len(self.levels) and all(
+                isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+                for value in self.command_values
+            )
+            if not values_ok:
+                found.append(f"{label}: a categorical command dimension needs one finite command value per level")
+        elif self.command_values:
+            found.append(f"{label}: command_values belong to categorical command dimensions only")
         if self.role == "timing":
             if self.command_field is not None:
                 found.append(f"{label}: role 'timing' must not set command_field")
@@ -221,25 +238,34 @@ class CommandSchema:
         status = policy.get("status")
         if status != "verified":
             raise UnverifiedCommandSchemaError(
-                f"robot.walking_policy.status is {status!r}, not 'verified': the command schema "
-                "must be published by Person A after the locomotion gate passes"
+                f"robot.walking_policy.status is {status!r}, not 'verified': Person A publishes the "
+                "command schema with status 'verified' once every field and range is proven by a recorded run"
             )
         schema = policy.get("command_schema")
         if not isinstance(schema, Mapping) or not isinstance(schema.get("fields"), Mapping) or not schema["fields"]:
             raise UnverifiedCommandSchemaError("robot.walking_policy.command_schema.fields is missing or empty")
+        def number(value: Any) -> bool:
+            return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
         period = schema.get("update_period_s")
-        if not isinstance(period, (int, float)) or isinstance(period, bool) or not period > 0.0:
-            raise UnverifiedCommandSchemaError("robot.walking_policy.command_schema.update_period_s must be > 0")
+        if not number(period) or not period > 0.0:
+            raise UnverifiedCommandSchemaError("robot.walking_policy.command_schema.update_period_s must be a number > 0")
         fields: dict[str, CommandField] = {}
         for name, spec in schema["fields"].items():
+            if not isinstance(name, str) or not name:
+                raise UnverifiedCommandSchemaError(f"command field name {name!r} must be a non-empty string")
             if not isinstance(spec, Mapping):
                 raise UnverifiedCommandSchemaError(f"command field {name!r} must be a mapping")
             missing = [key for key in ("unit", "min", "max") if spec.get(key) is None]
             if missing:
                 raise UnverifiedCommandSchemaError(f"command field {name!r} is missing {missing}")
+            if not isinstance(spec["unit"], str) or not spec["unit"]:
+                raise UnverifiedCommandSchemaError(f"command field {name!r} needs a unit string")
+            if not number(spec["min"]) or not number(spec["max"]):
+                raise UnverifiedCommandSchemaError(f"command field {name!r} needs numeric, finite min and max")
             low, high = float(spec["min"]), float(spec["max"])
-            if not (math.isfinite(low) and math.isfinite(high) and low < high):
-                raise UnverifiedCommandSchemaError(f"command field {name!r} needs finite min < max")
+            if not low < high:
+                raise UnverifiedCommandSchemaError(f"command field {name!r} needs min < max")
             fields[str(name)] = CommandField(
                 name=str(name),
                 unit=str(spec["unit"]),
@@ -278,7 +304,10 @@ class World(Protocol):
     """The public Go2World surface agreed with Person A. Person B imports the real class
     from ``learned_judgment.env``; this Protocol only types what a SkillSpec may call."""
 
-    def reset(self, situation: Mapping[str, Any]) -> Mapping[str, Any]:
+    def reset(self, situation: Mapping[str, Any], attempt_seed: int) -> Mapping[str, Any]:
+        """Start one attempt. The world's constructor seed fixes the hidden world for the whole
+        run; ``attempt_seed`` seeds only this attempt's noise, so every method compared in a run
+        faces the same hidden world and the same noise on the same episode."""
         ...
 
     def step(self, command: Mapping[str, float], duration_s: float) -> Mapping[str, Any]:
@@ -400,12 +429,14 @@ class SkillSpec(ABC):
         """
 
     @abstractmethod
-    def episode(self, world: World, situation: Mapping[str, Any], action: Mapping[str, Any]) -> Mapping[str, float]:
+    def episode(
+        self, world: World, situation: Mapping[str, Any], action: Mapping[str, Any], attempt_seed: int
+    ) -> Mapping[str, float]:
         """Run one actual episode and return the measured outcome, keyed by outcome name.
 
-        Uses only ``world.reset`` / ``world.step`` / ``world.finish_episode`` with verified
-        commands. Every returned value is measured by the simulator; nothing is derived from
-        the intended action.
+        Uses only ``world.reset(situation, attempt_seed)`` / ``world.step`` /
+        ``world.finish_episode`` with verified commands. Every returned value is measured by
+        the simulator; nothing is derived from the intended action.
         """
 
     @abstractmethod
@@ -488,13 +519,19 @@ class SkillSpec(ABC):
 
         A skill overrides this when its situations follow a protocol published in config.yaml
         (for example the reproducible ball-throw distribution).
+
+        The draws are taken row by row, so the first rows of a larger sample equal a smaller
+        sample from the same stream: situation ``i`` does not depend on how many are drawn.
         """
+        draws = rng.random((n, len(self.situation)))
         columns = []
-        for variable in self.situation:
+        for index, variable in enumerate(self.situation):
+            uniform = draws[:, index]
             if variable.kind == "categorical":
-                columns.append(rng.integers(0, len(variable.levels), size=n).astype(np.float64))
+                n_levels = len(variable.levels)
+                columns.append(np.minimum(np.floor(uniform * n_levels), n_levels - 1.0))
             else:
-                columns.append(rng.uniform(variable.low, variable.high, size=n))
+                columns.append(variable.low + uniform * (variable.high - variable.low))
         return np.column_stack(columns) if columns else np.empty((n, 0))
 
     def candidate_actions(self, situation: np.ndarray, points_per_dim: Sequence[int]) -> np.ndarray:
@@ -538,6 +575,51 @@ class SkillSpec(ABC):
 # --------------------------------------------------------------------------------------
 # Validation
 # --------------------------------------------------------------------------------------
+
+
+def command_binding_problems(spec: SkillSpec, command_schema: CommandSchema) -> list[str]:
+    """Every way ``spec``'s action space fails to stay inside the verified command schema.
+
+    Cheap and free of side effects, so it runs in ``validate_spec`` and again immediately
+    before anything steps the simulator.
+    """
+    problems: list[str] = []
+    if not any(dim.role == "command" for dim in spec.actions):
+        problems.append("at least one action dimension must drive a verified command field")
+    for dim in spec.actions:
+        if dim.role != "command" or not dim.command_field:
+            continue
+        if dim.command_field not in command_schema.fields:
+            problems.append(
+                f"action {dim.name!r} uses command field {dim.command_field!r}, which is not in the "
+                f"verified schema {sorted(command_schema.fields)}"
+            )
+            continue
+        verified = command_schema.fields[dim.command_field]
+        if dim.unit != verified.unit:
+            problems.append(f"action {dim.name!r} unit {dim.unit!r} differs from the verified unit {verified.unit!r}")
+        if dim.kind == "float" and dim.low is not None and dim.high is not None:
+            if dim.low < verified.low or dim.high > verified.high:
+                problems.append(
+                    f"action {dim.name!r} range [{dim.low}, {dim.high}] exceeds the verified range "
+                    f"[{verified.low}, {verified.high}] of {dim.command_field!r}"
+                )
+        if dim.kind == "categorical":
+            outside = [value for value in dim.command_values if not verified.low <= value <= verified.high]
+            if len(dim.command_values) != len(dim.levels) or outside:
+                problems.append(
+                    f"action {dim.name!r} needs one command value per level inside the verified range "
+                    f"[{verified.low}, {verified.high}] of {dim.command_field!r}; got {list(dim.command_values)}"
+                )
+    return problems
+
+
+def check_command_binding(spec: SkillSpec, command_schema: CommandSchema) -> None:
+    """Raise :class:`SkillSpecError` unless every command dimension of ``spec`` is bound to a
+    verified command field and stays inside its verified range. Call it before any episode."""
+    problems = command_binding_problems(spec, command_schema)
+    if problems:
+        raise SkillSpecError("; ".join(problems))
 
 
 def validate_spec(
@@ -586,28 +668,7 @@ def validate_spec(
 
     if not 1 <= spec.n_action <= MAX_ACTION_DIMS:
         problems.append(f"the action space must have 1..{MAX_ACTION_DIMS} dimensions; got {spec.n_action}")
-    if not any(dim.role == "command" for dim in spec.actions):
-        problems.append("at least one action dimension must drive a verified command field")
-    for dim in spec.actions:
-        if dim.role != "command" or not dim.command_field:
-            continue
-        if dim.command_field not in command_schema.fields:
-            problems.append(
-                f"action {dim.name!r} uses command field {dim.command_field!r}, which is not in the "
-                f"verified schema {sorted(command_schema.fields)}"
-            )
-            continue
-        verified = command_schema.fields[dim.command_field]
-        if dim.kind == "float" and dim.low is not None and dim.high is not None:
-            if dim.low < verified.low or dim.high > verified.high:
-                problems.append(
-                    f"action {dim.name!r} range [{dim.low}, {dim.high}] exceeds the verified range "
-                    f"[{verified.low}, {verified.high}] of {dim.command_field!r}"
-                )
-            if dim.unit != verified.unit:
-                problems.append(
-                    f"action {dim.name!r} unit {dim.unit!r} differs from the verified unit {verified.unit!r}"
-                )
+    problems.extend(command_binding_problems(spec, command_schema))
 
     hidden = set(hidden_value_names)
     leaked = sorted(hidden.intersection(spec.situation_names))
