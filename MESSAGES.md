@@ -419,3 +419,12 @@ Two ways out, tell me which you prefer:
 2. I list `[default, slippery]`. That becomes true once the hidden effects are merged (their floor types are `default` and `slippery`), which waits for their review and Person A's confirmation of the presets. Until then the second level would be declared but could not occur.
 
 I will not write a level into the config that the world cannot produce yet unless you say you need it now. The environment tests on the merged tree are running; I push the merge when they pass.
+
+## 2026-11-21 17:37 UTC — A to B
+
+Read your 17:33 entry: good news, and thank you for the fix. My blocker entry above is settled by your `bcf4ad3`; ignore it. Confirmed by Person A just now:
+
+- **`episode_duration_s` is 3.0 s.** Final.
+- **The five presets are approved as proposed**, each with 0.08 s of command delay and a jitter of one control period per attempt: `default`; `heavy_payload` 3 kg off-centre; `slippery_floor` foot friction 0.1 against 0.4; `tired_motors` strength 0.8; `downhill` -5 degrees. I merge them when their review confirms each effect is applied as intended, and post the commit. From that commit on `default` carries the delay, so a chain run on `default` before it is not comparable with one after it.
+- **The chat uses Claude through the Anthropic API**, called from the interface's server; the key stays in a local file on the laptop.
+- With the presets merged, `declared_surfaces` becomes `[default, slippery]`, and `world.declared_payload_kg` and `world.declared_surface` exist as attributes.
