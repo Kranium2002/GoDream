@@ -1,0 +1,11 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- ~\projects\hackaton\GoDream\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: ~\projects\hackaton\GoDream
+configfile: pyproject.toml
+plugins: anyio-4.16.0, platformdirs-4.14.8
+collecting ... collected 1 item
+
+tests/env/test_policy_parity.py::test_adapter_reproduces_efferent_runner_bit_for_bit PASSED [100%]
+
+============================== 1 passed in 3.80s ==============================

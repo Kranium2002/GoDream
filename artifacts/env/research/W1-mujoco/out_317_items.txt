@@ -1,0 +1,51 @@
+##### s2_mjspec_add_body
+mujoco 3.17.0 numpy 2.5.5
+before: nbody 14 ngeom 57 nq 19 nv 18
+after: nbody 16 ngeom 59 nq 26 nv 24
+obstacle body id 14 body_mass 2.5 geom id 57 geom_size [0.1 0.1 0.1]
+wall body id 15 body_mass 7.0 (static, no joint -> welded to world: body_weldid=0)
+obstacle qpos adr 19
+keyframe count 1 key_qpos len (1, 26)
+key 'home' qpos[0:19] unchanged: True padded qpos[19:26]: [1.  0.  0.1 1.  0.  0.  0. ]
+obstacle z after 1 s (should rest at 0.1 on floor): 0.0999
+##### s3_geom_distance
+mujoco 3.17.0
+Return smallest signed distance between two geoms and optionally segment from geom1 to geom2.
+nativeccd enabled: True
+centres 0.5 apart, radii 0.1+0.2 -> expected 0.2; got 0.2 float fromto [0.1 0.  1.  0.3 0.  1. ]
+distmax=0.1 (< true distance) -> 0.1 fromto [0. 0. 0. 0. 0. 0.]
+fromto=None -> 0.2
+centres 0.25 apart -> expected -0.05 (signed, penetration); got -0.05000000000000002 fromto [0.1  0.   1.   0.05 0.   1.  ]
+##### s4_renderer
+Traceback (most recent call last):
+  File "~\AppData\Local\Temp\claude\b5a20353bdb366d1\69c7996f-bc6a-4bc2-bb52-6077272ed315\scratchpad\w1\m\scripts\s4_renderer.py", line 21, in <module>
+    with r._gl_context.as_current():
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'GLContext' object has no attribute 'as_current'. Did you mean: 'make_current'?
+MUJOCO_GL env: None
+mujoco 3.17.0
+GLContext class: mujoco.glfw GLContext
+offscreen buffer (offwidth x offheight): 640 480
+frame: ndarray (240, 320, 3) uint8 min 0 max 255 std 41.89 sha256 387f969662f37bc8
+RENDER_FAILED
+##### s6_friction_gravity
+mujoco 3.17.0
+default gravity [ 0.    0.   -9.81] default floor friction [1.e+00 5.e-03 1.e-04]
+upright gravity, mu=1.0   -> x after 1 s: 0.00000
+tilted 20 deg,  mu=1.0   -> x after 1 s: 0.00194  (contact.friction[0]=1.0, tan20=0.364 so it sticks)
+tilted 20 deg,  mu=0.1   -> x after 1 s: 1.21911  (contact.friction[0]=0.1, Coulomb estimate 1.217)
+go2 floor: friction [1.e+00 5.e-03 1.e-04] priority 0 condim 3
+go2 FL foot: friction [0.8  0.02 0.01] priority 1 condim 6
+FL-floor contact friction (as loaded):       (array([0.8 , 0.8 , 0.02, 0.01, 0.01]), 6)
+after floor friction -> 0.2 (foot priority):  (array([0.8 , 0.8 , 0.02, 0.01, 0.01]), 6)
+after floor priority -> 2:                    (array([2.e-01, 2.e-01, 5.e-03, 1.e-04, 1.e-04]), 3)
+floor priority back 0, foot friction -> 0.3:  (array([0.3 , 0.3 , 0.02, 0.01, 0.01]), 6)
+##### s7_contacts
+mujoco 3.17.0
+geom ids: floor 0 feet {'FL': 20, 'FR': 32, 'RL': 44, 'RR': 56} unknown name -> -1
+t=0 (home keyframe): ncon 4 {'FL': (True, np.float64(29.23714940588055)), 'FR': (True, np.float64(29.236991112754854)), 'RL': (True, np.float64(27.747751155902954)), 'RR': (True, np.float64(27.747455868722504))}
+t=0.050 ncon 4 {'FL': (True, np.float64(13.35)), 'FR': (True, np.float64(13.35)), 'RL': (True, np.float64(8.32)), 'RR': (True, np.float64(8.32))}
+contact[0] fields: geom1 0 geom2 20 geom [ 0 20] dist -0.010145 pos [ 0.1913  0.1423 -0.0051] dim 6 exclude 0 efc_address 12
+names of contact[0]: floor / FL
+all contacts by body: [('world', 'FL_calf'), ('world', 'FR_calf'), ('world', 'RL_calf'), ('world', 'RR_calf')]
+t=3.050 after collapse (zero ctrl): ncon 7, base-body geoms touching floor: [6, 8]

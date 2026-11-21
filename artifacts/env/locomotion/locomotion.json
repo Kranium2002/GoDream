@@ -1,0 +1,149 @@
+[
+  {
+    "condition": "trot_0.3",
+    "command": {
+      "vx": 0.3,
+      "yaw_rate": 0.0,
+      "duration_s": 30
+    },
+    "seed": 20261121,
+    "measured": {
+      "fallen": false,
+      "max_tilt_deg": 3.0119242649982723,
+      "mean_speed_m_s": 0.2256047104448659,
+      "mean_yaw_rate_rad_s": 0.12092774344642823,
+      "final_speed_m_s": 0.22524477670704066,
+      "rtf": 7.929112428918888,
+      "cpu_fraction": 1.7636444924619668,
+      "trace_path": "artifacts/env/locomotion/trot_0.3.npz"
+    },
+    "criterion": "not fallen and |mean_speed_m_s - 0.3| <= 0.06",
+    "passed": false
+  },
+  {
+    "condition": "trot_0.6",
+    "command": {
+      "vx": 0.6,
+      "yaw_rate": 0.0,
+      "duration_s": 30
+    },
+    "seed": 20261121,
+    "measured": {
+      "fallen": false,
+      "max_tilt_deg": 4.332483183515712,
+      "mean_speed_m_s": 0.5429880226184444,
+      "mean_yaw_rate_rad_s": 0.07339671314133209,
+      "final_speed_m_s": 0.5346187252858564,
+      "rtf": 8.776096206030047,
+      "cpu_fraction": 1.802810204088208,
+      "trace_path": "artifacts/env/locomotion/trot_0.6.npz"
+    },
+    "criterion": "not fallen and |mean_speed_m_s - 0.6| <= 0.12",
+    "passed": true
+  },
+  {
+    "condition": "trot_0.9",
+    "command": {
+      "vx": 0.9,
+      "yaw_rate": 0.0,
+      "duration_s": 30
+    },
+    "seed": 20261121,
+    "measured": {
+      "fallen": false,
+      "max_tilt_deg": 4.753911427887064,
+      "mean_speed_m_s": 0.859645935840192,
+      "mean_yaw_rate_rad_s": 0.05223783201228356,
+      "final_speed_m_s": 0.8623002699067961,
+      "rtf": 7.474174912081185,
+      "cpu_fraction": 1.6212364699001733,
+      "trace_path": "artifacts/env/locomotion/trot_0.9.npz"
+    },
+    "criterion": "not fallen and |mean_speed_m_s - 0.9| <= 0.18",
+    "passed": true
+  },
+  {
+    "condition": "turn_left",
+    "command": {
+      "vx": 0.3,
+      "yaw_rate": 0.5,
+      "duration_s": 10
+    },
+    "seed": 20261121,
+    "measured": {
+      "fallen": false,
+      "max_tilt_deg": 4.435621063771265,
+      "mean_speed_m_s": 0.2824667374973125,
+      "mean_yaw_rate_rad_s": 0.4976198832825115,
+      "final_speed_m_s": 0.29966609075591916,
+      "rtf": 6.779436130085269,
+      "cpu_fraction": 1.3922056338566626,
+      "trace_path": "artifacts/env/locomotion/turn_left.npz"
+    },
+    "criterion": "not fallen and |mean_yaw_rate_rad_s - 0.5| <= 0.15",
+    "passed": true
+  },
+  {
+    "condition": "turn_right",
+    "command": {
+      "vx": 0.3,
+      "yaw_rate": -0.5,
+      "duration_s": 10
+    },
+    "seed": 20261121,
+    "measured": {
+      "fallen": false,
+      "max_tilt_deg": 5.077892867111303,
+      "mean_speed_m_s": 0.2099015013097358,
+      "mean_yaw_rate_rad_s": -0.5065521291901162,
+      "final_speed_m_s": 0.233703953692008,
+      "rtf": 7.533666070218368,
+      "cpu_fraction": 1.5891326866865345,
+      "trace_path": "artifacts/env/locomotion/turn_right.npz"
+    },
+    "criterion": "not fallen and |mean_yaw_rate_rad_s - -0.5| <= 0.15",
+    "passed": true
+  },
+  {
+    "condition": "stop",
+    "command": {
+      "vx": 0.6,
+      "trot_s": 5,
+      "stop_s": 5
+    },
+    "seed": 20261121,
+    "measured": {
+      "fallen": false,
+      "max_tilt_deg": 4.332483183515712,
+      "mean_speed_m_s": 0.010826230661815957,
+      "mean_yaw_rate_rad_s": 0.10884248869816128,
+      "final_speed_m_s": 0.012978207917504701,
+      "rtf": 9.552435639006562,
+      "cpu_fraction": 1.7910816823135585,
+      "trace_path": "artifacts/env/locomotion/stop.npz"
+    },
+    "criterion": "not fallen and final_speed_m_s < 0.05",
+    "passed": true
+  },
+  {
+    "condition": "stand",
+    "command": {
+      "vx": 0.0,
+      "yaw_rate": 0.0,
+      "duration_s": 30
+    },
+    "seed": 20261121,
+    "measured": {
+      "fallen": false,
+      "max_tilt_deg": 2.1583535745739133,
+      "mean_speed_m_s": 0.0037872508399262295,
+      "mean_yaw_rate_rad_s": 0.13689867155631505,
+      "final_speed_m_s": 0.015684918772534747,
+      "rtf": 7.183536331969913,
+      "cpu_fraction": 1.653930010256155,
+      "trace_path": "artifacts/env/locomotion/stand.npz"
+    },
+    "criterion": "not fallen",
+    "passed": true
+  }
+]

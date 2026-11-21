@@ -1,0 +1,8 @@
+mujoco 4.0.1 numpy 2.5.5
+geomDistance 0.2 fromto [0.1 0.  0.  0.3 0.  0. ]
+render ok via mujoco.glfw (240, 320, 3) uint8
+determinism ok
+friction/gravity ok
+contacts [('floor', 'FL'), ('floor', 'FR'), ('floor', 'RL'), ('floor', 'RR')]
+steps/s 8510  real-time factor 17.0x
+PROOF_OK

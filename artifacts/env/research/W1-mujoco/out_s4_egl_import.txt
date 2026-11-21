@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import mujoco
+  File "~\AppData\Local\Temp\claude\b5a20353bdb366d1\69c7996f-bc6a-4bc2-bb52-6077272ed315\scratchpad\w1\m\.venv\Lib\site-packages\mujoco\__init__.py", line 100, in <module>
+    from mujoco.rendering.classic.renderer import Renderer  # pyrefly: ignore[missing-import]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~\AppData\Local\Temp\claude\b5a20353bdb366d1\69c7996f-bc6a-4bc2-bb52-6077272ed315\scratchpad\w1\m\.venv\Lib\site-packages\mujoco\rendering\classic\renderer.py", line 21, in <module>
+    from mujoco.rendering.classic import gl_context
+  File "~\AppData\Local\Temp\claude\b5a20353bdb366d1\69c7996f-bc6a-4bc2-bb52-6077272ed315\scratchpad\w1\m\.venv\Lib\site-packages\mujoco\rendering\classic\gl_context.py", line 34, in <module>
+    raise RuntimeError(
+        f'invalid value for environment variable MUJOCO_GL: {_MUJOCO_GL}')
+RuntimeError: invalid value for environment variable MUJOCO_GL: egl

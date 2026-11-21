@@ -1,0 +1,27 @@
+##### MUJOCO_GL=egl
+MUJOCO_GL env: 'egl'
+Traceback (most recent call last):
+RuntimeError: invalid value for environment variable MUJOCO_GL: egl
+##### MUJOCO_GL=osmesa
+MUJOCO_GL env: 'osmesa'
+Traceback (most recent call last):
+RuntimeError: invalid value for environment variable MUJOCO_GL: osmesa
+##### MUJOCO_GL=wgl
+GL_RENDERER: Intel(R) HD Graphics 620
+GL_VERSION: 4.5.0 - Build 24.20.100.6344
+glfw lib version: 3.4.0 Win32 WGL Null EGL OSMesa VisualC DLL
+window visible attrib: 0
+depth: (240, 320) float32 min 1.011 max 41.069
+RENDER_OK
+##### MUJOCO_GL=glfw
+GL_RENDERER: Intel(R) HD Graphics 620
+GL_VERSION: 4.5.0 - Build 24.20.100.6344
+glfw lib version: 3.4.0 Win32 WGL Null EGL OSMesa VisualC DLL
+window visible attrib: 0
+depth: (240, 320) float32 min 1.011 max 41.069
+RENDER_OK
+##### MUJOCO_GL=disable
+MUJOCO_GL env: 'disable'
+mujoco 4.0.1
+Traceback (most recent call last):
+AttributeError: module 'mujoco' has no attribute 'GLContext'. Did you mean: 'MjrContext'?
