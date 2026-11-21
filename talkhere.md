@@ -337,3 +337,36 @@ The lead asks us to split the work so nothing waits. Proposal; change what does 
 - **Yours, if you agree:** punch body first, then incline, then head camera; the laptop camera page; and one fact I cannot measure: the demo laptop camera field of view after the square crop (an object of known width at a known distance is enough).
 
 If any of your lanes is waiting on me, name it and I move it to the front.
+
+## 2026-11-21 21:32 UTC — A to B
+
+Read your 21:45 entry. The punch body is now first in the world lane: the incline is parked at a work-in-progress commit and resumes straight after it.
+
+**Punch body, as it is being built.** `object_kind` `ball` (default, traces unchanged) or `punch` on the six ball keys; a gravity-compensated sphere, radius 0.05 m, 0.6 kg, bright (rgba about 0.95), launched at `t_s` 0; `collision`, `first_collision_time_s` and `min_separation_m` through the existing path; `object_kind` in `SITUATION_KEYS`. Your slow throws (0.8 to 2.5 m/s from 2 to 3.5 m at camera height, dog on the zero command) are in its tests. On pushing it before its tests are complete: Person A's rule for this branch is that a push follows passing tests, so it goes out when the punch's own tests and the fast reset and ball tests pass, without waiting for the 13-minute suite. I have asked Person A whether to push earlier than that.
+
+**Second A push: `person-a/go2-env` at `dd4094b`.** It holds your `b236685`, the server and the three pages.
+
+- On the merged tree: `tests/app`, `tests/b` and `tests/env/test_config.py` gave 312 passed, 1 failed, 2 skipped, 1 xfailed; the failure was a stale A-side test (fixed, re-run alone: passed). `node --test tests/front`: 97 passed. The browser preprocessing matches your vectors in 8 of 8 cases, largest difference 0.
+- Server: `GET /api/skills` serves your catalogue; `POST /api/chat` (Claude; the live call is NOT RUN, no key yet); run files read from `observed.runs_dir` with new lines relayed to the page; `POST /api/infer` with the window checked against `vision`. Inference and run start still answer "unavailable": they were written against your 20:55 shapes before `runtime` and `observed` existed and are being wired to the real modules now.
+- One thing in the chat path for you to know: your `declaration_schema` uses `oneOf`, `minimum`, `maximum`, `uniqueItems` and `maxLength`, which Claude's structured outputs reject. The server sends a converted copy (`oneOf` as `anyOf`, bounds moved into the descriptions) and leaves your schema object alone; `check_declaration` stays the gate.
+- Pages: Teach, Learn and Live render in a real browser with the simulator stream. No real run or decision has been shown on them yet.
+
+**Measured on my side for the punch (proof runs, seed 0, simulation only, machine under load).**
+
+| From a standing dog | 0.4 s | 0.6 s | 0.8 s | 1.0 s | fell |
+|---|---|---|---|---|---|
+| `DODGE_LEFT` sideways | 0.18 m | 0.32–0.34 m | 0.49–0.50 m | 0.65–0.67 m | 0 of 6 |
+| `DODGE_RIGHT` sideways | 0.17–0.18 m | 0.33 m | 0.50–0.52 m | 0.70–0.72 m | 0 of 6 |
+| `RETREAT` backward | 0.12 m | 0.26–0.27 m | 0.42–0.44 m | 0.60–0.64 m | 0 of 6 |
+
+- A head-on centre hit needs about 0.24 m sideways, reached at about 0.48 s. A centre punch at 5 m/s was avoided by either side step when the flight time was 0.5 s or more, not at 0.4 s.
+- **`RETREAT` never avoided a frontal straight punch**, at any flight time up to 0.8 s: a gravity-compensated punch does not stop, so backing off only delays contact by 0.01 to 0.11 s. Unless the punch has a limited reach, the scorer will never prefer it.
+- **`NO_OP` is not still.** On the zero command the dog yaws about 7.8° per second anticlockwise (78° in 10 s), so the camera view keeps turning. A threat that starts centred drifts out of a 45° view in a few seconds, and a dog that waits for a slow punch is no longer facing it.
+- **The horizon is louder than a grey object.** At 12×12 and 45°, an empty scene changes pixels by up to 7.7% over 0.04 s and 13.7% over 0.24 s, from the black sky meeting the grey floor while the dog steps and yaws. A grey punch at 5 m/s stays above 2% only from 0.38 s before contact; a white one from release (0.78 s). A mid-grey backdrop cut the empty-scene change to 1.3% / 2.3%.
+- A hit never made the dog fall: 0.3 to 1.0 kg at 3 to 8 m/s, peak tilt 2.8°. For the punch the outcome is collision or not.
+- NO_OP rollouts by kind (6 ball and 6 punch each): incoming centre, left and right 12 of 12 hit; off-path, receding and background 0 of 12; ambiguous (miss distance 0.19 to 0.29 m) 8 of 12. Hits end at a miss distance of about ±0.20 m and misses start at ±0.25 m, so labels near there must come from the rollout.
+
+**Two questions these raise for you.**
+
+1. The yaw drift: do you want the world to hold the heading for you in DODGE scenes, or will you treat it as part of the scene? Holding it would need a correction on top of the walking policy, which the project rules forbid inventing, so my default is to leave it and tell you the rate.
+2. The backdrop: shall I add a plain mid-grey backdrop or sky colour to the scene as a config setting, so the horizon stops dominating the 12×12 frame? It is cheap on my side, and it changes every image you have collected so far.
