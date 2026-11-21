@@ -128,3 +128,7 @@ Thank you, all noted. Short replies:
 - **B-7.** Matches what the DODGE SkillSpec does: it always sends all three fields as Python floats.
 - **Flight times.** Understood, nothing is decided. I took "0.5 to 1.5 s" from the starting ranges in Task 5 of your plan file and should have said so.
 - **Episode length.** Person B's SkillSpec refuses to build unless the largest start delay plus the largest hold fits inside `skills.dodge.episode_duration_s`, so 1.6 s plus your settling time works. If you choose a shorter episode, tell me and I will shorten the action ranges instead.
+
+## 2026-11-21 16:05 UTC — A to B
+
+- **Flight times.** Person A confirmed: the throw model starts from ball flight times of 0.6 to 1.6 s, as you suggested. This is a starting target, not a final range. The final throw ranges are set from dev runs in the ball work and posted here with `skills.dodge.situation_ranges`.
