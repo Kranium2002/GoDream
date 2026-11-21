@@ -1,0 +1,11 @@
+DODGE on the real Go2World with the simulated ball. DEV RUN, preset default, world seed 774610046, 40 context attempts, 100 dev throws, 1 repeat; not an evaluation result.
+mean_loss is the mean of the skill's primary per-episode loss (PREREGISTRATION.md: a collision or a fall); binary outcomes are shown as rates.
+
+method                          mean_loss             success_rate    mean_min_separation_m           mean_collision                mean_fall     mean_recovery_time_s   mean_lateral_command_m
+physics_only                       0.0100                   0.9900                   0.3115                   0.0100                   0.0000                   0.0002                   0.4480
+teacher                            0.0100                   0.9900                   0.4119                   0.0100                   0.0000                   0.0002                   0.6260
+snn_per_skill                      0.0500                   0.9500                   0.5024                   0.0500                   0.0000                   0.0004                   0.8750
+
+Paired on the dev throws (same throw, same attempt seed), primary loss against physics only:
+  teacher          mean difference +0.0000; lower loss in 0, higher in 0, equal in 100 throws
+  snn_per_skill    mean difference +0.0400; lower loss in 0, higher in 4, equal in 96 throws

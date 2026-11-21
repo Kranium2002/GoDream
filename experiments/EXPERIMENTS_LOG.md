@@ -554,3 +554,32 @@ Both exit 0; each throw and its outcome in `artifacts/env/dodge-calibration/<run
 **Versions.** As E6 (simulator half); `config_sha256` 2aaac75b…ca362 (before the final aim error and situation ranges, which a run without a ball does not read).
 
 **Cost.** TabPFN calls: 0.
+
+## B-dodge-chain — the whole learning chain on DODGE with the simulated ball — 2026-11-21 — Person B
+
+- Question: does the chain run end to end on DODGE with Person A's ball, and what do physics only, the teacher and the SNN each achieve on unseen throws?
+- Status: DEV RUN on the real simulator. One world, one seed, one repeat per throw. Person A's ball code was merged at `c4a35eb` before its independent review, at Person B's request. These are development measurements. They are not evaluation results and enter no report or table.
+- Versions: `person-b` at `bcf4ad3`; mujoco 3.11.0, tabpfn-client 0.10.1 (model `v3.5_default`, 8 estimators), torch 2.15.0+cpu, snntorch 1.0.0, Python 3.13. `Go2World` in the `default` preset has no hidden effects yet (no payload, no added latency, default floor).
+- Config and seeds: config digest `6aef6cb771af`; `runtime.seed` 20261121; world seed 774610046 (stream `dodge/dev/world/default`); situations from Person A's throw model through the `context` and `dev` splits; candidate grid 9 x 4 x 3 = 108 actions; episode 3.0 s.
+- Command: `.venv\Scripts\python.exe experiments\proofs\B_dodge_real\dodge_chain.py --preset default`, exit code 0. Output: `experiments/proofs/B_dodge_real/dodge_chain.out.txt`; artifacts in `experiments/proofs/B_dodge_real/out/chain_default_20261121T173315Z/`.
+- Protocol: 40 real context throws with exploration actions; the teacher fitted on them; 2000 throws dreamed by the teacher; a spiking network (one hidden layer of 64, 10 time steps) trained in that dream; then physics only, the teacher and the SNN each decided the same 100 dev throws, and every decision was run on the simulator with the same attempt seeds (300 episodes).
+- Measured on the 100 dev throws:
+
+  | Method | Collisions | Falls | Mean closest distance (m) | Mean commanded sideways travel (m) |
+  |---|---|---|---|---|
+  | physics_only | 1 of 100 | 0 | 0.3115 | 0.448 |
+  | teacher | 1 of 100 | 0 | 0.4119 | 0.626 |
+  | snn_per_skill | 5 of 100 | 0 | 0.5024 | 0.875 |
+
+  - Paired with physics only on the same throw and attempt seed: the teacher's primary loss (a collision or a fall) was equal in all 100 throws; the SNN's was higher in 4 throws and equal in 96.
+  - The 40 exploration attempts: 11 collisions (27.5%), no fall. Residual of the closest distance (measured minus formula): mean -0.086 m, standard deviation 0.109 m; the formula predicts more clearance than the simulator gives.
+  - The teacher's decision differed from the physics action in 69 of 100 dev throws and in 1339 of 2000 dreams. The SNN chose the teacher's action in 22 of 100 dev throws.
+  - SNN training: 1500 steps (the limit), validation loss 1.016 to 0.482, still falling at the last step.
+  - Time: 40 attempts 26.8 s; teacher decisions for 100 dev throws 5.2 s; 2000 dreams 80.4 s; SNN training 18.7 s; the SNN decided 100 throws in 9.5 ms; dev episodes 0.79 to 0.95 s each.
+- TabPFN calls: 15 billed requests, 150,000 tokens quoted. Account usage 250,000 of 35,000,000 tokens after the run.
+- What this shows, stated plainly:
+  - The chain works on DODGE with the real ball.
+  - **DODGE in this world is too easy for the formula.** With the ball's exact position and velocity given at the throw and no hidden effects in the world, the formula's own decision avoids the ball in 99 of 100 throws. The teacher has nothing left to gain on collisions; it only buys more clearance with more motion. The project's difficulty target (physics-only error at least 3 times the noise floor) is not met for DODGE in the `default` preset as it stands.
+  - **The SNN is worse than the formula here** (5 collisions against 1). Its training had not converged at the step limit, and it agrees with the teacher on 22 of 100 decisions. This is a negative result for the current SNN settings on DODGE.
+- Limitations: one world, one seed, one repeat, no intervals, no oracle; unreviewed ball code; no hidden effects; no confidence threshold, so every dream was kept; SNN settings are the starting values and were not tuned.
+- Decision: do not tune anything on these numbers yet. Open questions for the lead and Person A: make DODGE need learning by (a) the hidden effects and presets (in review on Person A's side), (b) harder throws, or (c) replacing the exact ball state by what a simulated onboard sensor reports. Then choose the SNN's size and step limit on dev data.

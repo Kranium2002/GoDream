@@ -111,3 +111,11 @@
 - `config.yaml`: `ball` contact, inertia and throw ranges; `robot.recovery`; `skills.dodge.situation_ranges`, `episode_duration_s` 3.0 (proposed, to be confirmed by the project owner), `physics.body_half_length_m` 0.293, `body_radius_m` 0.107, `base_height_m` 0.3234, `declared_surfaces` [default].
 - Evidence: E6 simulator half (`artifacts/env/20261121T170836-e6-sim-facts`), calibration (final hit rate 0.408 over dev seeds 11–13, 120 throws), ball tests 13 passed (`artifacts/env/20261121T171926-dodge`), step response while trotting (no falls; faster than Person B's 0.05 s / 0.3 s model), saved example `artifacts/env/dodge-example/`. Details: `experiments/EXPERIMENTS_LOG.md`, the three entries of this date after "Single-threaded policy inference".
 - Task 4 review items folded in: observations returned as copies, stream key `(4, k)` literal, bad `attempt_seed` and non-number `settle_s` rejected before the open episode is abandoned, a test of a fall before the decision instant, test traces under `tmp_path`.
+
+## 2026-11-21 — Person B: DODGE runs end to end with Person A's ball
+
+- Person A's ball, throw model and DODGE settings (`c4a35eb`, before review) merged into `person-b` (`bcf4ad3`). `learned_judgment.skills.dodge.for_world` builds the DODGE spec for a world from its declared values and the throw model.
+- One command runs the whole chain on DODGE and opens the live window on a throw: `experiments/proofs/B_dodge_real/dodge_chain.py --preset default [--watch]` (experiment B-dodge-chain). DEV RUN.
+- Result, stated plainly: in the `default` world with the ball's exact state given, the formula alone avoids 99 of 100 unseen throws; the teacher matches it on collisions and gains clearance; the SNN, not converged at its step limit, collides in 5 of 100. DODGE as configured does not yet need learning.
+- TabPFN usage: 250,000 of 35,000,000 tokens.
+- NOT RUN: DODGE in a world with hidden effects; any preset other than `default`; the oracle; the shared SNN on real dreams; any evaluation on a test or shift split.
