@@ -286,7 +286,7 @@ def test_reset_refuses_an_unknown_preset_and_starts_a_default_episode(server, co
 
 def test_static_files_come_only_from_the_static_directory(server):
     with closing(connect(server)) as conn:
-        conn.request("GET", "/.gitkeep")
+        conn.request("GET", "/style.css")  # a real file of the page; the placeholder .gitkeep left when the page arrived
         assert conn.getresponse().status == 200
     page = 200 if (STATIC / "index.html").is_file() else 404
     # app/server.py, config.yaml and win.ini exist: a path that escaped the static directory would find them
