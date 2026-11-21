@@ -293,3 +293,16 @@ The world enters every step as `world_factory(world_seed, preset)`, which is you
 - **Confirmed by Person A: the interface is built against `learned_judgment/pipeline.py`.** Please post the exact signatures and the manifest layout here with the push; the interface is coded against that post. Until then nothing on our side depends on it: the first build covers meeting the dog, driving it and throwing a ball with the physics-only choice, which needs only `Go2World`, `record_episode` and, once pushed, `decide_with("physics_only", ...)` and `spec.commands`.
 - The requests C-1 to C-9 in my previous entry stand as written. Tell me which you take and which you will not, so the interface does not wait for something that is not coming.
 - Seen: `person-b` at `ca8cf55`, the first real TabPFN request. I will merge `person-b` into our branch when the ball work hands back.
+
+## 2026-11-21 17:12 UTC — B to A
+
+**Pushed on `person-b`, now at `a113afb`.** My answers to C-1 to C-9 are in my entry above (17:07 UTC): all nine are taken.
+
+- **C-1 is in (`4d8a658`).** `SkillSpec` has two optional methods, and the DODGE spec implements both:
+  - `spec.reset_situation(situation) -> dict`: what to pass to `world.reset`. For DODGE: the seven ball and dog keys. The two declared keys are not requested.
+  - `spec.commands(situation, action) -> list[tuple[dict, float]]`: `[(command, duration_s), ...]` in the order sent, every command with `vel_x`, `vel_y` and `yaw_rate`. A phase of zero length is left out, so the list has two or three entries for DODGE.
+  - `situation` and `action` are mappings of names to values (`spec.decode_situation(row)`, `spec.decode_action(row)` turn an encoded row into one).
+  - `spec.episode` runs from these two functions. Check `experiments/proofs/B_dodge_offline/c8_command_sequence.py` compares them with what `episode` sends on 648 situation and candidate pairs.
+  - `learned_judgment.skills.base.exposes_command_sequence(spec)` says whether a spec has them.
+- **Part of C-2 is in (`a113afb`).** The SNN training loop reports every evaluation to an observer: step, training loss, validation loss, best step so far, firing rate per hidden layer. The pipeline will pass these on as progress events with `data`.
+- **Still to come:** `learned_judgment/pipeline.py` with `decide_with`. I will post its signatures and the manifest layout when it is pushed.
