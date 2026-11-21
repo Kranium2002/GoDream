@@ -251,8 +251,8 @@ def test_every_field_moves_the_dog_the_signed_way(config, tmp_path):
 **Interfaces:**
 - Consumes: `WalkingPolicy`, `validate_command`, `CommandError`.
 - Produces: `load_config(path="config.yaml") -> dict`; `make_streams(seed: int) -> dict[str, np.random.Generator]` with keys `situation`, `world`, `ball`, `noise`; `build_model(config: dict, hidden: dict) -> mujoco.MjModel`.
-- Produces: `Go2World(config: dict, seed: int, preset: str = "default")` with `reset(situation: dict | None = None) -> dict`, `step(command: dict, duration_s: float) -> dict`, `finish_episode() -> dict`, `render_frame() -> np.ndarray` (H×W×3 uint8), `command_schema: dict`.
-- Situation keys (all optional; names agreed with Person B, HANDOFF_PERSON_B.md item 4): `dog_forward_speed_m_s` (forward command held during `settle_s`, default 0.0), `settle_s`, the six ball keys (Task 5), `noise_key: int` (per-episode noise is drawn from `(seed, noise_key)`; absent means the episode counter).
+- Produces: `Go2World(config: dict, seed: int, preset: str = "default")` with `reset(situation: dict | None = None, attempt_seed: int | None = None) -> dict`, `step(command: dict, duration_s: float) -> dict`, `finish_episode() -> dict`, `render_frame() -> np.ndarray` (H×W×3 uint8), `command_schema: dict`.
+- Situation keys (all optional; names agreed with Person B, HANDOFF_PERSON_B.md item 4): `dog_forward_speed_m_s` (forward command held during `settle_s`, default 0.0), `settle_s`, the six ball keys (Task 5). Two levels of seed (HANDOFF_PERSON_B.md item 8): the constructor `seed` (with the preset) fixes the hidden world for the whole life of the object; `attempt_seed` fixes the per-attempt noise of one episode, drawn from `(seed, attempt_seed)`, so two worlds with the same `seed` and the same `attempt_seed` face identical noise. `attempt_seed=None` means the episode counter.
 - Observation keys (world frame, z up, SI units, quaternion w-x-y-z, one observation per control period): `t_s` (0 at the end of settling), `base_pos_m`, `base_quat_wxyz`, `base_lin_vel_m_s`, `base_ang_vel_rad_s`, `joint_pos_rad`, `joint_vel_rad_s`, `policy_obs`, `foot_contact` (4 bools, model foot order), `fallen`, `ball` (`None` until Task 5), `command_active` (what the policy is receiving now), `declared_payload_kg`, `declared_surface`.
 - Outcome keys: `elapsed_s`, `fall` (0 or 1), `fall_time_s`, `sim_unstable`, `commands_received` (list of `(t_s, command)`), `final_base_pos_m`, `declared_payload_kg`, `declared_surface`, `trace_path` (`.npz` with every observation array per control period). Hidden values are written only to `<trace>.hidden.json`.
 
@@ -296,7 +296,7 @@ def test_streams_are_independent_and_repeatable():
 @pytest.mark.system
 def test_fixed_seed_reproduces_the_episode(config, forward):
     def run():
-        w = Go2World(config, seed=20261121); w.reset({"noise_key": 3}); w.step(forward, 3.0)
+        w = Go2World(config, seed=20261121); w.reset(attempt_seed=3); w.step(forward, 3.0)
         return dict(np.load(w.finish_episode()["trace_path"]))
     first, second = run(), run()
     assert first.keys() == second.keys() and all(np.array_equal(first[k], second[k]) for k in first)
@@ -351,7 +351,7 @@ def test_wide_throw_misses_even_after_bouncing(world, zero):
 def test_ball_ignores_the_chosen_command(config, zero, forward):
     def flight(cmd):
         w = Go2World(config, seed=11); throw = w.sample_dodge_situation()
-        w.reset(throw | {"noise_key": 0}); w.step(cmd, 0.1)  # every sampled throw is still more than 0.1 s from the dog
+        w.reset(throw, attempt_seed=0); w.step(cmd, 0.1)  # every sampled throw is still more than 0.1 s from the dog
         return throw, np.load(w.finish_episode()["trace_path"])["ball_pos_m"]
     (t1, p1), (t2, p2) = flight(zero), flight(forward)
     assert t1 == t2 and np.array_equal(p1, p2)

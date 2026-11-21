@@ -39,3 +39,15 @@ Efferent is the first path in the mandated order and its proof passed (experimen
 ## 2026-11-21 — Command schema `verified` means proven fields and ranges, not tracking
 
 The integrator's rule for Task 3: `robot.walking_policy.status` becomes `verified` once every command field is proven at both ends of its range by a recorded run (no fall, response with the commanded sign); it makes no claim about speed-tracking accuracy, which stays with Gate 1 (still failing at 0.3 m/s). Applied on E4 (`artifacts/env/commands/commands.json`): `vel_x`, `vel_y` and `yaw_rate` all proven at −1 and 1, nothing narrowed.
+
+## 2026-11-21 — Gate 1 result at 0.3 m/s accepted as measured
+
+The locomotion gate fails on one of its seven conditions: 0.3 m/s commanded gave 0.2256 m/s, outside the 20% tolerance (0.24 to 0.36). The parity test shows our adapter reproduces Efferent's own runner exactly, and the review of that work recomputed every gate value from the saved traces, so the shortfall is the borrowed policy's behaviour and not our wiring. Person A decided to accept the result as measured and continue. The tolerance stays at 20%, nothing is tuned, and the gate row stays FAIL for that condition in `ENV_REPORT.md`.
+
+This sets aside, for this one condition, the rule to stop at a failed gate and to move to the next locomotion path. rl_sar's robot_lab checkpoint is the same policy (experiment E2), so it would not change the result; rl_sar himloco and Quadruped-PyMPC were not tried. The integrator can reverse this.
+
+Consequences for the skills: low forward commands under-deliver by about a quarter, and with zero yaw commanded the dog turns anticlockwise at 0.05 to 0.14 rad/s.
+
+## 2026-11-21 — Two levels of seed, in Person B's proposed form
+
+`Go2World(config, seed, preset)` fixes the hidden world for the life of the object. `reset(situation, attempt_seed)` fixes one episode's noise, drawn from `(seed, attempt_seed)`; leaving `attempt_seed` out uses the episode counter. This replaces the `noise_key` situation key of the plan (HANDOFF_PERSON_B.md item 8).

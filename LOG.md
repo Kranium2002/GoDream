@@ -32,3 +32,10 @@
 - Added `prove_commands` (`acceptance.py`) and `validate_command` / `CommandError` (`learned_judgment/env/commands.py`, exported from `learned_judgment.env`): strict, every field required, never clips.
 - Proof run: exit code 0, `artifacts/env/20261121T153523-commands-proof`, results in `artifacts/env/commands/commands.json`. `vel_x`, `vel_y` (m/s) and `yaw_rate` (rad/s) each proven at −1 and 1 (no fall, commanded sign): measured −0.8880 / 0.9243, −1.0349 / 0.8939, −0.9555 / 0.9687. Nothing narrowed.
 - `config.yaml` `robot.walking_policy.command_schema` published in Person B's layout with `update_period_s` 0.02; `status: verified`, meaning the fields and ranges are proven, not that speeds are tracked (Gate 1 still fails at 0.3 m/s). Tests: `artifacts/env/20261121T153641-commands`, exit 0, 6 passed. Details: `experiments/EXPERIMENTS_LOG.md`, "E4 — command inventory"; handoff: `HANDOFF_PERSON_A.md` item 3.
+
+## 2026-11-21 — Person A: Gate 1 reviewed; 0.3 m/s result accepted as measured
+
+- Independent review of the walking-adapter work: all 21 gate values recomputed from the seven saved traces, each equal to `artifacts/env/locomotion/locomotion.json`. The 0.3 m/s miss holds in every 5 s window (0.2205 to 0.2271 m/s).
+- Decision recorded in `DECISIONS.md`, "Gate 1 result at 0.3 m/s accepted as measured". No tolerance changed, nothing tuned.
+- Moved to the `Go2World` work from that review: spawn settings go from code into `config.yaml`, and fall detection must cover the settling period.
+- `HANDOFF_PERSON_A.md` updated: gate results, real-time factor 7.80, and the two-level seed in Person B's form (their new item 8).

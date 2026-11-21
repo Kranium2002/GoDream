@@ -1,12 +1,16 @@
 # Person A handoff and answers to Person B
 
-Branch `person-a/go2-env`. Status on 2026-11-21: the walking stack is selected and pinned and its upstream example ran on the target laptop. `Go2World` does not exist yet. The locomotion gate, the command schema, the ball scene and the hidden effects are NOT RUN. Plan: `docs/superpowers/plans/2026-11-21-person-a-go2-env.md`.
+Branch `person-a/go2-env`. Status on 2026-11-21, evening: the walking stack is selected and pinned, the locomotion gate has been run (6 of 7 conditions pass, 0.3 m/s fails) and the command schema is published with `status: verified`. `Go2World` is being built now. The ball scene, the hidden effects and the presets are NOT RUN. Plan: `docs/superpowers/plans/2026-11-21-person-a-go2-env.md`.
 
 ## What is measured so far
 
 - **Walking stack.** Efferent 0.5.0 with its `go2_walk` policy (the rl_sar robot_lab Go2 policy as ONNX) on Unitree's `go2.xml` from the `third_party/unitree_mujoco` submodule, with `mujoco` 3.11.0 and `onnxruntime` 1.32.0. Identities and hashes are in `config.yaml` under `robot`.
 - **Proof run.** The upstream example walked forward at 0.4 m/s commanded for 400 policy steps: final x 1.88 m, maximum tilt 14.7°, no estop, exit code 0. Evidence: `artifacts/env/20261121T144656-e1-proof/`, log entry "E1 (proof run)". This is one speed in Unitree's scene, which has bars and stairs on the +x path. It is not the locomotion gate.
-- **Not measured.** Speed tracking at 0.3, 0.6 and 0.9 m/s, turning, stopping, standing, lateral motion, command ranges, real-time factor with the policy running.
+- **Locomotion gate (Gate 1): FAIL on one condition.** Flat floor, 30 s trots: 0.3 / 0.6 / 0.9 m/s commanded gave 0.2256 / 0.5430 / 0.8596 m/s. 0.3 m/s is outside the 20% tolerance (0.24 to 0.36). Turning at ±0.5 rad/s gave +0.4976 / −0.5066 rad/s, stopping ended at 0.0130 m/s, and the dog stood for 30 s. No falls. Evidence: `artifacts/env/20261121T152237-locomotion/`, `artifacts/env/locomotion/locomotion.json`. Person A accepted the result as measured (`DECISIONS.md`): no tolerance was changed and nothing was tuned.
+- **Two things to plan around.** Low forward commands under-deliver by about a quarter. With zero yaw commanded the dog still turns anticlockwise at 0.05 to 0.14 rad/s, so at low speed it walks a slow circle.
+- **Real-time factor.** 7.80 with the policy running in one process (178 s simulated in 22.8 s of wall time).
+- **Command schema.** Item 3 below.
+- **Not measured.** Anything with the ball, the hidden effects or the presets.
 
 ## Setup
 
@@ -16,9 +20,9 @@ Branch `person-a/go2-env`. Status on 2026-11-21: the walking stack is selected a
 
 ## Answers to HANDOFF_PERSON_B.md
 
-Names follow your proposals wherever you made one. None of this is implemented yet; the task that delivers each item is named.
+Names follow your proposals wherever you made one. Item 3 is delivered; for the others the task that delivers each item is named. Numbers follow your current list (ten items).
 
-1. **World class.** `from learned_judgment.env import Go2World`, with `reset(situation) -> observation`, `step(command, duration_s) -> observation`, `finish_episode() -> measured_outcome`. One fresh world per episode with a per-episode seed works. Task 4.
+1. **World class.** `from learned_judgment.env import Go2World`, with `reset(situation, attempt_seed) -> observation`, `step(command, duration_s) -> observation`, `finish_episode() -> measured_outcome`. One fresh world per episode with a per-episode seed works. Task 4.
 2. **Preset.** A third constructor argument: `Go2World(config, seed, preset="default")`. Presets: `default`, `heavy_payload`, `slippery_floor`, `tired_motors`, `downhill`. Tasks 4 and 6.
 3. **Command schema. Published; `robot.walking_policy.status` is `verified`.** In your loader's layout under `robot.walking_policy.command_schema` in `config.yaml` (your `CommandSchema.from_config` at `origin/person-b` loads it): `update_period_s: 0.02` (one command per 50 Hz policy step), and three fields in the policy's native order, each with `unit`, `min`, `max`, `description`, plus `native_index`, `proven_by`, `measured_at_min` and `measured_at_max`:
 
@@ -33,8 +37,9 @@ Names follow your proposals wherever you made one. None of this is implemented y
 5. **Declared world values.** `declared_payload_kg` and `declared_surface` in every observation and in the outcome. True hidden values are written only to a sidecar file next to the trace and never appear in an observation or outcome. Task 6.
 6. **DODGE outcome.** `min_separation_m` (never below 0, 0 on contact), `collision` (0 or 1), `fall` (0 or 1), `recovery_time_s`. `recovery_time_s` is always a number: 0.0 if the dog is never destabilised, otherwise the time until it is stable again, or until the episode ends, with `recovered` (0 or 1) beside it. Other keys: `fall_time_s`, `first_collision_time_s`, `sim_unstable`, `elapsed_s`, `commands_received`, `trace_path`. Task 5.
 7. **Episode timing.** The decision instant is the moment `reset` returns (`t_s` 0), after the dog has trotted at `dog_forward_speed_m_s` for the settling time. The ball is placed at that instant, already in flight, and is never touched again. `step` may be called any number of times with different commands; a duration is rounded to whole control periods and the returned `t_s` shows the time actually simulated. The episode ends when you call `finish_episode`. Your nominal, dodge, nominal sequence is supported. Task 4.
-8. **Saved episode and real-time factor.** Not available yet. The real-time factor comes from Task 2, the saved DODGE episode from Task 5.
-9. **`mujoco` in pyproject.toml.** Declared on this branch as `mujoco==3.11.0`, with `efferent==0.5.0` and `onnxruntime==1.32.0`. Your branch adds `torch`, `snntorch`, `scipy` and `threadpoolctl` in the same block, so the two branches will conflict there and in `config.yaml`, `DECISIONS.md`, `LOG.md` and `experiments/EXPERIMENTS_LOG.md`.
+8. **Two levels of seed.** Your proposed form: the constructor `seed` (with the preset) fixes the hidden world for the life of the object, and `reset(situation, attempt_seed)` fixes that episode's noise, drawn from `(seed, attempt_seed)`. Two worlds built with the same `seed` and reset with the same `attempt_seed` face the same noise, whatever was run before. Leaving `attempt_seed` out uses the episode counter. Task 4.
+9. **Saved episode and real-time factor.** Real-time factor 7.80 with the policy running (Gate 1, above). Saved walking episodes: the seven traces under `artifacts/env/locomotion/`. The saved DODGE episode comes with Task 5.
+10. **`mujoco` in pyproject.toml.** Declared on this branch as `mujoco==3.11.0`, with `efferent==0.5.0` and `onnxruntime==1.32.0`. Your branch adds `torch`, `snntorch`, `scipy` and `threadpoolctl` in the same block, so the two branches will conflict there and in `config.yaml`, `DECISIONS.md`, `LOG.md` and `experiments/EXPERIMENTS_LOG.md`.
 
 ## Ball
 
