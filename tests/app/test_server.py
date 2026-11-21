@@ -160,11 +160,55 @@ def test_state_names_every_capability_and_why_it_is_unavailable(server):
     for name, capability in capabilities.items():
         assert set(capability) == {"available", "reason"} and isinstance(capability["available"], bool), name
         assert isinstance(capability["reason"], str), name
-        if not capability["available"]:
-            assert_plain_sentence(capability["reason"])
+        if not capability["available"]:  # one sentence; it may name a module or a file, so dots are allowed
+            assert capability["reason"].endswith(".") and "Traceback" not in capability["reason"], name
     assert capabilities["drive"]["available"]
     for name in ["head_camera", "scenarios", "runs", "results", "infer"]:  # not built in this server yet
         assert not capabilities[name]["available"], name
+
+
+SKILL_KEYS = {"skill", "description", "params", "actions", "outcomes", "available", "missing"}
+
+
+def test_skills_lists_the_catalogue_and_what_each_unavailable_skill_lacks(server):
+    status, body = request(server, "GET", "/api/skills")
+    assert status == 200 and body["skills"]
+    for entry in body["skills"]:
+        assert set(entry) >= SKILL_KEYS, entry
+        assert entry["available"] or entry["missing"], entry  # never unavailable without saying why
+    assert request(server, "GET", "/api/state")[1]["skills"] == body["skills"]
+
+
+def test_chat_without_its_pieces_is_unavailable_and_says_what_to_add(server, monkeypatch):
+    from app import backend, chat
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    has_key = chat.api_key(server.config["app"]["chat"]) is not None  # a .env at the repository root
+    has_backend = backend.declared()[0] is not None
+    if has_key and has_backend:
+        pytest.skip("the chat has everything it needs here; test_chat.py's live test covers it")
+    status, body = request(server, "POST", "/api/chat", {"messages": [{"role": "user", "content": "hello"}]})
+    assert status == 503 and body["code"] == "chat_unavailable"
+    if not has_key:
+        assert "ANTHROPIC_API_KEY" in body["message"]
+    if not has_backend:
+        assert "learned_judgment.declared" in body["message"]
+    capability = request(server, "GET", "/api/state")[1]["capabilities"]["chat"]
+    assert capability == {"available": False, "reason": body["message"]}
+
+
+def test_the_api_key_appears_in_no_response(server, monkeypatch):
+    from app import backend
+    sentinel = "sk-ant-test-SENTINEL-0123456789"  # not a real key: only to see whether it leaks anywhere
+    monkeypatch.setenv("ANTHROPIC_API_KEY", sentinel)
+    calls = [("GET", "/api/state", None), ("GET", "/api/skills", None), ("POST", "/api/chat", {"messages": "bad"})]
+    if backend.declared()[0] is None:  # with Dev B's module this would send the fake key to the API
+        calls.append(("POST", "/api/chat", {"messages": [{"role": "user", "content": "hello"}]}))
+    for method, path, body in calls:
+        with closing(connect(server)) as conn:
+            conn.request(method, path, body=None if body is None else json.dumps(body))
+            response = conn.getresponse()
+            raw = response.read().decode()
+            assert sentinel not in raw and sentinel not in str(response.getheaders()), path
 
 
 def test_unknown_api_paths_are_refused_with_a_code(server):

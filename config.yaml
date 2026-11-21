@@ -537,3 +537,14 @@ app:  # The local viewer server: uv run python -m app.server
   observation_hz: 10  # Observation events per second on /api/events; the same rule as stream_fps.
   fall_restart_pause_s: 2.0  # After a fall, seconds the fallen dog stays on screen before a fresh episode starts.
   png_compression_level: 1  # zlib level 0-9; measured on 640x480 frames: level 1 13 ms and 64 kB, level 6 51 ms and 61 kB.
+  # POST /api/chat: Claude turns a request into a declaration (data only, validated, never executed). The key is
+  # ANTHROPIC_API_KEY from the server's environment, else from env_file; it never reaches a response, log or file.
+  chat:
+    env_file: .env  # Relative to the repository root (git-ignored); the environment variable wins over it.
+    model: claude-opus-5-5  # The claude-api skill's default model (2026-11-21).
+    effort: low  # output_config.effort; low suits a short extraction-style turn. Raise only if declarations go wrong.
+    max_tokens: 16000  # Output cap including adaptive thinking; the skill's default for a non-streaming request.
+    timeout_s: 60.0  # Per request, in seconds; the SDK retries a timeout max_retries times on top.
+    max_retries: 2  # The SDK default: connection errors, 408, 409, 429 and 5xx.
+    max_messages: 20  # Messages per chat request (the browser sends the whole conversation).
+    max_message_chars: 4000  # Characters per message.

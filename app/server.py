@@ -13,6 +13,7 @@ Serves on config.yaml app.host and app.port (--port 0 picks a free port) until C
     POST /api/drive    {vel_x, vel_y, yaw_rate}, validated strictly; applied from the next control period
     POST /api/stop     the zero command
     POST /api/reset    optional {preset}: a fresh episode, on a new world if the preset differs
+    GET  /api/skills, POST /api/chat   the skill catalogue and the chat (app/chat.py)
     GET  /             and other static files, from app/static only
 Every refusal or error is {code, message}: a stable code and one plain sentence; the detail goes to the log on stderr.
 Routes live in app/routes.py's table: the ones above are registered here, each later feature in a module of its own,
@@ -29,6 +30,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+import app.chat  # noqa: F401  registers GET /api/skills, POST /api/chat and the chat capability
+from app import backend
 from app.routes import CAPABILITIES, ROUTES, Refusal, capability, route
 from app.simulation import Simulation
 from learned_judgment.env import CommandError, load_config, validate_command
@@ -39,7 +42,7 @@ NOT_BUILT = {
     "drive": "The simulation is not running; restart the server.",
     "head_camera": "The head camera stream needs the world lane's head camera, and this server does not serve it yet.",
     "scenarios": "Threat scenarios need the world lane's scenario sampler, and this server does not serve them yet.",
-    "chat": "The chat is not built into this server yet.",
+    "chat": "The chat module did not register.",  # app/chat.py replaces it
     "runs": "Learning runs need Dev B's pipeline entry point and run event files, which are not published yet.",
     "results": "Run results need Dev B's per-run results files, which are not published yet.",
     "infer": "Live inference needs Dev B's inference adapter and image window contract, which are not published yet.",
@@ -159,7 +162,7 @@ def state(h: Handler) -> None:
         **sim.state(),
         "frame": {"width": render["width"], "height": render["height"], "stream_fps": config["app"]["stream_fps"]},
         "capabilities": capabilities(h.server),
-        "skills": [],
+        "skills": backend.skill_catalog(config),
         "image_window": None,  # Dev B has not published the image window contract (capability infer says so)
         "actions": None,  # nor the four actions' command values
     })
