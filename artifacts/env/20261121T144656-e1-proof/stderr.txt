@@ -1,0 +1,9 @@
+Downloading onnxruntime (15.9MiB)
+Downloading onnx (7.5MiB)
+Downloading pydantic-core (2.2MiB)
+Downloading mujoco (15.1MiB)
+ Downloaded pydantic-core
+ Downloaded onnxruntime
+ Downloaded mujoco
+ Downloaded onnx
+Installed 21 packages in 9.12s

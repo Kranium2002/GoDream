@@ -22,6 +22,14 @@ def _git(*args):
     return done.stdout.strip() if done.returncode == 0 else None
 
 
+def redact_home(text: str) -> str:
+    """Replace the user's home directory (and so the user name) with ~, in Windows, / and Git Bash spellings."""
+    home = Path.home()
+    for spelling in (str(home), home.as_posix(), "/" + home.as_posix().replace(":", "", 1)):
+        text = re.sub(re.escape(spelling), "~", text, flags=re.IGNORECASE)  # Windows paths ignore case
+    return text
+
+
 def _label(value: str) -> str:
     # The label becomes a directory name, so it must not carry path separators.
     if not re.fullmatch(r"[A-Za-z0-9_-]+", value):
@@ -48,12 +56,18 @@ def main(argv=None) -> int:
     with open(run_dir / "stdout.txt", "w") as out, open(run_dir / "stderr.txt", "w") as err:
         exit_code = subprocess.run(command, stdout=out, stderr=err).returncode
     wall_s = time.perf_counter() - t0
+    for name in ("stdout.txt", "stderr.txt"):
+        path = run_dir / name
+        # latin-1 maps each byte to one character, so only the redaction changes the file.
+        # shortcut: a non-ASCII user name printed in another encoding is not matched; decode properly if that occurs.
+        path.write_bytes(redact_home(path.read_bytes().decode("latin-1")).encode("latin-1"))
 
     config = Path("config.yaml")
     (run_dir / "run.json").write_text(
         json.dumps(
             {
-                "command": command,
+                "command": [redact_home(arg) for arg in command],
+                "home_redacted": True,
                 "exit_code": exit_code,
                 "started_utc": started.isoformat(),
                 "wall_s": wall_s,

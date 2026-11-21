@@ -31,3 +31,7 @@ Every Person A acceptance claim is backed by a run recorded through `learned_jud
 ## 2026-11-21 — Thrown ball is an IHF size 3 handball
 
 Mass 0.450 kg and radius 0.0939 m, the mid-range of IHF Rule 3:2 (425–475 g, circumference 58–60 cm), verified in experiment E6. Chosen before any throw was simulated. Fallback if dev runs show every hit topples the dog: FIVB volleyball (0.270 kg, radius 0.1050 m). Contact parameters, ball friction and inertia are not set by any rule and remain to be stated by the ball-scene work.
+
+## 2026-11-21 — Walking stack: Efferent go2_walk on Unitree's Go2 model
+
+Efferent is the first path in the mandated order and its proof passed (experiment E1 proof run, `artifacts/env/20261121T144656-e1-proof`). Selected: the `go2_walk.app` policy and `go2.robot.yaml` from `Eximius-Labs/efferent` at `f51e1af953afe1016dae9ceeff2b5328fa51781d` (Apache-2.0; the ONNX is converted from rl_sar `policy/go2/robot_lab/policy.pt` at `376d42c9`), on Unitree's `go2.xml` from `unitreerobotics/unitree_mujoco` at `1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d` (BSD-3-Clause). Pinned packages: `efferent==0.5.0`, `mujoco==3.11.0`, `onnxruntime==1.32.0`. The Efferent files are vendored under `learned_judgment/env/assets/`; the model comes from the git submodule `third_party/unitree_mujoco` at that commit. Both are pinned by sha256 in `config.yaml`. rl_sar (E2) stays the fallback; its proof is not run.

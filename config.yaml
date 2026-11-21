@@ -9,21 +9,61 @@ runtime:
   simulator: mujoco
   headless: true
   seed: 20261121
-  timestep_s: null  # Must come from the verified Go2 simulator/policy configuration.
+  # The model's effective timestep: neither go2.xml nor scene.xml (unitree_mujoco@1eb6642) sets <option timestep>,
+  # mujoco 3.11.0 loads both with opt.timestep 0.002 (MuJoCo's default), and the E1 proof printed
+  # "timestep=0.002 substeps=10" (artifacts/env/20261121T144656-e1-proof/stdout.txt).
+  timestep_s: 0.002
 
 robot:
   model: unitree_go2
-  model_asset: null  # Set only after verifying the exact model source and revision.
+  # Unitree's own MJCF (BSD-3-Clause) from the integrator's git submodule third_party/unitree_mujoco, pinned at
+  # `revision`. Initialise it with: git submodule update --init --depth 1 third_party/unitree_mujoco
+  # sha256 is of go2.xml with CRLF normalised to LF (core.autocrlf may check it out with CRLF), i.e. the upstream blob.
+  model_asset:
+    path: third_party/unitree_mujoco/unitree_robots/go2/go2.xml
+    source: https://github.com/unitreerobotics/unitree_mujoco/tree/1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d/unitree_robots/go2
+    revision: 1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d
+    sha256: 2014a3d76e30f17ab9447d8a67bd015291f74fa4d71ae30d005f1a32bd693d4b
   walking_policy:
     status: not_verified
-    source: null
-    repository_revision: null
-    checkpoint: null
-    matching_config: null
-    license: null
-    observation_schema: null
-    action_schema: null
-    control_rate_hz: null
+    # Efferent examples/go2_walk at f51e1af, vendored byte-for-byte. The ONNX inside go2_walk.app is a conversion of
+    # rl_sar policy/go2/robot_lab/policy.pt (rl_sar 376d42c9, Apache-2.0). E1 proof: artifacts/env/20261121T144656-e1-proof.
+    source: https://github.com/Eximius-Labs/efferent/tree/f51e1af953afe1016dae9ceeff2b5328fa51781d/examples/go2_walk
+    repository_revision: f51e1af953afe1016dae9ceeff2b5328fa51781d
+    checkpoint: learned_judgment/env/assets/efferent@f51e1af/go2_walk.app
+    checkpoint_sha256: 89a5bb7e1ff1cc4cd60f4855bf1dd77bd1b313aeee7c19e984fe7c6e37d74147
+    # The second entry is a member of the go2_walk.app zip. go2.robot.yaml names "backend: id: mock"; the E1 proof
+    # does not use it: it passes efferent's MujocoBackend to the Runner itself.
+    matching_config:
+      - learned_judgment/env/assets/efferent@f51e1af/go2.robot.yaml
+      - learned_judgment/env/assets/efferent@f51e1af/go2_walk.app/manifest.yaml
+    license: Apache-2.0
+    # Read from manifest.yaml inside go2_walk.app (efferent@f51e1af), key "observation", in this order. The manifest
+    # leaves dim null; each term's size gives 3+3+3+12+12+12 = 45, the obs_dim the E1 proof printed.
+    # The manifest also sets normalization.clip_obs 100.0.
+    observation_schema:
+      - {name: base_ang_vel, dim: 3, scale: 0.25}
+      - {name: projected_gravity, dim: 3, scale: 1.0}
+      - {name: command, dim: 3, scale: [1.0, 1.0, 1.0]}  # names: vel_x, vel_y, yaw_rate
+      - {name: joint_pos_rel, dim: 12, scale: 1.0}
+      - {name: joint_vel, dim: 12, scale: 0.05}
+      - {name: last_action, dim: 12, scale: 1.0}
+    # manifest.yaml "control": action_type joint_position_delta (target = default_pose + action * scale),
+    # clip_actions [-100.0, 100.0], gains kp/kd; "joints": names and defaults. torque_limit: go2.robot.yaml
+    # (efferent@f51e1af) "joints[].torque_limit". go2.xml's own motor ctrlrange is 23.7 (hip, thigh) and 45.43 (calf).
+    action_schema:
+      dim: 12
+      # Policy order FR, FL, RR, RL. go2.xml <actuator> (lines 223-234) has the same order: actuator i is policy joint i.
+      # The model's joints follow its body tree, FL, FR, RL, RR (go2.xml lines 82-206), so policy joint i is
+      # qpos[7 + [3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8][i]] (the first 7 qpos are the free joint).
+      joint_order: [FR_hip_joint, FR_thigh_joint, FR_calf_joint, FL_hip_joint, FL_thigh_joint, FL_calf_joint,
+                    RR_hip_joint, RR_thigh_joint, RR_calf_joint, RL_hip_joint, RL_thigh_joint, RL_calf_joint]
+      scale: [0.125, 0.25, 0.25, 0.125, 0.25, 0.25, 0.125, 0.25, 0.25, 0.125, 0.25, 0.25]
+      default_pose: [0.0, 0.8, -1.5, 0.0, 0.8, -1.5, 0.0, 0.8, -1.5, 0.0, 0.8, -1.5]
+      kp: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]
+      kd: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+      torque_limit: [23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5]
+    control_rate_hz: 50.0  # manifest.yaml control.rate_hz
     command_schema: null
   acceptance:
     trot_duration_s: 30
