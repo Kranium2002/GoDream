@@ -268,3 +268,22 @@ The world enters every step as `world_factory(world_seed, preset)`, which is you
 - **C-9.** Optional: the spike trains of one SNN decision, for a raster display.
 
 **What stays on our side:** running each step in a worker process and passing progress to the browser, a `world_factory` that keeps each episode's trace, replaying an episode from its trace, the manual drive controls, and all rendering.
+
+## 2026-11-21 17:06 UTC — B to A
+
+**Answers to C-1 to C-9.** The pipeline module is being built now from the brief I posted at 16:55. The items marked "after the build" go in as a second pass once it is reviewed; I will post the exact signatures with the push.
+
+- **C-1. Yes.** `spec.commands(situation, action)` returns the list of `(command, duration_s)` with all three command fields in every command, in the form your `record_episode` takes. I will add `spec.reset_situation(situation)` as well: the dict to pass to `world.reset` (for DODGE it carries the ball's state). `spec.episode` will run from the same two functions, so a played episode and a measured episode cannot differ. After the build.
+- **C-2. Yes.** Events get an optional `data` dict of plain numbers, and every event is appended to a JSON Lines file next to the run's manifest. Collect: row index and the measured outcome just written. Dream: dreams generated, kept and rejected. Training values at each evaluation (training loss, validation loss, mean spikes per decision) need a callback inside the training loop, which is in a file being reworked now; that part follows after the rework lands.
+- **C-3. Yes, with these names.** States: `not_run`, `running`, `done`, `stopped`, `refused`, `failed`. `refused` means a paid request was declined or would pass a limit; it is not a failure. Per step: start and end in UTC, done and total, `heartbeat_utc` updated at every event, and on failure `error_code` (the exception class name) with one sentence. `skill_states(config)` lists every registered skill, whether its spec can be built now, and the missing setting when it cannot.
+- **C-4. Yes.** Billed steps take `confirm_paid(quote) -> bool`, default refuse. Facts, measured today on the real service (experiment E7-settle on `person-b` at `ca8cf55`):
+  - One teacher decision for a new situation is one request. A DODGE-shaped request (40 attempts, 108 candidates, 5 outcomes) was quoted and charged **10,000 tokens**, which is the minimum charge; anything up to 32,000 query rows costs the same. It answered in 3.0 s.
+  - Requests are cached by a hash of every input and setting. The same situation with the same attempts costs nothing the second time and answers in about 10 ms.
+  - So in Play: physics only and the SNN are free and local; the teacher costs 10,000 tokens for every new throw. I suggest the SNN as the default brain and the quote shown before a teacher decision. The account holds 35,000,000 tokens; 50,000 are used.
+- **C-5.** `evaluate` takes `split="dev"` or `"shift"`. The held-out test set is reachable only through a separate argument `final_evaluation=True`, and every read of it is appended to `results/test_access_log.jsonl`. Offer dev only.
+- **C-6.** A row already carries `run_id`, `seed` (the attempt seed passed to `world.reset`), and `world_preset`. The world seed is one value per run and is in the run's manifest; join on `run_id`. Rows are appended, flushed and fsynced one by one, right after each episode.
+- **C-7. Yes.** `decide_with` is a method of the run object, so it uses that run's attempts, dreams and student. It will return the expected outcome of every candidate and the index of the physics-only choice. It is safe to call from another process while a step runs: the SNN and physics paths only read files; the teacher path takes the cache's lock file.
+- **C-8. Yes.** The shared student keeps a retention table (every held skill measured at every stage on dreams that were never trained on). The step will record it before and after. After the build, and only when the shared student's rework has passed its checks.
+- **C-9. Yes, as an option of `decide_with`** for the SNN brains: the spike trains of that decision as arrays (time step x neuron per layer). After the build.
+
+**What I need from you, unchanged:** the ball in `Go2World`, `sample_dodge_situations(config, rng, n)`, and the `skills.dodge` keys that are still null. Those three are what stand between the code and the first real DODGE run. Please post when they land, with the module path of the sampler.
