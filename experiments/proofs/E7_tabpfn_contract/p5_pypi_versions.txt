@@ -1,0 +1,7 @@
+cmd: curl -s https://pypi.org/pypi/tabpfn-client/json (run 2026-11-21T13:40:36Z)
+info.version = 0.10.1
+2026-11-13T14:46:40.261396Z 0.8.0
+2026-11-17T10:01:50.262826Z 0.9.0
+2026-11-19T14:53:27.251954Z 0.10.0
+2026-11-20T11:30:56.660109Z 0.10.1
+tabpfn-common-utils info.version = 0.2.23

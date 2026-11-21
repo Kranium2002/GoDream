@@ -1,0 +1,41 @@
+scipy 1.18.1
+SIGNATURE stats.bootstrap (data, statistic, *, n_resamples=9999, batch=None, vectorized=None, paired=False, axis=0, confidence_level=0.95, alternative='two-sided', method='BCa', bootstrap_result=None, rng=None, random_state=None)
+
+== paired=True with statistic on two samples ==
+result type BootstrapResult fields ['bootstrap_distribution', 'confidence_interval', 'standard_error']
+BCa CI ConfidenceInterval(low=np.float64(0.0969659049601925), high=np.float64(0.13059415906864483)) SE 0.008505751188719612 bootstrap_distribution shape (9999,)
+same rng seed -> identical CI: True
+paired=True == one-sample bootstrap of the differences (percentile, same rng)?
+  paired: ConfidenceInterval(low=np.float64(0.09745332291312082), high=np.float64(0.1307909146206147)) 
+  diffs : ConfidenceInterval(low=np.float64(0.09745332291312082), high=np.float64(0.1307909146206147))
+
+== seed argument name ==
+  rng=3: OK []
+  random_state=3: OK []
+
+== degenerate: constant differences (all zero, all 0.5) ==
+  all-zero BCa       : CI=ConfidenceInterval(low=np.float64(nan), high=np.float64(nan)) SE=0.0 | warnings=['RuntimeWarning: invalid value encountered in scalar divide', 'DegenerateDataWarning: The BCa confidence interval cannot be calculated. This problem is known to occur when the distribution is degenerate or the statistic is np.min.']
+  all-zero percentile: CI=ConfidenceInterval(low=np.float64(0.0), high=np.float64(0.0)) SE=0.0 | warnings=[]
+  all-zero basic     : CI=ConfidenceInterval(low=np.float64(0.0), high=np.float64(0.0)) SE=0.0 | warnings=[]
+  all-0.5  BCa       : CI=ConfidenceInterval(low=np.float64(nan), high=np.float64(nan)) SE=0.0 | warnings=['RuntimeWarning: invalid value encountered in scalar divide', 'DegenerateDataWarning: The BCa confidence interval cannot be calculated. This problem is known to occur when the distribution is degenerate or the statistic is np.min.']
+  all-0.5  percentile: CI=ConfidenceInterval(low=np.float64(0.5), high=np.float64(0.5)) SE=0.0 | warnings=[]
+  all-0.5  basic     : CI=ConfidenceInterval(low=np.float64(0.5), high=np.float64(0.5)) SE=0.0 | warnings=[]
+
+== degenerate: n=1 and n=2 ==
+  n=1 BCa: EXC ValueError: each sample in `data` must contain two or more observations along `axis`. | warnings=[]
+  n=2 BCa: CI=ConfidenceInterval(low=np.float64(0.3), high=np.float64(0.4)) | warnings=[]
+
+== ten-line numpy percentile bootstrap of mean paired difference ==
+  numpy: point=0.113804 CI=(0.097453, 0.130791) boots.shape=(9999,)
+  scipy percentile (rng=5): CI=(0.097453, 0.130791)  |diff| low=0.00e+00 high=0.00e+00
+
+== cluster bootstrap: situations x seeds, paired (resample situations, keep all seeds of a situation together) ==
+  mean diff   : (0.104126, np.float64(0.094561), np.float64(0.114104))
+  ratio       : (1.103863, np.float64(1.092574), np.float64(1.115883))
+  log-ratio   : (0.098816, np.float64(0.088537), np.float64(0.109646))
+  scipy BCa ratio on per-situation seed-means: ConfidenceInterval(low=np.float64(1.0926369191571144), high=np.float64(1.1159641484338287))
+  NOTE: mean over seeds per situation then resampling situations == cluster bootstrap for mean statistics when K is equal for all situations
+
+== vectorized=False custom statistic (axis not accepted) ==
+  median paired diff CI: ConfidenceInterval(low=np.float64(0.09255736933119801), high=np.float64(0.11072944092442327))
+exit=0

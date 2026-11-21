@@ -1,0 +1,17 @@
+10.1109/ISSCC.2014.6757323 | 1.1 Computing's energy problem (and what we can do about it) | 2014 IEEE International Solid-State Circuits Conference Digest of Tech |   10-14 | [[2014, 2]]
+10.1109/JPROC.2023.3308088 | Training Spiking Neural Networks Using Lessons From Deep Learning | Proceedings of the IEEE | 111 9 1016-1054 | [[2023, 9]]
+10.1109/TNNLS.2021.3111897 | DIET-SNN: A Low-Latency Spiking Neural Network With
+                    <u>D</u>
+                    irect
+    | IEEE Transactions on Neural Networks and Learning Systems | 34 6 3174-3182 | [[2023, 6]]
+10.1109/MSP.2019.2931595 | Surrogate Gradient Learning in Spiking Neural Networks: Bringing the Power of Gradient-Based Optimization to S | IEEE Signal Processing Magazine | 36 6 51-63 | [[2019, 11]]
+10.1609/aaai.v33i01.33011311 | Direct Training for Spiking Neural Networks: Faster, Larger, Better | Proceedings of the AAAI Conference on Artificial Intelligence | 33 01 1311-1318 | [[2019, 7, 17]]
+10.3389/fnins.2021.651141 | Comparison of Artificial and Spiking Neural Networks on Digital Hardware | Frontiers in Neuroscience | 15   | [[2021, 4, 6]]
+10.1109/TETCI.2022.3214509 | Are SNNs Really More Energy-Efficient Than ANNs? an In-Depth Hardware-Aware Study | IEEE Transactions on Emerging Topics in Computational Intelligence | 7 3 731-741 | [[2023, 6]]
+10.1109/WACV48630.2021.00400 | Spike-Thrift: Towards Energy-Efficient Deep Spiking Neural Networks by Limiting Spiking Activity via Attention | 2021 IEEE Winter Conference on Applications of Computer Vision (WACV) |   3952-3961 | [[2021, 1]]
+10.1109/ICASSP43922.2022.9747906 | Rate Coding Or Direct Coding: Which One Is Better For Accurate, Robust, And Energy-Efficient Spiking Neural Ne | ICASSP 2022 - 2022 IEEE International Conference on Acoustics, Speech  |   71-75 | [[2022, 5, 23]]
+10.1007/978-3-030-01252-6_33 | Riemannian Walk for Incremental Learning: Understanding Forgetting and Intransigence | Lecture Notes in Computer Science |   556-572 | [[2018]]
+10.1145/3620665.3640366 | PyTorch 2: Faster Machine Learning Through Dynamic Python Bytecode Transformation and Graph Compilation | Proceedings of the 29th ACM International Conference on Architectural  |   929-947 | [[2024, 4, 27]]
+10.1109/mlsp55844.2023.10285911 | Memory Replay For Continual Learning With Spiking Neural Networks | 2023 IEEE 33rd International Workshop on Machine Learning for Signal Processing (MLSP) | 1-6 | [[2023, 9, 17]] | ['Proietti', 'Ragno', 'Capobianco']
+10.3103/s1060992x25601629 | Continual Learning with Columnar Spiking Neural Networks | Optical Memory and Neural Networks | S58-S71 | [[2025, 12]] | ['Larionov', 'Bazenkov', 'Kiselev']
+10.1109/icicip67436.2026.11417642 | Online Continual Learning via Spiking Neural Networks with Sleep Enhanced Latent Replay | 2026 14th International Conference on Intelligent Control and Information Processing (ICIC | 360-367 | [[2026, 2, 21]] | ['Lin', 'Luo', 'Jia', 'Yang']

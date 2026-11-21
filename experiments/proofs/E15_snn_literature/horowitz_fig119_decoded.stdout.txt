@@ -1,0 +1,308 @@
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 54.4973 80.3879']
+   raw=b'\x02\x02\x03\x04'
+   +29='\x1f\x1f !'
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f !'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 87.5441 80.3879']
+   raw=b'\x02\x02\x05\x04'
+   +29='\x1f\x1f"!'
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f"!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 120.591 80.3879']
+   raw=b'\x02\x02\x06\x04'
+   +29='\x1f\x1f#!'
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f#!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 152.643 80.3879']
+   raw=b'\x02\x03\x07\x04'
+   +29='\x1f $!'
+   clean(+29, 0x00 high bytes dropped)='\x1f $!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 185.689 80.3879']
+   raw=b'\x02\x05\x07\x04'
+   +29='\x1f"$!'
+   clean(+29, 0x00 high bytes dropped)='\x1f"$!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 218.737 80.3879']
+   raw=b'\x02\x06\x07\x04'
+   +29='\x1f#$!'
+   clean(+29, 0x00 high bytes dropped)='\x1f#$!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 250.879 80.3879']
+   raw=b'\x03\x07\x07\x04'
+   +29=' $$!'
+   clean(+29, 0x00 high bytes dropped)=' $$!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 47.3445 85.8203']
+   raw=b'\x02\x02\x03\x04'
+   +29='\x1f\x1f !'
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f !'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 47.3445 115.427']
+   raw=b'\x02\x02\x05\x04'
+   +29='\x1f\x1f"!'
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f"!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 47.3445 144.943']
+   raw=b'\x02\x02\x06\x04'
+   +29='\x1f\x1f#!'
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f#!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 45.3527 174.459']
+   raw=b'\x02\x03\x07\x04'
+   +29='\x1f $!'
+   clean(+29, 0x00 high bytes dropped)='\x1f $!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 45.3527 203.975']
+   raw=b'\x02\x05\x07\x04'
+   +29='\x1f"$!'
+   clean(+29, 0x00 high bytes dropped)='\x1f"$!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 45.3527 233.491']
+   raw=b'\x02\x06\x07\x04'
+   +29='\x1f#$!'
+   clean(+29, 0x00 high bytes dropped)='\x1f#$!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 43.4512 263.007']
+   raw=b'\x03\x07\x07\x04'
+   +29=' $$!'
+   clean(+29, 0x00 high bytes dropped)=' $$!'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 277.588 86.3637']
+   raw=b'\x03\x08\t\n'
+   +29=" %&'"
+   clean(+29, 0x00 high bytes dropped)=" %&'"
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 277.588 108.546']
+   raw=b'\x03\x08\t\t'
+   +29=' %&&'
+   clean(+29, 0x00 high bytes dropped)=' %&&'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 277.588 130.728']
+   raw=b'\x03\x08\x08\x07'
+   +29=' %%$'
+   clean(+29, 0x00 high bytes dropped)=' %%$'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 277.588 152.911']
+   raw=b'\x03\x08\x08\x05'
+   +29=' %%"'
+   clean(+29, 0x00 high bytes dropped)=' %%"'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 277.588 175.002']
+   raw=b'\x03\x08\x08\x0b'
+   +29=' %%('
+   clean(+29, 0x00 high bytes dropped)=' %%('
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 277.588 197.184']
+   raw=b'\x03\x08\x08\n'
+   +29=" %%'"
+   clean(+29, 0x00 high bytes dropped)=" %%'"
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 277.588 219.367']
+   raw=b'\x03\x08\x08\t'
+   +29=' %%&'
+   clean(+29, 0x00 high bytes dropped)=' %%&'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 277.588 241.549']
+   raw=b'\x05\x07\x07\x07'
+   +29='"$$$'
+   clean(+29, 0x00 high bytes dropped)='"$$$'
+stream=14 fonts=['/R40'] Tm=['1 0 0 1 277.588 263.641']
+   raw=b'\x05\x07\x07\x05'
+   +29='"$$"'
+   clean(+29, 0x00 high bytes dropped)='"$$"'
+stream=14 fonts=['/R40', '/R48', '/R40'] Tm=['1 0 0 1 83.1078 255.402']
+   raw=b'\t\x06\x00\xef\x08\x07'
+   +29='&#\x1dČ%$'
+   clean(+29, 0x00 high bytes dropped)='&#Č%$'
+stream=14 fonts=['/R40', '/R48', '/R40'] Tm=['1 0 0 1 83.1078 246.8']
+   raw=b'\x08\x07\x00\xef\x08\x06'
+   +29='%$\x1dČ%#'
+   clean(+29, 0x00 high bytes dropped)='%$Č%#'
+stream=14 fonts=['/R40', '/R48', '/R40'] Tm=['1 0 0 1 83.1078 238.29']
+   raw=b'\x08\x06\x00\xef\x07\x07'
+   +29='%#\x1dČ$$'
+   clean(+29, 0x00 high bytes dropped)='%#Č$$'
+stream=14 fonts=['/R40', '/R48', '/R40'] Tm=['1 0 0 1 83.1078 229.688']
+   raw=b'\x07\x07\x00\xef\x07\x06'
+   +29='$$\x1dČ$#'
+   clean(+29, 0x00 high bytes dropped)='$$Č$#'
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 321.084 83.2941']
+   raw=b'\x02\x02\x02\x03'
+   +29='\x1f\x1f\x1f '
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f\x1f '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 353.087 83.2941']
+   raw=b'\x02\x02\x04\x03'
+   +29='\x1f\x1f! '
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f! '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 385.089 83.2941']
+   raw=b'\x02\x02\x05\x03'
+   +29='\x1f\x1f" '
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f" '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 415.952 83.2941']
+   raw=b'\x02\x02\x06\x03'
+   +29='\x1f\x1f# '
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f# '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 447.955 83.2941']
+   raw=b'\x02\x04\x06\x03'
+   +29='\x1f!# '
+   clean(+29, 0x00 high bytes dropped)='\x1f!# '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 479.957 83.2941']
+   raw=b'\x02\x05\x06\x03'
+   +29='\x1f"# '
+   clean(+29, 0x00 high bytes dropped)='\x1f"# '
+stream=14 fonts=['/R51'] Tm=['1 0 0 1 510.995 83.2941']
+   raw=b'\x02\x06\x06\x03'
+   +29='\x1f## '
+   clean(+29, 0x00 high bytes dropped)='\x1f## '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 313.369 89.0809']
+   raw=b'\x02\x02\x02\x03'
+   +29='\x1f\x1f\x1f '
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f\x1f '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 313.369 117.752']
+   raw=b'\x02\x02\x04\x03'
+   +29='\x1f\x1f! '
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f! '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 313.369 146.335']
+   raw=b'\x02\x02\x05\x03'
+   +29='\x1f\x1f" '
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f" '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 311.177 174.918']
+   raw=b'\x02\x02\x06\x03'
+   +29='\x1f\x1f# '
+   clean(+29, 0x00 high bytes dropped)='\x1f\x1f# '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 311.177 203.501']
+   raw=b'\x02\x04\x06\x03'
+   +29='\x1f!# '
+   clean(+29, 0x00 high bytes dropped)='\x1f!# '
+stream=14 fonts=['/R40', '/R51'] Tm=['1 0 0 1 311.177 232.084']
+   raw=b'\x02\x05\x06\x03'
+   +29='\x1f"# '
+   clean(+29, 0x00 high bytes dropped)='\x1f"# '
+stream=14 fonts=['/R51'] Tm=['1 0 0 1 309.073 260.667']
+   raw=b'\x02\x06\x06\x03'
+   +29='\x1f## '
+   clean(+29, 0x00 high bytes dropped)='\x1f## '
+stream=14 fonts=['/R51', '/R40'] Tm=['1 0 0 1 537.912 89.9578']
+   raw=b'\x02\x08\t\n'
+   +29="\x1f%&'"
+   clean(+29, 0x00 high bytes dropped)="\x1f%&'"
+stream=14 fonts=['/R51', '/R40'] Tm=['1 0 0 1 537.912 111.439']
+   raw=b'\x02\x08\t\t'
+   +29='\x1f%&&'
+   clean(+29, 0x00 high bytes dropped)='\x1f%&&'
+stream=14 fonts=['/R51', '/R40', '/R51'] Tm=['1 0 0 1 537.912 132.92']
+   raw=b'\x02\x08\x08\x06'
+   +29='\x1f%%#'
+   clean(+29, 0x00 high bytes dropped)='\x1f%%#'
+stream=14 fonts=['/R51', '/R40', '/R51'] Tm=['1 0 0 1 537.912 154.401']
+   raw=b'\x02\x08\x08\x04'
+   +29='\x1f%%!'
+   clean(+29, 0x00 high bytes dropped)='\x1f%%!'
+stream=14 fonts=['/R51', '/R40'] Tm=['1 0 0 1 537.912 175.795']
+   raw=b'\x02\x08\x08\x0b'
+   +29='\x1f%%('
+   clean(+29, 0x00 high bytes dropped)='\x1f%%('
+stream=14 fonts=['/R51', '/R40'] Tm=['1 0 0 1 537.912 197.276']
+   raw=b'\x02\x08\x08\n'
+   +29="\x1f%%'"
+   clean(+29, 0x00 high bytes dropped)="\x1f%%'"
+stream=14 fonts=['/R51', '/R40'] Tm=['1 0 0 1 537.912 218.757']
+   raw=b'\x02\x08\x08\t'
+   +29='\x1f%%&'
+   clean(+29, 0x00 high bytes dropped)='\x1f%%&'
+stream=14 fonts=['/R51'] Tm=['1 0 0 1 537.912 240.238']
+   raw=b'\x04\x06\x06\x06'
+   +29='!###'
+   clean(+29, 0x00 high bytes dropped)='!###'
+stream=14 fonts=['/R51'] Tm=['1 0 0 1 537.912 261.631']
+   raw=b'\x04\x06\x06\x04'
+   +29='!##!'
+   clean(+29, 0x00 high bytes dropped)='!##!'
+stream=14 fonts=['/R40', '/R51', '/R48', '/R40', '/R51'] Tm=['1 0 0 1 349.141 252.776']
+   raw=b'\t\x05\x00\xef\x08\x06'
+   +29='&"\x1dČ%#'
+   clean(+29, 0x00 high bytes dropped)='&"Č%#'
+stream=14 fonts=['/R40', '/R51', '/R48', '/R40', '/R51'] Tm=['1 0 0 1 349.141 243.394']
+   raw=b'\x08\x06\x00\xef\x08\x05'
+   +29='%#\x1dČ%"'
+   clean(+29, 0x00 high bytes dropped)='%#Č%"'
+stream=14 fonts=['/R40', '/R51', '/R48', '/R51'] Tm=['1 0 0 1 349.141 233.925']
+   raw=b'\x08\x05\x00\xef\x06\x06'
+   +29='%"\x1dČ##'
+   clean(+29, 0x00 high bytes dropped)='%"Č##'
+stream=14 fonts=['/R51', '/R48', '/R51'] Tm=['1 0 0 1 349.141 224.543']
+   raw=b'\x06\x06\x00\xef\x06\x05'
+   +29='##\x1dČ#"'
+   clean(+29, 0x00 high bytes dropped)='##Č#"'
+stream=21 fonts=['/R70'] Tm=['0.999732 0 0 1 400.803 691.78']
+   raw=b'\x03r'
+   +29=' \x8f'
+   clean(+29, 0x00 high bytes dropped)=' \x8f'
+stream=21 fonts=['/R70'] Tm=['0.999732 0 0 1 530.92 631.875']
+   raw=b'\x00\x03'
+   +29='\x1d '
+   clean(+29, 0x00 high bytes dropped)=' '
+stream=21 fonts=['/R67', '/R70', '/R67'] Tm=['0.999732 0 0 1 473.023 589.028']
+   raw=b'GP\x00\x03DSPs'
+   +29='dm\x1d apm\x90'
+   clean(+29, 0x00 high bytes dropped)='dm apm\x90'
+stream=21 fonts=['/R70', '/R67'] Tm=['0 1.00027 -1 0 384.868 578.283']
+   raw=b'\x00\x03(MOPS/m'
+   +29='\x1d EjlmpL\x8a'
+   clean(+29, 0x00 high bytes dropped)=' EjlmpL\x8a'
+stream=21 fonts=['/R70'] Tm=['0.999732 0 0 1 353.805 574.366']
+   raw=b'\x00\x03'
+   +29='\x1d '
+   clean(+29, 0x00 high bytes dropped)=' '
+stream=21 fonts=['/R70'] Tm=['0.999732 0 0 1 359.288 574.366']
+   raw=b'\x00\x03'
+   +29='\x1d '
+   clean(+29, 0x00 high bytes dropped)=' '
+stream=21 fonts=['/R83'] Tm=['1 0 0 1 41.8023 468.921']
+   raw=b'\x00,\x00Q\x00W\x00H\x00J\x00H\x00U'
+   +29='\x1dI\x1dn\x1dt\x1de\x1dg\x1de\x1dr'
+   clean(+29, 0x00 high bytes dropped)='Integer'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 41.8023 457.28']
+   raw=b'\x00$\x00G\x00G'
+   +29='\x1dA\x1dd\x1dd'
+   clean(+29, 0x00 high bytes dropped)='Add'
+stream=21 fonts=['/R83'] Tm=['1 0 0 1 124.259 468.921']
+   raw=b'\x00)\x003'
+   +29='\x1dF\x1dP'
+   clean(+29, 0x00 high bytes dropped)='FP'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 124.259 457.111']
+   raw=b'\x00)\x00$\x00G\x00G'
+   +29='\x1dF\x1dA\x1dd\x1dd'
+   clean(+29, 0x00 high bytes dropped)='FAdd'
+stream=21 fonts=['/R83'] Tm=['1 0 0 1 211.566 468.921']
+   raw=b'\x000\x00H\x00P\x00R\x00U\x00\\'
+   +29='\x1dM\x1de\x1dm\x1do\x1dr\x1dy'
+   clean(+29, 0x00 high bytes dropped)='Memory'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 211.566 457.111']
+   raw=b'\x00&\x00D\x00F\x00K\x00H'
+   +29='\x1dC\x1da\x1dc\x1dh\x1de'
+   clean(+29, 0x00 high bytes dropped)='Cache'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 255.996 457.111']
+   raw=b'\x00\x0b\x00\x19\x00\x17\x00E\x00L\x00W\x00\x0c'
+   +29='\x1d(\x1d6\x1d4\x1db\x1di\x1dt\x1d)'
+   clean(+29, 0x00 high bytes dropped)='(64bit)'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 41.8023 457.28']
+   raw=b'\x00$\x00G\x00G'
+   +29='\x1dA\x1dd\x1dd'
+   clean(+29, 0x00 high bytes dropped)='Add'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 49.8539 445.47']
+   raw=b'\x00\x1b\x00\x03\x00E\x00L\x00W\x00\x13\x00\x11\x00\x13\x00\x16\x00S\x00-\x00\x16\x00\x15\x00\x03\x00E\x00L\x00W\x00\x13\x00\x11\x00\x14\x00S\x00-'
+   +29='\x1d8\x1d \x1db\x1di\x1dt\x1d0\x1d.\x1d0\x1d3\x1dp\x1dJ\x1d3\x1d2\x1d \x1db\x1di\x1dt\x1d0\x1d.\x1d1\x1dp\x1dJ'
+   clean(+29, 0x00 high bytes dropped)='8 bit0.03pJ32 bit0.1pJ'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 124.259 457.111']
+   raw=b'\x00)\x00$\x00G\x00G'
+   +29='\x1dF\x1dA\x1dd\x1dd'
+   clean(+29, 0x00 high bytes dropped)='FAdd'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 132.311 445.325']
+   raw=b'\x00\x14\x00\x19\x00\x03\x00E\x00L\x00W\x00\x13\x00\x11\x00\x17\x00S\x00-\x00\x16\x00\x15\x00\x03\x00E\x00L\x00W\x00\x13\x00\x11\x00\x1c\x00S\x00-'
+   +29='\x1d1\x1d6\x1d \x1db\x1di\x1dt\x1d0\x1d.\x1d4\x1dp\x1dJ\x1d3\x1d2\x1d \x1db\x1di\x1dt\x1d0\x1d.\x1d9\x1dp\x1dJ'
+   clean(+29, 0x00 high bytes dropped)='16 bit0.4pJ32 bit0.9pJ'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 211.566 457.111']
+   raw=b'\x00&\x00D\x00F\x00K\x00H'
+   +29='\x1dC\x1da\x1dc\x1dh\x1de'
+   clean(+29, 0x00 high bytes dropped)='Cache'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 255.996 457.111']
+   raw=b'\x00\x0b\x00\x19\x00\x17\x00E\x00L\x00W\x00\x0c'
+   +29='\x1d(\x1d6\x1d4\x1db\x1di\x1dt\x1d)'
+   clean(+29, 0x00 high bytes dropped)='(64bit)'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 219.618 445.325']
+   raw=b'\x00\x1b\x00.\x00%\x00\x14\x00\x13\x00S\x00-\x00\x16\x00\x15\x00.\x00%\x00\x15\x00\x13\x00S\x00-'
+   +29='\x1d8\x1dK\x1dB\x1d1\x1d0\x1dp\x1dJ\x1d3\x1d2\x1dK\x1dB\x1d2\x1d0\x1dp\x1dJ'
+   clean(+29, 0x00 high bytes dropped)='8KB10pJ32KB20pJ'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 41.8023 421.873']
+   raw=b'\x000\x00X\x00O\x00W\x00\x1b\x00\x03\x00E\x00L\x00W\x00\x13\x00\x11\x00\x15\x00S\x00-\x00\x16\x00\x15\x00\x03\x00E\x00L\x00W\x00\x16\x00\x11\x00\x14\x00S\x00-'
+   +29='\x1dM\x1du\x1dl\x1dt\x1d8\x1d \x1db\x1di\x1dt\x1d0\x1d.\x1d2\x1dp\x1dJ\x1d3\x1d2\x1d \x1db\x1di\x1dt\x1d3\x1d.\x1d1\x1dp\x1dJ'
+   clean(+29, 0x00 high bytes dropped)='Mult8 bit0.2pJ32 bit3.1pJ'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 124.259 421.703']
+   raw=b'\x00)\x000\x00X\x00O\x00W\x00\x14\x00\x19\x00\x03\x00E\x00L\x00W\x00\x14\x00\x11\x00\x14\x00S\x00-\x00\x16\x00\x15\x00\x03\x00E\x00L\x00W\x00\x16\x00\x11\x00\x1a\x00S\x00-'
+   +29='\x1dF\x1dM\x1du\x1dl\x1dt\x1d1\x1d6\x1d \x1db\x1di\x1dt\x1d1\x1d.\x1d1\x1dp\x1dJ\x1d3\x1d2\x1d \x1db\x1di\x1dt\x1d3\x1d.\x1d7\x1dp\x1dJ'
+   clean(+29, 0x00 high bytes dropped)='FMult16 bit1.1pJ32 bit3.7pJ'
+stream=21 fonts=['/R87'] Tm=['1 0 0 1 219.618 421.703']
+   raw=b"\x00\x14\x000\x00%\x00\x14\x00\x13\x00\x13\x00S\x00-\x00'\x005\x00$\x000\x00\x14\x00\x11\x00\x16\x00\x10\x00\x15\x00\x11\x00\x19\x00Q\x00-"
+   +29='\x1d1\x1dM\x1dB\x1d1\x1d0\x1d0\x1dp\x1dJ\x1dD\x1dR\x1dA\x1dM\x1d1\x1d.\x1d3\x1d-\x1d2\x1d.\x1d6\x1dn\x1dJ'
+   clean(+29, 0x00 high bytes dropped)='1MB100pJDRAM1.3-2.6nJ'

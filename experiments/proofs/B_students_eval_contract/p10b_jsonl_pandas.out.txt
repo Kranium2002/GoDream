@@ -1,0 +1,6 @@
+pd.read_json precise_float default: False
+read_json(lines=True) default: 1916/5000 values not bitwise equal; precise_float=True: 0/5000
+read_json nested dict column dtype: object type of cell: dict
+json.loads + pd.json_normalize: columns ['measured_outcome', 'physics_guess', 'residual', 'run_id', 'seed', 'skill', 'source', 'action.side'] ... | situation.ball_vx bitwise mismatches: 0
+json_normalize leaves lists as object cells: list
+exit=0

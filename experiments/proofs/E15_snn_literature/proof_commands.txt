@@ -1,0 +1,32 @@
+E15 SNN literature - executed commands (2026-11-21, Windows 11, Git Bash; interpreter C:\Python314\python.exe 3.14.0, stdlib only;
+pdftotext from /mingw64/bin). Downloads went to the session scratchpad (outside the repo):
+  SCRATCH=C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad
+Nothing was installed; the project venv was not used or modified. No secrets read.
+
+1) Download primary-source PDFs (curl -sS -L, generic UA) to $SCRATCH/dl ; all exit 0; hashes in downloaded_pdfs_sha256.txt.
+   The HAL /document URL returned a bot-check page; the direct /file/ URL of the accepted version returned the PDF.
+2) Text extraction: pdftotext -layout <pdf> <txt> and pdftotext <pdf> <txt>  (exit 0 for all).
+3) Horowitz Fig. 1.1.9 decode:
+   python -I decode_horowitz_fig119.py "$SCRATCH/dl/horowitz_gwern.pdf" > horowitz_fig119_decoded.stdout.txt 2> horowitz_fig119_decoded.stderr.txt
+   exit 0; stderr empty. Key decoded lines (clean form):
+     'Integer' 'Add' '8 bit0.03pJ32 bit0.1pJ' | 'FP' 'FAdd' '16 bit0.4pJ32 bit0.9pJ'
+     'Mult8 bit0.2pJ32 bit3.1pJ' | 'FMult16 bit1.1pJ32 bit3.7pJ'
+     'Memory' 'Cache' '(64bit)' '8KB10pJ32KB20pJ' '1MB100pJDRAM1.3-2.6nJ'
+   Same script on the second copy (pages.cs.wisc.edu/~markhill/restricted/isscc2014_horowitz_power_scaling.pdf):
+     python -I decode_horowitz_fig119.py "$SCRATCH/dl/horowitz_wisc.pdf" > horowitz_wisc_fig119_decoded.stdout.txt 2>&1
+     exit 0; output EMPTY (that copy's fonts are not 2-byte/shift-29; NOT decoded - only the gwern copy was decoded).
+4) Formula mechanics fixture (FIXTURE ONLY, invented sizes/spike counts):
+   python -I energy_formula_fixture.py > energy_formula_fixture.stdout.txt 2> energy_formula_fixture.stderr.txt
+   exit 0; stderr empty; stdout md5 1f07511be32719906327c632320a8209.
+5) Verbatim excerpts:
+   python -I extract_excerpts.py "$SCRATCH/txt" excerpts.txt > extract_excerpts.stdout.txt 2>&1
+   exit 0; "wrote 46 excerpts to excerpts.txt".
+6) Metadata checks: export.arxiv.org API (arxiv_api_metadata.txt; a second batch hit "Rate exceeded." and was
+   replaced by arxiv.org/abs page scraping -> arxiv_abs_page_meta.txt), api.crossref.org/works/<doi>
+   (crossref_doi_check.txt), api.github.com commits for snnTorch/TabPFN/PyTorch heads, raw.githubusercontent.com
+   LICENSE/README/CITATION.cff at those SHAs (license_and_readme_excerpts.txt), pypi.org/pypi/snntorch/json
+   -> "1.0.0 MIT License >=3.9".
+7) Local source read: Grep "(?i)distil" over .venv/Lib/site-packages/{tabpfn_client,tabpfn_common_utils}/**/*.py
+   (tabpfn_client 0.10.1) -> no matches.
+8) Not available locally: torch/snntorch are NOT installed in the project venv (only numpy, tabpfn_client,
+   tabpfn_common_utils match); a separate conda env 'dlenv' has torch 1.11.0+cpu and no snntorch. No SNN code was run.

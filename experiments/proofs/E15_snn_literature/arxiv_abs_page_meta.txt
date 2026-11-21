@@ -1,0 +1,7 @@
+2209.15425 | Spikformer: When Spiking Neural Network Meets Transformer | C:  | JR: 
+2307.01694 | Spike-driven Transformer | C:  | JR: 
+2008.03658 | DIET-SNN: Direct Input Encoding With Leakage and Threshold Optimization in Deep Spiking Neural Networks | C:  | JR: 
+2010.09635 | Deep Reinforcement Learning with Population-Coded Spiking Neural Network for Continuous Control | C: Conference on Robot Learning (CoRL) 2020, 14 pages, 7 figures | JR: 
+1904.11367 | A novel method for extracting interpretable knowledge from a spiking neural classifier with time-varying synaptic weights | C: 16 pages, 6 figures | JR: 
+2008.06937 | Supervised Learning with First-to-Spike Decoding in Multilayer Spiking Neural Networks | C: 41 pages, 13 figures | JR: 
+1506.02626 | Learning both Weights and Connections for Efficient Neural Networks | C: Published as a conference paper at NIPS 2015 | JR: 

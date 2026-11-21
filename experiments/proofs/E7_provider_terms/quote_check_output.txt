@@ -1,0 +1,62 @@
+FOUND  text/gtc_root.txt:172  Status: June 23, 2026
+FOUND  text/gtc_root.txt:176  1.1. These terms of service (“ToS”) govern the provision of access to the TabPFN foundatio
+FOUND  text/gtc_root.txt:179  1.2. The Services of PriorLabs are directed exclusively at business customers (Unternehmer
+FOUND  text/gtc_root.txt:182  1.3. Conflicting or additional contractual conditions of the Customer shall only apply if 
+FOUND  text/gtc_root.txt:188  1.2. In the event of any conflict or inconsistency between the provisions of the documents
+FOUND  text/gtc_root.txt:210  4.1. PriorLabs may offer the Services under free and paid options, each of which may diffe
+FOUND  text/gtc_root.txt:216  5.1. PriorLabs allows registered Customers, as and to the extent available from time to ti
+FOUND  text/gtc_root.txt:224  The Customer acknowledges that the provisions set out in the AUP shall be deemed material 
+FOUND  text/gtc_root.txt:228  5.7. PriorLabs may take measures to ensure that the use of the Contract Software and the S
+FOUND  text/gtc_root.txt:232  6.1. PriorLabs remains the sole owner of all right, title, and interest in the Contract So
+FOUND  text/gtc_root.txt:236  6.3. The Customer shall at all times respect PriorLabs' intellectual property rights in th
+FOUND  text/gtc_root.txt:240  (“Customer Content”)
+FOUND  text/gtc_root.txt:254  8.1. The Contract Software may be used to generate certain analyses, content, documents, r
+FOUND  text/gtc_root.txt:256  8.2. The Customer may freely use the Service Results. PriorLabs provides the Service Resul
+FOUND  text/gtc_root.txt:260  8.4. PriorLabs may use the Service Results to develop, test and improve the Contract Softw
+FOUND  text/gtc_root.txt:272  9.5. The Customer shall ensure that its use of the Services and the Contract Software does
+FOUND  text/gtc_root.txt:274  10. Blocking of Accesses
+FOUND  text/gtc_root.txt:276  10.1. In accordance with the requirements under Section 10.2, PriorLabs is entitled to blo
+FOUND  text/gtc_root.txt:278  10.1.1. there are reliable indications that the Customer or, where applicable, one of its 
+FOUND  text/gtc_root.txt:282  10.1.3. there are concrete indications that the Customer or one of its employees is in bre
+FOUND  text/gtc_root.txt:294  10.2. When deciding on a blocking, PriorLabs shall give due consideration to the legitimat
+FOUND  text/gtc_root.txt:316  13.1. Insofar as the Services are provided free of charge, the Contract is concluded for a
+FOUND  text/gtc_root.txt:320  13.3. The right of either party to extraordinary termination for cause shall remain unaffe
+FOUND  text/aup_www.txt:172  Status: January 2025
+FOUND  text/aup_www.txt:188  Customer may not misappropriate, reverse-engineer, copy, disassemble, decompile, extract s
+FOUND  text/aup_www.txt:191  Customer may not use the Services or the Contract Software in a way that imposes an unreas
+FOUND  text/aup_www.txt:194  including prompt-based manipulation or scraping behaviors
+FOUND  text/aup_www.txt:207  This list of prohibited uses is provided by way of example and should not be considered ex
+FOUND  text/aup_www.txt:211  Consumers within the meaning of Section 13 German Civil Code may not use PriorLabs' Servic
+FOUND  raw/hf_tabpfn_3_5_LICENSE.txt:7  This License applies only to customers who download the TABPFN-3.5 Model. For customers ac
+FOUND  raw/hf_tabpfn_3_5_LICENSE.txt:13  For clarity, use (a) for any revenue-generating activity, (b) in direct or indirect intera
+FOUND  raw/hf_tabpfn_3_5_LICENSE.txt:21  We claim no ownership rights in and to the Outputs.
+FOUND  raw/hf_tabpfn_3_5_LICENSE.txt:21  You may not use Outputs to train, fine-tune, or distill a model that is competitive with t
+FOUND  raw/hf_tabpfn_3_LICENSE.txt:7  For customers accessing the TABPFN-3 Model through our API, only our General Terms and Con
+FOUND  raw/hf_tabpfn_2_6_LICENSE.txt:7  For customers accessing the TABPFN-2.6 Model through our API, only our General Terms and C
+FOUND  raw/hf_tabpfn_2_5_LICENSE.txt:7  For customers accessing the TABPFN-2.5 Model through our API, only our General Terms and C
+FOUND  raw/hf_tabpfn_v2_clf_LICENSE.txt:192  weights or model outputs to create, train, fine tune, distil, or
+FOUND  raw/docs_models.md:142  Outputs are yours, but they can only be used for non-commercial evaluation and research. U
+FOUND  raw/docs_models.md:150  No. Using TabPFN (or its outputs) to train, fine tune, distill, or otherwise improve a com
+FOUND  raw/docs_models.md:146  However, if you use TabPFN (or its outputs) to train, guide, fine tune, or distill another
+FOUND  raw/docs_capabilities_distillation.md:14  TabPFN introduces a proprietary distillation engine designed to bridge the gap between fou
+FOUND  raw/docs_capabilities_distillation.md:18  **TabPFN-as-MLP/TreeEns**: Our distillation engine outputs a dataset-specific Multi-Layer 
+FOUND  raw/docs_capabilities_distillation.md:37  The high-speed inference engine and the associated distillation tooling are exclusive to t
+FOUND  raw/docs_faq.md:49  We can also create a tree- or small MLP based model that yields almost the same accuracy a
+FOUND  text/site_technical-reports_tabpfn-2-5-model-report.txt:209  Our proprietary distillation engine converts TabPFN-2.5 into a compact MLP or tree ensembl
+FOUND  text/site_tabpfn-2.txt:198  With this release, we also introduce a new distillation engine that brings foundation-mode
+FOUND  text/arxiv_2511.08667v2.txt:304  To improve deployment flexibility, we developed a proprietary distillation engine that, gi
+FOUND  text/arxiv_2511.08667v2.txt:305  In contrast to TabPFN, this resulting MLP or tree ensemble classifier is dataset-specific,
+FOUND  raw/docs_api_security.md:43  TabPFN foundation models are **never trained or fine-tuned on customer data**.
+FOUND  raw/docs_changelog_november-2026.md:42  Students and academics can apply for **twice the regular monthly API allowance**.
+FOUND  raw/docs_api_metering.md:81  | Daily tokens | 5,000,000 | Midnight UTC |
+FOUND  raw/docs_api_metering.md:82  | Monthly tokens | 20,000,000 | 1st of each month, midnight UTC |
+FOUND  raw/docs_api_rate-limits.md:24  | Predict | 60 | 1,500 |
+FOUND  text/pricing.txt:182  For teams running evaluation, research, and workflows that fit inside the free limits.
+FOUND  raw/gh_client_v0.10.1_README.md:546  This project is licensed under the Apache License 2.0 — see the [LICENSE](LICENSE) file fo
+FOUND  raw/gh_client_v0.10.1_README.md:25  This is a cloud-based service: your data will be sent to our servers for processing.
+FOUND  text/event_hacklab_edition2.txt:107  Prior Labs
+FOUND  text/event_hacklab_hacklab-edition-2-tracks-explained.txt:59  Exact track briefs, judging criteria and partner-to-track assignments are not covered here
+FOUND  text/event_hacklab_edition2.txt:61  Free credits from every technology partner
+FOUND  text/wayback_gtc_20260519.txt:170  Status: 26th March 2026
+FOUND  text/wayback_gtc_20260519.txt:276  10.1.1. there are reliable indications that the Customer or, where applicable, one of its 
+checked=61 missing=0
