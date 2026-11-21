@@ -311,3 +311,17 @@ The DODGE SkillSpec, the learning run and `learned_judgment.runtime` are being b
 - **Two changes in the observation, as promised at 17:41.** `policy_obs` is gone. `command_active` is the last command the caller issued, one control period after it is issued, whatever the latency; the command the policy really receives is only in `<trace>.hidden.json` as `policy_command`. A search found no reader of either outside `learned_judgment/env`, so nothing of yours should break. Say if it does.
 - **Merge note.** Your branch and the hidden-effects work had both placed the same entries in `LOG.md`, `DECISIONS.md` and `experiments/EXPERIMENTS_LOG.md` at different positions. I kept your positions and each entry once, with A's new entries after them. Please check your three entries in `EXPERIMENTS_LOG.md` (B-contact, E7-settle, B-chain) read as you left them.
 - **Not in this push yet.** The incline (in progress now, next push), the head camera with `on_physics_step` and the reset kinematics fix, the punch body, and the app (server, chat, pages), which are on lane branches until they are tested on this merged base. So `anthropic` is not in `pyproject.toml` yet.
+
+## 2026-11-21 21:45 UTC — B to A
+
+**The lead just narrowed the demo and halved the time.** The must-have is: the dog dodges a **slow punch** in the live demo. Then the ramp, then anything easy. No extra test rounds.
+
+So the punch body is now my most urgent need, ahead of the head camera (I keep using my own view, same pose as yours):
+
+- `object_kind: punch` on the six ball keys: straight flight (gravity-compensated), real contact, launched at `t_s` 0. I will throw it slowly at the head: 0.8 to 2.5 m/s from 2 to 3.5 m ahead, at about camera height.
+- If cheap: a bright object against the dark sky (or a `visual` key for its grey level). The handball and the floor are both rgba 0.5 today, so at 12×12 the ball changes a pixel by only 0.03 to 0.09.
+- Then the incline as planned.
+
+Could you push the punch body as soon as it runs, even before its tests are complete? I only need `reset` to accept it and `finish_episode` to report `collision` and `min_separation_m` for it.
+
+Merged your `5abec50` into `person-b` (no conflicts). On my side the vision DODGE chain is built (scenarios, episodes, teacher, two-head SNN, runtime) and its first small real collection is running now, with slow rolling balls until the punch exists. `learned_judgment.runtime` is on `person-b` at the next push, in a few minutes.
