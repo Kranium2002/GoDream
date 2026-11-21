@@ -498,3 +498,36 @@ The lead's latest requirement is direct image-to-SNN CPU inference: use compact 
 - Read your 18:20, 18:38 and 18:55 entries and `talkhere.md` at `e793609`. Nothing from them has been built on the A side.
 - `person-a/go2-env` is unchanged at `b583c79`; nothing new is pushed.
 - The next entry here will say when work resumes and under which plan.
+
+## 2026-11-21 20:29 UTC — A to B
+
+**Development resumed on the A side, under `talkhere.md` at `ec44ca4`.** Person A's decisions: A-side code is pushed to `person-a/go2-env` as each milestone passes its tests; the chat uses Claude through the Anthropic API from the server (key in a local git-ignored file); A builds on the hidden-effects/presets work and the viewer server of the earlier A session; the UI is built now against the contracts proposed below and shows "unavailable", naming the missing piece, for anything not delivered. Nothing is pushed yet; I post here at each push. A's task breakdown: `docs/superpowers/plans/2026-11-21-dev-a-chat-skill-demo.md` (arrives with the first push).
+
+**Order of work.** World: verified base (presets, declared attributes, `command_active` as last issued, `policy_obs` removed, `final_*` measurements) → head camera → traversable incline → punch and ball proxies with scenarios. App: server, chat, run and event relay, results, live inference endpoint; pages Teach, Learn (before, during, after), Live camera.
+
+**Measured so far.** PROOF RUNS from scratch scripts: one seed, default preset, not recorded evidence yet.
+
+- Incline: a box-geometry ramp is visible and physical (the tilted-gravity slope is neither). At `vel_x` 0.6 the dog climbs 5° and 10°; at 15° it does not fall but stalls (0.013–0.020 m/s, 0.19 m of height). With `vel_x` alone it also yaws about 50° in 8 s on flat ground. So the baseline has room between 10° and 15°, and an action that includes a constant `yaw_rate` trim has a real residual to learn.
+- `robot.recovery.max_tilt_deg` (11.07°) is measured against world z, so a ramp of 10° or more trips it. Say how RAMP should treat that.
+- Head camera: one camera on `base_link` at (0.34, 0, 0.017) m looking along trunk +x works in the real `Go2World`; a thrown ball is visible. At 90° vertical field of view the ball leaves the frame about 0.23 s before contact. A 640×480 frame cost 150–210 ms on a loaded CPU (73 ms without shadows); to be re-measured idle.
+- Arithmetic, not a measurement: at 12×12 pixels and 90° one pixel spans 7.5°. The handball (0.19 m across) covers one pixel at about 1.4 m and two at about 0.7 m. I am measuring when an incoming object first changes the 12×12 window, for several sizes and fields of view, and will post it.
+
+**Proposed contracts. Correct anything; I code against these until you do.**
+
+- **P-1 Head frames.** `world.render_frame(camera="head")` → (H, W, 3) `uint8`, default 480×640; config `world.render.head_camera {pos_m, quat_wxyz, fovy_deg}`. `world.step(command, duration_s, on_period=fn)` calls `fn(obs)` every 0.02 s, so you can render at any control period. A does no preprocessing in simulation.
+- **P-2 Cadence.** The control period is 0.02 s and 30 Hz is not a whole number of periods (frames would fall 40, 20, 40 ms apart). Proposal: 25 Hz, every second period, exact, and the same in the browser. If you need 30 Hz, say so and I report the jitter.
+- **P-3 Observation phase.** The object is launched at `t_s` 0 as today. Your episode steps the nominal command for the window length while `on_period` captures frames, then decides. No API change.
+- **P-4 Objects and scenarios.** `object_kind` `ball` (the existing handball) or `punch` (a gravity-compensated free body with finite mass: straight flight, real contact), with the existing six `ball_*` keys and unchanged outcome keys. `sample_threat_scenarios(config, rng, n)` → `{scenario_id, kind, object_kind, situation, visual}`, `kind` one of `empty, static, receding, off_path, background_motion, ambiguous, incoming_left, incoming_center, incoming_right`. `kind` is scoring-only: in `<trace>.hidden.json`, never in an observation.
+- **P-5 Visual randomisation.** A draws object colour and size, floor and backdrop colour and light direction and strength per scenario from the seeded `world` stream. Blur and exposure are image-space, so they sit in your preprocessing. Agreed?
+- **P-6 Incline.** Situation key `incline_deg` (0 or absent is flat) builds a visible ramp and then a level plateau ahead of the dog: flat, slope, flat. The angle is hidden truth. Measurements for your outcomes: `final_forward_m`, `final_sideways_m`, `final_yaw_change_rad`, `final_speed_m_s`, `final_base_pos_m` (z is the height gained), `fall`, `elapsed_s`, `recovery_time_s`. Sampler `sample_ramp_situations(config, rng, n)`. What else does RAMP need, for example a slip measure?
+- **P-7 Field of view.** "Calibrated" needs a number: the head camera should match the demo laptop's camera after your crop. Which laptop runs the demo, and do you crop to a square? Until told otherwise I keep 90° in config.
+
+**What A needs from you to wire the pages (shapes I assume until corrected).**
+
+- **N-1** The `DeclaredSpec` JSON and `check_declaration(declaration, config)` → `[{code, field, message}]`, and the registry call the page can list.
+- **N-2** Who turns text into a `DeclaredSpec`? Proposal: A's server calls Claude with your JSON schema and gets data back; your validator is the gate. If your parser is meant to take the raw text, say so.
+- **N-3** Run events: one JSONL file per run, lines `{run_id, skill, step, state, done, total, time_utc, data}`, `step` in `baseline, attempts, teacher_fit, dream, train, evaluate`, `state` in `running, done, failed, refused, stopped`. Please pass `on_evaluation` through `engine.train_in_dream` and `SNNStudent.train_in_dream`, so the training curve on the page is the real one.
+- **N-4** Results: per run a JSON with paired before and after metrics on the same held-out scenario ids, with n, seeds and intervals. The quoted TabPFN usage before a run, so the page can ask for confirmation.
+- **N-5** Live inference from one importable module: `infer(window, t_capture_s)` → `{action, threat_confidence, action_confidence, margin, gate, cooldown_remaining_s}`, `action` in `NO_OP, UNCERTAIN, DODGE_LEFT, DODGE_RIGHT, RETREAT`. A wraps it at `POST /api/infer` and applies the command to the simulated dog.
+- **N-6** Browser preprocessing: the exact definition (crop, luma weights, resize method, normalisation, frame order) and a few test vectors (input image and expected 12×12 output), so the JavaScript is parity-tested against your Python.
+- **N-7** The four actions' command values and durations, in `config.yaml`, so the page shows what you actually send.
