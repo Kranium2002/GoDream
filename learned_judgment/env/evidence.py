@@ -23,11 +23,12 @@ def _git(*args):
 
 
 def redact_home(text: str) -> str:
-    """Replace the user's home directory (and so the user name) with ~, in Windows, / and Git Bash spellings."""
+    """Replace the user's home directory (and so the user name) with ~, in Windows, /, doubled-\\ and Git Bash spellings."""
     home = Path.home()
-    for spelling in (str(home), home.as_posix(), "/" + home.as_posix().replace(":", "", 1)):
-        text = re.sub(re.escape(spelling), "~", text, flags=re.IGNORECASE)  # Windows paths ignore case
-    return text
+    drive = r"(?:[a-z]:|/[a-z])" if home.drive else ""  # C: or Git Bash /c; none on POSIX
+    names = "".join(r"[\\/]+" + re.escape(part) for part in home.parts[1:])
+    # Windows paths ignore case; the lookahead keeps a longer name that only starts with the home's last part.
+    return re.sub(drive + names + r"""(?![^\\/\s'"])""", "~", text, flags=re.IGNORECASE)
 
 
 def _label(value: str) -> str:
@@ -48,6 +49,8 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv[:split])
     command = argv[split + 1 :]
 
+    # Before the run: its own new directory must not count as a change, and the checkout may move during it.
+    git_rev, git_status = _git("rev-parse", "HEAD"), _git("status", "--porcelain")
     started = datetime.now(timezone.utc)
     run_dir = Path(args.out) / f"{started:%Y%m%dT%H%M%S}-{args.label}"
     run_dir.mkdir(parents=True)
@@ -74,16 +77,17 @@ def main(argv=None) -> int:
                 "python": sys.version,
                 "platform": platform.platform(),
                 "packages": {d.metadata["Name"]: d.version for d in metadata.distributions()},
-                "git_rev": _git("rev-parse", "HEAD"),
-                "git_dirty": bool(_git("status", "--porcelain")),
+                "git_rev": git_rev,
+                "git_dirty": None if git_status is None else bool(git_status),  # None: git failed, state unknown
                 "config_sha256": hashlib.sha256(config.read_bytes()).hexdigest() if config.exists() else None,
             },
             indent=2,
         )
     )
     # Echo after the child ends so the caller still sees the output; the files are the record.
-    sys.stdout.write((run_dir / "stdout.txt").read_text())
-    sys.stderr.write((run_dir / "stderr.txt").read_text())
+    # Bytes, not text: decoding with the locale codec can fail and would replace the child's exit code.
+    sys.stdout.buffer.write((run_dir / "stdout.txt").read_bytes())
+    sys.stderr.buffer.write((run_dir / "stderr.txt").read_bytes())
     return exit_code
 
 
