@@ -4,14 +4,14 @@ and, if the page should know whether it works, its capability; app/server.py imp
     @route("GET", "/api/thing")
     def thing(h): h.send_json(200, {...})          # h is the server's request handler
 
-    @route("GET", "/api/things/*")                 # any one last path segment; the handler reads it from h.path
+    @route("GET", "/api/things/*/parts")           # "*" matches any one path segment; the handler reads it from h.path
 
     @capability("thing")
     def thing_capability(server): return {"available": ..., "reason": "..."}
 """
 import json
 
-ROUTES = {}  # (method, path) -> handler(h); a path ending in "/*" matches one last segment
+ROUTES = {}  # (method, path) -> handler(h); a "*" segment in a path matches any one segment
 CAPABILITIES = {}  # name -> fn(server) -> {"available": bool, "reason": str}
 
 
@@ -36,8 +36,17 @@ def route(method: str, path: str):
 
 
 def find(method: str, path: str):
-    """The handler for a request path, or None."""
-    return ROUTES.get((method, path)) or ROUTES.get((method, path.rsplit("/", 1)[0] + "/*"))
+    """The handler for a request path, or None: an exact route first, else a pattern whose "*" segments each match
+    one segment of the path."""
+    if (method, path) in ROUTES:
+        return ROUTES[method, path]
+    parts = path.split("/")
+    for (m, pattern), handler in ROUTES.items():
+        segments = pattern.split("/")
+        if m == method and "*" in segments and len(segments) == len(parts) and all(
+                s in ("*", p) for s, p in zip(segments, parts)):
+            return handler
+    return None
 
 
 def capability(name: str):

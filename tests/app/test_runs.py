@@ -71,8 +71,8 @@ def test_summary_has_the_newest_line_per_step_in_pipeline_order():
     events = events_of(line("attempts", done=1), line("baseline", "done", 10, 10, {"fall_rate": 0.4}),
                        line("attempts", done=7, data={"last": 3}))
     assert runs.summarize(events) == [
-        {"step": "baseline", "state": "done", "done": 10, "total": 10, "data": {"fall_rate": 0.4}},
-        {"step": "attempts", "state": "running", "done": 7, "total": 10, "data": {"last": 3}},
+        {"step": "baseline", "state": "done", "done": 10, "total": 10, "time_utc": "2026-11-21T21:00:00Z", "data": {"fall_rate": 0.4}},
+        {"step": "attempts", "state": "running", "done": 7, "total": 10, "time_utc": "2026-11-21T21:00:00Z", "data": {"last": 3}},
     ]
 
 
@@ -263,3 +263,27 @@ def test_the_runner_calls_quote_run_and_start_run_once_the_module_imports(config
     runner, missing = backend.runner(config)
     assert missing == [] and runner.quote(DECLARATION, config) == {"estimated_cost_usd": 0.5}
     assert runner.start(DECLARATION, config) == "r7" and calls == [("quote", DECLARATION), ("start", DECLARATION)]
+
+
+# ---- every line of a run (the replay) -----------------------------------------------------------------------------
+
+def test_all_events_are_the_complete_valid_lines_in_file_order(tmp_path):
+    folder = tmp_path / "r"
+    folder.mkdir()
+    (folder / runs.EVENTS).write_bytes(line("train", done=1) + b"garbage\n" + line(step="warmup")
+                                       + line("train", done=2) + line("train", done=3)[:10])
+    assert [e["done"] for e in runs.all_events(folder)] == [1, 2]  # bad lines and the partial last line left out
+
+
+def test_all_events_of_a_folder_without_an_event_file_is_empty(tmp_path):
+    assert runs.all_events(tmp_path) == []
+
+
+def test_all_events_of_dev_bs_v0_run_are_its_file_lines(config):
+    root, _ = backend.runs_dir(config)
+    if not (root / "v0").is_dir():
+        pytest.skip("Dev B's v0 run is not in this tree")
+    lines = [json.loads(raw) for raw in (root / "v0" / runs.EVENTS).read_bytes().splitlines() if raw.strip()]
+    events = runs.all_events(root / "v0")  # Dev B's real run file
+    assert len(events) == len(lines) and events[0] == lines[0] and events[-1] == lines[-1]
+    assert sum(e["step"] == "train" for e in events) > 1  # why the page needs every line, not one per step

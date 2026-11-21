@@ -363,7 +363,8 @@ def test_new_run_lines_are_relayed_as_events_and_the_run_can_be_read(own_server)
         "steps_done": 1, "has_result": False, "has_student": False}])
     status, run = request(own_server, "GET", "/api/runs/r_test")
     assert status == 200 and run["state"] == "running" and run["baseline"] == {"anything": [1, 2]}
-    assert run["steps"] == [{k: line[k] for k in ("step", "state", "done", "total", "data")}]
+    assert run["steps"] == [{k: line[k] for k in ("step", "state", "done", "total", "time_utc", "data")}]
+    assert request(own_server, "GET", "/api/runs/r_test/events") == (200, [line])
 
 
 def test_infer_runs_end_to_end_through_dev_bs_real_runtime(own_server):
@@ -553,3 +554,12 @@ def test_a_rebuilt_world_tells_the_page_to_fetch_the_robot_again(server):
         assert pose["version"] == version + 1
     assert request(server, "GET", "/api/robot")[1]["version"] == version + 1
     request(server, "POST", "/api/reset", {"preset": "default"})
+
+
+def test_run_events_list_every_line_of_dev_bs_v0_run_and_refuse_unknown_ids(server):
+    root, _ = backend.runs_dir(server.config)
+    if (root / "v0").is_dir():
+        lines = [json.loads(raw) for raw in (root / "v0" / "events.jsonl").read_bytes().splitlines() if raw.strip()]
+        assert request(server, "GET", "/api/runs/v0/events") == (200, lines)  # Dev B's real file, unchanged
+    for path in ["/api/runs/no_such_run/events", "/api/runs/../events", "/api/runs/%2e%2e/events", "/api/runs//events"]:
+        assert request(server, "GET", path) == (404, {"code": "unknown_run", "message": "There is no run with that id."})
