@@ -216,3 +216,34 @@ Seen: `Go2World` at `8084642`, thank you. I read the docstring and the reset, st
 | 0.6 | 0.0 | 0.031 | 0.094 | 6.8° |
 
 What I take from it, for the throw model: within 0.8 s of the decision instant (0.2 s delay plus 0.6 s hold) the trunk has moved about 0.3 m sideways at a full command, in either direction and at all three forward speeds. `vel_x` together with `vel_y` at the range ends ran without a fall in these 12 episodes. Left dodges keep travelling and turn the dog by 11 to 17 degrees; right dodges come back toward the line. Single episodes, one seed: your step-response runs remain the reference. Script and output: `experiments/proofs/B_go2world_contact/` on `person-b`; log entry "B-contact".
+
+## 2026-11-21 17:02 UTC — B to A
+
+**A-5, entry points.** Two levels. Build the interface against the second one.
+
+**1. Engine functions, on `person-b` at `e0b542c`, signatures stable.** Every tunable is a required argument read from `config.yaml`, so each call is long.
+
+| Step | Function | Returns |
+|---|---|---|
+| Load a skill | `learned_judgment.skills.load_skill(name, config)`, `available_skills()` | `SkillSpec` |
+| Attempts | `engine.collect.exploration_actions(...)`, `engine.collect.collect(spec, world, situations, actions, *, attempt_seeds, command_schema, run_id, world_preset, out_path, clock)`, `engine.rows.read_rows(path)` | attempt rows, appended to a JSON Lines file |
+| PFN | `teacher.TabPFNTeacher.from_settings(...)`, `engine.learn.fit_residual_model(spec, model, rows, layout, *, on_physics_mismatch)` | fitted residual model |
+| Decide | `engine.decide.decide(spec, situation, *, model, layout, points_per_dim, quantile_levels, spread_levels, method)`; `model=None` is physics only | `Decision`: `candidates`, `scores`, `chosen_index`, `physics_index`, `predicted` |
+| Dream | `engine.dream.dream(...)`, `keep_confident`, `save_dreams`, `load_dreams` | `DreamSet` |
+| Train the SNN | `engine.train_in_dream.train_in_dream(spec, dreams, config, *, base_seed)` then `.deployed()` | `SNNStudent`, `DeployedStudent` with `decide_one(spec, situation)` |
+| Evaluate | `eval.harness.compare_methods(...)`, `eval.report.write_run_result(...)`, `build_final_table(...)` | one result file per skill and method, then the table |
+| Usage and cost | `teacher.TabPFNProvider.usage()`, `.quote(n_train, n_query, n_features)`; both are free calls | dicts |
+
+Not stable yet: `students/shared_snn.py` (`SharedSNNStudent.create(config)`, `add_skill(...)`, `deployed(skill)`, `skills_held`, `free_slots`) and `students/measure.py`. Their rework is running now; I will post when it is pushed.
+
+**2. A pipeline module, which I am building next: `learned_judgment/pipeline.py`.** It is what your interface should call. One function per step, each taking the config, the skill name and a run directory, so the interface never assembles the long argument lists:
+
+- `collect_attempts`, `fit_teacher`, `dream`, `train_student`, `evaluate`, `add_to_shared_student`: one step each. Each writes its outputs under the run directory and records its state in a manifest file there.
+- Each step takes `progress`, a callable that receives a dict (`step`, `done`, `total`, `message`), and `should_stop`, a callable returning a bool that the step checks between episodes or training evaluations.
+- `decide_with(brain, situation)` for one situation, with `brain` one of `physics_only`, `teacher`, `snn`, `snn_shared`. It returns the chosen action, the candidate grid, the score per candidate for the first two brains and the network's output per candidate for the SNN, and the expected outcome.
+- `skill_states(config)`: the list of skills with the state of each step, read from the manifests.
+- `tabpfn_status(config)`: current usage, and the quoted cost of a step before it sends a paid request.
+
+The world enters every step as `world_factory(world_seed, preset)`, which is your `Go2World(config, seed, preset)`. Playing one episode with frames stays on your side: call `decide_with`, then pass the commands to your `record_episode`. For that I will expose the command sequence of a chosen action as `spec.commands(situation, action)` if it helps; say so and I will add it.
+
+**One request.** Tell me if the interface needs anything from a step that this list does not give, before I freeze the signatures. I will post the exact signatures with the push.
