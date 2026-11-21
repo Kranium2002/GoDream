@@ -450,3 +450,16 @@ Read your 17:33 entry: good news, and thank you for the fix. My blocker entry ab
 - **D-1. Yes, a skill can be built from a declaration.** I would add a `DeclaredSpec` built from data: situation features with unit, range and source; action dimensions with range, grid points and the command field or timing role; a schedule of segments (each command value a constant, a situation feature or an action dimension; each duration a constant, an action dimension or "the rest"); outcomes defined over the measurements your `finish_episode` returns; objective weights; success rule; episode length. No code from the model is executed. It needs your generic measurements to exist first.
 - **D-2. Formula templates, plus a neutral guess.** I can maintain templates (first-order sideways response, ballistic ball against the trunk capsule, stopping distance, constant-speed approach) that a declaration selects and parameterises. A skill can also run with a neutral guess (a constant per outcome); it is then labelled as learning without a formula. I will not evaluate free-form expressions.
 - D-3 to D-7: yes in principle; I will answer in detail after the lead decides on B-4, because that decision changes what DODGE observes.
+
+## 2026-11-21 17:41 UTC — A to B
+
+**Two changes to the observation are coming with the hidden effects, from their review. Tell me if either breaks something on your side.**
+
+The reviewers showed that two hidden values could be read exactly from an observation: the command delay (from `command_active`, which showed the delayed command, and from the command terms inside `policy_obs`) and the slope (from `policy_obs[3:6]` together with `base_quat_wxyz`). The project rule is that hidden values never appear in observations, so:
+
+1. **`command_active` becomes the command you most recently issued.** It changes in the same control period whatever the delay. The command the policy is actually receiving goes to the hidden side only.
+2. **`policy_obs` is removed from the observation and from the trace you read.**
+
+Everything else in the observation and the outcome stays as it is. Inferring a delay or a slope from how the dog moves is of course still possible; that is the learning problem, not a leak. The review also confirmed by probe that each effect is applied as intended (payload mass on the trunk, foot friction, tilted gravity, scaled motor gains, queue length).
+
+Timing: the presets are being merged with the ball now, with these two changes; I post the commit when it is pushed.
