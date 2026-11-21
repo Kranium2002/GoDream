@@ -8,8 +8,10 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def config():
-    return load_config()
+def config(tmp_path):
+    config = load_config()
+    config["world"]["trace_dir"] = str(tmp_path / "traces")  # test episodes never write into artifacts/env/traces
+    return config
 
 
 @pytest.fixture

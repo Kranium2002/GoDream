@@ -1,0 +1,802 @@
+[
+  {
+    "attempt_seed": 0,
+    "situation": {
+      "ball_rel_x_m": 3.5405293705323695,
+      "ball_rel_y_m": 2.0388585365488683,
+      "ball_rel_z_m": 1.1273983942490702,
+      "ball_vel_x_m_s": -3.333004407001493,
+      "ball_vel_y_m_s": -1.9985331151868175,
+      "ball_vel_z_m_s": 3.507282671480599,
+      "dog_forward_speed_m_s": 0.3721260998755545
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.932,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt0-1.npz"
+  },
+  {
+    "attempt_seed": 1,
+    "situation": {
+      "ball_rel_x_m": 2.2185094841586834,
+      "ball_rel_y_m": -3.517434089836491,
+      "ball_rel_z_m": 1.132799874904093,
+      "ball_vel_x_m_s": -1.1196127792063002,
+      "ball_vel_y_m_s": 3.3391360624246356,
+      "ball_vel_z_m_s": 4.998646805595545,
+      "dog_forward_speed_m_s": 0.7139208224292108
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.1608135312679202,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt1-1.npz"
+  },
+  {
+    "attempt_seed": 2,
+    "situation": {
+      "ball_rel_x_m": 2.484933081267083,
+      "ball_rel_y_m": -2.6376988139026003,
+      "ball_rel_z_m": 1.0018943023267008,
+      "ball_vel_x_m_s": -2.654339480856995,
+      "ball_vel_y_m_s": 3.1023450953964646,
+      "ball_vel_z_m_s": 2.567683729877033,
+      "dog_forward_speed_m_s": 0.5151622600188686
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.792,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt2-1.npz"
+  },
+  {
+    "attempt_seed": 3,
+    "situation": {
+      "ball_rel_x_m": 4.296035310262688,
+      "ball_rel_y_m": 0.46492220475374163,
+      "ball_rel_z_m": 0.7030862526846,
+      "ball_vel_x_m_s": -3.697058520031922,
+      "ball_vel_y_m_s": -0.610891982664414,
+      "ball_vel_z_m_s": 4.568833536720678,
+      "dog_forward_speed_m_s": 0.33322668177393633
+    },
+    "collision": 1,
+    "first_collision_time_s": 1.05,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt3-1.npz"
+  },
+  {
+    "attempt_seed": 4,
+    "situation": {
+      "ball_rel_x_m": 2.323535871756285,
+      "ball_rel_y_m": -2.9569860487513124,
+      "ball_rel_z_m": 0.753025071107128,
+      "ball_vel_x_m_s": -1.6959408966265703,
+      "ball_vel_y_m_s": 3.1166650936102362,
+      "ball_vel_z_m_s": 4.428382877185721,
+      "dog_forward_speed_m_s": 0.518724404686017
+    },
+    "collision": 1,
+    "first_collision_time_s": 1.028,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt4-1.npz"
+  },
+  {
+    "attempt_seed": 5,
+    "situation": {
+      "ball_rel_x_m": 4.023297182048658,
+      "ball_rel_y_m": -2.3310118124382346,
+      "ball_rel_z_m": 0.7133556117793165,
+      "ball_vel_x_m_s": -3.49403822236643,
+      "ball_vel_y_m_s": 2.3110879612187247,
+      "ball_vel_z_m_s": 3.9095045293576227,
+      "dog_forward_speed_m_s": 0.7404986760984128
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.9520000000000001,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt5-1.npz"
+  },
+  {
+    "attempt_seed": 6,
+    "situation": {
+      "ball_rel_x_m": 3.0875645115250867,
+      "ball_rel_y_m": 3.718023038440356,
+      "ball_rel_z_m": 1.1082581868499566,
+      "ball_vel_x_m_s": -2.271454475950791,
+      "ball_vel_y_m_s": -3.9284045767184845,
+      "ball_vel_z_m_s": 4.366598017836875,
+      "dog_forward_speed_m_s": 0.5448275120796283
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.29335936930758805,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt6-1.npz"
+  },
+  {
+    "attempt_seed": 7,
+    "situation": {
+      "ball_rel_x_m": 3.744617298336959,
+      "ball_rel_y_m": 1.9410230773602188,
+      "ball_rel_z_m": 0.8615845454042843,
+      "ball_vel_x_m_s": -4.0475601221811885,
+      "ball_vel_y_m_s": -1.6319985471365563,
+      "ball_vel_z_m_s": 2.6587558724312292,
+      "dog_forward_speed_m_s": 0.8147381459119021
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.28450197846240255,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt7-1.npz"
+  },
+  {
+    "attempt_seed": 8,
+    "situation": {
+      "ball_rel_x_m": 3.539984247745309,
+      "ball_rel_y_m": -0.4158362663681544,
+      "ball_rel_z_m": 0.9471098050835772,
+      "ball_vel_x_m_s": -3.6016587645335263,
+      "ball_vel_y_m_s": 0.5240704027086748,
+      "ball_vel_z_m_s": 3.000709785304404,
+      "dog_forward_speed_m_s": 0.6061741487062641
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.8140000000000001,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt8-1.npz"
+  },
+  {
+    "attempt_seed": 9,
+    "situation": {
+      "ball_rel_x_m": 4.513989905059674,
+      "ball_rel_y_m": 0.18947067524387334,
+      "ball_rel_z_m": 1.1237384149026464,
+      "ball_vel_x_m_s": -4.068781122702118,
+      "ball_vel_y_m_s": -0.86281637644276,
+      "ball_vel_z_m_s": 3.894574074454951,
+      "dog_forward_speed_m_s": 0.361648804230475
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.4485238464747897,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt9-1.npz"
+  },
+  {
+    "attempt_seed": 10,
+    "situation": {
+      "ball_rel_x_m": 4.738840102851189,
+      "ball_rel_y_m": 1.057404939186782,
+      "ball_rel_z_m": 0.8950850589023298,
+      "ball_vel_x_m_s": -4.383293693213956,
+      "ball_vel_y_m_s": -1.5221126887129934,
+      "ball_vel_z_m_s": 3.455485880545266,
+      "dog_forward_speed_m_s": 0.8476874755899537
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.08535878442440496,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt10-1.npz"
+  },
+  {
+    "attempt_seed": 11,
+    "situation": {
+      "ball_rel_x_m": 4.5017270488105225,
+      "ball_rel_y_m": 0.23941626896656085,
+      "ball_rel_z_m": 0.7874071028068295,
+      "ball_vel_x_m_s": -3.860508209685992,
+      "ball_vel_y_m_s": 0.40382525689608034,
+      "ball_vel_z_m_s": 3.9135309490396857,
+      "dog_forward_speed_m_s": 0.8077139285227182
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.3530913047873847,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt11-1.npz"
+  },
+  {
+    "attempt_seed": 12,
+    "situation": {
+      "ball_rel_x_m": 3.8912340130342784,
+      "ball_rel_y_m": -1.032923284110554,
+      "ball_rel_z_m": 0.8092783974472353,
+      "ball_vel_x_m_s": -3.4479151319631764,
+      "ball_vel_y_m_s": 0.5227999156537161,
+      "ball_vel_z_m_s": 3.8045622900882456,
+      "dog_forward_speed_m_s": 0.6505860412983617
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.25445353415521826,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt12-1.npz"
+  },
+  {
+    "attempt_seed": 13,
+    "situation": {
+      "ball_rel_x_m": 3.2027324795461514,
+      "ball_rel_y_m": 3.81129708492265,
+      "ball_rel_z_m": 0.8235532858280759,
+      "ball_vel_x_m_s": -2.286389127870836,
+      "ball_vel_y_m_s": -2.914719158156416,
+      "ball_vel_z_m_s": 5.255297432856244,
+      "dog_forward_speed_m_s": 0.3601491854895768
+    },
+    "collision": 1,
+    "first_collision_time_s": 1.212,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt13-1.npz"
+  },
+  {
+    "attempt_seed": 14,
+    "situation": {
+      "ball_rel_x_m": 4.377541972766858,
+      "ball_rel_y_m": 0.11263437361446031,
+      "ball_rel_z_m": 0.6914120548382972,
+      "ball_vel_x_m_s": -4.5349859619319846,
+      "ball_vel_y_m_s": -0.6813932098937546,
+      "ball_vel_z_m_s": 3.295736723469968,
+      "dog_forward_speed_m_s": 0.6778009460905989
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.22695860568351586,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt14-1.npz"
+  },
+  {
+    "attempt_seed": 15,
+    "situation": {
+      "ball_rel_x_m": 3.4590996712432682,
+      "ball_rel_y_m": 0.818620868288832,
+      "ball_rel_z_m": 1.0446016241503808,
+      "ball_vel_x_m_s": -4.063048063698733,
+      "ball_vel_y_m_s": -1.9235347398138316,
+      "ball_vel_z_m_s": 2.2347378145653636,
+      "dog_forward_speed_m_s": 0.5959985216316439
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.34530998589450423,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt15-1.npz"
+  },
+  {
+    "attempt_seed": 16,
+    "situation": {
+      "ball_rel_x_m": 3.853062554146248,
+      "ball_rel_y_m": -1.0219311064733707,
+      "ball_rel_z_m": 0.961580191356302,
+      "ball_vel_x_m_s": -4.28005953779008,
+      "ball_vel_y_m_s": 2.1111796790573023,
+      "ball_vel_z_m_s": 2.772753103879026,
+      "dog_forward_speed_m_s": 0.48896387847721734
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.34043128519777893,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt16-1.npz"
+  },
+  {
+    "attempt_seed": 17,
+    "situation": {
+      "ball_rel_x_m": 4.086890538042294,
+      "ball_rel_y_m": -0.0680930475118025,
+      "ball_rel_z_m": 1.0848281987787027,
+      "ball_vel_x_m_s": -3.755697564094634,
+      "ball_vel_y_m_s": 0.5285227206506979,
+      "ball_vel_z_m_s": 3.6008799263679863,
+      "dog_forward_speed_m_s": 0.4854089720565826
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.14382658180448138,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt17-1.npz"
+  },
+  {
+    "attempt_seed": 18,
+    "situation": {
+      "ball_rel_x_m": 2.5920378436587357,
+      "ball_rel_y_m": 2.3598879059389453,
+      "ball_rel_z_m": 0.6843299542233142,
+      "ball_vel_x_m_s": -3.666006793348792,
+      "ball_vel_y_m_s": -2.8688748783649722,
+      "ball_vel_z_m_s": 1.826504222604024,
+      "dog_forward_speed_m_s": 0.6287167023234588
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.06381165857678998,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt18-1.npz"
+  },
+  {
+    "attempt_seed": 19,
+    "situation": {
+      "ball_rel_x_m": 3.499385167290286,
+      "ball_rel_y_m": -0.437760924545789,
+      "ball_rel_z_m": 1.0333815505524848,
+      "ball_vel_x_m_s": -4.3802276339947674,
+      "ball_vel_y_m_s": 0.09406810340930022,
+      "ball_vel_z_m_s": 1.8394105479051401,
+      "dog_forward_speed_m_s": 0.7409014977451989
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.10166441730234436,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt19-1.npz"
+  },
+  {
+    "attempt_seed": 20,
+    "situation": {
+      "ball_rel_x_m": 2.2671579297095716,
+      "ball_rel_y_m": -2.714609023987261,
+      "ball_rel_z_m": 1.1985205576145175,
+      "ball_vel_x_m_s": -2.2896895203743095,
+      "ball_vel_y_m_s": 3.430995489936817,
+      "ball_vel_z_m_s": 2.5209098885325094,
+      "dog_forward_speed_m_s": 0.495198861389469
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.788,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt20-1.npz"
+  },
+  {
+    "attempt_seed": 21,
+    "situation": {
+      "ball_rel_x_m": 4.2622199395822635,
+      "ball_rel_y_m": 1.4436105185181511,
+      "ball_rel_z_m": 0.698567709092017,
+      "ball_vel_x_m_s": -3.73878805772572,
+      "ball_vel_y_m_s": -1.8923169541789187,
+      "ball_vel_z_m_s": 4.0279698250218186,
+      "dog_forward_speed_m_s": 0.6630515360570698
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.14970406383711254,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt21-1.npz"
+  },
+  {
+    "attempt_seed": 22,
+    "situation": {
+      "ball_rel_x_m": 3.1848565689434696,
+      "ball_rel_y_m": -2.011489936851508,
+      "ball_rel_z_m": 0.7896854427124629,
+      "ball_vel_x_m_s": -3.5614767764406676,
+      "ball_vel_y_m_s": 2.8414502872571195,
+      "ball_vel_z_m_s": 2.4550365593919508,
+      "dog_forward_speed_m_s": 0.8426730600570944
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.6920000000000001,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt22-1.npz"
+  },
+  {
+    "attempt_seed": 23,
+    "situation": {
+      "ball_rel_x_m": 3.7733357788797073,
+      "ball_rel_y_m": -0.8850685570249713,
+      "ball_rel_z_m": 1.0573329519330241,
+      "ball_vel_x_m_s": -4.0854861738203825,
+      "ball_vel_y_m_s": 0.5761007420279379,
+      "ball_vel_z_m_s": 2.581735399500812,
+      "dog_forward_speed_m_s": 0.6497592343243567
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.13070944040431232,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt23-1.npz"
+  },
+  {
+    "attempt_seed": 24,
+    "situation": {
+      "ball_rel_x_m": 3.463265067413222,
+      "ball_rel_y_m": 1.2842616340622444,
+      "ball_rel_z_m": 1.1133063197025064,
+      "ball_vel_x_m_s": -3.2684533100612856,
+      "ball_vel_y_m_s": -2.0163667868665907,
+      "ball_vel_z_m_s": 3.1991451824720505,
+      "dog_forward_speed_m_s": 0.5649201750194539
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.29646735471912417,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt24-1.npz"
+  },
+  {
+    "attempt_seed": 25,
+    "situation": {
+      "ball_rel_x_m": 2.7711338802708614,
+      "ball_rel_y_m": 3.0677571728375197,
+      "ball_rel_z_m": 0.9938798072060899,
+      "ball_vel_x_m_s": -2.0394877454734446,
+      "ball_vel_y_m_s": -3.558624107085039,
+      "ball_vel_z_m_s": 3.5835581482232617,
+      "dog_forward_speed_m_s": 0.8928992491671579
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.045348188656879465,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt25-1.npz"
+  },
+  {
+    "attempt_seed": 26,
+    "situation": {
+      "ball_rel_x_m": 3.106777692009875,
+      "ball_rel_y_m": 2.2921791588916043,
+      "ball_rel_z_m": 0.8467688732267402,
+      "ball_vel_x_m_s": -3.239519158206226,
+      "ball_vel_y_m_s": -2.282885146494342,
+      "ball_vel_z_m_s": 2.9803335968823017,
+      "dog_forward_speed_m_s": 0.5560808687815274
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.902,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt26-1.npz"
+  },
+  {
+    "attempt_seed": 27,
+    "situation": {
+      "ball_rel_x_m": 2.9003092739839835,
+      "ball_rel_y_m": 2.7544465516188597,
+      "ball_rel_z_m": 0.9023461463669304,
+      "ball_vel_x_m_s": -2.4932851847055315,
+      "ball_vel_y_m_s": -2.367630976832881,
+      "ball_vel_z_m_s": 3.615547122636323,
+      "dog_forward_speed_m_s": 0.611754665904026
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.04199940615058721,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt27-1.npz"
+  },
+  {
+    "attempt_seed": 28,
+    "situation": {
+      "ball_rel_x_m": 3.1976718886423825,
+      "ball_rel_y_m": 2.413275908684527,
+      "ball_rel_z_m": 0.7278241683960233,
+      "ball_vel_x_m_s": -2.4500987387078075,
+      "ball_vel_y_m_s": -2.3638141560426167,
+      "ball_vel_z_m_s": 4.05859833583408,
+      "dog_forward_speed_m_s": 0.8161413179039261
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.96,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt28-1.npz"
+  },
+  {
+    "attempt_seed": 29,
+    "situation": {
+      "ball_rel_x_m": 4.540372088457666,
+      "ball_rel_y_m": 0.9525072404187036,
+      "ball_rel_z_m": 1.1468267493981559,
+      "ball_vel_x_m_s": -3.6035960330077135,
+      "ball_vel_y_m_s": -1.1100037869527217,
+      "ball_vel_z_m_s": 4.6260838380025175,
+      "dog_forward_speed_m_s": 0.3549411314886749
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.12291771966121935,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt29-1.npz"
+  },
+  {
+    "attempt_seed": 30,
+    "situation": {
+      "ball_rel_x_m": 1.9466991446293567,
+      "ball_rel_y_m": -2.9686614460933396,
+      "ball_rel_z_m": 0.6969273142513818,
+      "ball_vel_x_m_s": -1.529992639478057,
+      "ball_vel_y_m_s": 3.575879148325654,
+      "ball_vel_z_m_s": 4.00206167064694,
+      "dog_forward_speed_m_s": 0.4906667222306862
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.1028565731144865,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt30-1.npz"
+  },
+  {
+    "attempt_seed": 31,
+    "situation": {
+      "ball_rel_x_m": 4.820909186847388,
+      "ball_rel_y_m": 0.5249221737688301,
+      "ball_rel_z_m": 0.6492305471871566,
+      "ball_vel_x_m_s": -3.9038382071811624,
+      "ball_vel_y_m_s": -0.3052434412683471,
+      "ball_vel_z_m_s": 4.9823904014086215,
+      "dog_forward_speed_m_s": 0.3525143898977374
+    },
+    "collision": 1,
+    "first_collision_time_s": 1.11,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt31-1.npz"
+  },
+  {
+    "attempt_seed": 32,
+    "situation": {
+      "ball_rel_x_m": 4.580871002918242,
+      "ball_rel_y_m": 1.0909345797097867,
+      "ball_rel_z_m": 1.19851873561873,
+      "ball_vel_x_m_s": -3.952701870173538,
+      "ball_vel_y_m_s": -0.7471813770670065,
+      "ball_vel_z_m_s": 3.651282300011739,
+      "dog_forward_speed_m_s": 0.6699003420902276
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.025585838939840067,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt32-1.npz"
+  },
+  {
+    "attempt_seed": 33,
+    "situation": {
+      "ball_rel_x_m": 3.230383373464365,
+      "ball_rel_y_m": -1.3610961720360182,
+      "ball_rel_z_m": 0.9105497265439559,
+      "ball_vel_x_m_s": -3.915362489286747,
+      "ball_vel_y_m_s": 1.351995026081508,
+      "ball_vel_z_m_s": 2.1844612156257006,
+      "dog_forward_speed_m_s": 0.6494278691163515
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.03994570304516189,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt33-1.npz"
+  },
+  {
+    "attempt_seed": 34,
+    "situation": {
+      "ball_rel_x_m": 2.3804871296381114,
+      "ball_rel_y_m": 3.4330699049630518,
+      "ball_rel_z_m": 1.0575438505875043,
+      "ball_vel_x_m_s": -1.7850049124010199,
+      "ball_vel_y_m_s": -4.096128136940187,
+      "ball_vel_z_m_s": 3.4532032906087924,
+      "dog_forward_speed_m_s": 0.7618208590882845
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.11872237582038743,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt34-1.npz"
+  },
+  {
+    "attempt_seed": 35,
+    "situation": {
+      "ball_rel_x_m": 2.365914861723362,
+      "ball_rel_y_m": 4.039381015435428,
+      "ball_rel_z_m": 1.1729101020795527,
+      "ball_vel_x_m_s": -1.5349367209202935,
+      "ball_vel_y_m_s": -4.285595813146324,
+      "ball_vel_z_m_s": 3.7962837228353887,
+      "dog_forward_speed_m_s": 0.8062013764836862
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.05991575728227057,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt35-1.npz"
+  },
+  {
+    "attempt_seed": 36,
+    "situation": {
+      "ball_rel_x_m": 3.97572194985994,
+      "ball_rel_y_m": -1.1735110940634441,
+      "ball_rel_z_m": 0.7184504162129238,
+      "ball_vel_x_m_s": -3.5209409018751425,
+      "ball_vel_y_m_s": 1.2258017129355132,
+      "ball_vel_z_m_s": 4.27023218968322,
+      "dog_forward_speed_m_s": 0.3963777900116839
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.99,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt36-1.npz"
+  },
+  {
+    "attempt_seed": 37,
+    "situation": {
+      "ball_rel_x_m": 3.7971729367400977,
+      "ball_rel_y_m": 2.569843088335325,
+      "ball_rel_z_m": 0.6087224281940748,
+      "ball_vel_x_m_s": -3.7462025706523816,
+      "ball_vel_y_m_s": -2.596299868861467,
+      "ball_vel_z_m_s": 3.4881143075780616,
+      "dog_forward_speed_m_s": 0.6892424467047031
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.912,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt37-1.npz"
+  },
+  {
+    "attempt_seed": 38,
+    "situation": {
+      "ball_rel_x_m": 3.543641625837905,
+      "ball_rel_y_m": 2.4046862072671202,
+      "ball_rel_z_m": 0.8809376837362559,
+      "ball_vel_x_m_s": -3.885398500647539,
+      "ball_vel_y_m_s": -2.5303591980853497,
+      "ball_vel_z_m_s": 2.553251145140935,
+      "dog_forward_speed_m_s": 0.7920360661542999
+    },
+    "collision": 0,
+    "first_collision_time_s": null,
+    "min_separation_m": 0.011150893945402807,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt38-1.npz"
+  },
+  {
+    "attempt_seed": 39,
+    "situation": {
+      "ball_rel_x_m": 2.5497467025438016,
+      "ball_rel_y_m": 2.409214037445081,
+      "ball_rel_z_m": 0.776121964831268,
+      "ball_vel_x_m_s": -2.6484849109136865,
+      "ball_vel_y_m_s": -3.131553703965824,
+      "ball_vel_z_m_s": 2.8606669834032163,
+      "dog_forward_speed_m_s": 0.6003167854425226
+    },
+    "collision": 1,
+    "first_collision_time_s": 0.754,
+    "min_separation_m": 0.0,
+    "fall": 0,
+    "recovery_time_s": 0.0,
+    "recovered": 1,
+    "sim_unstable": 0,
+    "trace_path": "artifacts/env/traces/default-seed12-attempt39-1.npz"
+  }
+]

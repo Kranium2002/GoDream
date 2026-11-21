@@ -13,7 +13,8 @@ OBS_KEYS = {"t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang
             "joint_vel_rad_s", "policy_obs", "foot_contact", "fallen", "ball", "command_active", "declared_payload_kg",
             "declared_surface"}
 OUTCOME_KEYS = {"elapsed_s", "fall", "fall_time_s", "sim_unstable", "commands_received", "final_base_pos_m",
-                "declared_payload_kg", "declared_surface", "trace_path"}
+                "declared_payload_kg", "declared_surface", "collision", "first_collision_time_s", "min_separation_m",
+                "recovery_time_s", "recovered", "trace_path"}
 
 
 def yaw_of(quats_wxyz):
@@ -142,6 +143,33 @@ def test_fall_is_latched_with_its_first_time(world, zero, period):
     assert world.step(zero, 1.0)["fallen"]
     out = world.finish_episode()
     assert out["fall"] == 1 and out["fall_time_s"] == pytest.approx(world.model.opt.timestep)  # first physics step
+
+
+def test_fall_before_the_decision_instant_has_a_negative_time(config, zero, period):
+    # Spawned with the trunk box (half height 0.057 m) through the floor: the fall is caught during reset's settling.
+    config["robot"]["walking_policy"]["spawn"] |= {"base_pos": [0.0, 0.0, 0.05], "auto_base_height": False}
+    world = Go2World(config, seed=1)
+    world.reset()
+    world.step(zero, period)
+    out = world.finish_episode()
+    assert out["fall"] == 1 and out["fall_time_s"] < 0
+
+
+def test_reset_rejects_bad_seeds_and_values_without_abandoning_the_episode(world, zero, period):
+    world.reset()
+    for situation, seed in (({}, -1), ({"settle_s": True}, 0), ({"settle_s": "2"}, 0)):
+        with pytest.raises(ValueError):
+            world.reset(situation, attempt_seed=seed)
+    assert world.step(zero, period)["t_s"] == pytest.approx(period)  # the open episode goes on
+
+
+def test_returned_observation_is_a_copy(world, zero):
+    obs = world.reset()
+    obs["base_pos_m"] += 10.0
+    obs = world.step(zero, 0.1)
+    obs["base_pos_m"] += 10.0
+    trace = np.load(world.finish_episode()["trace_path"])
+    assert np.all(np.abs(trace["base_pos_m"]) < 1.0)
 
 
 def test_bad_simulator_state_is_reported(world, zero, period, tmp_path, monkeypatch):
