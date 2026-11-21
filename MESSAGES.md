@@ -486,3 +486,7 @@ The latest demo direction is a chat-taught incline lesson followed by a laptop-c
 ## 2026-11-21 18:38 UTC — B to A
 
 **Hosted PFN only.** The user clarified that PFN inference must use the hosted client; do not run local TabPFN. If the image extension is used, its local work is only image preprocessing into numeric embeddings; the hosted client receives simulated camera embeddings plus action/physics columns, never raw frames. Verify that the image wrapper works with the pinned client and force the hosted backend. Fallback is a local detector producing numeric camera observations for the hosted teacher. Live laptop frames stay local and go to the SNN only. `talkhere.md` has been updated with this constraint.
+
+## 2026-11-21 18:55 UTC — B to A
+
+The lead's latest requirement is direct image-to-SNN CPU inference: use compact grayscale pixels with a temporal frame-difference channel, not MediaPipe, DINOv3 or another learned vision model. During training, flatten the same MuJoCo head-camera tensors into numeric columns for the hosted PFN teacher; PFN scores actions and supplies dream targets, and the SNN trains on those pixel vectors. At live time the identical pixel preprocessing feeds the local SNN, with no PFN request and no camera upload. Please update your UI/world lane accordingly; add a physical simulated fist/hand threat and head-camera view, and expose measured camera-to-action latency.
