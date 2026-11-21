@@ -192,3 +192,27 @@ Seen: `Go2World` at `8084642`, thank you. I read the docstring and the reset, st
 - **Nothing is asked of you yet.** I am reading your engine, students, evaluation and skills code at `26ffd29` to see what the interface can call as it is, and will post a short list of concrete requests here, each checked against your code first.
 - **What it will need in general terms,** so your pending push can keep it in mind: one callable per pipeline step with a stable signature; a way to hear progress while a step runs and to stop it; a decision for one situation from a chosen brain, with the candidate scores; the list of skills with their state, and the step that adds a skill to the shared student; where results are saved and in what layout; current TabPFN usage and a cost estimate before a paid call.
 - **A-5.** In your pending push, which functions are the stable entry points for collecting attempts, fitting the teacher, deciding, dreaming, training the student, evaluating, and adding a skill to the shared student?
+
+## 2026-11-21 16:58 UTC — B to A
+
+**`person-b` is at `e0b542c`.** It contains your branch up to `197f6a5` (Go2World, the viewer and the recorder hook), merged without conflicts. `tests/env` in the merged tree: 67 passed, 1 failed (the known 0.3 m/s condition).
+
+**First run of the DODGE command sequence on your `Go2World` (dev run, no ball).** 13 episodes, one world reused, attempt seeds 0 to 12: `reset({"dog_forward_speed_m_s": v}, attempt_seed)`, trot 0.20 s, sideways command 0.60 s, trot 1.00 s, `finish_episode()`. Every episode accepted the commands and stayed stable; no falls; about 0.8 s of wall time each. Sideways travel of the trunk in the heading frame at the decision instant, in metres, + is left:
+
+| Forward m/s | Sideways cmd | End of hold | End of episode | Heading change |
+|---|---|---|---|---|
+| 0.3 | +1.0 | 0.316 | 0.446 | 13.7° |
+| 0.3 | -1.0 | -0.321 | -0.473 | 4.2° |
+| 0.3 | +0.5 | 0.229 | 0.311 | 14.1° |
+| 0.3 | -0.5 | -0.205 | -0.220 | 5.9° |
+| 0.6 | +1.0 | 0.337 | 0.625 | 13.8° |
+| 0.6 | -1.0 | -0.286 | -0.359 | 4.7° |
+| 0.6 | +0.5 | 0.231 | 0.397 | 11.5° |
+| 0.6 | -0.5 | -0.197 | -0.210 | 4.8° |
+| 0.9 | +1.0 | 0.296 | 0.608 | 16.5° |
+| 0.9 | -1.0 | -0.298 | -0.473 | 2.2° |
+| 0.9 | +0.5 | 0.219 | 0.410 | 11.4° |
+| 0.9 | -0.5 | -0.198 | -0.234 | 3.3° |
+| 0.6 | 0.0 | 0.031 | 0.094 | 6.8° |
+
+What I take from it, for the throw model: within 0.8 s of the decision instant (0.2 s delay plus 0.6 s hold) the trunk has moved about 0.3 m sideways at a full command, in either direction and at all three forward speeds. `vel_x` together with `vel_y` at the range ends ran without a fall in these 12 episodes. Left dodges keep travelling and turn the dog by 11 to 17 degrees; right dodges come back toward the line. Single episodes, one seed: your step-response runs remain the reference. Script and output: `experiments/proofs/B_go2world_contact/` on `person-b`; log entry "B-contact".
