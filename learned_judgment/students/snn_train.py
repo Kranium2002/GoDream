@@ -55,7 +55,7 @@ import platform
 import time
 from dataclasses import dataclass, fields
 from functools import lru_cache
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
@@ -875,6 +875,7 @@ def fit(
     sampling: Mapping[str, float],
     settings: SNNSettings,
     seed: int,
+    on_evaluation: Callable[[dict[str, Any]], None] | None = None,
 ) -> TrainingReport:
     """Train ``model`` inside the dream on one or more heads; restore the best weights.
 
@@ -886,6 +887,15 @@ def fit(
         settings:   batch size, learning rate, step limits, penalty and threads.
         seed:       batch order (seeded ``torch.Generator``) and ``torch.manual_seed`` inside a
                     forked RNG, so the caller's global torch RNG is unchanged.
+        on_evaluation: optional observer, called once before the first step (``step`` 0) and after
+                    every validation evaluation with a dict of plain values: ``step``,
+                    ``max_steps``, ``train_loss`` (mean training loss since the previous
+                    evaluation; None at step 0), ``validation_loss`` (sampling-weighted total),
+                    ``validation_loss_per_head``, ``best_validation_loss``, ``best_step`` and
+                    ``firing_rate_per_layer`` (hidden firing rates on the validation rows). It
+                    only reads: training with and without it gives the same weights. An
+                    exception it raises stops the training and propagates to the caller, with
+                    the torch settings restored; the model is then left partly trained.
 
     Each optimizer step draws a batch whose rows come from the heads in the ``sampling``
     proportions (exact in expectation; each head's rows are visited in seeded epoch-wise
@@ -970,6 +980,17 @@ def fit(
             total_curve: list[tuple[int, float]] = [(0, initial_total)]
             train_curve: list[tuple[int, float]] = []
             best_total, best_step = initial_total, 0
+            if on_evaluation is not None:
+                on_evaluation({
+                    "step": 0,
+                    "max_steps": settings.max_steps,
+                    "train_loss": None,
+                    "validation_loss": initial_total,
+                    "validation_loss_per_head": dict(initial_losses),
+                    "best_validation_loss": best_total,
+                    "best_step": best_step,
+                    "firing_rate_per_layer": list(initial_statistics["firing_rate_per_layer"]),
+                })
             best_weights = {key: value.detach().clone() for key, value in model.state_dict().items()}
             stale_evaluations = 0
             stopped_early = False
@@ -1028,9 +1049,22 @@ def fit(
                         stale_evaluations = 0
                     else:
                         stale_evaluations += 1
-                        if stale_evaluations >= settings.patience_evaluations and step < settings.max_steps:
-                            stopped_early = True
-                            break
+                    if on_evaluation is not None:
+                        on_evaluation({
+                            "step": step,
+                            "max_steps": settings.max_steps,
+                            "train_loss": train_curve[-1][1],
+                            "validation_loss": total,
+                            "validation_loss_per_head": dict(losses),
+                            "best_validation_loss": best_total,
+                            "best_step": best_step,
+                            "firing_rate_per_layer": list(
+                                spike_statistics(model, validation_inputs)["firing_rate_per_layer"]
+                            ),
+                        })
+                    if stale_evaluations >= settings.patience_evaluations and step < settings.max_steps:
+                        stopped_early = True
+                        break
             model.load_state_dict(best_weights)
             model.eval()
             final_statistics = spike_statistics(model, validation_inputs)
