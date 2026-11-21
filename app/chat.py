@@ -79,11 +79,41 @@ def check_messages(body: dict, settings: dict) -> list:
     return messages
 
 
+# Rejected by structured outputs with a 400 (docs, structured-outputs page, read 2026-11-21); so is minItems above 1.
+UNSUPPORTED = ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf", "uniqueItems", "maxItems",
+               "minLength", "maxLength")
+
+
+def model_schema(schema):
+    """A copy of a JSON Schema that structured outputs accept: oneOf becomes anyOf, and each constraint they reject
+    moves into the description (minItems above 1 becomes 1). check_declaration still enforces all of them on the
+    model's answer, so nothing is loosened, only told to the model in words."""
+    if not isinstance(schema, dict):
+        return schema
+    out, moved = {}, []
+    for key, value in schema.items():
+        if key in UNSUPPORTED or (key == "minItems" and type(value) is int and value > 1):
+            moved.append(f"{key} {json.dumps(value)}")
+            if key == "minItems":
+                out["minItems"] = 1
+        elif key in ("properties", "$defs", "definitions"):
+            out[key] = {name: model_schema(s) for name, s in value.items()}
+        elif key in ("oneOf", "anyOf", "allOf"):
+            out["anyOf" if key == "oneOf" else key] = [model_schema(s) for s in value]
+        elif key in ("items", "additionalProperties", "not"):
+            out[key] = model_schema(value)
+        else:
+            out[key] = value
+    if moved:
+        out["description"] = f"{schema.get('description', '')} ({', '.join(moved)})".strip()
+    return out
+
+
 def build_request(messages: list, catalogue: list, schema: dict, settings: dict) -> dict:
     """The keyword arguments of client.beta.messages.create for one chat turn (everything but the key)."""
     answer = {"type": "object", "additionalProperties": False, "required": ["reply", "declaration", "unsupported"],
               "properties": {"reply": {"type": "string"},
-                             "declaration": {"anyOf": [schema, {"type": "null"}]},
+                             "declaration": {"anyOf": [model_schema(schema), {"type": "null"}]},
                              "unsupported": {"type": "array", "items": {"type": "string"}}}}
     return {
         "model": settings["model"],

@@ -109,6 +109,41 @@ def test_request_carries_the_catalogue_the_schema_and_the_config(config):
     assert "data" in system.lower()  # the model is told it returns data only
 
 
+UNSUPPORTED = {"oneOf", "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf", "uniqueItems",
+               "maxItems", "minLength", "maxLength"}  # structured outputs reject these with a 400 (docs, 2026-11-21)
+
+
+def keys_in(schema):
+    if isinstance(schema, dict):
+        return set(schema) | set().union(*(keys_in(v) for v in schema.values()))
+    if isinstance(schema, list):
+        return set().union(*(keys_in(v) for v in schema)) if schema else set()
+    return set()
+
+
+def test_the_declaration_schema_is_made_acceptable_to_structured_outputs(config):
+    declared, _ = backend.declared()
+    if declared is None:
+        pytest.skip("needs Dev B's declaration_schema")
+    original = declared.declaration_schema(config)
+    sent = chat.model_schema(original)
+    assert not keys_in(sent) & UNSUPPORTED and "anyOf" in sent
+    assert all(item.get("minItems", 0) <= 1 for item in [sent] if isinstance(item, dict))
+    text = json.dumps(sent)
+    assert "5.0" in text and "15.0" in text  # the RAMP range survives as description text for the model
+    assert declared.declaration_schema(config) == original  # Dev B's schema object is not changed
+
+
+def test_model_schema_moves_constraints_into_descriptions():
+    sent = chat.model_schema({"oneOf": [{"type": "object", "properties": {
+        "a": {"type": "number", "minimum": 1, "maximum": 2, "description": "A."},
+        "b": {"type": "array", "items": {"enum": ["x", "y"]}, "minItems": 2, "uniqueItems": True}}}]})
+    a, b = sent["anyOf"][0]["properties"]["a"], sent["anyOf"][0]["properties"]["b"]
+    assert a == {"type": "number", "description": "A. (minimum 1, maximum 2)"}
+    assert b == {"type": "array", "items": {"enum": ["x", "y"]}, "minItems": 1,
+                 "description": "(minItems 2, uniqueItems true)"}
+
+
 # ---- reply parsing -------------------------------------------------------------------------------------------------
 
 def no_problems(declaration, config):
