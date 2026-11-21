@@ -529,3 +529,11 @@ students:
       e_mac_pj: 4.6  # 32-bit float multiply 3.7 pJ + add 0.9 pJ.
       e_ac_pj: 0.9  # 32-bit float add.
       source: "Horowitz, ISSCC 2014, Fig. 1.1.9 (45 nm, 0.9 V), doi:10.1109/ISSCC.2014.6757323"
+
+app:  # The local viewer server: uv run python -m app.server
+  host: 127.0.0.1  # The only address the server accepts: it serves this machine alone.
+  port: 8765  # --port overrides it; --port 0 picks a free port and prints it.
+  stream_fps: 10  # PNG frames per second on /api/stream; must divide the 50 Hz control rate into whole control periods.
+  observation_hz: 10  # Observation events per second on /api/events; the same rule as stream_fps.
+  fall_restart_pause_s: 2.0  # After a fall, seconds the fallen dog stays on screen before a fresh episode starts.
+  png_compression_level: 1  # zlib level 0-9; measured on 640x480 frames: level 1 13 ms and 64 kB, level 6 51 ms and 61 kB.
