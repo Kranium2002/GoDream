@@ -1,0 +1,85 @@
+{
+  "seed": 5,
+  "demanding_preset": {
+    "payload_mass_kg": 3.0,
+    "payload_offset_m": [
+      0.0,
+      0.0
+    ],
+    "floor_type": "slippery",
+    "slope_deg": 5.0,
+    "motor_strength_fraction": 0.8,
+    "command_latency_s": 0.3
+  },
+  "baseline": {
+    "steady_speed_m_s": 0.5479549890865782,
+    "stopping_distance_m": 0.14283940927377525,
+    "time_to_half_speed_s": 0.2
+  },
+  "baseline_fall": {
+    "steady_speed_m_s": 0,
+    "stopping_distance_m": 0,
+    "time_to_half_speed_s": 0
+  },
+  "all_off": {
+    "steady_speed_m_s": 0.5479549890865782,
+    "stopping_distance_m": 0.14283940927377525,
+    "time_to_half_speed_s": 0.2
+  },
+  "all_off_fall": {
+    "steady_speed_m_s": 0,
+    "stopping_distance_m": 0,
+    "time_to_half_speed_s": 0
+  },
+  "payload": {
+    "quantity": "steady_speed_m_s",
+    "measured": 0.5644863018129513,
+    "fall": 0,
+    "hidden": {
+      "payload": {
+        "mass_kg": 3.0,
+        "offset_m": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "attempt_latency_s": 0.0
+  },
+  "friction": {
+    "quantity": "stopping_distance_m",
+    "measured": 0.3061025458703219,
+    "fall": 0,
+    "hidden": {
+      "friction": 0.09506307647814248
+    },
+    "attempt_latency_s": 0.0
+  },
+  "slope": {
+    "quantity": "steady_speed_m_s",
+    "measured": 0.5214353871372128,
+    "fall": 0,
+    "hidden": {
+      "slope": 5.0
+    },
+    "attempt_latency_s": 0.0
+  },
+  "motor_strength": {
+    "quantity": "steady_speed_m_s",
+    "measured": 0.5551507406784254,
+    "fall": 0,
+    "hidden": {
+      "motor_strength": 0.8
+    },
+    "attempt_latency_s": 0.0
+  },
+  "latency": {
+    "quantity": "time_to_half_speed_s",
+    "measured": 0.42,
+    "fall": 0,
+    "hidden": {
+      "latency": 0.3
+    },
+    "attempt_latency_s": 0.3
+  }
+}
