@@ -471,9 +471,10 @@ skills:
     hold_s: 0.6
     settle_s: 1.0  # Seconds the dog stands on the zero command before the object is launched (t_s 0). Starting value; the stand is checked by the collection run.
     episode_duration_s: 4.0  # Simulated seconds per episode after the launch: slowest arrival (3.2 m at 1.0 m/s), then hold and recovery.
-    decision_time_range_s: [0.3, 0.9]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
+    decision_time_range_s: [0.3, 2.5]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
     windows_per_dream_episode: 4  # Decision instants taken from one rendered dream episode (the dog stays on the zero command, so one episode gives several windows).
     teacher_features: [window, action, physics]  # Columns given to the residual teacher. Compared on dev with [action, physics]; the wider one is talkhere.md's plan.
+    window_repeat_tolerance: 0.01  # Largest allowed grey difference (0-1 scale) between the windows the episodes of one situation saw before acting; the render repeats to within 0.002 (seen twice in about 700 situations).
     separation_clip_m: 2.0  # min_separation_m is reported at most this (measured and guessed); a scene without an object reads this value.
     threat_target_scale: 0.05  # Threat target = logistic((best active score - NO_OP score) / this). Small against the motion cost of an active command (0.3), so a scene where NO_OP is best gives about 0.
     # Scenario kinds (Person A's nine names, messages log 2026-11-21 20:29 UTC) and their sampling weights. The kind shapes the
@@ -485,6 +486,10 @@ skills:
       launch_height_m: [-0.1, 0.5]  # Launch height relative to the trunk origin.
       aim_height_m: [-0.03, 0.12]  # Height of the aim point relative to the trunk origin (the head camera is at 0.017).
       aim_x_m: 0.3  # The aim point lies this far ahead of the trunk origin: the head.
+    visual:  # Per-scenario visual draws for Person B's stopgap render (Person A's visual key replaces them).
+      object_grey: [0.1, 1.0]  # Grey level of the thrown object.
+      backdrop_grey: [0.15, 0.85]  # Grey level painted over the model's black sky.
+      min_contrast: 0.15  # Redraw the object grey until it differs from the backdrop grey by at least this.
     scenarios:  # Ranges of the draws, in the dog's frame at the launch (x ahead, y left). Starting values; change only from dev runs, logged in DECISIONS.md.
       launch_modes: {roll: 1.0, throw: 0.0}  # roll: on the floor, no vertical speed. throw: ballistic, aimed at the head camera's height.
       distance_m: [1.8, 3.2]  # Launch distance ahead of the trunk origin.
@@ -741,6 +746,12 @@ vision:  # learned_judgment.vision (Person B): the image-window contract, identi
   frame_variants: [4, 6, 8]  # Window lengths compared on simulation dev data.
   luma_weights: [0.299, 0.587, 0.114]  # Grey = these weights x (R, G, B): ITU-R BT.601.
   pixel_scale: 255.0  # Grey levels are divided by this: float32 in [0, 1].
+  # Student input from a window of F frames (learned_judgment.observed.encode_window_features, used by training and the
+  # runtime): abs_diff = |frame k - frame k-1| for the F-1 adjacent pairs, divided by max(largest of those values,
+  # diff_floor). A still background gives 0; a darker and a brighter object give the same input. raw = the F frames as they are.
+  encoding: signed_diff  # signed_diff: (frame k - frame k-1) over the same divisor, mapped to 0.5 + 0.5 x: keeps whether a pixel got brighter or darker. Chosen on v1 dream data (development): a plain MLP reached 0.70 validation accuracy with signed_diff, 0.71 raw, 0.58 abs_diff.
+  diff_floor: 0.1  # Raised from 0.03 on development data: in still scenes the standing dog's own sway changes pixels by up to 0.06 (empty) and 0.13 (object at rest), which 0.03 stretched to full scale.
+  # Smallest divisor of the change encoding (0-1 grey scale): keeps sensor noise in a still scene small instead of stretching it to 1.
   # Simulation frames are taken at the 0.02 s control period nearest each k / frame_rate_hz (at most 6.7 ms off) until
   # Go2World offers a physics-step hook (asked of Person A, messages log 2026-11-21); then physics_step (at most 1 ms off).
   sim_timing: nearest_control_period
@@ -749,7 +760,6 @@ vision:  # learned_judgment.vision (Person B): the image-window contract, identi
     pitch_up_deg: 0.0  # Upward tilt of the optical axis from trunk +x.
     fovy_deg: 45.0  # Vertical field of view; the image is square. A 16:9 laptop camera of about 75-78 degrees diagonal has about 43 degrees vertically, which the centre crop keeps both ways.
     render_size: 96  # Square render in pixels: 8 x 8 source pixels per output cell.
-    object_rgba: [1.0, 1.0, 1.0, 1.0]  # Colour given to the thrown object in Person B's stopgap render (the model's ball and floor are both grey 0.5); Person A's visual key replaces it.
   augmentation:  # Image-space variation of simulation frames only (never live frames), one seeded draw per window: uniform in each range.
     exposure_gain: [0.7, 1.3]  # Multiplies the grey levels.
     exposure_bias: [-0.1, 0.1]  # Added to the grey levels (0-1 scale).

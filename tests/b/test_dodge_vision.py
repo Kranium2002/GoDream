@@ -96,7 +96,12 @@ def test_scenarios_have_valid_kinds_keys_and_ranges() -> None:
     half_view = math.tan(math.radians(require(CONFIG, "vision.head_camera.fovy_deg")) / 2.0)
     for index, scenario in enumerate(SAMPLE):
         assert set(scenario) == {"scenario_id", "kind", "object_kind", "situation", "visual"}
-        assert scenario["scenario_id"] == index and scenario["object_kind"] in ("ball", "punch") and scenario["visual"] == {}
+        assert scenario["scenario_id"] == index and scenario["object_kind"] in ("ball", "punch")
+        visual = scenario["visual"]
+        assert set(visual) == {"object_grey", "backdrop_grey"}
+        assert inside(visual["object_grey"], f"{ROOT}.visual.object_grey")
+        assert inside(visual["backdrop_grey"], f"{ROOT}.visual.backdrop_grey")
+        assert abs(visual["object_grey"] - visual["backdrop_grey"]) >= require(CONFIG, f"{ROOT}.visual.min_contrast")
         s = scenario["situation"]
         assert all(type(value) is float for value in s.values())
         assert s["dog_forward_speed_m_s"] == 0.0 and s["settle_s"] == require(CONFIG, f"{ROOT}.settle_s")
