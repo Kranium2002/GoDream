@@ -3,7 +3,8 @@ physics guess, the objective and the collection command line.
 
 Lane contract (Person B, dodge_vision)
 --------------------------------------
-The dog stands on the zero command; at t_s 0 (the launch) an object may move in the scene. A student sees only
+The dog stands on the zero command; at t_s 0 (the launch) an object may move in the scene: a ball (under gravity) or
+a punch (a slow straight flight at head height), by skills.dodge_vision.object_kinds. A student sees only
 image windows from the head camera and picks one of C commands; the scorer side (physics guess, objective) may use
 the scenario's truth, which never becomes a student input. Shared arrays:
 
@@ -25,7 +26,8 @@ Files of the command line, one directory per call:
     rows.npz    scenario_index (n,) int64, decision_time_s (n,) float64, action (n,) int64,
                 features (n, D) float32, physics (n, K) float64, measured (n, K) float64
     rows.json   skill, split, action_names, outcome_names, outcome_kinds, outcome_bounds, frames, n_situations,
-                seeds, world_seed, world_preset, config_digest, kind_counts, scenarios (index = scenario_index)
+                seeds, world_seed, world_preset, config_digest, kind_counts, punch_stand_in (a punch ran as the
+                ball with its weight cancelled), scenarios (index = scenario_index)
     dream.npz   scenario_index (m,) int64, decision_time_s (m,) float64, features (m, D) float32,
                 physics (m, C, K) float64
     dream.json  the keys of rows.json plus n_episodes and windows_per_dream_episode
@@ -110,6 +112,8 @@ _AIMS = {
 }
 KINDS = ("empty", "static", "receding", "background_motion", *_AIMS)
 _LAUNCH_MODES = ("roll", "throw")
+_OBJECT_KINDS = ("ball", "punch")  # values of skills.dodge_vision.object_kinds and of a scenario's "object_kind"
+_OBJECT_GEOMS = ("ball", "punch")  # geoms HeadView draws in vision.head_camera.object_rgba, when the model has them
 _PLANAR = ("vel_x", "vel_y")  # verified command fields of the dog's planar velocity (x ahead, y left)
 _ROOT = "skills.dodge_vision"
 _TOLERANCE = 1e-9  # s or m: times are sums of 0.02 s periods
@@ -163,6 +167,50 @@ def _ball_keys() -> tuple[str, ...]:
     from learned_judgment.env.throws import BALL_KEYS
 
     return BALL_KEYS
+
+
+def _object_kinds(config: Mapping[str, Any]) -> tuple[str, ...]:
+    """skills.dodge_vision.object_kinds: a non-empty list of distinct members of _OBJECT_KINDS."""
+    key = f"{_ROOT}.object_kinds"
+    kinds = require(config, key)
+    if (
+        isinstance(kinds, (str, bytes))
+        or not isinstance(kinds, Sequence)
+        or not kinds
+        or not all(isinstance(kind, str) and kind in _OBJECT_KINDS for kind in kinds)
+        or len(set(kinds)) != len(kinds)
+    ):
+        raise ConfigError(f"config.yaml key {key!r} must be a non-empty list of distinct {list(_OBJECT_KINDS)}; got {kinds!r}")
+    return tuple(kinds)
+
+
+def _punch_runs_as_stand_in() -> bool:
+    """True while Go2World.reset has no "object_kind" key: a punch then runs as the ball with its weight cancelled."""
+    from learned_judgment.env.world import SITUATION_KEYS  # on use: see _ball_keys
+
+    return "object_kind" not in SITUATION_KEYS
+
+
+def _reset(world: Any, scenario: Mapping[str, Any], attempt_seed: int) -> None:
+    """world.reset(scenario's situation, attempt_seed) for every object kind.
+
+    A punch scenario with an object: when Go2World.reset accepts "object_kind" (Person A's punch body) the situation
+    gets "object_kind": "punch" and nothing else is done. Otherwise the stand-in: right after the reset, a constant
+    force -mass x gravity on the ball body (world.policy.data.xfrc_applied; world.model is the ball scene then)
+    cancels its weight, so it flies straight at its launch velocity until a contact. Go2World.reset zeroes
+    xfrc_applied of the scene it resets (its walking-policy backend resets the MjData), measured 2026-11-21, so the
+    force never reaches the next episode of either scene.
+    """
+    situation = dict(scenario["situation"])
+    punch = scenario.get("object_kind", "ball") == "punch" and all(key in situation for key in _ball_keys())
+    if punch and not _punch_runs_as_stand_in():
+        situation["object_kind"] = "punch"
+        punch = False
+    world.reset(situation, attempt_seed=int(attempt_seed))
+    if punch:
+        model, data = world.model, world.policy.data
+        body = model.body("ball").id
+        data.xfrc_applied[body, :3] = -model.body_mass[body] * model.opt.gravity  # z: mass x |gravity z|
 
 
 def _camera(config: Mapping[str, Any]) -> tuple[np.ndarray, float, float]:
@@ -284,13 +332,26 @@ def _sign(rng: np.random.Generator) -> float:
 def sample_threat_scenarios(config: Mapping[str, Any], rng: np.random.Generator, n: int) -> list[dict[str, Any]]:
     """``n`` scenarios drawn from config.yaml skills.dodge_vision; no world needed.
 
-    Each is {"scenario_id": i (0 .. n - 1), "kind": a key of kind_weights, "object_kind": "ball", "situation": a
-    dict Go2World.reset accepts, "visual": {}}. The situation always has dog_forward_speed_m_s 0.0 and settle_s =
-    skills.dodge_vision.settle_s; kind "empty" has no ball key, every other kind all six BALL_KEYS (Go2World's frame
-    at the launch: origin at the trunk origin, x ahead, y left, z up; velocity over the ground). Values are floats.
+    Each is {"scenario_id": i (0 .. n - 1), "kind": a key of kind_weights, "object_kind": a member of object_kinds,
+    "situation": a dict Go2World.reset accepts, "visual": {}}. The situation always has dog_forward_speed_m_s 0.0 and
+    settle_s = skills.dodge_vision.settle_s; kind "empty" has no ball key, every other kind all six BALL_KEYS (the
+    object's launch state in Go2World's frame at the launch: origin at the trunk origin, x ahead, y left, z up;
+    velocity over the ground), whatever the object kind (run it with _reset). Values are floats.
 
     Draws, row by row in this order (so row i does not depend on n), each uniform over its scenarios range:
       kind                 by kind_weights
+      object kind          uniform over object_kinds (one rng.integers draw; none when the list has one member)
+    then, for object kind "punch" (skills.dodge_vision.punch; a straight flight at constant velocity):
+      incoming_*, ambiguous, off_path
+                           distance, bearing (launch point (x0, y0)); |aim_y| and sign as for the ball; speed;
+                           z0 from launch_height_m; aim_z from aim_height_m. The velocity, of that speed, points
+                           from (x0, y0, z0) to the aim point (aim_x_m, aim_y, aim_z).
+      static               static_distance, bearing, z from launch_height_m; at rest (hovering)
+      receding             receding_distance, bearing, z from aim_height_m, speed: straight away (+x)
+      background_motion    background_distance (x0), a random side, speed, z from launch_height_m; at the edge of the
+                           view as for the ball, moving sideways (pure y velocity) toward the other side
+      empty                nothing more
+    or, for object kind "ball":
       incoming_*, ambiguous, off_path
                            distance, bearing (launch point (x0, y0)); launch mode by launch_modes; |aim_y|
                            (aim_center_m, aim_side_m, aim_ambiguous_m or aim_off_path_m) and, except for
@@ -335,12 +396,45 @@ def sample_threat_scenarios(config: Mapping[str, Any], rng: np.random.Generator,
     gravity = _positive(config, "ball.gravity_m_s2")
     floor_z = _positive(config, "ball.radius_m") - _positive(config, f"{_ROOT}.physics.base_height_m")
     half_view = math.tan(math.radians(fovy) / 2.0)
+    objects = _object_kinds(config)
+    if "punch" in objects:
+        p = f"{_ROOT}.punch"
+        punch_speed = _pair(config, f"{p}.speed_m_s", minimum=_TOLERANCE)
+        punch_launch, punch_aim = _pair(config, f"{p}.launch_height_m"), _pair(config, f"{p}.aim_height_m")
+        aim_x = _value(config, f"{p}.aim_x_m")
+        if distance[0] * math.cos(math.radians(max(abs(bearing[0]), abs(bearing[1])))) <= aim_x:
+            raise ConfigError(f"every launch point of '{s}.distance_m' and '{s}.bearing_deg' must lie ahead of '{p}.aim_x_m'")
+
+    def punch(kind: str) -> tuple[float, ...] | None:
+        """The punch's launch state (x0, y0, z0, vx, vy, vz) of a kind, None for empty: a straight flight."""
+        if kind in _AIMS:
+            d, b = _uniform(rng, distance), math.radians(_uniform(rng, bearing))
+            key, side = _AIMS[kind]
+            aim_y = _uniform(rng, aims[key]) * (side if side else _sign(rng))
+            speed = _uniform(rng, punch_speed)
+            start = np.array([d * math.cos(b), d * math.sin(b), _uniform(rng, punch_launch)])
+            path = np.array([aim_x, aim_y, _uniform(rng, punch_aim)]) - start  # |path| > 0: x0 > aim_x
+            return (*start, *(speed * path / np.linalg.norm(path)))
+        if kind == "static":
+            d, b = _uniform(rng, static), math.radians(_uniform(rng, bearing))
+            return (d * math.cos(b), d * math.sin(b), _uniform(rng, punch_launch), 0.0, 0.0, 0.0)
+        if kind == "receding":
+            d, b = _uniform(rng, receding), math.radians(_uniform(rng, bearing))
+            return (d * math.cos(b), d * math.sin(b), _uniform(rng, punch_aim), _uniform(rng, punch_speed), 0.0, 0.0)
+        if kind == "background_motion":
+            d, side = _uniform(rng, background), _sign(rng)
+            speed = _uniform(rng, punch_speed)
+            return (d, side * (d - eye[0]) * half_view, _uniform(rng, punch_launch), 0.0, -side * speed, 0.0)
+        return None
 
     scenarios: list[dict[str, Any]] = []
     for index in range(int(n)):
         kind = _pick(rng, kinds)
+        obj = objects[0] if len(objects) == 1 else objects[int(rng.integers(len(objects)))]
         ball: tuple[float, ...] | None = None
-        if kind in _AIMS:
+        if obj == "punch":
+            ball = punch(kind)
+        elif kind in _AIMS:
             d, b = _uniform(rng, distance), math.radians(_uniform(rng, bearing))
             x0, y0 = d * math.cos(b), d * math.sin(b)
             mode = _pick(rng, modes)
@@ -367,7 +461,7 @@ def sample_threat_scenarios(config: Mapping[str, Any], rng: np.random.Generator,
         situation: dict[str, float] = {} if ball is None else {k: float(v) for k, v in zip(ball_keys, ball)}
         situation["dog_forward_speed_m_s"] = 0.0
         situation["settle_s"] = settle_s
-        scenarios.append({"scenario_id": index, "kind": kind, "object_kind": "ball", "situation": situation, "visual": {}})
+        scenarios.append({"scenario_id": index, "kind": kind, "object_kind": obj, "situation": situation, "visual": {}})
     return scenarios
 
 
@@ -388,6 +482,10 @@ class HeadView:
     the robot's visual meshes (geom group 2) hidden: 2.4 ms instead of 45-66 ms a render on this machine, with 7 of
     9216 pixels differing by at most 10 levels (render_cost_probe.out.txt). The renderer is rebuilt when world.model
     changes object (Go2World swaps scenes with and without the ball).
+
+    The thrown object (the geoms named "ball" and, when the model has one, "punch") is drawn in
+    vision.head_camera.object_rgba: the colour is written into this renderer's scene (mjvScene geoms) after
+    update_scene, so model.geom_rgba, the physics and world.render_frame are untouched.
     """
 
     def __init__(self, config: Mapping[str, Any]) -> None:
@@ -396,6 +494,13 @@ class HeadView:
         if isinstance(size, bool) or not isinstance(size, int) or size < 1:
             raise ConfigError(f"config.yaml key 'vision.head_camera.render_size' must be an int >= 1; got {size!r}")
         self.size = size
+        rgba = require(config, "vision.head_camera.object_rgba")
+        if isinstance(rgba, (str, bytes)) or not isinstance(rgba, Sequence) or len(rgba) != 4:
+            raise ConfigError(f"config.yaml key 'vision.head_camera.object_rgba' must be [r, g, b, a]; got {rgba!r}")
+        self._rgba = np.array([_number("vision.head_camera.object_rgba", v) for v in rgba], dtype=np.float32)
+        if np.any(self._rgba < 0.0) or np.any(self._rgba > 1.0):
+            raise ConfigError(f"config.yaml key 'vision.head_camera.object_rgba' must lie in [0, 1]; got {rgba!r}")
+        self._object_geoms: frozenset[int] = frozenset()
         self._option = mujoco.MjvOption()
         self._option.geomgroup[2] = 0  # robot visual meshes
         self._camera = mujoco.MjvCamera()
@@ -418,6 +523,8 @@ class HeadView:
             self._renderer = mujoco.Renderer(model, self.size, self.size)
             self._scratch = mujoco.MjData(model)
             self._base = model.body("base_link").id
+            ids = (mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, name) for name in _OBJECT_GEOMS)
+            self._object_geoms = frozenset(i for i in ids if i >= 0)
             self._model = model
         scratch = self._scratch
         scratch.qpos[:] = data.qpos
@@ -440,7 +547,14 @@ class HeadView:
             self._renderer.update_scene(scratch, camera=camera, scene_option=self._option)
         finally:
             model.vis.global_.fovy = fovy
-        self._renderer.scene.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = False
+        scene = self._renderer.scene
+        scene.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = False
+        if self._object_geoms:
+            geom_type = int(mujoco.mjtObj.mjOBJ_GEOM)
+            for index in range(scene.ngeom):
+                geom = scene.geoms[index]
+                if geom.objtype == geom_type and geom.objid in self._object_geoms:
+                    geom.rgba[:] = self._rgba
         return self._renderer.render()
 
     def close(self) -> None:
@@ -554,7 +668,8 @@ def observe_and_act(
 ) -> tuple[np.ndarray, dict[str, float]]:
     """One measured one-shot row on the real world.
 
-    reset(scenario["situation"], attempt_seed); the zero command until the decision frame, rendering (``view``) and
+    reset(scenario["situation"], attempt_seed) through _reset (a punch: Person A's punch body or the weightless
+    ball); the zero command until the decision frame, rendering (``view``) and
     preprocessing the frames of its window; then the action's command for hold_s and the zero command until
     episode_duration_s; finish_episode(). Only the window's own frames are rendered: earlier frames would leave it.
     A hold that would end after episode_duration_s runs in full (frames in decision_time_range_s end in time).
@@ -584,7 +699,7 @@ def observe_and_act(
         raise TypeError(f"action_index must be an int; got {action_index!r}")
     if not 0 <= action_index < len(ep.actions.names):
         raise ValueError(f"action_index must be in [0, {len(ep.actions.names)}); got {action_index}")
-    world.reset(dict(scenario["situation"]), attempt_seed=int(attempt_seed))
+    _reset(world, scenario, attempt_seed)
     periods = ep.timing.frame_periods[frame - settings.frames + 1 : frame + 1]
     window = np.stack(_frames_at(world, view, settings, periods.tolist(), ep))
     if augment_rng is not None:
@@ -618,7 +733,7 @@ def render_windows(
     if augment_rngs is not None and len(augment_rngs) != len(frames):
         raise ValueError(f"augment_rngs must have one Generator per decision frame ({len(frames)}); got {len(augment_rngs)}")
     needed = sorted({k for frame in frames for k in range(frame - settings.frames + 1, frame + 1)})
-    world.reset(dict(scenario["situation"]), attempt_seed=int(attempt_seed))
+    _reset(world, scenario, attempt_seed)
     rendered = dict(zip(needed, _frames_at(world, view, settings, ep.timing.frame_periods[needed].tolist(), ep)))
     out = np.empty((len(frames), settings.n_features), dtype=np.float32)
     for row, frame in enumerate(frames):
@@ -663,7 +778,7 @@ def closed_loop(
     augment = None if augment_rng is None else _EpisodeAugmentation(augment_rng, ep.augmentation)
     frame_periods = set(ep.timing.frame_periods.tolist())
     period_s = ep.timing.period_s
-    world.reset(dict(scenario["situation"]), attempt_seed=int(attempt_seed))
+    _reset(world, scenario, attempt_seed)
     window = FrameWindow(settings)
     command: dict[str, Any] = dict(ep.actions.commands[ep.actions.no_op])
     travel = 0.0
@@ -718,9 +833,12 @@ def physics_guess(
 
     Model on a grid of physics.time_step_s from 0 to episode_duration_s (frame: Go2World's at the launch, z from the
     trunk origin):
-      * ball: from its launch state, ballistic under gravity_m_s2 until its centre reaches the floor rest height
-        ball.radius_m - base_height_m, then on the floor keeping its horizontal velocity (a ball starting at or
-        below that height keeps its height: a rolling start).
+      * object, by scenario["object_kind"] (default "ball"):
+        ball:  from its launch state, ballistic under gravity_m_s2 until its centre reaches the floor rest height
+               ball.radius_m - base_height_m, then on the floor keeping its horizontal velocity (a ball starting at
+               or below that height keeps its height: a rolling start).
+        punch: from its launch state, a straight line at constant velocity for the whole episode (no gravity, no
+               floor stop); radius ball.radius_m (the stand-in is the ball).
       * dog: at rest; from decision time + assumed_latency_s its planar velocity approaches the action's
         (vel_x, vel_y) first-order (response_time_s) while the command is held for hold_s, then decays the same
         way to 0. Heading fixed.
@@ -756,10 +874,13 @@ def physics_guess(
     duration = _positive(config, f"{_ROOT}.episode_duration_s")
 
     ball_keys = _ball_keys()
-    situations = []
+    situations, objects = [], []
     for index, scenario in enumerate(scenarios):
         if not isinstance(scenario, Mapping) or not isinstance(scenario.get("situation"), Mapping):
             raise ValueError(f"scenarios[{index}] must be a mapping with a 'situation' mapping")
+        objects.append(scenario.get("object_kind", "ball"))
+        if objects[-1] not in _OBJECT_KINDS:
+            raise ValueError(f"scenarios[{index}] has object_kind {objects[-1]!r}, not one of {list(_OBJECT_KINDS)}")
         situations.append(scenario["situation"])
     has_ball = np.array([all(k in s for k in ball_keys) for s in situations], dtype=bool)
     closest = np.full(n, np.inf)
@@ -768,15 +889,18 @@ def physics_guess(
         launch = np.array([[float(situations[i][k]) for k in ball_keys] for i in rows], dtype=np.float64)
         x0, y0, z0, vx, vy, vz = launch.T
         command = ep.actions.features[actions[rows]][:, planar]
+        punch = np.array([objects[i] == "punch" for i in rows], dtype=bool)
         height = z0 - floor_z  # ball centre above its floor rest height
         landing = np.where(height > 0.0, (vz + np.sqrt(vz * vz + 2.0 * gravity * np.maximum(height, 0.0))) / gravity, 0.0)
+        landing[punch] = np.inf  # a punch: straight at constant velocity for the whole episode
+        fall = np.where(punch, 0.0, gravity)
         start = times[rows] + latency  # the dog's velocity starts to change
         stop = start + ep.hold_s  # ... and starts to decay back to 0
         near = np.full(rows.size, np.inf)
         for t in _time_grid(step_s, duration):
             flight = np.minimum(t, landing)
             ball_x, ball_y = x0 + vx * t, y0 + vy * t
-            ball_z = z0 + vz * flight - 0.5 * gravity * flight * flight
+            ball_z = z0 + vz * flight - 0.5 * fall * flight * flight
             rise = np.clip(t - start, 0.0, ep.hold_s)  # time spent rising toward the commanded velocity
             decay = np.maximum(t - stop, 0.0)  # time since the held command ended
             left = np.exp(-rise / tau)
@@ -974,6 +1098,10 @@ def _meta(config: Mapping[str, Any], split: str, frames: int, scenarios: list[di
         "world_preset": require(config, "observed.world_preset"),
         "config_digest": config_digest(config),
         "kind_counts": {kind: kinds.get(kind, 0) for kind in require(config, f"{_ROOT}.kind_weights")},
+        # True when a punch with an object ran as the stand-in (the ball with its weight cancelled, _reset).
+        "punch_stand_in": _punch_runs_as_stand_in() and any(
+            s.get("object_kind") == "punch" and any(k in s["situation"] for k in _ball_keys()) for s in scenarios
+        ),
         "scenarios": scenarios,
     }
 

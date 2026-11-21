@@ -352,8 +352,47 @@ skills:
     status: planned
   turn:
     status: planned
-  ramp:
+  ramp:  # RAMP from the trunk pitch (Person B, learned_judgment.skills.ramp). Starting values; change only from dev runs.
     status: planned
+    teacher_features: [window, action, physics]  # observed.py block names; "window" carries the 4 pitch features.
+    detector:  # SlopeDetector on nose_up_deg(base_quat_wxyz), one sample per 0.02 s control period.
+      window_s: 0.2  # Moving mean of 10 samples, about one trot gait period: averages out the gait's pitch wobble.
+      on_deg: 4.5  # Flat 0.6 m/s trot (Go2World seed 0, 3 s scratch check): filtered +1.11..+2.81 deg, raw +0.97..+3.78; ~1.7 deg margin, far below 8 deg.
+      off_deg: 3.0  # Above the flat filtered max 2.81 so the plateau exit is prompt; below on_deg for hysteresis.
+      hold_s: 0.1  # 5 samples: one stumble does not switch.
+    observe_s: 0.2  # Nominal kept this long after the entry before the one decision; the pitch-rate window.
+    episode_duration_s: 10.0  # Flat approach + ramp + plateau at ~0.2-0.5 m/s climbing; set from Person A's ramp geometry.
+    dream_decision_time_range_s: [1.0, 5.0]  # Dream decision times (remaining time of the physics guess); replace with the context rows' measured decision times.
+    candidates:
+      climb_speeds_m_s: [0.4, 0.6, 0.8, 1.0]  # vel_x inside the verified [-1, 1]; 0.6 is the nominal (candidate index 4).
+      climb_yaw_rates_rad_s: [-0.2, 0.0, 0.2]  # inside the verified [-1, 1]; -0.2 can cancel the anticlockwise drift.
+    feature_ranges:  # [low, high] mapped to [0, 1], clipped.
+      filtered_pitch_deg: [-5.0, 20.0]  # flat +1..+3 deg, 8-15 deg slopes plus the trot bias.
+      raw_pitch_deg: [-10.0, 25.0]  # raw swings about 1 deg wider than filtered on flat.
+      pitch_rate_deg_s: [-30.0, 60.0]  # a 10 deg rise over the 0.2 s observe window is 50 deg/s.
+      nominal_speed_m_s: [0.3, 1.0]  # locomotion-gate speeds up to the verified 1.0 end.
+    scenarios:
+      flat_share: 0.25
+      incline_deg: [8.0, 15.0]  # Person A: 10 deg climbs at vel_x 0.6, 15 deg stalls: the correction matters here.
+      nominal_speed_m_s: [0.6, 0.6]
+    outcome_bounds:
+      progress_m: [-2.0, 10.0]  # 1.0 m/s x 10 s; negative for sliding back.
+      sideways_m: [0.0, 5.0]
+      slip_m: [0.0, 2.0]
+    physics:
+      k_track: 0.905  # Gate 1: 0.6 m/s commanded gave 0.5430 m/s on flat.
+      k_slope_s: 0.214  # Person A: vel_x 0.6 stalls at 15 deg -> 0.905 x 0.6 = k x 9.81 x sin 15 deg.
+      gravity_m_s2: 9.81
+      typical_ramp_length_m: 1.5  # PLACEHOLDER until Person A's ramp geometry; centre of the reached_top logistic.
+      softness_m: 0.25
+      yaw_drift_rad_s: 0.109  # Person A: about 50 deg in 8 s with vel_x alone on flat.
+    objective_weights:
+      progress: 0.5
+      reached_top: 5.0
+      fall: 10.0
+      sideways: 0.5
+      slip: 1.0
+      spread: 0.25  # x predicted spread of progress_m
   kick:
     status: stretch
   dodge_vision:  # DODGE from the head camera (Person B): one of four commands chosen from an image window.
@@ -370,8 +409,8 @@ skills:
     # 2026-11-21 17:49 UTC: a full sideways command moves the trunk about 0.35 m in 0.6 s); tune on dev data only.
     hold_s: 0.6
     settle_s: 1.0  # Seconds the dog stands on the zero command before the object is launched (t_s 0). Starting value; the stand is checked by the collection run.
-    episode_duration_s: 3.0  # Simulated seconds per episode after the launch: slowest arrival (about 1.8 s), hold 0.6 s, recovery hold 0.6 s.
-    decision_time_range_s: [0.3, 1.3]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
+    episode_duration_s: 4.0  # Simulated seconds per episode after the launch: slowest arrival (3.2 m at 1.0 m/s), then hold and recovery.
+    decision_time_range_s: [0.3, 0.9]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
     windows_per_dream_episode: 4  # Decision instants taken from one rendered dream episode (the dog stays on the zero command, so one episode gives several windows).
     teacher_features: [window, action, physics]  # Columns given to the residual teacher. Compared on dev with [action, physics]; the wider one is talkhere.md's plan.
     separation_clip_m: 2.0  # min_separation_m is reported at most this (measured and guessed); a scene without an object reads this value.
@@ -379,12 +418,17 @@ skills:
     # Scenario kinds (Person A's nine names, messages log 2026-11-21 20:29 UTC) and their sampling weights. The kind shapes the
     # draw only; whether a scene is a threat is measured by the simulator (a NO_OP episode that ends in a collision).
     kind_weights: {empty: 1.0, static: 1.0, receding: 1.0, off_path: 1.5, background_motion: 1.0, ambiguous: 1.5, incoming_left: 2.0, incoming_center: 2.0, incoming_right: 2.0}
-    object_kinds: [ball]  # punch is added when Person A's proxy exists (Go2World situation key object_kind).
+    object_kinds: [punch]  # ball: the handball under gravity (rolls or is thrown). punch: a slow straight flight at head height.
+    punch:  # The punch object. Until Go2World accepts object_kind (Person A's punch body), the stand-in is the existing handball with its weight cancelled by a constant upward force (straight flight, real contact); rows.json records which was used.
+      speed_m_s: [0.8, 2.5]  # Constant approach speed: the slow punch of the demo.
+      launch_height_m: [-0.1, 0.5]  # Launch height relative to the trunk origin.
+      aim_height_m: [-0.03, 0.12]  # Height of the aim point relative to the trunk origin (the head camera is at 0.017).
+      aim_x_m: 0.3  # The aim point lies this far ahead of the trunk origin: the head.
     scenarios:  # Ranges of the draws, in the dog's frame at the launch (x ahead, y left). Starting values; change only from dev runs, logged in DECISIONS.md.
-      launch_modes: {roll: 0.6, throw: 0.4}  # roll: on the floor, no vertical speed. throw: ballistic, aimed at the head camera's height.
-      distance_m: [2.5, 5.0]  # Launch distance ahead of the trunk origin.
+      launch_modes: {roll: 1.0, throw: 0.0}  # roll: on the floor, no vertical speed. throw: ballistic, aimed at the head camera's height.
+      distance_m: [1.8, 3.2]  # Launch distance ahead of the trunk origin.
       bearing_deg: [-12.0, 12.0]  # Bearing of the launch point; inside the 45 degree view.
-      roll_speed_m_s: [1.5, 4.0]  # Ground speed of a rolling ball.
+      roll_speed_m_s: [1.0, 2.5]  # Ground speed of a rolling ball.
       throw_speed_m_s: [4.0, 7.0]  # Horizontal speed of a thrown ball.
       throw_release_height_m: [0.0, 0.5]  # Release height above the trunk origin.
       aim_center_m: [0.0, 0.08]  # |sideways offset| of the aim point at the dog, incoming_center.
@@ -644,10 +688,11 @@ vision:  # learned_judgment.vision (Person B): the image-window contract, identi
     pitch_up_deg: 0.0  # Upward tilt of the optical axis from trunk +x.
     fovy_deg: 45.0  # Vertical field of view; the image is square. A 16:9 laptop camera of about 75-78 degrees diagonal has about 43 degrees vertically, which the centre crop keeps both ways.
     render_size: 96  # Square render in pixels: 8 x 8 source pixels per output cell.
+    object_rgba: [1.0, 1.0, 1.0, 1.0]  # Colour given to the thrown object in Person B's stopgap render (the model's ball and floor are both grey 0.5); Person A's visual key replaces it.
   augmentation:  # Image-space variation of simulation frames only (never live frames), one seeded draw per window: uniform in each range.
     exposure_gain: [0.7, 1.3]  # Multiplies the grey levels.
     exposure_bias: [-0.1, 0.1]  # Added to the grey levels (0-1 scale).
-    noise_std: [0.0, 0.03]  # Standard deviation of independent Gaussian noise per pixel and frame (0-1 scale).
+    noise_std: [0.0, 0.01]  # Standard deviation of independent Gaussian noise per pixel and frame (0-1 scale).
     blur_mix: [0.0, 0.5]  # Share of a 3 x 3 box blur mixed into each frame.
   test_vectors: artifacts/vision/preprocess_vectors.json  # Input images and expected 12 x 12 outputs, for the browser's parity test.
 
@@ -669,6 +714,13 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
   world_seed: 0  # Constructor seed of every Go2World of a run (the hidden world).
   world_preset: default
   workers: 6  # Processes running independent episodes side by side (episodes are deterministic; tests/env/test_determinism.py).
+  ramp:
+    context_scenarios: 20  # up to 240 episodes (12 candidates where the detector decided). MISSION says 10-40 attempts per skill: lead's call.
+    dev_scenarios: 60
+    test_scenarios: 60
+    dream_situations: 4000  # no simulator: sampled over feature_ranges
+    snn_hidden_sizes: [32]  # 4 inputs, 12 outputs
+    snn_max_steps: 3000
   dodge_vision:
     context_scenarios: 120  # Scenarios whose four actions are all run for the teacher's context: 480 measured rows.
     dream_episodes: 1500  # Rendered zero-command episodes; x windows_per_dream_episode dream situations.
