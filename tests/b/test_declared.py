@@ -20,7 +20,7 @@ from learned_judgment.declared import (
 )
 
 ALL = frozenset({"ball", "incline", "punch_proxy"})
-SPECS = frozenset({"ramp", "dodge_vision"})
+SPECS = frozenset({"ramp", "dodge_vision", "move"})
 NO_INCLINE = "the simulator has no traversable incline yet (Go2World.reset does not accept incline_deg)"
 NO_BALL = "the simulator has no ball"
 NO_PUNCH = "the simulator has no punch proxy yet"
@@ -48,8 +48,8 @@ def parse(text, config, capabilities=ALL, implemented=SPECS):
 
 def test_catalog_lists_ramp_then_dodge_from_config(config):
     catalog = skill_catalog(config, capabilities=ALL, implemented=SPECS)
-    assert [entry["skill"] for entry in catalog] == ["RAMP", "DODGE"]
-    ramp, dodge = catalog
+    assert [entry["skill"] for entry in catalog] == list(config["declared"]["skills"])  # every declared skill, in config order
+    ramp, dodge = catalog[:2]
     declared = config["declared"]["skills"]
     assert ramp["spec"] == "ramp" and dodge["spec"] == "dodge_vision"
     assert ramp["actions"] == declared["RAMP"]["actions"] and dodge["outcomes"] == declared["DODGE"]["outcomes"]
@@ -63,7 +63,7 @@ def test_catalog_lists_ramp_then_dodge_from_config(config):
 
 
 def test_catalog_availability_follows_capabilities_and_specs(config):
-    ramp, dodge = skill_catalog(config, capabilities={"ball"}, implemented={"dodge_vision"})
+    ramp, dodge = skill_catalog(config, capabilities={"ball"}, implemented={"dodge_vision"})[:2]
     assert ramp["available"] is False
     assert ramp["missing"] == [NO_INCLINE, "SkillSpec 'ramp' is not implemented yet (learned_judgment/skills/ramp.py)"]
     assert dodge["available"] is True and dodge["missing"] == []  # the punch choice's requirement is not the skill's
@@ -88,8 +88,8 @@ def test_capability_and_implemented_arguments_must_be_name_collections(config):
 
 def test_schema(config):
     schema = declaration_schema(config)
-    assert list(schema) == ["oneOf"] and len(schema["oneOf"]) == 2
-    ramp, dodge = schema["oneOf"]
+    assert list(schema) == ["oneOf"] and len(schema["oneOf"]) == len(config["declared"]["skills"])
+    ramp, dodge = schema["oneOf"][:2]
     for variant, name in ((ramp, "RAMP"), (dodge, "DODGE")):
         assert variant["type"] == "object"
         assert variant["additionalProperties"] is False
@@ -402,7 +402,7 @@ def test_default_implemented_adds_modules_with_build_observed_spec(config, fake_
     changed = copy.deepcopy(config)
     declared = changed["declared"]["skills"]
     declared["RAMP"]["spec"], declared["DODGE"]["spec"] = "zz_test_observed", "zz_test_not_callable"
-    ramp, dodge = skill_catalog(changed, capabilities=ALL)
+    ramp, dodge = skill_catalog(changed, capabilities=ALL)[:2]
     assert ramp["available"] is True and ramp["missing"] == []
     assert dodge["missing"] == [
         "SkillSpec 'zz_test_not_callable' is not implemented yet (learned_judgment/skills/zz_test_not_callable.py)"
