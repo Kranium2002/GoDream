@@ -276,6 +276,7 @@ export function initLearnView({ api, el, catalogue = () => null }) {
     const v = resultView(result);
     if (v.kind === "none") return body.replaceChildren(el("p", { class: "empty" }, replay && !replay.finished ? "Appears when the replay reaches the end." : "Not reported yet."));
     if (v.kind === "raw") {
+      if (v.rows.length <= 6) return body.replaceChildren(kv(v.rows)); // a few values read best as they are
       return body.replaceChildren(el("p", { class: "hint" }, "The server sent a result without a metrics table; its sections are shown as sent."), ...sections(v.rows));
     }
     const facts = [v.scenarioCount !== null && `${v.scenarioCount} held-out scenarios`, v.seeds && `seeds ${v.seeds}`].filter(Boolean).join(", ");
@@ -283,12 +284,12 @@ export function initLearnView({ api, el, catalogue = () => null }) {
       el("caption", {}, `Measured in simulation${facts ? `: ${facts}` : ""}. Values with their interval and n where the server gives them.`),
       el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Metric"), ...v.methods.map((m) => el("th", { scope: "col" }, m.label)))),
       el("tbody", {}, ...v.rows.map((row) => el("tr", {},
-        el("th", { scope: "row" }, row.name, row.better ? el("span", { class: "note" }, row.better) : null),
+        el("th", { scope: "row" }, row.name.replace(/_/g, " "), row.better ? el("span", { class: "note" }, row.better) : null),
         ...row.cells.map((c) => el("td", {}, c))))));
     const paired = v.paired.length ? el("table", { class: "specs" },
       el("caption", {}, "Paired differences on the same scenarios"),
       el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Metric"), el("th", { scope: "col" }, "Comparison"), el("th", { scope: "col" }, "Difference"))),
-      el("tbody", {}, ...v.paired.map((p) => el("tr", {}, el("th", { scope: "row" }, p.name), el("td", {}, p.comparison), el("td", {}, p.diff))))) : null;
+      el("tbody", {}, ...v.paired.map((p) => el("tr", {}, el("th", { scope: "row" }, p.name.replace(/_/g, " ")), el("td", {}, p.comparison), el("td", {}, p.diff))))) : null;
     const extra = v.extra.length ? [el("p", { class: "block-title" }, "Other sections of the result, as sent"), ...sections(v.extra)] : [];
     body.replaceChildren(table, ...(paired ? [paired] : []), ...extra);
   }

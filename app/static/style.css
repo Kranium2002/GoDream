@@ -265,7 +265,8 @@ body.track-open .stage-main { min-height: 440px; } /* the stage grows rather tha
 .zoom__btn:active { transform: translateY(1px) scale(.985); transition-duration: var(--m-press); }
 .zoom__btn:focus-visible { outline-color: var(--stage-ink); }
 .scene-status { font-size: var(--t-small); color: var(--stage-muted); max-width: min(540px, 100%); }
-@media (min-width: 760px) { .stage-bar { max-width: min(760px, 52vw); } }
+@media (min-width: 760px) { .stage-bar { max-width: min(540px, 38vw); } }
+@media (min-width: 760px) and (max-width: 999px) { .stage-bar { max-width: min(440px, 44vw); } }
 .notice--stage { position: absolute; left: var(--gut); top: var(--s-4); max-width: min(640px, 60%); background: var(--stage-panel); color: var(--stage-ink); border-color: var(--stage-line); border-left-color: var(--stage-ink); }
 
 /* The chat dock fades in over the right of the stage: heading fixed, conversation scrolling, message box pinned. */
@@ -464,3 +465,8 @@ body.cam-on .when-off { display: none; }
   .areas { order: 3; width: 100%; gap: 0; }
   .areas a { font-size: 17px; padding: var(--s-1) var(--s-3) var(--s-1) 0; min-height: 40px; }
 }
+.cards .card { display: flex; flex-direction: column; }
+.cards .card__go { margin-top: auto; padding-top: var(--s-2); } /* every card's action on one line */
+.learn-stack { display: grid; gap: var(--s-5); }
+#results-body > * + *, #baseline-body > * + * { margin-top: var(--s-5); }
+#res-h + h4, #results-body + h4, #baseline-body + h4 { margin-top: var(--s-4); }

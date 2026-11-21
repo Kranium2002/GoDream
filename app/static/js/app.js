@@ -76,9 +76,9 @@ function placeDog() {
     if (document.body.classList.contains("drive-open")) top = side.bottom;
     else bottom = side.top; // the copy sits at the bottom on narrow screens
   }
-  // At full scale the dog spans about 0.68 x 0.57 of the stage's height (measured at 1440 x 900); a smaller free region
+  // At full scale the dog spans about 0.85 x 0.57 of the stage's height (its three-quarter view, measured by eye); a smaller free region
   // scales it down so it fits with a margin, in width and in height.
-  const k = Math.max(0.3, Math.min(1, 0.85 * (right - left) / (0.68 * s.height), 0.85 * (bottom - top) / (0.57 * s.height)));
+  const k = Math.max(0.3, Math.min(1, 0.85 * (right - left) / (0.85 * s.height), 0.85 * (bottom - top) / (0.57 * s.height)));
   stage.setShift(2 * ((left + right) / 2 - s.left) / s.width - 1, 1 - 2 * ((top + bottom) / 2 - s.top) / s.height, k);
 }
 addEventListener("resize", placeDog);

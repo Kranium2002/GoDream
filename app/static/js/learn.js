@@ -109,8 +109,10 @@ const num = (v) => String(Number(v.toPrecision(4)));
 
 function cell(c, unit) {
   if (!c || !finite(c.value)) return "not measured";
-  let s = num(c.value) + (unit ? ` ${unit}` : "");
-  if (finite(c.ci_low) && finite(c.ci_high)) s += ` (${num(c.ci_low)} to ${num(c.ci_high)})`;
+  // A fraction reads as a percentage of the same value; any other unit is written after the number.
+  const pct = unit === "fraction", bound = pct ? (v) => `${(v * 100).toFixed(1)}%` : num;
+  let s = pct ? bound(c.value) : num(c.value) + (unit ? ` ${unit}` : "");
+  if (finite(c.ci_low) && finite(c.ci_high)) s += ` (${bound(c.ci_low)} to ${bound(c.ci_high)})`;
   if (finite(c.n)) s += `, n = ${c.n}`;
   return s;
 }
@@ -140,7 +142,7 @@ export function resultView(result) {
     })),
     paired: (Array.isArray(result.paired) ? result.paired : []).map((p) => ({
       name: text(p?.name),
-      comparison: `${text(p?.a)} minus ${text(p?.b)}`,
+      comparison: `${METHOD_LABELS[p?.a] ?? text(p?.a)} minus ${METHOD_LABELS[p?.b] ?? text(p?.b)}`,
       diff: cell({ value: p?.diff, ci_low: p?.ci_low, ci_high: p?.ci_high, n: p?.n }, ""),
     })),
   };

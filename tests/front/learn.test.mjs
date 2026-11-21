@@ -123,7 +123,7 @@ test("resultView maps the proposed result shape to one column per method", () =>
   assert.deepEqual(v.rows[0], { name: "completed ascents", unit: "%", better: "higher is better", cells: ["40 % (30 to 50), n = 60", "72.25 %", "not measured"] });
   assert.deepEqual(v.rows[1].cells, ["not measured", "not measured", "0.1235 m, n = 60"]);
   assert.equal(v.rows[1].better, "lower is better");
-  assert.deepEqual(v.paired, [{ name: "completed ascents", comparison: "snn minus no_op", diff: "32 (20 to 44), n = 60" }]);
+  assert.deepEqual(v.paired, [{ name: "completed ascents", comparison: "SNN minus No-op", diff: "32 (20 to 44), n = 60" }]);
 });
 
 test("a result that does not match is shown as key and value, never guessed", () => {
@@ -196,4 +196,10 @@ test("groupRows gathers key and value rows by their first key, in order, keeping
     { key: "quote", rows: [["quote.state", "done"], ["quote.quote.dream", "1"]] },
     { key: "train", rows: [["train.steps_run", "700"]] },
   ]);
+});
+
+test("a metric in the unit fraction is shown as a percentage of the same value", () => {
+  const v = resultView({ metrics: [{ name: "ascent_success_rate", unit: "fraction", higher_is_better: true,
+    values: { no_op: { value: 0.6098, ci_low: 0.4573, ci_high: 0.7434, n: 41 }, snn: { value: 0.7317 } } }] });
+  assert.deepEqual(v.rows[0].cells, ["61.0% (45.7% to 74.3%), n = 41", "73.2%"]);
 });
