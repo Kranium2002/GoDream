@@ -1,0 +1,165 @@
+{
+ "format": "learned-judgment/observed-student/v1",
+ "skill": "dodge_vision",
+ "action_names": [
+  "NO_OP",
+  "DODGE_LEFT",
+  "DODGE_RIGHT",
+  "RETREAT"
+ ],
+ "heads": {
+  "threat": [
+   0,
+   2
+  ],
+  "action": [
+   2,
+   6
+  ]
+ },
+ "no_op_index": 0,
+ "input": {
+  "frames": 8,
+  "frame_size": 12,
+  "window_encoding": "signed_diff",
+  "diff_floor": 0.1,
+  "encoding": "(x - 0.5) * sqrt(12)"
+ },
+ "vision": {
+  "frame_size": 12,
+  "frame_rate_hz": 30.0,
+  "frames": 8,
+  "luma_weights": [
+   0.299,
+   0.587,
+   0.114
+  ],
+  "pixel_scale": 255.0
+ },
+ "thresholds": {
+  "threat": 0.95,
+  "action": 0.4,
+  "margin": 0.1
+ },
+ "provenance": {
+  "dream": "D:/BerlinPrior-eval/results/runs/v3/dream",
+  "scores": "D:/BerlinPrior-eval/results/runs/v3/scores.npz",
+  "frames": 8,
+  "window_encoding": "signed_diff",
+  "diff_floor": 0.1,
+  "hidden_sizes": [
+   128
+  ],
+  "max_steps": 1500,
+  "run_id": "f8_signed_diff_h128",
+  "dream_config_digest": "123e52a3886c4e56fd58fedcd5d8a6ad6744d97cb2c40d9743b28a7260092815",
+  "scores_sha256": "bf66b6651324f76a5ed70dba9458b6a55d9156e788b9f6df4b2e05bd0d09ed3a",
+  "teacher_request_keys": [
+   "aca657bd6db31d12c1f92a9bbf5926b7629ce8f12a78c2370a218083fc0cfdfe",
+   "19aa3a3b0d888aebf6b54f9562da8afd8ff6f66d91aeb004f4e6d88056fd808a",
+   "9f8fc9d92b73726e3d413a037c8d774d11e8d1d3da61230654b42eebdd8f8f27",
+   "8c9cf08bf06cf51521a8a7c20bc656cc6e32002fba5b346cf828feaf6862d375"
+  ],
+  "config_digest": "6cc620b0c7e7abe98f39fa90a48b1f4a128351cc8150285c463d426b40c86a88",
+  "seeds": {
+   "seed": 20261121,
+   "streams": {
+    "validation_split": "dodge_vision/observed/validation_split",
+    "init": "dodge_vision/observed/init",
+    "train": "dodge_vision/observed/train"
+   },
+   "init": 1595375350,
+   "train": 549658744
+  },
+  "training_settings": {
+   "hidden_sizes": [
+    128
+   ],
+   "time_steps": 10,
+   "beta": 0.9,
+   "threshold": 1.0,
+   "readout_beta": 0.9,
+   "learn_beta": false,
+   "learn_threshold": false,
+   "surrogate": "atan",
+   "surrogate_alpha": 2.0,
+   "target_temperature": 0.5,
+   "target_spread": "global_median",
+   "spike_rate_penalty": 0.0,
+   "learning_rate": 0.002,
+   "adam_beta1": 0.9,
+   "adam_beta2": 0.999,
+   "adam_eps": 1e-08,
+   "weight_decay": 0.0,
+   "batch_size": 64,
+   "max_steps": 1500,
+   "validation_fraction": 0.1,
+   "evaluate_every_steps": 100,
+   "patience_evaluations": 5,
+   "torch_threads": 1,
+   "parity_logit_tolerance": 1e-09,
+   "out_of_range": "error"
+  },
+  "status": "PROVISIONAL development student (run v3, sweep variant f8_signed_diff_h128). On 240 simulation dev trajectories (72 threats) its frozen gate issued 19 commands, all 19 on true threats (precision 1.0, Wilson 0.83-1.0), recall 0.25. The pre-set sweep rule asked for at least 20 issued commands, so the sweep declared NO winner; this student is used for a first live-camera try only. Not evaluated on the held-out split."
+ },
+ "network": {
+  "files": [
+   "network.npz",
+   "network.json"
+  ],
+  "sha256": "7e9f361f9d84f45faf9ae8df7db669cb0338b5a94b0bfafa2e209ad2dbc3a466"
+ },
+ "calibration": {
+  "split": "dev",
+  "n_scenarios": 240,
+  "n_threats": 72,
+  "grid_size": 240,
+  "chosen": {
+   "threat": 0.95,
+   "action": 0.4,
+   "margin": 0.1,
+   "emitted": 19,
+   "correct": 19,
+   "precision": 1.0,
+   "recalled": 18,
+   "recall": 0.25,
+   "false_activations": 0,
+   "precision_ci": [
+    0.8318207759473838,
+    0.9999999999999999
+   ],
+   "ci_level": 0.95,
+   "ci_method": "Wilson"
+  },
+  "precision_target": 0.99,
+  "gate_passed": true,
+  "rule": "precision >= target: highest recall, then fewer false activations, then higher threat, action, margin",
+  "seeds": {
+   "runtime_seed": 20261121,
+   "split": "dev",
+   "split_code": 2,
+   "scenarios": "dodge_vision._split_plan: np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), first n of sample_threat_scenarios",
+   "augmentation": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2)[1]), fresh for every episode of the scenario (paired)",
+   "attempt_seed": "scenario_id",
+   "world_seed": 0,
+   "world_preset": "default"
+  },
+  "t_hit": "Go2World.finish_episode first_collision_time_s of the NO_OP episode",
+  "source": "offline: the saved NO_OP trace (dodge_eval trace), windows rebuilt from its frames, readouts batched through observed.student_readout, the same gate replay as calibrate",
+  "trace": "D:/BerlinPrior-eval/results/runs/v3/trace_dev.npz",
+  "trace_config_digest": "daf9339212ef92f6ee9ea4b55f05d4229e896db44ec19f37caa31ac2f062961b",
+  "readout_check": {
+   "n_frames": 50,
+   "max_abs_difference": 4.440892098500626e-16,
+   "tolerance": 1e-09,
+   "passed": true,
+   "seed": 20261121,
+   "method": "np.random.default_rng(runtime.seed).choice of (scenario, decision frame) without replacement; DodgeRuntime.readout of that window against the batched observed.student_readout"
+  },
+  "config_digest": "7c96285ee48714362b55e27fcbb979ca5137d649ca03a7e9bfe813a7ffea4b58",
+  "run_id": "v3",
+  "records": "D:/BerlinPrior-eval/results/runs/v3/calibration_dev.json",
+  "traces": "D:/BerlinPrior-eval/results/runs/v3/calibration_dev.npz",
+  "frozen_utc": "2026-11-21T23:52:43.687239+00:00"
+ }
+}
