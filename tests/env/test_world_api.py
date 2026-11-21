@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from learned_judgment.env import CommandError, Go2World
+from learned_judgment.env.world import recovery
 
 pytestmark = pytest.mark.system
 OBS_KEYS = {"t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang_vel_rad_s", "joint_pos_rad",
@@ -189,3 +190,66 @@ def test_render_frame_shows_the_dog(config, world):
     size = config["world"]["render"]
     assert frame.shape == (size["height"], size["width"], 3) and frame.dtype == np.uint8
     assert len(np.unique(frame.reshape(-1, 3), axis=0)) > 1  # not a single flat colour
+
+
+def shoved_episode(config, save_traces, zero, period):
+    """150 control periods standing, shoved sideways at 2.5 m/s after 0.2 s: out of the recovery limits, then back."""
+    w = Go2World(config | {"world": config["world"] | {"save_traces": save_traces}}, seed=1)
+    w.reset({"settle_s": 0.5})
+    w.step(zero, 0.2)
+    w.policy.data.qvel[1] = 2.5
+    for _ in range(150):
+        w.step(zero, period)
+    return w, w.finish_episode()
+
+
+def test_without_traces_an_episode_keeps_no_growing_trace(config, zero, period, tmp_path):
+    config["world"]["trace_dir"] = str(tmp_path)
+    (kept, out_kept), (lean, out_lean) = (shoved_episode(config, save, zero, period) for save in (True, False))
+    assert out_kept["recovery_time_s"] > 0  # the running measures had something to measure
+    assert {k: v for k, v in out_kept.items() if k != "trace_path"} == {
+        k: v for k, v in out_lean.items() if k != "trace_path"}
+    assert len(kept._trace) == 1 + 10 + 150 and lean._trace == []  # decision instant, 0.2 s, 150 periods
+    # The running recovery measure equals recovery() over the saved trace.
+    trace, limits = np.load(out_kept["trace_path"]), config["robot"]["recovery"]
+    q, w = trace["base_quat_wxyz"], trace["base_ang_vel_rad_s"]
+    within = ((1 - 2 * (q[:, 1] ** 2 + q[:, 2] ** 2) >= np.cos(np.radians(limits["max_tilt_deg"])))
+              & (np.hypot(w[:, 0], w[:, 1]) <= limits["max_tilt_rate_rad_s"]))
+    assert (out_kept["recovery_time_s"], out_kept["recovered"]) == recovery(trace["t_s"], within, limits["hold_s"])
+
+
+def test_commands_received_records_each_change_once(world, zero, forward, period):
+    world.reset()
+    for _ in range(50):
+        world.step(forward, period)
+    split = world.finish_episode()["commands_received"]
+    world.reset()
+    world.step(forward, 50 * period)
+    assert split == world.finish_episode()["commands_received"] == [(0.0, forward)]
+    sideways = zero | {"vel_y": 0.5}
+    world.reset()
+    for command in (forward, sideways, forward):
+        for _ in range(15):
+            world.step(command, period)
+    received = world.finish_episode()["commands_received"]
+    assert [c for _, c in received] == [forward, sideways, forward]
+    assert [t for t, _ in received] == pytest.approx([0.0, 15 * period, 30 * period])
+
+
+class Stop(Exception):
+    pass
+
+
+def test_on_period_sees_every_control_period(world, zero, period):
+    world.reset()
+    seen = []
+    last = world.step(zero, 10 * period, on_period=seen.append)
+    assert [o["t_s"] for o in seen] == pytest.approx([(i + 1) * period for i in range(10)])
+    assert seen[-1]["t_s"] == last["t_s"] and np.array_equal(seen[-1]["base_pos_m"], last["base_pos_m"])
+
+    def stop_at_the_third(obs):
+        if obs["t_s"] > 12.5 * period:
+            raise Stop
+    with pytest.raises(Stop):  # an exception from on_period ends step after that period; the episode stays open
+        world.step(zero, 10 * period, on_period=stop_at_the_third)
+    assert world.step(zero, period)["t_s"] == pytest.approx(14 * period)

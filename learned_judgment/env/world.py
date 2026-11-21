@@ -24,19 +24,38 @@ TRACE_KEYS = ("t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_a
               "joint_vel_rad_s", "policy_obs", "foot_contact", "fallen")
 
 
+class RecoveryClock:
+    """recovery() one sample at a time, so an episode need not keep its samples."""
+
+    def __init__(self, hold_s: float):
+        self.hold_s = hold_s
+        self._first = self._start = self._last = self._result = None  # sample times
+
+    def add(self, t_s: float, within: bool) -> None:
+        if self._result is not None:
+            return
+        self._last = t_s
+        if self._first is None:
+            self._first = None if within else t_s
+            return
+        self._start = None if not within else t_s if self._start is None else self._start
+        if self._start is not None and t_s - self._start >= self.hold_s - 1e-9:  # 1e-9: times are sums of 0.002 s
+            self._result = float(self._start - self._first), 1
+
+    def result(self) -> tuple[float, int]:
+        if self._first is None:
+            return 0.0, 1
+        return self._result or (float(self._last - self._first), 0)
+
+
 def recovery(t_s: np.ndarray, within: np.ndarray, hold_s: float) -> tuple[float, int]:
     """(recovery_time_s, recovered) from per-sample times and whether each sample is within the recovery limits:
     (0.0, 1) if every sample is; else the time from the first sample out to the first sample from which they hold
     for hold_s, and 1; or, if they never hold that long, the time to the last sample, and 0."""
-    out = np.flatnonzero(~within)
-    if out.size == 0:
-        return 0.0, 1
-    first, start = out[0], None
-    for i in range(first, len(t_s)):
-        start = None if not within[i] else i if start is None else start
-        if start is not None and t_s[i] - t_s[start] >= hold_s - 1e-9:  # 1e-9: sample times are sums of 0.002 s steps
-            return float(t_s[start] - t_s[first]), 1
-    return float(t_s[-1] - t_s[first]), 0
+    clock = RecoveryClock(hold_s)
+    for t, w in zip(t_s, within):
+        clock.add(t, w)
+    return clock.result()
 
 
 def _number(key: str, value) -> float:
@@ -74,10 +93,13 @@ class Go2World:
 
     Episode. reset(situation) spawns the dog, runs the policy's settle and soft start, trots at
     dog_forward_speed_m_s (default 0.0, a vel_x command) for settle_s (default world.settle_s) and returns the
-    observation at the decision instant, t_s 0.0. step(command, duration_s) holds a command, validated strictly
-    against command_schema, for duration_s rounded to whole control periods (at least one), any number of times.
+    observation at the decision instant, t_s 0.0. step(command, duration_s, on_period=None) holds a command, validated
+    strictly against command_schema, for duration_s rounded to whole control periods (at least one), any number of
+    times, and returns the last observation; on_period, if given, is called after every control period with a copy of
+    that period's observation, and an exception it raises ends step after that period with the episode still open.
     finish_episode() ends the episode and returns the outcome; reset may follow for a new episode. A reset during an
-    episode abandons it without a trace.
+    episode abandons it without a trace. With world.save_traces false nothing is kept per control period: the outcome
+    comes from the last observation and measures updated as the episode runs.
 
     Ball (DODGE). A situation with all six BALL_KEYS throws the ball; with some of them reset raises ValueError naming
     the missing ones, and with none the episode simulates the scene without a ball body. Their frame is fixed at the
@@ -119,8 +141,9 @@ class Go2World:
         fall_time_s         t_s of the first such physics step (negative: before the decision instant), or None.
         sim_unstable        0 or 1. 1 if MuJoCo flagged a bad state this episode (warning mjWARN_BADQPOS, BADQVEL or
                             BADQACC: it then resets the state itself) or the final state is not finite.
-        commands_received   [(t_s, command)], one per step() call, at the t_s it was issued. Re-sending the same
-                            command in shorter steps gives the same episode: the delay line is not restarted.
+        commands_received   [(t_s, command)]: each command that differs from the one before it, at the t_s it was
+                            issued. Re-sending the same command, in steps of any length, adds no entry and gives the
+                            same episode: the delay line is not restarted.
         final_base_pos_m    [x, y, z], m, world frame.
         declared_payload_kg, declared_surface as in the observation.
         collision           0 or 1. 1 if the ball had a contact with a robot geom (any body but the world and the
@@ -154,6 +177,8 @@ class Go2World:
         self._floor = self.model.geom("floor").id
         self._feet = [self.model.geom(name).id for name in FEET]
         self._cos_max_tilt = math.cos(math.radians(config["robot"]["fall"]["max_tilt_deg"]))
+        limits = config["robot"]["recovery"]
+        self._recovery_limits = math.cos(math.radians(limits["max_tilt_deg"])), limits["max_tilt_rate_rad_s"]
         self._episodes = 0
         self._active = False
         self._renderer = None
@@ -229,23 +254,28 @@ class Go2World:
             self._throw(throw)
         self._command = {name: float(v) for name, v in trot.items()}
         self._queue = deque([(native, self._command)] * self._delay)  # the trot, issued long enough ago
-        self._received, self._trace = [], []
+        # With traces off only the last observation and the running measures are kept, never every period's.
+        self._received, self._trace, self._last = [], [], None
+        self._recovery = RecoveryClock(self.config["robot"]["recovery"]["hold_s"])
         self._active = True
         return copy.deepcopy(self._observe())
 
-    def step(self, command: dict, duration_s: float) -> dict:
+    def step(self, command: dict, duration_s: float, on_period=None) -> dict:
         if not self._active:
             raise RuntimeError("no episode in progress: call reset() first")
         native = validate_command(command, self.command_schema)
         if not 0.0 < duration_s < math.inf:
             raise ValueError(f"duration_s must be finite and > 0, got {duration_s}")
         issued = {name: float(command[name]) for name in self.command_schema["fields"]}
-        self._received.append((self._t(), dict(issued)))
+        if not self._received or self._received[-1][1] != issued:  # recorded when it changes, at its issue time
+            self._received.append((self._t(), dict(issued)))
         for _ in range(max(1, round(duration_s / self.policy.control_dt))):
             self._queue.append((native, issued))
             active, self._command = self._queue.popleft()  # the command issued self._delay control periods ago
             self.policy.step(active, on_substep=self._watch)
             obs = self._observe()
+            if on_period is not None:
+                on_period(copy.deepcopy(obs))
         return copy.deepcopy(obs)
 
     def finish_episode(self) -> dict:
@@ -256,13 +286,8 @@ class Go2World:
         # MuJoCo checks qpos, qvel and qacc at every step, so a bad state before the last step left a warning count.
         unstable = any(d.warning[w].number for w in BAD_STATE) or not (
             np.isfinite(d.qpos).all() and np.isfinite(d.qvel).all())
-        last = self._trace[-1]
-        limits = self.config["robot"]["recovery"]
-        quat = np.array([o["base_quat_wxyz"] for o in self._trace])
-        spin = np.array([o["base_ang_vel_rad_s"] for o in self._trace])
-        within = ((1 - 2 * (quat[:, 1] ** 2 + quat[:, 2] ** 2) >= math.cos(math.radians(limits["max_tilt_deg"])))
-                  & (np.hypot(spin[:, 0], spin[:, 1]) <= limits["max_tilt_rate_rad_s"]))
-        recovery_time_s, recovered = recovery(np.array([o["t_s"] for o in self._trace]), within, limits["hold_s"])
+        last = self._last
+        recovery_time_s, recovered = self._recovery.result()
         return {
             "elapsed_s": last["t_s"],
             "fall": int(self._fall_n is not None),
@@ -379,7 +404,12 @@ class Go2World:
             "command_active": dict(self._command),
             **self._declared,
         }
-        self._trace.append(obs)
+        q, cos_tilt, max_rate = obs["base_quat_wxyz"], *self._recovery_limits
+        self._recovery.add(obs["t_s"], bool(1 - 2 * (q[1] ** 2 + q[2] ** 2) >= cos_tilt
+                                            and np.hypot(ang_vel[0], ang_vel[1]) <= max_rate))
+        self._last = obs
+        if self.config["world"]["save_traces"]:
+            self._trace.append(obs)
         return obs
 
     def _write_trace(self) -> str:
