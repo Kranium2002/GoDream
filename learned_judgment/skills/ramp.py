@@ -53,7 +53,11 @@ Files of the command line, one directory per call (the observed.py array contrac
 
     python -m learned_judgment.skills.ramp rows --split {context|dev|test} --out DIR [--n N]
     python -m learned_judgment.skills.ramp dream --out DIR [--n N]
-    python -m learned_judgment.skills.ramp run --student DIR --split {context|dev|test} --out DIR [--n N]
+    python -m learned_judgment.skills.ramp run --student DIR --split {context|dev|test} --out DIR [--n N] [--run RUN]
+
+run also appends "evaluate" events to <observed.runs_dir>/<RUN>/events.jsonl and merges into its result.json the UI
+keys run_id, skill, seeds, scenario_ids, metrics, paired (methods "no_op" = the nominal pass-through, "snn" = the
+student) and a section run_<split>; RUN defaults to the student's provenance.run_id.
 
 Seeds. The scenarios of a split come from np.random.default_rng(np.random.SeedSequence([runtime.seed, code]))
 (code: SPLIT_CODES); scenario i's episodes use attempt_seed i, so every candidate and both run methods face the
@@ -823,14 +827,16 @@ def _pool(config: Mapping[str, Any], student_dir: str | None = None) -> Iterator
         yield pool
 
 
-def _map(pool: Any, tasks: list[tuple], label: str) -> list[dict[str, Any]]:
-    """_episode_task over tasks, results in task order, sparse progress lines."""
+def _map(pool: Any, tasks: list[tuple], label: str, on_progress: Callable[[int], None] | None = None) -> list[dict[str, Any]]:
+    """_episode_task over tasks, results in task order, sparse progress lines (and on_progress(done) with each)."""
     every = max(1, len(tasks) // 10)
     results = []
     for result in pool.imap(_episode_task, tasks):
         results.append(result)
         if len(results) % every == 0 or len(results) == len(tasks):
             print(f"{label} {len(results)}/{len(tasks)}", flush=True)
+            if on_progress is not None:
+                on_progress(len(results))
     return results
 
 
@@ -1041,11 +1047,96 @@ def _summary(results: Sequence[Mapping[str, Any]], action_names: Sequence[str]) 
     }
 
 
+_UI_METHODS = {"no_op": "nominal", "snn": "student"}  # result.json method name -> run.json method
+_METRIC_NOTES = {
+    "ascent_success_rate": "slope scenarios whose episode ended with reached_top 1 (final_forward_m >= ramp_end_m, no "
+                           "fall); Wilson interval",
+    "fall_rate": "every scenario (flat and slope) with fall 1; Wilson interval",
+    "mean_progress_m": "mean final_forward_m over the slope scenarios",
+    "mean_slip_m": "mean foot_slip_m over the slope scenarios (the whole episode, approach included)",
+    "flat_false_activations": "flat scenarios in which the detector switched to SLOPE at least once (a count; n = flat "
+                              "scenarios)",
+    "no_op": "the nominal walking command throughout (RAMP has no NO_OP; the detector observes and never acts)",
+    "snn": "the exported spiking student's argmax candidate, sent while the detector is in SLOPE",
+}
+
+
+def _ui_metrics(config: Mapping[str, Any], records: Sequence[Mapping[str, Any]], split: str) -> tuple[list, list, str]:
+    """result.json UI keys "metrics" and "paired" (ascent success snn - no_op, percentile bootstrap over the slope
+    scenarios at evaluation.bootstrap_confidence_level with evaluation.bootstrap_resamples) and the bootstrap stream."""
+    from learned_judgment.dodge_eval import paired_bootstrap, wilson_interval
+    from learned_judgment.engine.streams import stream_rng
+
+    level = _value(config, "evaluation.bootstrap_confidence_level")
+    resamples = _count("evaluation.bootstrap_resamples", require(config, "evaluation.bootstrap_resamples"))
+    slope = [r for r in records if r["kind"] == "slope"]
+    flat = [r for r in records if r["kind"] == "flat"]
+
+    def rate(k: int, n: int) -> dict[str, Any]:
+        low, high = wilson_interval(k, n, level)
+        return {"value": k / n if n else None, "ci_low": low, "ci_high": high, "n": n}
+
+    def mean(values: list[float]) -> dict[str, Any]:
+        return {"value": float(np.mean(values)) if values else None, "ci_low": None, "ci_high": None, "n": len(values)}
+
+    def per_method(make: Callable[[str], dict[str, Any]]) -> dict[str, Any]:
+        return {ui: make(method) for ui, method in _UI_METHODS.items()}
+
+    metrics = [
+        {"name": "ascent_success_rate", "unit": "fraction", "higher_is_better": True,
+         "values": per_method(lambda m: rate(sum(int(r[m]["measured"]["reached_top"]) for r in slope), len(slope)))},
+        {"name": "fall_rate", "unit": "fraction", "higher_is_better": False,
+         "values": per_method(lambda m: rate(sum(int(r[m]["measured"]["fall"]) for r in records), len(records)))},
+        {"name": "mean_progress_m", "unit": "m", "higher_is_better": True,
+         "values": per_method(lambda m: mean([r[m]["measured"]["progress_m"] for r in slope]))},
+        {"name": "mean_slip_m", "unit": "m", "higher_is_better": False,
+         "values": per_method(lambda m: mean([r[m]["measured"]["slip_m"] for r in slope]))},
+        {"name": "flat_false_activations", "unit": "count", "higher_is_better": False,
+         "values": per_method(lambda m: {"value": sum(int(r[m]["entered"]) for r in flat), "ci_low": None,
+                                         "ci_high": None, "n": len(flat)})},
+    ]
+    stream = f"{SKILL}/run/{split}/paired_bootstrap"
+    differences = [r["student"]["measured"]["reached_top"] - r["nominal"]["measured"]["reached_top"] for r in slope]
+    p = paired_bootstrap(differences, resamples, level, stream_rng(int(require(config, "runtime.seed")), stream, 0))
+    paired = [{"name": "ascent_success_rate", "a": "snn", "b": "no_op", "diff": p["diff"], "ci_low": p["ci_low"],
+               "ci_high": p["ci_high"], "n": p["n"]}]
+    return metrics, paired, f"{stream}[0]"
+
+
+def _merge_result(run_dir: Path, run_id: str, updates: Mapping[str, Any]) -> Path:
+    """Merge top-level keys into <run_dir>/result.json (observed's file: every other key is kept)."""
+    from learned_judgment.observed import _dumps, _jsonable as _observed_jsonable, _utc_now  # Paths become strings
+
+    path = run_dir / "result.json"
+    result = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"run_id": run_id, "skill": SKILL}
+    if result.get("run_id") != run_id or result.get("skill") != SKILL:
+        raise ValueError(f"{path} belongs to run {result.get('run_id')!r} of skill {result.get('skill')!r}")
+    result.update(_observed_jsonable(dict(updates)))
+    result["updated_utc"] = _utc_now().isoformat()
+    run_dir.mkdir(parents=True, exist_ok=True)
+    atomic_write_text(path, _dumps(result, indent=1) + "\n")
+    return path
+
+
+def _student_run_id(student_dir: str | Path) -> str:
+    """provenance.run_id of <student_dir>/student.json (written by observed train)."""
+    path = Path(student_dir) / "student.json"
+    run_id = json.loads(path.read_text(encoding="utf-8")).get("provenance", {}).get("run_id")
+    if not isinstance(run_id, str) or not run_id:
+        raise ValueError(f"{path} has no provenance.run_id; pass --run")
+    return run_id
+
+
 def run_student(
-    config: Mapping[str, Any], student_dir: str | Path, split: str, out_dir: str | Path, n: int | None = None
+    config: Mapping[str, Any], student_dir: str | Path, split: str, out_dir: str | Path, n: int | None = None,
+    run_id: str | None = None, argv: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     """Complete flat -> slope -> flat episodes of a split with the trained student deciding at the entry, next to the
-    nominal pass-through on the same scenarios and attempt seeds; writes <out_dir>/run.json and returns it."""
+    nominal pass-through on the same scenarios and attempt seeds; writes <out_dir>/run.json and returns it.
+
+    With run_id, the run's events.jsonl gets "evaluate" events and its result.json the UI keys (run_id, skill, seeds,
+    scenario_ids, metrics, paired: methods "no_op" = the nominal pass-through and "snn" = the student) and a section
+    "run_<split>"; every other key of result.json is kept."""
     if split not in ("context", "dev", "test"):
         raise ValueError(f"split must be context, dev or test; got {split!r}")
     n = _count("n", require(config, f"{_OBSERVED}.{split}_scenarios") if n is None else n)
@@ -1055,34 +1146,71 @@ def run_student(
     if any(INCLINE_KEY in s["situation"] for s in scenarios):
         _require_incline()
     methods = ("nominal", "student")
-    print(f"run: split {split}, {n} scenarios x {methods}", flush=True)
-    start = time.perf_counter()
-    with _pool(config, str(student_dir)) as pool:
-        results = _map(pool, [(s, method) for s in scenarios for method in methods], "episodes:")
-    wall_s = time.perf_counter() - start
-    records = []
-    for scenario in scenarios:
-        own = {r["policy"]: r for r in results if r["scenario_id"] == scenario["scenario_id"]}
-        records.append({**scenario, **{method: own[method] for method in methods}})
-    out = {
-        **_meta(config, split, scenarios, n),
-        "student": {"dir": Path(student_dir).as_posix(), "network_sha256": student.digest},
-        "methods": {"nominal": "the nominal command throughout (detector observes, never acts)",
-                    "student": "the student's argmax candidate (observed.student_readout, action head) at the entry"},
-        "scoring_source": _SCORING_SOURCE,
-        "records": records,
-        "summary": {method: _summary([record[method] for record in records], spec.action_names) for method in methods},
-        "wall_s": wall_s,
-    }
-    out.pop("scenarios")
     folder = Path(out_dir)
-    atomic_write_text(folder / "run.json", json.dumps(_jsonable(out), indent=1, allow_nan=False) + "\n")
+    events = run_dir = None
+    section = f"run_{split}"
+    common = {"argv": list(argv or []), "split": split, "student": Path(student_dir).as_posix(),
+              "network_sha256": student.digest, "config_digest": config_digest(config)}
+    if run_id is not None:
+        from learned_judgment.observed import EventLog, _run_dir
+
+        run_dir = _run_dir(config, run_id)
+        events = EventLog(run_dir / "events.jsonl", run_id, SKILL)
+        _merge_result(run_dir, run_id, {section: {"state": "running", **common}})
+        events.emit("evaluate", "running", done=0, total=n * len(methods), data={"split": split, **common})
+    print(f"run: split {split}, {n} scenarios x {methods}", flush=True)
+    try:
+        start = time.perf_counter()
+        progress = None if events is None else (
+            lambda done: events.emit("evaluate", "running", done=done, total=n * len(methods)))
+        with _pool(config, str(student_dir)) as pool:
+            results = _map(pool, [(s, method) for s in scenarios for method in methods], "episodes:", progress)
+        wall_s = time.perf_counter() - start
+        records = []
+        for scenario in scenarios:
+            own = {r["policy"]: r for r in results if r["scenario_id"] == scenario["scenario_id"]}
+            records.append({**scenario, **{method: own[method] for method in methods}})
+        out = {
+            **_meta(config, split, scenarios, n),
+            "student": {"dir": Path(student_dir).as_posix(), "network_sha256": student.digest},
+            "methods": {"nominal": "the nominal command throughout (detector observes, never acts)",
+                        "student": "the student's argmax candidate (observed.student_readout, action head) at the entry"},
+            "scoring_source": _SCORING_SOURCE,
+            "records": records,
+            "summary": {method: _summary([record[method] for record in records], spec.action_names) for method in methods},
+            "wall_s": wall_s,
+        }
+        out.pop("scenarios")
+        atomic_write_text(folder / "run.json", json.dumps(_jsonable(out), indent=1, allow_nan=False) + "\n")
+        if run_id is not None:
+            metrics, paired, stream = _ui_metrics(config, records, split)
+            seeds = {**out["seeds"], "split": split, "world_seed": out["world_seed"], "world_preset": out["world_preset"],
+                     "bootstrap": stream}
+            scenario_ids = [record["scenario_id"] for record in records]
+            _merge_result(run_dir, run_id, {
+                section: {"state": "done", **common, "records": folder / "run.json", "summary": out["summary"],
+                          "metric_notes": _METRIC_NOTES, "wall_s": wall_s, "seeds": seeds,
+                          "bootstrap": {"method": "percentile bootstrap over slope scenarios",
+                                        "resamples": require(config, "evaluation.bootstrap_resamples"),
+                                        "level": require(config, "evaluation.bootstrap_confidence_level")},
+                          "where": "simulation (MuJoCo Go2World); student inference on this computer's CPU (numpy)"},
+                "seeds": seeds, "scenario_ids": scenario_ids, "metrics": metrics, "paired": paired,
+            })
+    except Exception as error:
+        if events is not None:
+            events.emit("evaluate", "failed", data={"type": type(error).__name__, "message": str(error)})
+            _merge_result(run_dir, run_id, {section: {"state": "failed", **common, "error": {
+                "type": type(error).__name__, "message": str(error)}}})
+        raise
     for method in methods:
         s = out["summary"][method]
         print(f"{method}: false activations {s['flat_false_activations']}/{s['flat_scenarios']}, missed entries "
               f"{s['missed_slope_entries']}/{s['slope_scenarios']}, ascents {s['ascent_success']['count']}/"
               f"{s['ascent_success']['of_slope']}, falls {s['falls']['count']}, commands changed on flat "
               f"{s['commands_changed_on_flat']['total']}")
+    if events is not None:
+        events.emit("evaluate", "done", done=n * len(methods), total=n * len(methods), data={
+            "split": split, "records": folder / "run.json", "metrics": metrics, "paired": paired})
     print(f"wall time {wall_s:.1f} s; wrote {folder / 'run.json'}", flush=True)
     return out
 
@@ -1103,6 +1231,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     run.add_argument("--split", required=True, choices=("context", "dev", "test"))
     run.add_argument("--out", required=True, help="output directory")
     run.add_argument("--n", type=int, help="scenarios (default observed.ramp.<split>_scenarios)")
+    run.add_argument("--run", help="run id for events.jsonl / result.json (default: student.json provenance.run_id)")
     args = parser.parse_args(argv)
     config = load_config()
     if args.command == "rows":
@@ -1110,7 +1239,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     elif args.command == "dream":
         collect_dream(config, args.out, args.n)
     else:
-        run_student(config, args.student, args.split, args.out, args.n)
+        run_id = args.run if args.run else _student_run_id(args.student)
+        run_student(config, args.student, args.split, args.out, args.n, run_id=run_id,
+                    argv=list(sys.argv[1:] if argv is None else argv))
     return 0
 
 

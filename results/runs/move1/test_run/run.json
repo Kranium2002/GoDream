@@ -1,0 +1,2754 @@
+{
+ "skill": "move",
+ "split": "test",
+ "student": "D:/BerlinPrior/results/runs/move1/student",
+ "network_sha256": "636b8fc482e90a377c69a2c792a10f5424add334833b5934f64abddaace44559",
+ "n": 45,
+ "seeds": {
+  "runtime_seed": 20261121,
+  "split": "test",
+  "split_code": 3,
+  "scenarios": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), rng.random(3) per scenario",
+  "attempt_seed": "scenario_id",
+  "world_seed": 0,
+  "world_preset": "default",
+  "bootstrap": "move/run/test/paired_bootstrap[0]"
+ },
+ "config_digest": "47480462a97726343ac334d7de5e51972156a5544102f35140d06a9c34db29f3",
+ "methods": {
+  "physics_only": "argmax of the objective of the physics guess (point mass) per scenario",
+  "snn": "the student's argmax candidate (observed.student_readout, action head)"
+ },
+ "scales": {
+  "forward": 2.0,
+  "sideways": 0.6,
+  "turn": 2.5
+ },
+ "error_note": "error is |final value on the kind's axis - target| / scale (dimensionless), because spec.objective receives only the predicted outcomes; error_units is the same in m (forward, sideways) or rad (turn)",
+ "where": "simulation (MuJoCo Go2World); student inference on this computer's CPU (numpy)",
+ "records": [
+  {
+   "scenario_id": 0,
+   "kind": "forward",
+   "target": 0.5880218098433985,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 3,
+    "command": {
+     "vel_x": 0.4,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.05616264213111585,
+     "drift_m": 0.07709593017546769,
+     "fall": 0.0
+    },
+    "error_units": 0.1123252842622317,
+    "final": {
+     "forward_m": 0.47569652558116676,
+     "sideways_m": 0.07709593017546769,
+     "yaw_change_rad": 0.24213381661555244,
+     "yaw_change_wrapped_rad": 0.24213381661555022
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.01718651947793956,
+    "action_name": "L0.40_H1.60"
+   },
+   "snn": {
+    "action": 17,
+    "command": {
+     "vel_x": 0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.03733112129861477,
+     "drift_m": 0.01946634919888074,
+     "fall": 0.0
+    },
+    "error_units": 0.07466224259722953,
+    "final": {
+     "forward_m": 0.5133595672461689,
+     "sideways_m": 0.01946634919888074,
+     "yaw_change_rad": 0.13003569924995872,
+     "yaw_change_wrapped_rad": 0.1300356992499596
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.013397609473541445,
+    "action_name": "L0.80_H0.80"
+   }
+  },
+  {
+   "scenario_id": 1,
+   "kind": "sideways",
+   "target": -0.2151378792004433,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 8,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.045870000719345265,
+     "drift_m": 0.0057441068717636445,
+     "fall": 0.0
+    },
+    "error_units": 0.027522000431607158,
+    "final": {
+     "forward_m": -0.0057441068717636445,
+     "sideways_m": -0.18761587876883615,
+     "yaw_change_rad": 0.14468895484945588,
+     "yaw_change_wrapped_rad": 0.14468895484945632
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.02842731529753961,
+    "action_name": "L0.60_H0.40"
+   },
+   "snn": {
+    "action": 8,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.045870000719345265,
+     "drift_m": 0.0057441068717636445,
+     "fall": 0.0
+    },
+    "error_units": 0.027522000431607158,
+    "final": {
+     "forward_m": -0.0057441068717636445,
+     "sideways_m": -0.18761587876883615,
+     "yaw_change_rad": 0.14468895484945588,
+     "yaw_change_wrapped_rad": 0.14468895484945632
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.02842731529753961,
+    "action_name": "L0.60_H0.40"
+   }
+  },
+  {
+   "scenario_id": 2,
+   "kind": "sideways",
+   "target": 0.36197514291512545,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 9,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.06283265559133426,
+     "drift_m": 0.06005884413935857,
+     "fall": 0.0
+    },
+    "error_units": 0.037699593354800554,
+    "final": {
+     "forward_m": -0.06005884413935857,
+     "sideways_m": 0.399674736269926,
+     "yaw_change_rad": 0.22011898305307787,
+     "yaw_change_wrapped_rad": 0.22011898305307742
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.001453372850712392,
+    "action_name": "L0.60_H0.80"
+   },
+   "snn": {
+    "action": 9,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.06283265559133426,
+     "drift_m": 0.06005884413935857,
+     "fall": 0.0
+    },
+    "error_units": 0.037699593354800554,
+    "final": {
+     "forward_m": -0.06005884413935857,
+     "sideways_m": 0.399674736269926,
+     "yaw_change_rad": 0.22011898305307787,
+     "yaw_change_wrapped_rad": 0.22011898305307742
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.001453372850712392,
+    "action_name": "L0.60_H0.80"
+   }
+  },
+  {
+   "scenario_id": 3,
+   "kind": "sideways",
+   "target": 0.15508047382551818,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 0,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.4,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.06821560183461242,
+     "drift_m": 0.004222726668560031,
+     "fall": 0.0
+    },
+    "error_units": 0.04092936110076745,
+    "final": {
+     "forward_m": 0.004222726668560031,
+     "sideways_m": 0.11415111272475073,
+     "yaw_change_rad": 0.13841781738861725,
+     "yaw_change_wrapped_rad": 0.13841781738861725
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.001209980805528724,
+    "action_name": "L0.40_H0.40"
+   },
+   "snn": {
+    "action": 8,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.037071579718055046,
+     "drift_m": 0.020755797517143616,
+     "fall": 0.0
+    },
+    "error_units": 0.022242947830833026,
+    "final": {
+     "forward_m": -0.020755797517143616,
+     "sideways_m": 0.1773234216563512,
+     "yaw_change_rad": 0.12795395105728247,
+     "yaw_change_wrapped_rad": 0.12795395105728247
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.004241693543406177,
+    "action_name": "L0.60_H0.40"
+   }
+  },
+  {
+   "scenario_id": 4,
+   "kind": "sideways",
+   "target": 0.5845549209108242,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 10,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.07327200430512382,
+     "drift_m": 0.12063202030765409,
+     "fall": 0.0
+    },
+    "error_units": 0.04396320258307429,
+    "final": {
+     "forward_m": -0.12063202030765409,
+     "sideways_m": 0.6285181234938985,
+     "yaw_change_rad": 0.3223446194688444,
+     "yaw_change_wrapped_rad": 0.3223446194688435
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.001952512667853575,
+    "action_name": "L0.60_H1.20"
+   },
+   "snn": {
+    "action": 3,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.4,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.10661223843914713,
+     "drift_m": 0.07101380895528403,
+     "fall": 0.0
+    },
+    "error_units": 0.06396734306348828,
+    "final": {
+     "forward_m": -0.07101380895528403,
+     "sideways_m": 0.5205875778473359,
+     "yaw_change_rad": 0.386186905825876,
+     "yaw_change_wrapped_rad": 0.3861869058258769
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.00028539437872815513,
+    "action_name": "L0.40_H1.60"
+   }
+  },
+  {
+   "scenario_id": 5,
+   "kind": "turn",
+   "target": 1.083272627446913,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 26,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 1.0
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.07809483483668274,
+     "drift_m": 0.04883296506341312,
+     "fall": 0.0
+    },
+    "error_units": 0.19523708709170684,
+    "final": {
+     "forward_m": 0.00847797243782621,
+     "sideways_m": 0.04809139694610654,
+     "yaw_change_rad": 1.27850971453862,
+     "yaw_change_wrapped_rad": 1.27850971453862
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.011428399156890541,
+    "action_name": "L1.00_H1.20"
+   },
+   "snn": {
+    "action": 11,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.6
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.02302553499780835,
+     "drift_m": 0.08735979165600952,
+     "fall": 0.0
+    },
+    "error_units": 0.057563837494520875,
+    "final": {
+     "forward_m": 0.018460161708359346,
+     "sideways_m": 0.0853870928646866,
+     "yaw_change_rad": 1.140836464941434,
+     "yaw_change_wrapped_rad": 1.1408364649414384
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.009222174095321308,
+    "action_name": "L0.60_H1.60"
+   }
+  },
+  {
+   "scenario_id": 6,
+   "kind": "sideways",
+   "target": -0.1556174915677453,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 0,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.4,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.10544992413248046,
+     "drift_m": 0.01569653349568613,
+     "fall": 0.0
+    },
+    "error_units": 0.06326995447948827,
+    "final": {
+     "forward_m": 0.01569653349568613,
+     "sideways_m": -0.09234753708825702,
+     "yaw_change_rad": 0.13216734419934184,
+     "yaw_change_wrapped_rad": 0.1321673441993414
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.010556309157163811,
+    "action_name": "L0.40_H0.40"
+   },
+   "snn": {
+    "action": 8,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.04873656410835763,
+     "drift_m": 0.003937048019262923,
+     "fall": 0.0
+    },
+    "error_units": 0.029241938465014577,
+    "final": {
+     "forward_m": -0.003937048019262923,
+     "sideways_m": -0.18485943003275987,
+     "yaw_change_rad": 0.14154512696893295,
+     "yaw_change_wrapped_rad": 0.14154512696893295
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.027374545087608598,
+    "action_name": "L0.60_H0.40"
+   }
+  },
+  {
+   "scenario_id": 7,
+   "kind": "forward",
+   "target": 0.34818454347237393,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 24,
+    "command": {
+     "vel_x": 1.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.05804924382148344,
+     "drift_m": 0.011200745957549187,
+     "fall": 0.0
+    },
+    "error_units": 0.11609848764296687,
+    "final": {
+     "forward_m": 0.23208605582940706,
+     "sideways_m": 0.011200745957549187,
+     "yaw_change_rad": 0.13408740886783876,
+     "yaw_change_wrapped_rad": 0.13408740886783654
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.020033847134427428,
+    "action_name": "L1.00_H0.40"
+   },
+   "snn": {
+    "action": 9,
+    "command": {
+     "vel_x": 0.6,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.019740610390617502,
+     "drift_m": 0.04508867762066045,
+     "fall": 0.0
+    },
+    "error_units": 0.039481220781235005,
+    "final": {
+     "forward_m": 0.38766576425360894,
+     "sideways_m": 0.04508867762066045,
+     "yaw_change_rad": 0.17938069512042398,
+     "yaw_change_wrapped_rad": 0.1793806951204231
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.01366885719489745,
+    "action_name": "L0.60_H0.80"
+   }
+  },
+  {
+   "scenario_id": 8,
+   "kind": "sideways",
+   "target": -0.18787520007368483,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 8,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.001367016928472085,
+     "drift_m": 0.003471344905145909,
+     "fall": 0.0
+    },
+    "error_units": 0.000820210157083251,
+    "final": {
+     "forward_m": -0.003471344905145909,
+     "sideways_m": -0.18869541023076808,
+     "yaw_change_rad": 0.13716183437173113,
+     "yaw_change_wrapped_rad": 0.13716183437173024
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.02668972500168221,
+    "action_name": "L0.60_H0.40"
+   },
+   "snn": {
+    "action": 8,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.001367016928472085,
+     "drift_m": 0.003471344905145909,
+     "fall": 0.0
+    },
+    "error_units": 0.000820210157083251,
+    "final": {
+     "forward_m": -0.003471344905145909,
+     "sideways_m": -0.18869541023076808,
+     "yaw_change_rad": 0.13716183437173113,
+     "yaw_change_wrapped_rad": 0.13716183437173024
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.02668972500168221,
+    "action_name": "L0.60_H0.40"
+   }
+  },
+  {
+   "scenario_id": 9,
+   "kind": "forward",
+   "target": -1.5317865666911343,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 20,
+    "command": {
+     "vel_x": -0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 2.0,
+    "measured": {
+     "error": 0.09547627649038581,
+     "drift_m": 0.2356000923735816,
+     "fall": 0.0
+    },
+    "error_units": 0.19095255298077163,
+    "final": {
+     "forward_m": -1.3408340137103627,
+     "sideways_m": -0.2356000923735816,
+     "yaw_change_rad": 0.4858623245836049,
+     "yaw_change_wrapped_rad": 0.48586232458360534
+    },
+    "elapsed_s": 3.0,
+    "final_speed_m_s": 0.010669790229243007,
+    "action_name": "L0.80_H2.00"
+   },
+   "snn": {
+    "action": 20,
+    "command": {
+     "vel_x": -0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 2.0,
+    "measured": {
+     "error": 0.09547627649038581,
+     "drift_m": 0.2356000923735816,
+     "fall": 0.0
+    },
+    "error_units": 0.19095255298077163,
+    "final": {
+     "forward_m": -1.3408340137103627,
+     "sideways_m": -0.2356000923735816,
+     "yaw_change_rad": 0.4858623245836049,
+     "yaw_change_wrapped_rad": 0.48586232458360534
+    },
+    "elapsed_s": 3.0,
+    "final_speed_m_s": 0.010669790229243007,
+    "action_name": "L0.80_H2.00"
+   }
+  },
+  {
+   "scenario_id": 10,
+   "kind": "sideways",
+   "target": -0.1750026855766918,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 8,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.022821207756793804,
+     "drift_m": 0.003471344905145909,
+     "fall": 0.0
+    },
+    "error_units": 0.013692724654076283,
+    "final": {
+     "forward_m": -0.003471344905145909,
+     "sideways_m": -0.18869541023076808,
+     "yaw_change_rad": 0.13716183437173113,
+     "yaw_change_wrapped_rad": 0.13716183437173024
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.02668972500168221,
+    "action_name": "L0.60_H0.40"
+   },
+   "snn": {
+    "action": 8,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.022821207756793804,
+     "drift_m": 0.003471344905145909,
+     "fall": 0.0
+    },
+    "error_units": 0.013692724654076283,
+    "final": {
+     "forward_m": -0.003471344905145909,
+     "sideways_m": -0.18869541023076808,
+     "yaw_change_rad": 0.13716183437173113,
+     "yaw_change_wrapped_rad": 0.13716183437173024
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.02668972500168221,
+    "action_name": "L0.60_H0.40"
+   }
+  },
+  {
+   "scenario_id": 11,
+   "kind": "turn",
+   "target": 2.2328578557635868,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 22,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.8
+    },
+    "hold_s": 3.0,
+    "measured": {
+     "error": 0.07042430857186358,
+     "drift_m": 0.1599001048159265,
+     "fall": 0.0
+    },
+    "error_units": 0.17606077142965892,
+    "final": {
+     "forward_m": -0.08192840635075758,
+     "sideways_m": 0.13731634918307953,
+     "yaw_change_rad": 2.4089186271932457,
+     "yaw_change_wrapped_rad": 2.408918627193245
+    },
+    "elapsed_s": 4.0,
+    "final_speed_m_s": 0.01457393924951515,
+    "action_name": "L0.80_H3.00"
+   },
+   "snn": {
+    "action": 29,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 1.0
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.11505468504092953,
+     "drift_m": 0.12973326627869666,
+     "fall": 0.0
+    },
+    "error_units": 0.2876367126023238,
+    "final": {
+     "forward_m": -0.06284357013531287,
+     "sideways_m": 0.11349628219456014,
+     "yaw_change_rad": 2.5204945683659106,
+     "yaw_change_wrapped_rad": 2.520494568365912
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.013979287751243422,
+    "action_name": "L1.00_H2.50"
+   }
+  },
+  {
+   "scenario_id": 12,
+   "kind": "turn",
+   "target": -1.9368441738551307,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 21,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.8
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.043531898127394705,
+     "drift_m": 0.09506307596804067,
+     "fall": 0.0
+    },
+    "error_units": 0.10882974531848677,
+    "final": {
+     "forward_m": -0.0528184910485914,
+     "sideways_m": -0.07903920176630924,
+     "yaw_change_rad": -1.828014428536644,
+     "yaw_change_wrapped_rad": -1.8280144285366458
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.02721517261879494,
+    "action_name": "L0.80_H2.50"
+   },
+   "snn": {
+    "action": 21,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.8
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.043531898127394705,
+     "drift_m": 0.09506307596804067,
+     "fall": 0.0
+    },
+    "error_units": 0.10882974531848677,
+    "final": {
+     "forward_m": -0.0528184910485914,
+     "sideways_m": -0.07903920176630924,
+     "yaw_change_rad": -1.828014428536644,
+     "yaw_change_wrapped_rad": -1.8280144285366458
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.02721517261879494,
+    "action_name": "L0.80_H2.50"
+   }
+  },
+  {
+   "scenario_id": 13,
+   "kind": "sideways",
+   "target": -0.26412527102154504,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 1,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.4,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.09883400888058494,
+     "drift_m": 0.03308267704393914,
+     "fall": 0.0
+    },
+    "error_units": 0.05930040532835096,
+    "final": {
+     "forward_m": 0.03308267704393914,
+     "sideways_m": -0.20482486569319408,
+     "yaw_change_rad": 0.11352804443426523,
+     "yaw_change_wrapped_rad": 0.11352804443426479
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.010726475194156827,
+    "action_name": "L0.40_H0.80"
+   },
+   "snn": {
+    "action": 16,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.8,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.03710740113285908,
+     "drift_m": 0.0015640905667321826,
+     "fall": 0.0
+    },
+    "error_units": 0.022264440679715447,
+    "final": {
+     "forward_m": 0.0015640905667321826,
+     "sideways_m": -0.2418608303418296,
+     "yaw_change_rad": 0.08918284714019586,
+     "yaw_change_wrapped_rad": 0.08918284714019498
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.015108064862289937,
+    "action_name": "L0.80_H0.40"
+   }
+  },
+  {
+   "scenario_id": 14,
+   "kind": "turn",
+   "target": -0.8937948834353517,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 18,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.8
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.043846918953195944,
+     "drift_m": 0.04817915979014701,
+     "fall": 0.0
+    },
+    "error_units": 0.10961729738298986,
+    "final": {
+     "forward_m": -0.006746993678713913,
+     "sideways_m": -0.047704397222728984,
+     "yaw_change_rad": -0.7841775860523619,
+     "yaw_change_wrapped_rad": -0.7841775860523641
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.025692587846697677,
+    "action_name": "L0.80_H1.20"
+   },
+   "snn": {
+    "action": 11,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.6
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.004029749771187063,
+     "drift_m": 0.07719852109675268,
+     "fall": 0.0
+    },
+    "error_units": 0.010074374427967658,
+    "final": {
+     "forward_m": -0.00404021974309913,
+     "sideways_m": -0.07709272523366417,
+     "yaw_change_rad": -0.8837205090073841,
+     "yaw_change_wrapped_rad": -0.8837205090073823
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.006519785763912735,
+    "action_name": "L0.60_H1.60"
+   }
+  },
+  {
+   "scenario_id": 15,
+   "kind": "forward",
+   "target": -0.5813977335485914,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 3,
+    "command": {
+     "vel_x": -0.4,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.05801054212882517,
+     "drift_m": 0.06167184718104527,
+     "fall": 0.0
+    },
+    "error_units": 0.11602108425765034,
+    "final": {
+     "forward_m": -0.465376649290941,
+     "sideways_m": -0.06167184718104527,
+     "yaw_change_rad": 0.3705178935081017,
+     "yaw_change_wrapped_rad": 0.3705178935081017
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.009898816631593194,
+    "action_name": "L0.40_H1.60"
+   },
+   "snn": {
+    "action": 17,
+    "command": {
+     "vel_x": -0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.03394324627194539,
+     "drift_m": 0.03615210812729959,
+     "fall": 0.0
+    },
+    "error_units": 0.06788649254389079,
+    "final": {
+     "forward_m": -0.5135112410047006,
+     "sideways_m": -0.03615210812729959,
+     "yaw_change_rad": 0.18631807268753153,
+     "yaw_change_wrapped_rad": 0.18631807268753153
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.004775729958669535,
+    "action_name": "L0.80_H0.80"
+   }
+  },
+  {
+   "scenario_id": 16,
+   "kind": "sideways",
+   "target": -0.4769660693173441,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 17,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.8,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.1554799235198127,
+     "drift_m": 0.002390451330715783,
+     "fall": 0.0
+    },
+    "error_units": 0.09328795411188762,
+    "final": {
+     "forward_m": 0.002390451330715783,
+     "sideways_m": -0.5702540234292317,
+     "yaw_change_rad": 0.052844300781610176,
+     "yaw_change_wrapped_rad": 0.05284430078160751
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.017658193936774147,
+    "action_name": "L0.80_H0.80"
+   },
+   "snn": {
+    "action": 17,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.8,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.1554799235198127,
+     "drift_m": 0.002390451330715783,
+     "fall": 0.0
+    },
+    "error_units": 0.09328795411188762,
+    "final": {
+     "forward_m": 0.002390451330715783,
+     "sideways_m": -0.5702540234292317,
+     "yaw_change_rad": 0.052844300781610176,
+     "yaw_change_wrapped_rad": 0.05284430078160751
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.017658193936774147,
+    "action_name": "L0.80_H0.80"
+   }
+  },
+  {
+   "scenario_id": 17,
+   "kind": "forward",
+   "target": -0.8915712385417645,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 5,
+    "command": {
+     "vel_x": -0.4,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.08372458300658298,
+     "drift_m": 0.1435830556400366,
+     "fall": 0.0
+    },
+    "error_units": 0.16744916601316595,
+    "final": {
+     "forward_m": -0.7241220725285985,
+     "sideways_m": -0.1435830556400366,
+     "yaw_change_rad": 0.44046365486336336,
+     "yaw_change_wrapped_rad": 0.44046365486336336
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.004339089039092395,
+    "action_name": "L0.40_H2.50"
+   },
+   "snn": {
+    "action": 18,
+    "command": {
+     "vel_x": -0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.03971460888632611,
+     "drift_m": 0.0936237391471828,
+     "fall": 0.0
+    },
+    "error_units": 0.07942921777265222,
+    "final": {
+     "forward_m": -0.8121420207691122,
+     "sideways_m": -0.0936237391471828,
+     "yaw_change_rad": 0.3120678404012729,
+     "yaw_change_wrapped_rad": 0.3120678404012751
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.010760112338302631,
+    "action_name": "L0.80_H1.20"
+   }
+  },
+  {
+   "scenario_id": 18,
+   "kind": "sideways",
+   "target": 0.24509518367813465,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 16,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.8,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.08480796490906935,
+     "drift_m": 0.024014880444873522,
+     "fall": 0.0
+    },
+    "error_units": 0.050884778945441606,
+    "final": {
+     "forward_m": -0.024014880444873522,
+     "sideways_m": 0.19421040473269305,
+     "yaw_change_rad": 0.10934639038039906,
+     "yaw_change_wrapped_rad": 0.10934639038039995
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.006052681271719569,
+    "action_name": "L0.80_H0.40"
+   },
+   "snn": {
+    "action": 1,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.4,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.0016673968170819824,
+     "drift_m": 0.007653900017680636,
+     "fall": 0.0
+    },
+    "error_units": 0.0010004380902491894,
+    "final": {
+     "forward_m": -0.007653900017680636,
+     "sideways_m": 0.24609562176838384,
+     "yaw_change_rad": 0.2047890481903485,
+     "yaw_change_wrapped_rad": 0.20478904819034893
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.00496047605526679,
+    "action_name": "L0.40_H0.80"
+   }
+  },
+  {
+   "scenario_id": 19,
+   "kind": "sideways",
+   "target": 0.2576424569008865,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 16,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.8,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.10572008694698909,
+     "drift_m": 0.024014880444873522,
+     "fall": 0.0
+    },
+    "error_units": 0.06343205216819345,
+    "final": {
+     "forward_m": -0.024014880444873522,
+     "sideways_m": 0.19421040473269305,
+     "yaw_change_rad": 0.10934639038039906,
+     "yaw_change_wrapped_rad": 0.10934639038039995
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.006052681271719569,
+    "action_name": "L0.80_H0.40"
+   },
+   "snn": {
+    "action": 1,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.4,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.019244725220837755,
+     "drift_m": 0.007653900017680636,
+     "fall": 0.0
+    },
+    "error_units": 0.011546835132502653,
+    "final": {
+     "forward_m": -0.007653900017680636,
+     "sideways_m": 0.24609562176838384,
+     "yaw_change_rad": 0.2047890481903485,
+     "yaw_change_wrapped_rad": 0.20478904819034893
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.00496047605526679,
+    "action_name": "L0.40_H0.80"
+   }
+  },
+  {
+   "scenario_id": 20,
+   "kind": "sideways",
+   "target": -0.31298244265232905,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 24,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -1.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.17186501823328423,
+     "drift_m": 0.010752546073205214,
+     "fall": 0.0
+    },
+    "error_units": 0.10311901093997053,
+    "final": {
+     "forward_m": 0.010752546073205214,
+     "sideways_m": -0.20986343171235852,
+     "yaw_change_rad": 0.08557295649942498,
+     "yaw_change_wrapped_rad": 0.08557295649942454
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.012488306511181569,
+    "action_name": "L1.00_H0.40"
+   },
+   "snn": {
+    "action": 24,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -1.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.17186501823328423,
+     "drift_m": 0.010752546073205214,
+     "fall": 0.0
+    },
+    "error_units": 0.10311901093997053,
+    "final": {
+     "forward_m": 0.010752546073205214,
+     "sideways_m": -0.20986343171235852,
+     "yaw_change_rad": 0.08557295649942498,
+     "yaw_change_wrapped_rad": 0.08557295649942454
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.012488306511181569,
+    "action_name": "L1.00_H0.40"
+   }
+  },
+  {
+   "scenario_id": 21,
+   "kind": "forward",
+   "target": 1.5288849762708687,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 20,
+    "command": {
+     "vel_x": 0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 2.0,
+    "measured": {
+     "error": 0.059514313393282725,
+     "drift_m": 0.17596886110975687,
+     "fall": 0.0
+    },
+    "error_units": 0.11902862678656545,
+    "final": {
+     "forward_m": 1.4098563494843033,
+     "sideways_m": 0.17596886110975687,
+     "yaw_change_rad": 0.25522376528213453,
+     "yaw_change_wrapped_rad": 0.25522376528213364
+    },
+    "elapsed_s": 3.0,
+    "final_speed_m_s": 0.018285686919113874,
+    "action_name": "L0.80_H2.00"
+   },
+   "snn": {
+    "action": 14,
+    "command": {
+     "vel_x": 0.6,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 3.0,
+    "measured": {
+     "error": 0.00010384359586246283,
+     "drift_m": 0.33537106159753294,
+     "fall": 0.0
+    },
+    "error_units": 0.00020768719172492567,
+    "final": {
+     "forward_m": 1.5290926634625936,
+     "sideways_m": 0.33537106159753294,
+     "yaw_change_rad": 0.343471809106767,
+     "yaw_change_wrapped_rad": 0.3434718091067648
+    },
+    "elapsed_s": 4.0,
+    "final_speed_m_s": 0.015885510065562044,
+    "action_name": "L0.60_H3.00"
+   }
+  },
+  {
+   "scenario_id": 22,
+   "kind": "sideways",
+   "target": -0.31176771297678607,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 24,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -1.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.150111903352619,
+     "drift_m": 0.0032723515910413545,
+     "fall": 0.0
+    },
+    "error_units": 0.0900671420115714,
+    "final": {
+     "forward_m": 0.0032723515910413545,
+     "sideways_m": -0.22170057096521467,
+     "yaw_change_rad": 0.10106904647763582,
+     "yaw_change_wrapped_rad": 0.10106904647763626
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.009020763369124583,
+    "action_name": "L1.00_H0.40"
+   },
+   "snn": {
+    "action": 24,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -1.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.150111903352619,
+     "drift_m": 0.0032723515910413545,
+     "fall": 0.0
+    },
+    "error_units": 0.0900671420115714,
+    "final": {
+     "forward_m": 0.0032723515910413545,
+     "sideways_m": -0.22170057096521467,
+     "yaw_change_rad": 0.10106904647763582,
+     "yaw_change_wrapped_rad": 0.10106904647763626
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.009020763369124583,
+    "action_name": "L1.00_H0.40"
+   }
+  },
+  {
+   "scenario_id": 23,
+   "kind": "forward",
+   "target": -0.38755145270036256,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 9,
+    "command": {
+     "vel_x": -0.6,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.0059329693018000396,
+     "drift_m": 0.029742178805228205,
+     "fall": 0.0
+    },
+    "error_units": 0.011865938603600079,
+    "final": {
+     "forward_m": -0.3756855140967625,
+     "sideways_m": -0.029742178805228205,
+     "yaw_change_rad": 0.23040029065902212,
+     "yaw_change_wrapped_rad": 0.23040029065902257
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.005659691840469145,
+    "action_name": "L0.60_H0.80"
+   },
+   "snn": {
+    "action": 9,
+    "command": {
+     "vel_x": -0.6,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.0059329693018000396,
+     "drift_m": 0.029742178805228205,
+     "fall": 0.0
+    },
+    "error_units": 0.011865938603600079,
+    "final": {
+     "forward_m": -0.3756855140967625,
+     "sideways_m": -0.029742178805228205,
+     "yaw_change_rad": 0.23040029065902212,
+     "yaw_change_wrapped_rad": 0.23040029065902257
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.005659691840469145,
+    "action_name": "L0.60_H0.80"
+   }
+  },
+  {
+   "scenario_id": 24,
+   "kind": "sideways",
+   "target": -0.35602415944442334,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 9,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.07539867880941752,
+     "drift_m": 0.0074912881722085725,
+     "fall": 0.0
+    },
+    "error_units": 0.04523920728565051,
+    "final": {
+     "forward_m": 0.0074912881722085725,
+     "sideways_m": -0.40126336673007384,
+     "yaw_change_rad": 0.0346991781297068,
+     "yaw_change_wrapped_rad": 0.03469917812970724
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.011568762427806816,
+    "action_name": "L0.60_H0.80"
+   },
+   "snn": {
+    "action": 9,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.07539867880941752,
+     "drift_m": 0.0074912881722085725,
+     "fall": 0.0
+    },
+    "error_units": 0.04523920728565051,
+    "final": {
+     "forward_m": 0.0074912881722085725,
+     "sideways_m": -0.40126336673007384,
+     "yaw_change_rad": 0.0346991781297068,
+     "yaw_change_wrapped_rad": 0.03469917812970724
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.011568762427806816,
+    "action_name": "L0.60_H0.80"
+   }
+  },
+  {
+   "scenario_id": 25,
+   "kind": "sideways",
+   "target": 0.4337090220795585,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 2,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.4,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.08645460821299403,
+     "drift_m": 0.029120337758226436,
+     "fall": 0.0
+    },
+    "error_units": 0.05187276492779641,
+    "final": {
+     "forward_m": -0.029120337758226436,
+     "sideways_m": 0.3818362571517621,
+     "yaw_change_rad": 0.30782192369940775,
+     "yaw_change_wrapped_rad": 0.30782192369940686
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.0018930588846507957,
+    "action_name": "L0.40_H1.20"
+   },
+   "snn": {
+    "action": 9,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.05610212679716833,
+     "drift_m": 0.06649256730641409,
+     "fall": 0.0
+    },
+    "error_units": 0.033661276078300995,
+    "final": {
+     "forward_m": -0.06649256730641409,
+     "sideways_m": 0.40004774600125753,
+     "yaw_change_rad": 0.2278973755048188,
+     "yaw_change_wrapped_rad": 0.22789737550481792
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.0006623260518470394,
+    "action_name": "L0.60_H0.80"
+   }
+  },
+  {
+   "scenario_id": 26,
+   "kind": "forward",
+   "target": 1.051312390267403,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 26,
+    "command": {
+     "vel_x": 1.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.03686844479822632,
+     "drift_m": 0.06730744686614368,
+     "fall": 0.0
+    },
+    "error_units": 0.07373688959645264,
+    "final": {
+     "forward_m": 0.9775755006709504,
+     "sideways_m": 0.06730744686614368,
+     "yaw_change_rad": 0.21586254950310302,
+     "yaw_change_wrapped_rad": 0.2158625495031008
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.023904392530631636,
+    "action_name": "L1.00_H1.20"
+   },
+   "snn": {
+    "action": 19,
+    "command": {
+     "vel_x": 0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.014750527432940252,
+     "drift_m": 0.14269439436905146,
+     "fall": 0.0
+    },
+    "error_units": 0.029501054865880505,
+    "final": {
+     "forward_m": 1.0808134451332836,
+     "sideways_m": 0.14269439436905146,
+     "yaw_change_rad": 0.22274030919604426,
+     "yaw_change_wrapped_rad": 0.2227403091960416
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.017023296828278217,
+    "action_name": "L0.80_H1.60"
+   }
+  },
+  {
+   "scenario_id": 27,
+   "kind": "turn",
+   "target": -0.5597619491459107,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 17,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.8
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.030220259741729906,
+     "drift_m": 0.04346117017784336,
+     "fall": 0.0
+    },
+    "error_units": 0.07555064935432476,
+    "final": {
+     "forward_m": 0.0026568960936302517,
+     "sideways_m": -0.04337988262288308,
+     "yaw_change_rad": -0.48421129979158595,
+     "yaw_change_wrapped_rad": -0.4842112997915864
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.03314069405454132,
+    "action_name": "L0.80_H0.80"
+   },
+   "snn": {
+    "action": 3,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.4
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.041940828947422126,
+     "drift_m": 0.058165235920861064,
+     "fall": 0.0
+    },
+    "error_units": 0.10485207236855532,
+    "final": {
+     "forward_m": -0.0004107330811502271,
+     "sideways_m": -0.058163785709541595,
+     "yaw_change_rad": -0.664614021514466,
+     "yaw_change_wrapped_rad": -0.6646140215144669
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.019127114801081743,
+    "action_name": "L0.40_H1.60"
+   }
+  },
+  {
+   "scenario_id": 28,
+   "kind": "turn",
+   "target": 1.8455159946495174,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 28,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 1.0
+    },
+    "hold_s": 2.0,
+    "measured": {
+     "error": 0.05005098505883145,
+     "drift_m": 0.10727195715185267,
+     "fall": 0.0
+    },
+    "error_units": 0.12512746264707864,
+    "final": {
+     "forward_m": -0.04140812764730252,
+     "sideways_m": 0.09895776753713482,
+     "yaw_change_rad": 1.970643457296596,
+     "yaw_change_wrapped_rad": 1.9706434572965978
+    },
+    "elapsed_s": 3.0,
+    "final_speed_m_s": 0.017181329308105196,
+    "action_name": "L1.00_H2.00"
+   },
+   "snn": {
+    "action": 28,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 1.0
+    },
+    "hold_s": 2.0,
+    "measured": {
+     "error": 0.05005098505883145,
+     "drift_m": 0.10727195715185267,
+     "fall": 0.0
+    },
+    "error_units": 0.12512746264707864,
+    "final": {
+     "forward_m": -0.04140812764730252,
+     "sideways_m": 0.09895776753713482,
+     "yaw_change_rad": 1.970643457296596,
+     "yaw_change_wrapped_rad": 1.9706434572965978
+    },
+    "elapsed_s": 3.0,
+    "final_speed_m_s": 0.017181329308105196,
+    "action_name": "L1.00_H2.00"
+   }
+  },
+  {
+   "scenario_id": 29,
+   "kind": "forward",
+   "target": 1.753108263312887,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 28,
+    "command": {
+     "vel_x": 1.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 2.0,
+    "measured": {
+     "error": 0.005923205736816928,
+     "drift_m": 0.14444604883264442,
+     "fall": 0.0
+    },
+    "error_units": 0.011846411473633855,
+    "final": {
+     "forward_m": 1.741261851839253,
+     "sideways_m": 0.14444604883264442,
+     "yaw_change_rad": 0.17719710259844668,
+     "yaw_change_wrapped_rad": 0.1771971025984458
+    },
+    "elapsed_s": 3.0,
+    "final_speed_m_s": 0.026634329843465945,
+    "action_name": "L1.00_H2.00"
+   },
+   "snn": {
+    "action": 28,
+    "command": {
+     "vel_x": 1.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 2.0,
+    "measured": {
+     "error": 0.005923205736816928,
+     "drift_m": 0.14444604883264442,
+     "fall": 0.0
+    },
+    "error_units": 0.011846411473633855,
+    "final": {
+     "forward_m": 1.741261851839253,
+     "sideways_m": 0.14444604883264442,
+     "yaw_change_rad": 0.17719710259844668,
+     "yaw_change_wrapped_rad": 0.1771971025984458
+    },
+    "elapsed_s": 3.0,
+    "final_speed_m_s": 0.026634329843465945,
+    "action_name": "L1.00_H2.00"
+   }
+  },
+  {
+   "scenario_id": 30,
+   "kind": "forward",
+   "target": 1.0729732536086958,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 12,
+    "command": {
+     "vel_x": 0.6,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 2.0,
+    "measured": {
+     "error": 0.031274955053399056,
+     "drift_m": 0.19097435416970865,
+     "fall": 0.0
+    },
+    "error_units": 0.06254991010679811,
+    "final": {
+     "forward_m": 1.0104233435018977,
+     "sideways_m": 0.19097435416970865,
+     "yaw_change_rad": 0.2760518856315377,
+     "yaw_change_wrapped_rad": 0.27605188563153726
+    },
+    "elapsed_s": 3.0,
+    "final_speed_m_s": 0.01625147040855356,
+    "action_name": "L0.60_H2.00"
+   },
+   "snn": {
+    "action": 19,
+    "command": {
+     "vel_x": 0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.003920095762293907,
+     "drift_m": 0.14269439436905146,
+     "fall": 0.0
+    },
+    "error_units": 0.007840191524587814,
+    "final": {
+     "forward_m": 1.0808134451332836,
+     "sideways_m": 0.14269439436905146,
+     "yaw_change_rad": 0.22274030919604426,
+     "yaw_change_wrapped_rad": 0.2227403091960416
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.017023296828278217,
+    "action_name": "L0.80_H1.60"
+   }
+  },
+  {
+   "scenario_id": 31,
+   "kind": "forward",
+   "target": -1.6316137008621592,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 14,
+    "command": {
+     "vel_x": -0.6,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 3.0,
+    "measured": {
+     "error": 0.09501454871793791,
+     "drift_m": 0.3568525291762784,
+     "fall": 0.0
+    },
+    "error_units": 0.19002909743587582,
+    "final": {
+     "forward_m": -1.4415846034262834,
+     "sideways_m": -0.3568525291762784,
+     "yaw_change_rad": 0.6004662492578512,
+     "yaw_change_wrapped_rad": 0.6004662492578463
+    },
+    "elapsed_s": 4.0,
+    "final_speed_m_s": 0.022373670842775587,
+    "action_name": "L0.60_H3.00"
+   },
+   "snn": {
+    "action": 21,
+    "command": {
+     "vel_x": -0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.0078487138995178,
+     "drift_m": 0.3668871097744323,
+     "fall": 0.0
+    },
+    "error_units": 0.0156974277990356,
+    "final": {
+     "forward_m": -1.6473111286611948,
+     "sideways_m": -0.3668871097744323,
+     "yaw_change_rad": 0.5226104482573737,
+     "yaw_change_wrapped_rad": 0.5226104482573746
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.008887695336752686,
+    "action_name": "L0.80_H2.50"
+   }
+  },
+  {
+   "scenario_id": 32,
+   "kind": "turn",
+   "target": 0.6613173681354788,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 10,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.6
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.03454701959410298,
+     "drift_m": 0.05665099484038454,
+     "fall": 0.0
+    },
+    "error_units": 0.08636754898525745,
+    "final": {
+     "forward_m": 0.023570542162374482,
+     "sideways_m": 0.051514704294764256,
+     "yaw_change_rad": 0.7476849171207363,
+     "yaw_change_wrapped_rad": 0.7476849171207367
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.0015475717580809688,
+    "action_name": "L0.60_H1.20"
+   },
+   "snn": {
+    "action": 17,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.8
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.03475934168622534,
+     "drift_m": 0.03332918958866561,
+     "fall": 0.0
+    },
+    "error_units": 0.08689835421556336,
+    "final": {
+     "forward_m": 0.008507996171091322,
+     "sideways_m": 0.03222497292147678,
+     "yaw_change_rad": 0.7482157223510422,
+     "yaw_change_wrapped_rad": 0.748215722351043
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.017943969090922714,
+    "action_name": "L0.80_H0.80"
+   }
+  },
+  {
+   "scenario_id": 33,
+   "kind": "turn",
+   "target": 0.3101157228815192,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 1,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.4
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.06429657385657121,
+     "drift_m": 0.023790754966910764,
+     "fall": 0.0
+    },
+    "error_units": 0.16074143464142804,
+    "final": {
+     "forward_m": 0.003207829852758864,
+     "sideways_m": 0.023573498881823595,
+     "yaw_change_rad": 0.4708571575229472,
+     "yaw_change_wrapped_rad": 0.4708571575229459
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.01126318169274485,
+    "action_name": "L0.40_H0.80"
+   },
+   "snn": {
+    "action": 1,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.4
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.06429657385657121,
+     "drift_m": 0.023790754966910764,
+     "fall": 0.0
+    },
+    "error_units": 0.16074143464142804,
+    "final": {
+     "forward_m": 0.003207829852758864,
+     "sideways_m": 0.023573498881823595,
+     "yaw_change_rad": 0.4708571575229472,
+     "yaw_change_wrapped_rad": 0.4708571575229459
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.01126318169274485,
+    "action_name": "L0.40_H0.80"
+   }
+  },
+  {
+   "scenario_id": 34,
+   "kind": "turn",
+   "target": -0.5599575010275137,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 17,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.8
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.03227597572567396,
+     "drift_m": 0.04487484861666029,
+     "fall": 0.0
+    },
+    "error_units": 0.08068993931418489,
+    "final": {
+     "forward_m": 0.003478160823324329,
+     "sideways_m": -0.04473985287923139,
+     "yaw_change_rad": -0.47926756171332885,
+     "yaw_change_wrapped_rad": -0.4792675617133293
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.04920323069921611,
+    "action_name": "L0.80_H0.80"
+   },
+   "snn": {
+    "action": 3,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.4
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.04077759936996026,
+     "drift_m": 0.057073204133109234,
+     "fall": 0.0
+    },
+    "error_units": 0.10194399842490065,
+    "final": {
+     "forward_m": -0.0025229939555625356,
+     "sideways_m": -0.05701741077530399,
+     "yaw_change_rad": -0.6619014994524144,
+     "yaw_change_wrapped_rad": -0.6619014994524162
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.020638301661431355,
+    "action_name": "L0.40_H1.60"
+   }
+  },
+  {
+   "scenario_id": 35,
+   "kind": "turn",
+   "target": -1.8844545081760822,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 28,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -1.0
+    },
+    "hold_s": 2.0,
+    "measured": {
+     "error": 0.03715273878552585,
+     "drift_m": 0.12327682633496041,
+     "fall": 0.0
+    },
+    "error_units": 0.09288184696381463,
+    "final": {
+     "forward_m": -0.06979840595724612,
+     "sideways_m": -0.10161377090260679,
+     "yaw_change_rad": -1.7915726612122675,
+     "yaw_change_wrapped_rad": -1.7915726612122647
+    },
+    "elapsed_s": 3.0,
+    "final_speed_m_s": 0.020910671010564343,
+    "action_name": "L1.00_H2.00"
+   },
+   "snn": {
+    "action": 21,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.8
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.018124661406676436,
+     "drift_m": 0.1092533984246247,
+     "fall": 0.0
+    },
+    "error_units": 0.045311653516691086,
+    "final": {
+     "forward_m": -0.06001425172586894,
+     "sideways_m": -0.09129400121099865,
+     "yaw_change_rad": -1.839142854659391,
+     "yaw_change_wrapped_rad": -1.8391428546593924
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.014410853054046753,
+    "action_name": "L0.80_H2.50"
+   }
+  },
+  {
+   "scenario_id": 36,
+   "kind": "forward",
+   "target": 0.8855084860960096,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 5,
+    "command": {
+     "vel_x": 0.4,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.04119169487274965,
+     "drift_m": 0.16931818825021078,
+     "fall": 0.0
+    },
+    "error_units": 0.0823833897454993,
+    "final": {
+     "forward_m": 0.8031250963505103,
+     "sideways_m": 0.16931818825021078,
+     "yaw_change_rad": 0.3350447869815727,
+     "yaw_change_wrapped_rad": 0.3350447869815709
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.01210307198724909,
+    "action_name": "L0.40_H2.50"
+   },
+   "snn": {
+    "action": 18,
+    "command": {
+     "vel_x": 0.8,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.05632141304468463,
+     "drift_m": 0.06902891874671697,
+     "fall": 0.0
+    },
+    "error_units": 0.11264282608936926,
+    "final": {
+     "forward_m": 0.7728656600066404,
+     "sideways_m": 0.06902891874671697,
+     "yaw_change_rad": 0.16994045449386297,
+     "yaw_change_wrapped_rad": 0.16994045449386297
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.025838793576493015,
+    "action_name": "L0.80_H1.20"
+   }
+  },
+  {
+   "scenario_id": 37,
+   "kind": "sideways",
+   "target": 0.24797964910045023,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 16,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.8,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.4,
+    "measured": {
+     "error": 0.0896154072795953,
+     "drift_m": 0.024014880444873522,
+     "fall": 0.0
+    },
+    "error_units": 0.05376924436775718,
+    "final": {
+     "forward_m": -0.024014880444873522,
+     "sideways_m": 0.19421040473269305,
+     "yaw_change_rad": 0.10934639038039906,
+     "yaw_change_wrapped_rad": 0.10934639038039995
+    },
+    "elapsed_s": 1.4000000000000001,
+    "final_speed_m_s": 0.006052681271719569,
+    "action_name": "L0.80_H0.40"
+   },
+   "snn": {
+    "action": 1,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.4,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.003140045553443975,
+     "drift_m": 0.007653900017680636,
+     "fall": 0.0
+    },
+    "error_units": 0.0018840273320663847,
+    "final": {
+     "forward_m": -0.007653900017680636,
+     "sideways_m": 0.24609562176838384,
+     "yaw_change_rad": 0.2047890481903485,
+     "yaw_change_wrapped_rad": 0.20478904819034893
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.00496047605526679,
+    "action_name": "L0.40_H0.80"
+   }
+  },
+  {
+   "scenario_id": 38,
+   "kind": "turn",
+   "target": 1.4134766411531412,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 13,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.6
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.11668981369490661,
+     "drift_m": 0.13189993034845457,
+     "fall": 0.0
+    },
+    "error_units": 0.2917245342372665,
+    "final": {
+     "forward_m": -0.01509178163511257,
+     "sideways_m": 0.13103369701342188,
+     "yaw_change_rad": 1.7052011753904077,
+     "yaw_change_wrapped_rad": 1.7052011753904086
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.015786379064933295,
+    "action_name": "L0.60_H2.50"
+   },
+   "snn": {
+    "action": 27,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": 1.0
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.04378914243622001,
+     "drift_m": 0.08457326603470858,
+     "fall": 0.0
+    },
+    "error_units": 0.10947285609055002,
+    "final": {
+     "forward_m": 0.0122268641237811,
+     "sideways_m": 0.0836847723392744,
+     "yaw_change_rad": 1.5229494972436912,
+     "yaw_change_wrapped_rad": 1.5229494972436939
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.00227396599136059,
+    "action_name": "L1.00_H1.60"
+   }
+  },
+  {
+   "scenario_id": 39,
+   "kind": "forward",
+   "target": -0.4549695122340911,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 2,
+    "command": {
+     "vel_x": -0.4,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.060229686645318,
+     "drift_m": 0.04069942674342558,
+     "fall": 0.0
+    },
+    "error_units": 0.120459373290636,
+    "final": {
+     "forward_m": -0.3345101389434551,
+     "sideways_m": -0.04069942674342558,
+     "yaw_change_rad": 0.3464339194299071,
+     "yaw_change_wrapped_rad": 0.346433919429908
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.01414812010882012,
+    "action_name": "L0.40_H1.20"
+   },
+   "snn": {
+    "action": 9,
+    "command": {
+     "vel_x": -0.6,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.03807313926318523,
+     "drift_m": 0.036832339341270906,
+     "fall": 0.0
+    },
+    "error_units": 0.07614627852637046,
+    "final": {
+     "forward_m": -0.37882323370772064,
+     "sideways_m": -0.036832339341270906,
+     "yaw_change_rad": 0.24076009468619075,
+     "yaw_change_wrapped_rad": 0.24076009468619342
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.009264599461240497,
+    "action_name": "L0.60_H0.80"
+   }
+  },
+  {
+   "scenario_id": 40,
+   "kind": "sideways",
+   "target": -0.5461391845950951,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 3,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.4,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.6,
+    "measured": {
+     "error": 0.10939058743920427,
+     "drift_m": 0.08505787627497738,
+     "fall": 0.0
+    },
+    "error_units": 0.06563435246352256,
+    "final": {
+     "forward_m": 0.08505787627497738,
+     "sideways_m": -0.4805048321315726,
+     "yaw_change_rad": 0.19610937679022022,
+     "yaw_change_wrapped_rad": 0.19610937679021934
+    },
+    "elapsed_s": 2.6,
+    "final_speed_m_s": 0.002982784809445089,
+    "action_name": "L0.40_H1.60"
+   },
+   "snn": {
+    "action": 17,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.8,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.04650603239628478,
+     "drift_m": 0.005844534790533755,
+     "fall": 0.0
+    },
+    "error_units": 0.027903619437770866,
+    "final": {
+     "forward_m": 0.005844534790533755,
+     "sideways_m": -0.574042804032866,
+     "yaw_change_rad": 0.0630081023405622,
+     "yaw_change_wrapped_rad": 0.06300810234056531
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.017602960732860117,
+    "action_name": "L0.80_H0.80"
+   }
+  },
+  {
+   "scenario_id": 41,
+   "kind": "sideways",
+   "target": -0.3574285749262265,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 9,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.08569617890725828,
+     "drift_m": 0.006359423248259187,
+     "fall": 0.0
+    },
+    "error_units": 0.05141770734435497,
+    "final": {
+     "forward_m": 0.006359423248259187,
+     "sideways_m": -0.40884628227058145,
+     "yaw_change_rad": 0.035226496080340564,
+     "yaw_change_wrapped_rad": 0.035226496080341896
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.012282587271830618,
+    "action_name": "L0.60_H0.80"
+   },
+   "snn": {
+    "action": 9,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": -0.6,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 0.8,
+    "measured": {
+     "error": 0.08569617890725828,
+     "drift_m": 0.006359423248259187,
+     "fall": 0.0
+    },
+    "error_units": 0.05141770734435497,
+    "final": {
+     "forward_m": 0.006359423248259187,
+     "sideways_m": -0.40884628227058145,
+     "yaw_change_rad": 0.035226496080340564,
+     "yaw_change_wrapped_rad": 0.035226496080341896
+    },
+    "elapsed_s": 1.8,
+    "final_speed_m_s": 0.012282587271830618,
+    "action_name": "L0.60_H0.80"
+   }
+  },
+  {
+   "scenario_id": 42,
+   "kind": "turn",
+   "target": -2.2027761779330155,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 22,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.8
+    },
+    "hold_s": 3.0,
+    "measured": {
+     "error": 0.007436582710463746,
+     "drift_m": 0.11003608382003713,
+     "fall": 0.0
+    },
+    "error_units": 0.018591456776159365,
+    "final": {
+     "forward_m": -0.07825945301774968,
+     "sideways_m": -0.07735242566211396,
+     "yaw_change_rad": -2.221367634709175,
+     "yaw_change_wrapped_rad": -2.221367634709177
+    },
+    "elapsed_s": 4.0,
+    "final_speed_m_s": 0.023745379764312766,
+    "action_name": "L0.80_H3.00"
+   },
+   "snn": {
+    "action": 22,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -0.8
+    },
+    "hold_s": 3.0,
+    "measured": {
+     "error": 0.007436582710463746,
+     "drift_m": 0.11003608382003713,
+     "fall": 0.0
+    },
+    "error_units": 0.018591456776159365,
+    "final": {
+     "forward_m": -0.07825945301774968,
+     "sideways_m": -0.07735242566211396,
+     "yaw_change_rad": -2.221367634709175,
+     "yaw_change_wrapped_rad": -2.221367634709177
+    },
+    "elapsed_s": 4.0,
+    "final_speed_m_s": 0.023745379764312766,
+    "action_name": "L0.80_H3.00"
+   }
+  },
+  {
+   "scenario_id": 43,
+   "kind": "forward",
+   "target": 0.9997270393519664,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 26,
+    "command": {
+     "vel_x": 1.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.002922280962148527,
+     "drift_m": 0.05083640493236263,
+     "fall": 0.0
+    },
+    "error_units": 0.005844561924297054,
+    "final": {
+     "forward_m": 0.9938824774276693,
+     "sideways_m": 0.05083640493236263,
+     "yaw_change_rad": 0.17445132083016945,
+     "yaw_change_wrapped_rad": 0.17445132083016945
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.022113951399195492,
+    "action_name": "L1.00_H1.20"
+   },
+   "snn": {
+    "action": 26,
+    "command": {
+     "vel_x": 1.0,
+     "vel_y": 0.0,
+     "yaw_rate": 0.0
+    },
+    "hold_s": 1.2,
+    "measured": {
+     "error": 0.002922280962148527,
+     "drift_m": 0.05083640493236263,
+     "fall": 0.0
+    },
+    "error_units": 0.005844561924297054,
+    "final": {
+     "forward_m": 0.9938824774276693,
+     "sideways_m": 0.05083640493236263,
+     "yaw_change_rad": 0.17445132083016945,
+     "yaw_change_wrapped_rad": 0.17445132083016945
+    },
+    "elapsed_s": 2.2,
+    "final_speed_m_s": 0.022113951399195492,
+    "action_name": "L1.00_H1.20"
+   }
+  },
+  {
+   "scenario_id": 44,
+   "kind": "turn",
+   "target": -2.437249773948011,
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "physics_only": {
+    "action": 29,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -1.0
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.07807859684045101,
+     "drift_m": 0.13615727639669145,
+     "fall": 0.0
+    },
+    "error_units": 0.19519649210112755,
+    "final": {
+     "forward_m": -0.10235936438809722,
+     "sideways_m": -0.08978510142462258,
+     "yaw_change_rad": -2.2420532818468835,
+     "yaw_change_wrapped_rad": -2.242053281846884
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.012250517049001685,
+    "action_name": "L1.00_H2.50"
+   },
+   "snn": {
+    "action": 29,
+    "command": {
+     "vel_x": 0.0,
+     "vel_y": 0.0,
+     "yaw_rate": -1.0
+    },
+    "hold_s": 2.5,
+    "measured": {
+     "error": 0.07807859684045101,
+     "drift_m": 0.13615727639669145,
+     "fall": 0.0
+    },
+    "error_units": 0.19519649210112755,
+    "final": {
+     "forward_m": -0.10235936438809722,
+     "sideways_m": -0.08978510142462258,
+     "yaw_change_rad": -2.2420532818468835,
+     "yaw_change_wrapped_rad": -2.242053281846884
+    },
+    "elapsed_s": 3.5,
+    "final_speed_m_s": 0.012250517049001685,
+    "action_name": "L1.00_H2.50"
+   }
+  }
+ ],
+ "summary": {
+  "physics_only": {
+   "n": 45,
+   "mean_error_normalised": 0.06600321491814348,
+   "falls": 0,
+   "by_kind": {
+    "forward": {
+     "n": 14,
+     "unit": "cm",
+     "mean_error": 9.861362672286749,
+     "max_error": 19.095255298077163,
+     "median_error": 11.417318425994104,
+     "mean_drift_cm": 12.53783650152457,
+     "max_drift_cm": 35.68525291762784,
+     "falls": 0
+    },
+    "sideways": {
+     "n": 18,
+     "unit": "cm",
+     "mean_error": 5.310675925863302,
+     "max_error": 10.311901093997053,
+     "median_error": 5.164523613607569,
+     "mean_drift_cm": 2.571491745113933,
+     "max_drift_cm": 12.063202030765408,
+     "falls": 0
+    },
+    "turn": {
+     "n": 13,
+     "unit": "deg",
+     "mean_error": 7.565759007635178,
+     "max_error": 16.714584592215058,
+     "median_error": 6.280608501675763,
+     "mean_drift_cm": 8.687654986856327,
+     "max_drift_cm": 15.99001048159265,
+     "falls": 0
+    }
+   },
+   "action_counts": {
+    "L0.40_H0.40": 2,
+    "L0.40_H0.80": 2,
+    "L0.40_H1.20": 2,
+    "L0.40_H1.60": 3,
+    "L0.40_H2.00": 0,
+    "L0.40_H2.50": 2,
+    "L0.40_H3.00": 0,
+    "L0.40_H3.50": 0,
+    "L0.60_H0.40": 3,
+    "L0.60_H0.80": 4,
+    "L0.60_H1.20": 2,
+    "L0.60_H1.60": 0,
+    "L0.60_H2.00": 1,
+    "L0.60_H2.50": 1,
+    "L0.60_H3.00": 1,
+    "L0.60_H3.50": 0,
+    "L0.80_H0.40": 3,
+    "L0.80_H0.80": 3,
+    "L0.80_H1.20": 1,
+    "L0.80_H1.60": 0,
+    "L0.80_H2.00": 2,
+    "L0.80_H2.50": 1,
+    "L0.80_H3.00": 2,
+    "L0.80_H3.50": 0,
+    "L1.00_H0.40": 3,
+    "L1.00_H0.80": 0,
+    "L1.00_H1.20": 3,
+    "L1.00_H1.60": 0,
+    "L1.00_H2.00": 3,
+    "L1.00_H2.50": 1,
+    "L1.00_H3.00": 0,
+    "L1.00_H3.50": 0
+   }
+  },
+  "snn": {
+   "n": 45,
+   "mean_error_normalised": 0.04565619836864119,
+   "falls": 0,
+   "by_kind": {
+    "forward": {
+     "n": 14,
+     "unit": "cm",
+     "mean_error": 5.1714578905305615,
+     "max_error": 19.095255298077163,
+     "median_error": 3.4491137823557754,
+     "mean_drift_cm": 12.48902726597069,
+     "max_drift_cm": 36.68871097744323,
+     "falls": 0
+    },
+    "sideways": {
+     "n": 18,
+     "unit": "cm",
+     "mean_error": 3.758768980005242,
+     "max_error": 10.311901093997053,
+     "median_error": 2.857277895139272,
+     "mean_drift_cm": 1.6421180469180927,
+     "max_drift_cm": 7.101380895528403,
+     "falls": 0
+    },
+    "turn": {
+     "n": 13,
+     "unit": "deg",
+     "mean_error": 6.224262882960482,
+     "max_error": 16.480369665130574,
+     "median_error": 6.007581219918497,
+     "mean_drift_cm": 8.53080785720739,
+     "max_drift_cm": 13.615727639669146,
+     "falls": 0
+    }
+   },
+   "action_counts": {
+    "L0.40_H0.40": 0,
+    "L0.40_H0.80": 4,
+    "L0.40_H1.20": 0,
+    "L0.40_H1.60": 3,
+    "L0.40_H2.00": 0,
+    "L0.40_H2.50": 0,
+    "L0.40_H3.00": 0,
+    "L0.40_H3.50": 0,
+    "L0.60_H0.40": 5,
+    "L0.60_H0.80": 7,
+    "L0.60_H1.20": 0,
+    "L0.60_H1.60": 2,
+    "L0.60_H2.00": 0,
+    "L0.60_H2.50": 0,
+    "L0.60_H3.00": 1,
+    "L0.60_H3.50": 0,
+    "L0.80_H0.40": 1,
+    "L0.80_H0.80": 5,
+    "L0.80_H1.20": 2,
+    "L0.80_H1.60": 2,
+    "L0.80_H2.00": 1,
+    "L0.80_H2.50": 3,
+    "L0.80_H3.00": 1,
+    "L0.80_H3.50": 0,
+    "L1.00_H0.40": 2,
+    "L1.00_H0.80": 0,
+    "L1.00_H1.20": 1,
+    "L1.00_H1.60": 1,
+    "L1.00_H2.00": 2,
+    "L1.00_H2.50": 2,
+    "L1.00_H3.00": 0,
+    "L1.00_H3.50": 0
+   }
+  }
+ },
+ "paired_error": {
+  "a": "snn",
+  "b": "physics_only",
+  "outcome": "error (normalised)",
+  "diff": -0.020347016549502297,
+  "ci_low": -0.02993512734441586,
+  "ci_high": -0.011142710397987471,
+  "n": 45,
+  "method": "percentile bootstrap over scenarios",
+  "resamples": 9999,
+  "level": 0.95,
+  "stream": "move/run/test/paired_bootstrap[0]"
+ },
+ "wall_s": 30.014049399993382
+}

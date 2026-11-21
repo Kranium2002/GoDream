@@ -357,15 +357,30 @@ skills:
     teacher_features: [window, action, physics]  # observed.py block names; "window" carries the 4 pitch features.
     detector:  # SlopeDetector on nose_up_deg(base_quat_wxyz), one sample per 0.02 s control period.
       window_s: 0.2  # Moving mean of 10 samples, about one trot gait period: averages out the gait's pitch wobble.
-      on_deg: 4.5  # Flat 0.6 m/s trot (Go2World seed 0, 3 s scratch check): filtered +1.11..+2.81 deg, raw +0.97..+3.78; ~1.7 deg margin, far below 8 deg.
-      off_deg: 3.0  # Above the flat filtered max 2.81 so the plateau exit is prompt; below on_deg for hysteresis.
-      hold_s: 0.1  # 5 samples: one stumble does not switch.
+      # Dev check (step 3, 2026-11-21): nominal pass-through on dev scenarios 0-13, 16, 36, 37, 48, 50, 52, 55, 57 (10 flat,
+      # 12 slope at 15.1-18.0 deg; 12 s, world seed 0). Flat: filtered pitch +1.11..+2.83 deg, raw max 3.78 (all 10 flat
+      # traces are identical: constant command, so the per-attempt latency jitter never acts). Slope: filtered pitch
+      # reaches 4.3-5.1 deg while the trunk origin is still before ramp_start (front feet on the slope). Plateau after a
+      # reached top: filtered max 2.69-2.71 deg. Grid on {4.0, 4.5, 5.0} x off {2.5, 3.0, 3.5} x hold {0.1, 0.2, 0.3}:
+      # 0/10 flat false activations and 0/12 missed entries everywhere. 4.5/3.0/0.1 (was): entry latency mean 0.058 s,
+      # max 0.100 s, 1 re-entry on the plateau (15.30 deg, 8.42-8.70 s: the candidate re-applied on flat ground).
+      # 5.0/3.0/0.1 (now): latency mean 0.100 s, max 0.140 s, 0 re-entries, 2.17 deg above the flat filtered max.
+      on_deg: 5.0
+      off_deg: 3.0  # Above the flat/plateau filtered max 2.83 so the exit is prompt (0.52-0.96 s after the top); 2.5 delays it.
+      hold_s: 0.1  # 5 samples: one stumble does not switch; 0.2 / 0.3 add 0.1 / 0.2 s latency for no other change at on 5.0.
     observe_s: 0.2  # Nominal kept this long after the entry before the one decision; the pitch-rate window.
-    episode_duration_s: 10.0  # Flat approach + ramp + plateau at ~0.2-0.5 m/s climbing; set from Person A's ramp geometry.
-    dream_decision_time_range_s: [1.0, 5.0]  # Dream decision times (remaining time of the physics guess); replace with the context rows' measured decision times.
+    # From the real ramp (world.incline: foot 1.0 m ahead, slope 2.0 m, top at 2.88-2.98 m, plateau far end ~6.9 m) and
+    # the step-2 sweep (Go2World seed 0, attempt seed 0, 2026-11-21): the slowest ascent, vel_x 0.6 at 16 deg, reaches
+    # the top at 9.4 s and the detector returns to NORMAL at 10.6 s, inside 12 s with the 0.6 s recovery hold; the
+    # farthest run (vel_x 1.0 at 15 deg) ends at 5.89 m, 1 m short of the plateau's far end. Was 10.0 (placeholder).
+    episode_duration_s: 12.0
+    dream_decision_time_range_s: [2.12, 2.18]  # Dream decision times (remaining time of the physics guess): the measured range of run ramp1's context rows (14 situations). Was [1.0, 5.0].
     candidates:
-      climb_speeds_m_s: [0.4, 0.6, 0.8, 1.0]  # vel_x inside the verified [-1, 1]; 0.6 is the nominal (candidate index 4).
-      climb_yaw_rates_rad_s: [-0.2, 0.0, 0.2]  # inside the verified [-1, 1]; -0.2 can cancel the anticlockwise drift.
+      climb_speeds_m_s: [0.4, 0.6, 0.8, 1.0]  # vel_x inside the verified [-1, 1]; 0.6 is the nominal (candidate index 1).
+      # Was [-0.2, 0.0, 0.2]. Measured (seed 0, 12 s): every non-zero yaw held on the slope turns the dog across it
+      # (yaw change -1.4 rad at -0.1, +2.2 rad at +0.1) and fails to reach the top at 15, 16 and 17 deg, where the same
+      # speed at yaw 0 reaches it (-0.2: 15/16/17/17.5/18 deg; -0.1: 16/17 deg; +0.1: 16 deg). Heading candidates removed.
+      climb_yaw_rates_rad_s: [0.0]
     feature_ranges:  # [low, high] mapped to [0, 1], clipped.
       filtered_pitch_deg: [-5.0, 20.0]  # flat +1..+3 deg, 8-15 deg slopes plus the trot bias.
       raw_pitch_deg: [-10.0, 25.0]  # raw swings about 1 deg wider than filtered on flat.
@@ -373,17 +388,24 @@ skills:
       nominal_speed_m_s: [0.3, 1.0]  # locomotion-gate speeds up to the verified 1.0 end.
     scenarios:
       flat_share: 0.25
-      incline_deg: [8.0, 15.0]  # Person A: 10 deg climbs at vel_x 0.6, 15 deg stalls: the correction matters here.
+      # Was [8.0, 15.0]: the nominal vel_x 0.6 reached the top at 8, 10, 12, 14 and 15 deg (top at 6.1-7.4 s, seed 0),
+      # so that range had no room. Measured with 12 s episodes: nominal reaches the top at 15 and 16 deg (7.4 s, 9.4 s)
+      # and not at 17, 17.5, 18 deg; vel_x 0.8 / 1.0 reach it at 15, 16, 17 deg (faster) and not at 17.5 or 18 deg;
+      # nothing tried reaches it at 18-20 deg. Inside world.incline.max_deg 20.
+      incline_deg: [15.0, 18.0]
       nominal_speed_m_s: [0.6, 0.6]
     outcome_bounds:
       progress_m: [-2.0, 10.0]  # 1.0 m/s x 10 s; negative for sliding back.
-      sideways_m: [0.0, 5.0]
-      slip_m: [0.0, 2.0]
+      sideways_m: [0.0, 8.0]  # Was [0, 5]: measured up to 4.5 m at yaw 0 and 5.4 m with a yaw candidate (12 s).
+      slip_m: [0.0, 15.0]  # Was [0, 2]: foot_slip_m measured 2.45 m on flat (10 s) and up to 10.6 m on an 18 deg stall.
     physics:
       k_track: 0.905  # Gate 1: 0.6 m/s commanded gave 0.5430 m/s on flat.
       k_slope_s: 0.214  # Person A: vel_x 0.6 stalls at 15 deg -> 0.905 x 0.6 = k x 9.81 x sin 15 deg.
       gravity_m_s2: 9.81
-      typical_ramp_length_m: 1.5  # PLACEHOLDER until Person A's ramp geometry; centre of the reached_top logistic.
+      # Centre of the reached_top logistic: floor distance from the trunk at the decision to the top of the slope.
+      # Measured: ramp_end_m 2.88-2.98 m (start 1.0 m + 2.0 m x cos angle), trunk ~1.1-1.2 m ahead at the decision
+      # (2.1-2.4 s). Was 1.5 (placeholder).
+      typical_ramp_length_m: 1.8
       softness_m: 0.25
       yaw_drift_rad_s: 0.109  # Person A: about 50 deg in 8 s with vel_x alone on flat.
     objective_weights:
@@ -463,6 +485,30 @@ skills:
       contact_margin_m: 0.02
       motion: 0.5  # Per metre of commanded travel (speed x hold time): 0.3 for an active command.
       recovery: 0.5
+  move:  # MOVE (Person B, learned_judgment.skills.move): move the standing dog to a target on one axis and stop. Starting values; change only from dev runs.
+    status: planned
+    teacher_features: [window, action, physics]  # observed.py block names; "window" carries the 5 request features.
+    settle_s: 1.0  # Seconds standing on the zero command before the decision (as skills.dodge_vision.settle_s, whose stand was checked).
+    settle_tail_s: 1.0  # Zero command after the hold, then the episode ends: covers the 0.08 s latency and the stop; later drift is not counted.
+    kind_weights: {forward: 1.0, sideways: 1.0, turn: 1.0}  # Equal share of the three axes.
+    targets:  # |target| ranges, sign drawn uniformly; the high end is each axis's scale for the error and the features.
+      forward_m: [0.3, 2.0]  # Below 0.3 m the shortest candidate (0.4 x 0.92 x 0.35 s = 0.13 m) leaves little choice.
+      sideways_m: [0.15, 0.6]  # A short sidestep up to about one body length.
+      turn_rad: [0.3, 2.5]  # 17 to 143 degrees, below the +-pi wrap of final_yaw_change_rad.
+    candidates:  # C = 4 x 8 = 32, level-major.
+      command_levels: [0.4, 0.6, 0.8, 1.0]  # Fraction of the verified range end (1.0) on the target's side; above the 0.2 zeroing of training.
+      hold_s: [0.4, 0.8, 1.2, 1.6, 2.0, 2.5, 3.0, 3.5]  # Whole 0.02 s periods; 1.0 x 0.92 x 3.45 s reaches beyond 2.0 m.
+    outcome_bounds:
+      error: [0.0, 6.0]  # Dimensionless (error / axis scale): a 0.15 m sidestep at level 1.0 for 3.5 s overshoots by ~3 m = 5 scales.
+      drift_m: [0.0, 2.0]  # Off-axis travel; a turn in place moves the trunk origin by decimetres.
+    physics:
+      latency_s: 0.05  # Delay before the command acts (as skills.dodge.physics.assumed_latency_s); the true latency is hidden.
+      track: {forward: 0.92, sideways: 0.89, turn: 0.97}  # Response per unit command per second: measured_at_max of vel_x, vel_y, yaw_rate (command_schema).
+    objective_weights:
+      error: 10.0  # Per axis scale of mean error (2.0 m, 0.6 m, 2.5 rad).
+      drift: 2.0  # Per metre of off-axis drift.
+      fall: 10.0  # Per unit of fall probability.
+      spread: 2.0  # Per axis scale of predicted error spread.
 
 engine:
   candidate_batch_size: null  # Determine with verified API limits and dev runs.
@@ -672,6 +718,18 @@ declared:  # learned_judgment.declared (Person B): what a chat request may decla
       outcomes: [min_separation_m, collision, fall, recovery_time_s, command_travel_m]
       params:
         threats: {type: choices, choices: [ball, punch], default: [ball, punch], requires: {punch: punch_proxy}, description: "Kinds of incoming object to train against."}
+    MOVE:
+      spec: move
+      description: "Move the standing dog to a target and stop: a forward/backward distance, a sideways distance or a turn angle, one axis per request."
+      # "turn" is left out (declared.planned.TURN has it) and "walk" (the RAMP request "walk up a 12 degree hill" would turn ambiguous).
+      keywords: [move, go, step, sidestep, back, backward, forward, rotate]
+      requires: []
+      actions: [command_level, hold_s]
+      outcomes: [error, drift_m, fall]
+      params:
+        forward_m: {type: number, min: -2.0, max: 2.0, default: 0.0, unit: m, description: "Distance along the heading, + forward, - backward (skills.move.targets.forward_m). Give one axis only."}
+        sideways_m: {type: number, min: -0.6, max: 0.6, default: 0.0, unit: m, description: "Distance to the side, + left, - right (skills.move.targets.sideways_m). Give one axis only."}
+        turn_deg: {type: number, min: -143.0, max: 143.0, default: 0.0, unit: deg, description: "Turn angle, + anticlockwise (left), - clockwise (skills.move.targets.turn_rad, 2.5 rad). Give one axis only."}
   # Skills named in MISSION.md that have no SkillSpec yet: a request holding one of these words is refused, naming the skill.
   planned:
     BRAKE: [brake, braking]
@@ -725,11 +783,11 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
   world_preset: default
   workers: 6  # Processes running independent episodes side by side (episodes are deterministic; tests/env/test_determinism.py).
   ramp:
-    context_scenarios: 20  # up to 240 episodes (12 candidates where the detector decided). MISSION says 10-40 attempts per skill: lead's call.
+    context_scenarios: 20  # up to 80 episodes (4 candidates where the detector decided). MISSION says 10-40 attempts per skill: lead's call.
     dev_scenarios: 60
     test_scenarios: 60
     dream_situations: 4000  # no simulator: sampled over feature_ranges
-    snn_hidden_sizes: [32]  # 4 inputs, 12 outputs
+    snn_hidden_sizes: [32]  # 4 inputs, 4 outputs
     snn_max_steps: 3000
   dodge_vision:
     context_scenarios: 120  # Scenarios whose four actions are all run for the teacher's context: 480 measured rows.
@@ -738,3 +796,10 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
     test_scenarios: 240  # Held-out split: run once, after the freeze.
     snn_hidden_sizes: [128]  # Starting value; compare on dev.
     snn_max_steps: 6000  # The configured 1500 was reached without convergence on DODGE (dev check E11).
+  move:
+    context_scenarios: 15  # x 32 candidates = 480 teacher context rows (every candidate is run per scenario).
+    dev_scenarios: 45  # 1440 rows; physics rule and teacher are compared here.
+    test_scenarios: 45  # Held-out split of move run.
+    dream_situations: 4000  # No simulator: sampled requests x 32 candidates of physics guess.
+    snn_hidden_sizes: [32]  # 5 inputs, 32 outputs.
+    snn_max_steps: 3000  # As observed.ramp.
