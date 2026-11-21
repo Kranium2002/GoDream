@@ -1,0 +1,6 @@
+Person B's d 0.05 s, tau 0.3 s: rms error 0.0917 m per m/s; displacement per m/s at 0.2/0.4/0.6/1.0 s [0.032, 0.143, 0.298, 0.663]
+fit d 0.000 s, tau 0.222 s: rms error 0.0389 m per m/s; displacement per m/s at 0.2/0.4/0.6/1.0 s [0.068, 0.215, 0.393, 0.781]
+measured displacement per m/s at 0.2 s over the 12 runs: 0.054 to 0.107
+measured displacement per m/s at 0.4 s over the 12 runs: 0.174 to 0.268
+measured displacement per m/s at 0.6 s over the 12 runs: 0.330 to 0.464
+measured displacement per m/s at 1.0 s over the 12 runs: 0.698 to 0.883

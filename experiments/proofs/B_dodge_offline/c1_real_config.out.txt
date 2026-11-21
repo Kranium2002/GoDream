@@ -1,0 +1,38 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+== registry ==
+PASS  available_skills() lists dodge  [('dodge',)]
+
+== the verified command schema loads from the real config ==
+  vel_x: unit=m/s range=[-1.0, 1.0]
+  vel_y: unit=m/s range=[-1.0, 1.0]
+  yaw_rate: unit=rad/s range=[-1.0, 1.0]
+  update_period_s=0.02
+PASS  agreed command fields vel_x, vel_y, yaw_rate are verified  [['vel_x', 'vel_y', 'yaw_rate']]
+
+== load_skill('dodge', real config) ==
+PASS  load_skill without arguments raises ConfigError naming a null key  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_rel_x_m' is null: it must be set before this step can run]
+  null key named: skills.dodge.situation_ranges.ball_rel_x_m
+PASS  load_skill without arguments: the named key is null in the real config
+PASS  load_skill with a fixture throw sampler raises ConfigError naming a null key  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_rel_x_m' is null: it must be set before this step can run]
+  null key named: skills.dodge.situation_ranges.ball_rel_x_m
+PASS  load_skill with a fixture throw sampler: the named key is null in the real config
+PASS  DodgeSpec(real config, verified schema) raises ConfigError naming a null key  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_rel_x_m' is null: it must be set before this step can run]
+  null key named: skills.dodge.situation_ranges.ball_rel_x_m
+PASS  DodgeSpec(real config, verified schema): the named key is null in the real config
+
+== each null key alone stops the build ==
+PASS  only skills.dodge.situation_ranges.ball_rel_x_m null  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_rel_x_m' is null: it must be set before this step can run]
+PASS  only skills.dodge.situation_ranges.ball_rel_y_m null  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_rel_y_m' is null: it must be set before this step can run]
+PASS  only skills.dodge.situation_ranges.ball_rel_z_m null  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_rel_z_m' is null: it must be set before this step can run]
+PASS  only skills.dodge.situation_ranges.ball_vel_x_m_s null  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_vel_x_m_s' is null: it must be set before this step can run]
+PASS  only skills.dodge.situation_ranges.ball_vel_y_m_s null  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_vel_y_m_s' is null: it must be set before this step can run]
+PASS  only skills.dodge.situation_ranges.ball_vel_z_m_s null  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_vel_z_m_s' is null: it must be set before this step can run]
+PASS  only skills.dodge.situation_ranges.dog_forward_speed_m_s null  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.dog_forward_speed_m_s' is null: it must be set before this step can run]
+PASS  only skills.dodge.declared_surfaces null  [ConfigError: config.yaml key 'skills.dodge.declared_surfaces' is null: it must be set before this step can run]
+PASS  only skills.dodge.episode_duration_s null  [ConfigError: config.yaml key 'skills.dodge.episode_duration_s' is null: it must be set before this step can run]
+PASS  only skills.dodge.physics.body_half_length_m null  [ConfigError: config.yaml key 'skills.dodge.physics.body_half_length_m' is null: it must be set before this step can run]
+PASS  only skills.dodge.physics.body_radius_m null  [ConfigError: config.yaml key 'skills.dodge.physics.body_radius_m' is null: it must be set before this step can run]
+PASS  only skills.dodge.physics.base_height_m null  [ConfigError: config.yaml key 'skills.dodge.physics.base_height_m' is null: it must be set before this step can run]
+
+20 passed, 0 failed

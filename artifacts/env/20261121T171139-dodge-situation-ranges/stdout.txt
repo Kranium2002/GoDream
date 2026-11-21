@@ -1,0 +1,7 @@
+ball_rel_x_m: [1.69, 5.07]
+ball_rel_y_m: [-4.49, 4.5]
+ball_rel_z_m: [0.58, 1.22]
+ball_vel_x_m_s: [-4.89, -0.68]
+ball_vel_y_m_s: [-4.75, 4.73]
+ball_vel_z_m_s: [0.68, 7.38]
+dog_forward_speed_m_s: [0.28, 0.92]

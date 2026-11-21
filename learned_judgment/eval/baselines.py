@@ -876,7 +876,7 @@ class DirectTargetAdapter:
 
     so the shared decide step (physics + residual) scores the directly predicted outcome.
     The situation and action blocks are read from the first ``n_situation + n_action``
-    columns of the layout. ``last_request_hash`` is forwarded from the inner model so a
+    columns of the layout. ``last_request_hash`` and ``last_request_hashes`` are forwarded from the inner model so a
     provider-backed inner model keeps its cache key on each Decision. The quantiles are the
     inner model's (see its ``describe()["quantile_method"]``) shifted by -physics.
     """
@@ -911,6 +911,11 @@ class DirectTargetAdapter:
     @property
     def last_request_hash(self) -> str | None:
         return getattr(self.inner, "last_request_hash", None)
+
+    @property
+    def last_request_hashes(self) -> tuple[str, ...]:
+        """Every provider request key behind the inner model's latest prediction."""
+        return tuple(getattr(self.inner, "last_request_hashes", None) or ())
 
     def _check_features(self, label: str, features: np.ndarray) -> np.ndarray:
         x = np.asarray(features, dtype=np.float64)

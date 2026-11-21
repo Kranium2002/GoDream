@@ -6,7 +6,7 @@ FIXTURE CHECK - mechanics only. Usage:
 Exit code 0 when the decisions and digest are identical and neither torch nor snntorch was imported.
 """
 
-print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 import sys  # noqa: E402
 from pathlib import Path  # noqa: E402

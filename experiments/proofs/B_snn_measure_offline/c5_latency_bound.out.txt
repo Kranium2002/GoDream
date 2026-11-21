@@ -1,0 +1,44 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+hand student: (2, 3, 2), 16 stored probe situations, 25 FIXTURE situations; evaluation.latency_decisions=1000
+
+== binding runs the grid check once ==
+  [ok] bind: 16 candidate_actions calls (one per probe situation), i.e. one check_spec
+  candidate_actions calls for 25 decisions: bound 25, unbound DeployedStudent.decide_one 425
+  [ok] BoundStudent.decide_one: exactly one candidate_actions call per decision (the lookup), 25 in total
+  [ok] DeployedStudent.decide_one keeps its per-call grid check: 16 + 1 calls per decision
+  [ok] bound and unbound decide_one return the same command values
+  [ok] bound and unbound decide_index_one return the same indices
+  [ok] the bound full path returns spec.candidate_actions(situation, points_per_dim)[index]
+  [ok] the bound student names the same skill and network digest
+
+== a spec that differs is refused at binding; a replaced spec is refused at the next decision ==
+  [ok] bind to a spec with other action bounds -> GridMismatchError: spec 'fixture_hand': action dimension 0 ('fx_choice') has low -0.6; the student was trained with -0.5; output k of the student would stand for a different command, so it refuses to decide (retrain it inside a dream of th
+  [ok] bind to a spec of another skill -> ValueError: this student was trained for skill 'fixture_hand', not 'fixture_other'
+  [ok] BoundStudent around something that is not a DeployedStudent -> TypeError: deployed must be a DeployedStudent; got object
+  [ok] decide_one after spec.actions was replaced -> GridMismatchError: spec 'fixture_hand': its actions or situation were replaced after binding; bind the student again so that the grid check runs on the current spec
+  [ok] decide_index_one after spec.actions was replaced -> GridMismatchError: spec 'fixture_hand': its actions or situation were replaced after binding; bind the student again so that the grid check runs on the current spec
+  [ok] bound decide_one outside the declared range (policy 'error') -> OutOfRangeError: situation feature 'fx_a' = 2.0 at row 0 lies outside its declared range [-1.7320508075688772, 1.7320508075688772] (1 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to decide
+  [ok] bound decisions are counted in the student's out_of_range log
+
+== measure_decision_latency binds once and records both paths ==
+  candidate_actions calls during the measurement: 1066 (= 16 at binding + 1000 timed full-path lookups + 2 x 25 after timing); a per-call grid check would have made at least 17000
+  MECHANICS timings on a fixture: full path median 275.0 us p95 437.3 us; index only median 159.9 us p95 257.5 us; bind 0.589 ms
+  [ok] the grid check ran once: 1066 candidate_actions calls = 16 + 1000 + 2 x 25
+  [ok] the record says the grid check ran once at binding and how long binding took
+  [ok] the record names full_path as the H3 timing
+  [ok] each timing states what it includes (full path: up to the command values; index only: no lookup)
+  [ok] both timings over evaluation.latency_decisions calls, 0 < median <= p95; decisions consistent; rows and distinct situations stated
+  [ok] latency with a spec of other bounds -> GridMismatchError: spec 'fixture_hand': action dimension 0 ('fx_choice') has high 0.6; the student was trained with 0.5; output k of the student would stand for a different command, so it refuses to decide (retrain it inside a dream of the
+  [ok] this process never imported torch (the record agrees)
+
+== a FRESH process loads a saved hand-built student, binds it and times it without torch ==
+    FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+    worker: torch_in_sys_modules=False snntorch_in_sys_modules=False
+  [ok] fresh-process worker exit code 0
+  MECHANICS latency, fresh process: full path median 198.3 us, index only median 166.7 us; torch_free_process=True
+  [ok] the worker loaded, bound and timed the student without importing torch or snntorch
+  [ok] the fresh process timed the same network (digest)
+  [ok] temporary directory removed
+
+CHECK RESULT: 25 assertions held, 0 failed 

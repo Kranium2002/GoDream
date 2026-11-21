@@ -8,10 +8,18 @@ candidate command for every dreamed situation. This step trains the skill's spik
 inside that dream to choose the best candidate
 (:meth:`learned_judgment.students.snn.SNNStudent.train_in_dream`).
 
-Every setting comes from config.yaml: ``students.snn.*`` (via ``SNNSettings.from_config``) and
-``skills.<skill>.candidate_points_per_dim``, which must be the grid the dream was made with.
-Nothing is defaulted; a missing or null key raises ``ConfigError`` naming it. Which dream rows
-to train on (for example after ``engine.dream.keep_confident``) is the caller's decision.
+Every setting comes from config.yaml: ``students.snn.*`` (via ``SNNSettings.from_config``:
+network, targets including ``target_spread``, Adam including ``adam_beta1``, ``adam_beta2``,
+``adam_eps`` and ``weight_decay``, ``parity_logit_tolerance`` and the deployed
+``out_of_range`` policy) and ``skills.<skill>.candidate_points_per_dim``, which must be the grid
+the dream was made with. Nothing is defaulted; a missing or null key raises ``ConfigError``
+naming it. Which dream rows to train on (for example after ``engine.dream.keep_confident``) is
+the caller's decision.
+
+The in-dream numbers the student stores (``meta["early_stopping_rows_in_dream"]``) come from
+the early-stopping rows, which chose the restored weights: they are not held out. Held-out
+measurements need dreams whose situations are not in ``student.training_situation_digests``
+(compare with ``learned_judgment.students.snn.situation_digests``).
 """
 
 from __future__ import annotations
@@ -34,8 +42,8 @@ def train_in_dream(spec: SkillSpec, dreams: DreamSet, config: Mapping[str, Any],
         spec:      the skill's SkillSpec.
         dreams:    DreamSet of ``spec`` with n rows, C candidates per row.
         config:    loaded config.yaml.
-        base_seed: run seed; the validation split, network initialisation and batch order use
-                   the named streams ``"<skill>/snn/validation_split"``, ``"<skill>/snn/init"``
+        base_seed: run seed; the early-stopping split, network initialisation and batch order
+                   use the named streams ``"<skill>/snn/validation_split"``, ``"<skill>/snn/init"``
                    and ``"<skill>/snn/train"`` under it.
 
     Raises:

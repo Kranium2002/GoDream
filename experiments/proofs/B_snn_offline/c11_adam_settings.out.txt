@@ -1,0 +1,23 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+config.yaml: [('adam_beta1', 0.9), ('adam_beta2', 0.999), ('adam_eps', 1e-08), ('weight_decay', 0.0)]
+  [ok] SNNSettings carries the four values from config.yaml
+  [ok] config without students.snn.adam_beta1 -> ConfigError: config.yaml has no key 'students.snn.adam_beta1'
+  [ok] config without students.snn.adam_beta2 -> ConfigError: config.yaml has no key 'students.snn.adam_beta2'
+  [ok] config without students.snn.adam_eps -> ConfigError: config.yaml has no key 'students.snn.adam_eps'
+  [ok] config without students.snn.weight_decay -> ConfigError: config.yaml has no key 'students.snn.weight_decay'
+
+== the values reach torch.optim.Adam ==
+  config values: optimizer record {'name': 'Adam', 'lr': 0.002, 'betas': [0.9, 0.999], 'eps': 1e-08, 'weight_decay': 0.0}; network 21341aa789df7cb1...
+  [ok] config values: the optimizer ran with betas (0.9, 0.999), eps 1e-08, weight_decay 0.0
+  [ok] config values: the student's stored settings hold the four values
+  fixture values: optimizer record {'name': 'Adam', 'lr': 0.002, 'betas': [0.8, 0.99], 'eps': 1e-06, 'weight_decay': 0.001}; network f76db632aab405ce...
+  [ok] fixture values: the optimizer ran with betas (0.8, 0.99), eps 1e-06, weight_decay 0.001
+  [ok] fixture values: the student's stored settings hold the four values
+  [ok] other Adam values train a different network from the same seed
+  [ok] changing only adam_beta1 to 0.8 changes the trained network
+  [ok] changing only adam_beta2 to 0.99 changes the trained network
+  [ok] changing only adam_eps to 1e-06 changes the trained network
+  [ok] changing only weight_decay to 0.001 changes the trained network
+
+CHECK RESULT: 14 assertions held, 0 failed 

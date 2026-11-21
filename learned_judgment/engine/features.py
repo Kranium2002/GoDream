@@ -16,7 +16,7 @@ tells a model which columns those are and what the levels mean.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 import numpy as np
 
@@ -78,9 +78,23 @@ class FeatureLayout:
 
 
 def build_layout(
-    spec: SkillSpec, *, include_physics: bool = True, extra: Sequence[Variable] = ()
+    spec: SkillSpec,
+    *,
+    include_physics: bool = True,
+    extra: Sequence[Variable] = (),
+    hidden_value_names: Iterable[str] | None = None,
 ) -> FeatureLayout:
-    """Layout for ``spec``. ``include_physics=False`` gives the direct (no physics feature) layout."""
+    """Layout for ``spec``. ``include_physics=False`` gives the direct (no physics feature) layout.
+
+    When ``extra`` declares observed context, ``hidden_value_names`` (the hidden simulator
+    values named in config.yaml) is required, and no extra feature may carry one of those names.
+    """
+    if extra:
+        if hidden_value_names is None:
+            raise ValueError("hidden_value_names is required when extra features are declared")
+        leaked = sorted(set(hidden_value_names).intersection(variable.name for variable in extra))
+        if leaked:
+            raise ValueError(f"extra features expose hidden simulator values: {leaked}")
     names: list[str] = []
     categorical: list[tuple[int, tuple[str, ...]]] = []
 

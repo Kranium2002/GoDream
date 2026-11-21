@@ -10,7 +10,7 @@ Run from the repository root:
     .venv\\Scripts\\python.exe experiments\\proofs\\B_snn_shared_offline\\p00_state_dict_probe.py
 """
 
-print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 import dataclasses  # noqa: E402
 import io  # noqa: E402

@@ -7,9 +7,13 @@ regret printed here are MECHANICS numbers on a fixture, measured inside the fixt
 say nothing about the robot, the simulator, TabPFN or a project student.
 
 Check 2: training runs; the restored validation loss is below its initial value; the numpy
-network reproduces the torch model (zero spike-count mismatches, identical decisions); decisions
-are valid candidate indices; decide() returns in-bounds grid actions. 2b repeats training and
-parity with a threshold float32 cannot represent and learned beta/threshold (fast_sigmoid).
+network reproduces the torch model on EVERY dream row (zero spike-train mismatches per neuron,
+identical decisions, logits within students.snn.parity_logit_tolerance, the per-decision path
+decide_one equal to the batched path); decisions are valid candidate indices; decide() returns
+in-bounds grid actions. The in-dream numbers are stored under early_stopping_rows_in_dream and
+recomputed from the rows whose situation digests are the stored early-stopping digests. 2b
+repeats training and parity with a threshold float32 cannot represent and learned
+beta/threshold (fast_sigmoid).
 Check 4: save/load round trip in-process (same digest and decisions) and in a fresh process
 (c4_load_worker.py), which must not import torch. Files go to a temporary directory only.
 
@@ -17,7 +21,7 @@ Run from the repository root:
     .venv\\Scripts\\python.exe experiments\\proofs\\B_snn_offline\\c2_end_to_end.py
 """
 
-print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 import dataclasses  # noqa: E402
 import shutil  # noqa: E402
@@ -34,7 +38,7 @@ from learned_judgment.config import load_config  # noqa: E402
 from learned_judgment.engine.decide import PHYSICS_ONLY, decide_batch  # noqa: E402
 from learned_judgment.engine.features import build_layout  # noqa: E402
 from learned_judgment.engine.streams import stream_rng  # noqa: E402
-from learned_judgment.students.snn import SNNStudent  # noqa: E402
+from learned_judgment.students.snn import SNNStudent, situation_row_digests  # noqa: E402
 from learned_judgment.students.snn_train import SNNSettings  # noqa: E402
 from learned_judgment.students.targets import dream_regret  # noqa: E402
 
@@ -79,27 +83,35 @@ checks.expect(
 )
 parity = student.meta["parity"]
 print(f"  parity report: {parity}")
-checks.expect(all(m == 0 for m in parity["spike_count_mismatches_per_layer"]), "numpy vs torch: zero spike-count mismatches per layer")
-checks.expect(parity["decisions_differing"] == 0, "numpy vs torch: identical decisions on the validation rows")
+checks.expect(parity["n_inputs_checked"] == dreams.n_rows, f"parity was checked on all {dreams.n_rows} dream rows (training and early stopping)")
+checks.expect(all(m == 0 for m in parity["spike_train_mismatches_per_layer"]), "numpy vs torch: zero spike-train mismatches per neuron and step")
+checks.expect(parity["decisions_differing"] == 0, "numpy vs torch: identical batched decisions on every row")
 checks.expect(
-    parity["max_abs_logit_difference"] < 1e-12,
-    f"max |logit difference| {parity['max_abs_logit_difference']:.2e} is at float64 rounding level (< 1e-12)",
+    parity["decide_one_vs_batch_differing"] == 0 and parity["decide_one_vs_torch_differing"] == 0,
+    "per-decision path decide_one: identical to the batched and the torch decisions on every row",
+)
+checks.expect(
+    parity["max_abs_logit_difference"] <= settings.parity_logit_tolerance == parity["logit_tolerance"],
+    f"max |logit difference| {parity['max_abs_logit_difference']:.2e} <= parity_logit_tolerance {settings.parity_logit_tolerance:g} (config)",
 )
 
-validation_numbers = student.meta["validation_in_dream"]
-print("  MECHANICS numbers on the fixture dream's validation rows (inside the dream, not the simulator):")
+validation_numbers = student.meta["early_stopping_rows_in_dream"]
+print("  MECHANICS numbers on the fixture dream's EARLY-STOPPING rows (inside the dream, not held out):")
 print(f"    {validation_numbers}")
+checks.expect("validation_in_dream" not in student.meta and "NOT held out" in validation_numbers["label"], "the in-dream numbers are labelled as early-stopping rows, not held out")
 
-# Independent recomputation of the validation numbers through the public decide path.
-split = stream_rng(BASE_SEED, f"{spec.name}/snn/validation_split").permutation(dreams.n_rows)
-validation_rows = np.sort(split[: student.meta["dream"]["n_rows_validation"]])
+# Independent recomputation of the early-stopping numbers through the public decide path, on the
+# rows whose situation digests are the stored early-stopping digests.
+early_digests = set(student.meta["student"]["situations_seen"]["early_stopping_rows"])
+validation_rows = np.array([row for row, digest in enumerate(situation_row_digests(dreams.situations)) if digest in early_digests])
+checks.expect(validation_rows.size == validation_numbers["n_rows"], f"{validation_rows.size} rows carry the stored early-stopping digests = n_rows")
 indices = student.decide_index(dreams.situations[validation_rows])
 recomputed_agreement = float(np.mean(indices == dreams.chosen[validation_rows]))
 recomputed_regret = float(np.mean(dream_regret(dreams.scores[validation_rows], indices)))
 checks.expect(
     recomputed_agreement == validation_numbers["agreement_with_dream_choice"]
     and recomputed_regret == validation_numbers["mean_dream_regret"],
-    "decide_index on the validation rows reproduces the stored agreement and regret",
+    "decide_index on the early-stopping rows reproduces the stored agreement and regret",
 )
 
 situations = spec.sample_situations(stream_rng(BASE_SEED, f"{spec.name}/check/situations"), CHECK_SITUATIONS)
@@ -125,7 +137,7 @@ fresh = decide_batch(
 fresh_scores = np.stack([decision.scores for decision in fresh])
 fresh_chosen = np.array([decision.chosen_index for decision in fresh])
 fresh_regret = dream_regret(fresh_scores, indices)
-spread = student.meta["dream"]["score_spread"]
+spread = student.meta["dream"]["score_spread"]  # target_spread global_median (config)
 print(
     f"  MECHANICS numbers on {CHECK_SITUATIONS} new fixture situations scored by the same fixture objective: "
     f"agreement {np.mean(indices == fresh_chosen):.3f}, zero-regret share {np.mean(fresh_regret == 0.0):.3f}, "
@@ -151,8 +163,9 @@ print(f"  learned (exported) betas {student_2b.network.betas} thresholds {studen
 print(f"  parity report: {parity_2b}")
 checks.expect(student_2b.network.thresholds[0] != 0.3, "the threshold was learned (moved away from 0.3)")
 checks.expect(
-    all(m == 0 for m in parity_2b["spike_count_mismatches_per_layer"]) and parity_2b["decisions_differing"] == 0,
-    "parity holds with a learned float64 threshold",
+    all(m == 0 for m in parity_2b["spike_train_mismatches_per_layer"]) and parity_2b["decisions_differing"] == 0
+    and parity_2b["decide_one_vs_batch_differing"] == 0,
+    "parity (spike trains, decisions, decide_one) holds with a learned float64 threshold",
 )
 # Logits are not bitwise equal: the readout matmul sums in a different order in torch (MKL)
 # and numpy (OpenBLAS); the first-layer current was bitwise equal (p01_matmul_rounding_probe). The
@@ -178,7 +191,11 @@ try:
         and loaded.encoder.describe() == student.encoder.describe(),
         "grid and encoder survive the round trip",
     )
-    checks.expect(loaded.meta["validation_in_dream"] == validation_numbers, "meta (validation numbers) survives the round trip")
+    checks.expect(loaded.meta["early_stopping_rows_in_dream"] == validation_numbers, "meta (early-stopping numbers) survives the round trip")
+    checks.expect(
+        bool(np.array_equal(np.array([loaded.decide_index_one(s) for s in situations]), indices)),
+        "loaded decide_index_one (per-decision path) = trained decide_index on every situation",
+    )
     np.save(scratch / "situations.npy", situations)
     np.save(scratch / "expected.npy", indices)
     worker = Path(__file__).resolve().parent / "c4_load_worker.py"

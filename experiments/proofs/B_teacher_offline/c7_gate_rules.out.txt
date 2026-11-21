@@ -21,7 +21,7 @@ FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, Tab
 == TeacherSettings.from_config ==
    TeacherSettings(client_version='0.10.1', model_path='v3.5_default', n_estimators=8, random_state=0, quantile_levels=(0.1, 0.25, 0.5, 0.75, 0.9), spread_levels=(0.1, 0.9), multi_outcome_mode='stacked', cache_dir=WindowsPath('D:/BerlinPrior/.cache/tabpfn'), call_log=WindowsPath('D:/BerlinPrior/results/tabpfn_calls.jsonl'), max_tokens_per_request=10000, project_token_budget=35000000, max_query_rows_per_request=32000, lock_timeout_s=120.0, lock_poll_s=0.05, verified_request_limit_per_minute=None, verified_request_limit_per_hour=None)
   [ok] relative paths resolve against the repository root
-  [ok] lock_poll_s is persistence.replace_pause_s
+  [ok] lock_poll_s is tabpfn.lock_poll_s
   [ok] missing tabpfn.model_path raises ConfigError: config.yaml has no key 'tabpfn.model_path'
   [ok] null tabpfn.n_estimators raises ConfigError: config.yaml key 'tabpfn.n_estimators' is null: it must be set before this step can run
   [ok] float random_state 0.0 raises ConfigError: config.yaml key 'tabpfn.random_state' must be an integer; got 0.0
@@ -34,7 +34,7 @@ FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, Tab
   [ok] row cap 5 (not above the 5 quantile levels) raises ConfigError: config.yaml tabpfn/engine settings are invalid: invalid TeacherSettings: max_query_rows_per_request must exceed the number of quantile levels (5); got 5
   [ok] null tabpfn.lock_timeout_s raises ConfigError: config.yaml key 'tabpfn.lock_timeout_s' is null: it must be set before this step can run
   [ok] zero tabpfn.lock_timeout_s raises ConfigError: config.yaml tabpfn/engine settings are invalid: invalid TeacherSettings: lock_timeout_s must be a positive finite number of seconds; got 0.0
-  [ok] missing persistence.replace_pause_s raises ConfigError: config.yaml has no key 'persistence.replace_pause_s'
+  [ok] missing tabpfn.lock_poll_s raises ConfigError: config.yaml has no key 'tabpfn.lock_poll_s'
   [ok] an integer project budget is read
   [ok] a null project budget reads as None (refuses every uncached request)
   [ok] a missing project budget reads as None

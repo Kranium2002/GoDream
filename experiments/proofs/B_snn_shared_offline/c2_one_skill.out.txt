@@ -1,0 +1,49 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+check config: config.yaml with students.snn.shared_feature_width=6 (fixture; config.yaml None) and students.snn.max_steps=300 (config.yaml 1500); every other value from config.yaml
+
+== create(config): an empty student with reserved slots ==
+  settings: {'hidden_sizes': [64], 'time_steps': 10, 'beta': 0.9, 'threshold': 1.0, 'readout_beta': 0.9, 'learn_beta': False, 'learn_threshold': False, 'surrogate': 'atan', 'surrogate_alpha': 2.0, 'target_temperature': 0.5, 'target_spread': 'global_median', 'spike_rate_penalty': 0.0, 'learning_rate': 0.002, 'adam_beta1': 0.9, 'adam_beta2': 0.999, 'adam_eps': 1e-08, 'weight_decay': 0.0, 'batch_size': 64, 'max_steps': 300, 'validation_fraction': 0.1, 'evaluate_every_steps': 100, 'patience_evaluations': 5, 'torch_threads': 1, 'parity_logit_tolerance': 1e-09, 'out_of_range': 'error'}
+  n_slots=8 feature_width=6 input_width=14 retention_fraction=0.1 rehearsal_fraction=0.5
+  [ok] create reads students.snn.shared_skill_slots (8) and shared_feature_width: W = 14
+  [ok] create reads students.snn.shared_retention_fraction and rehearsal_fraction
+  [ok] a created student holds no skill and no stage
+  fixture fx_alpha: S=3 encoded D=4 C=35 dream rows=1000
+
+== add fx_alpha: one skill held, 7 slots empty ==
+  steps_run=300 best_step=300 validation 1.2510 -> 0.0267 (constant prediction {'fx_alpha': 0.8696064457715134}); firing rate [0.2064236111111111]; add wall 5.3 s
+  split: {'n_rows': 1000, 'n_distinct_situations': 1000, 'n_rows_training': 810, 'n_rows_early_stopping': 90, 'n_rows_retention': 100}
+  [ok] fx_alpha took slot 0; 7 slots stay free; one stage
+  [ok] rehearsal requested but nothing to rehearse: every batch is fx_alpha's
+  [ok] trained: restored validation loss below initialisation and below the best constant prediction; no silent layer
+  parity: {'n_inputs_checked': 1000, 'max_abs_logit_difference': 3.552713678800501e-15, 'spike_train_mismatches_per_layer': [0], 'decisions_differing': 0, 'decide_one_vs_batch_differing': 0, 'decide_one_vs_torch_differing': 0}
+  [ok] parity on all 1000 dream rows: spike trains, decisions, decide_one, logits within 1e-09
+  [ok] training 810 + early-stopping 90 + retention 100 rows partition the dream
+  [ok] decide -> (300, 2) in-bounds actions = candidate_actions(situation, (7, 5))[decide_index]; 22 distinct candidates chosen
+  [ok] the per-decision path (decide_index_one, decide_one) gives the batched decisions
+  [ok] deployed('fx_alpha') is one DeployedStudent per (skill, stage)
+  [ok] deployed(skill) decides exactly as the student
+  [ok] shared layout: 4 own columns, 2 zero padding, slot 0 = 1, 7 empty slots = 0
+  [ok] the network view on the hand-built encoding gives the same decisions
+  operation counts: layer_sizes=(14, 64, 35) first_layer_macs=896 dense_reference_macs=3136 neuron_updates=990 mean spikes per layer=[131.11] (MECHANICS)
+  [ok] operation counts include the padded inputs: first layer 14 x 64 = 896 MACs (own encoding alone: 256); dense reference 3136
+  [ok] the view's meta names kind, stage, slot, student record (action records, grid digest) and network digest
+  [ok] recorded situation digests: the optimiser saw exactly the training rows, early stopping exactly the early-stopping rows
+  [ok] seen_in_training: no retention situation, every training situation
+  retention numbers (MECHANICS, fixture dream): {'n_rows': 100, 'n_distinct_situations': 100, 'agreement_with_dream_choice': 0.83, 'fraction_with_zero_dream_regret': 0.83, 'mean_dream_regret': 0.006243952764162642, 'mean_dream_regret_over_spread': 0.010863175575663799, 'spread_definition': "median population std of the skill's training rows' scores across candidates"}
+  [ok] the record's retention numbers are reproduced through deployed(skill) on the retention rows
+  [ok] retention matrix 1 x 1; backward transfer null with one skill
+
+== add fx_beta: it takes the next slot; stage 0 keeps fx_alpha's original view ==
+  steps_run=300 sampling={'fx_beta': 0.5, 'fx_alpha': 0.5} add wall 3.8 s
+  [ok] fx_beta took slot 1; stages [('fx_alpha',), ('fx_alpha', 'fx_beta')]
+  [ok] after the second add both views pass parity on every row of their dreams
+  [ok] stage 0's view of fx_alpha is the network fx_alpha had before fx_beta was added (same digest)
+  [ok] deployed('fx_alpha', stage=0) gives fx_alpha's original decisions
+  [ok] the latest fx_alpha view differs (the trunk moved); 38 of 300 decisions changed (MECHANICS)
+  [ok] deployed('fx_beta', stage=0) -> ValueError: skill 'fx_beta' was added at stage 1; stage 0 holds only ['fx_alpha']
+  [ok] deployed('fx_alpha', stage=2) -> ValueError: stage must be an integer in [0, 2) (stage i = after the i-th add, 0-based) or None for the latest; got 2
+  [ok] deployed('fx_alpha', stage=True) -> ValueError: stage must be an integer in [0, 2) (stage i = after the i-th add, 0-based) or None for the latest; got True
+  [ok] R[1][0] is reproduced by the stage-1 view of fx_alpha on its retention rows
+
+CHECK RESULT: 29 assertions held, 0 failed 

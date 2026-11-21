@@ -150,8 +150,12 @@ class SpikingNetwork:
         """The one implementation of the dynamics: logits (n, C) for float64 inputs (n, D).
 
         Fills ``counts`` (L, T, n) and ``trains`` (one uint8 array (T, n, H_l) per hidden layer)
-        when given. Every public method runs through here, so a batch, a single decision and a
-        recorded run use the same arithmetic in the same order.
+        when given. Every public method runs through here, so there is one statement of the
+        dynamics. A row computed alone and the same row inside a batch can still differ in the
+        last bit, because the matrix library sums a product differently for different batch
+        sizes; in rare cases that flips a spike. Training therefore checks the single-decision
+        path against the batched path on its rows, and decisions on the robot always come from
+        the single-decision path.
         """
         n = inputs.shape[0]
         weights, biases = self.hidden_weights, self.hidden_biases
@@ -212,7 +216,7 @@ class SpikingNetwork:
         """Index of the chosen output for one encoded input (D,): the per-decision path.
 
         Runs the same dynamics as :meth:`forward` on a batch of one, with only the shape and
-        finiteness checks a single vector needs.
+        finiteness checks a single vector needs. This is the path a deployed student uses.
         """
         encoded = np.asarray(encoded, dtype=np.float64)
         if encoded.shape != (self.n_inputs,):

@@ -26,6 +26,22 @@ def test_fixed_seed_reproduces_the_episode(config, forward):
 
 
 @pytest.mark.system
+def test_reused_world_equals_fresh_world(config, forward):
+    # A world that ran other episodes before, switching between the scenes with and without the ball, gives a trace
+    # bit-identical to a fresh world's for the same seed, situation and attempt seed.
+    throw = Go2World(config, seed=6).sample_dodge_situation()
+
+    def run(world, situation, attempt_seed):
+        world.reset(situation, attempt_seed=attempt_seed); world.step(forward, 1.0)
+        return dict(np.load(world.finish_episode()["trace_path"]))
+    reused = Go2World(config, seed=6)
+    run(reused, throw, 0)
+    for situation, attempt_seed in (({}, 3), (throw, 4)):
+        again, fresh = run(reused, situation, attempt_seed), run(Go2World(config, seed=6), situation, attempt_seed)
+        assert again.keys() == fresh.keys() and all(np.array_equal(again[k], fresh[k]) for k in again)
+
+
+@pytest.mark.system
 def test_attempt_seed_fixes_the_noise_whatever_ran_before(config, zero, period):
     a, b = Go2World(config, seed=5), Go2World(config, seed=5)
     a.reset(attempt_seed=1)  # an unrelated episode that draws from its own streams

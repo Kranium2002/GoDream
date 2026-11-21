@@ -7,14 +7,17 @@ robot, the simulator, TabPFN or any model, and none of it may enter a report.
 
 FileMechanicsSpec (THROWAWAY) returns a constant "outcome" from episode() so the harness's
 file handling (manifests, attempt files, run-result files) can be exercised inside a
-temporary directory; it is not an episode and its rows are not measurements.
+temporary directory; it is not an episode and its rows are not measurements. It records which
+world token and attempt seed each call received, so the checks can see how the harness hands
+out worlds and seeds. ThrowawayWorldToken is NOT a world: it has no reset, step or physics; it
+only carries the seed it was made from so that identity can be checked.
 """
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 import numpy as np
 
@@ -77,7 +80,9 @@ class FixtureSpec(SkillSpec):
         low_level = float(predicted.quantile_levels[0])
         return predicted.quantile_of("separation", low_level) - 2.0 * predicted.mean_of("contact")
 
-    def episode(self, world: Any, situation: Mapping[str, Any], action: Mapping[str, Any]) -> Mapping[str, float]:
+    def episode(
+        self, world: Any, situation: Mapping[str, Any], action: Mapping[str, Any], attempt_seed: int
+    ) -> Mapping[str, float]:
         raise RuntimeError("the fixture spec has no world; checks never run episodes")
 
     def loss(self, measured: np.ndarray) -> np.ndarray:
@@ -96,23 +101,46 @@ class FileMechanicsSpec(FixtureSpec):
     every time, so the harness has something to write. Nothing it produces is a measurement,
     and it may only be used with ``throwaway_world_factory`` inside a temporary directory.
     ``crash_at`` makes the given call (1-based, counted per instance) raise, to mimic a crash.
+    ``seen`` records (world token, attempt seed) per call; ``on_episode`` (optional) is called
+    with the same arguments as ``episode`` before it returns, so a check can look at files.
     """
 
-    def __init__(self, crash_at: int | None = None) -> None:
+    def __init__(self, crash_at: int | None = None, on_episode: Callable[..., None] | None = None) -> None:
         super().__init__()
         self.crash_at = crash_at
+        self.on_episode = on_episode
         self.calls = 0
+        self.seen: list[tuple[Any, int]] = []
 
-    def episode(self, world: Any, situation: Mapping[str, Any], action: Mapping[str, Any]) -> Mapping[str, float]:
+    def episode(
+        self, world: Any, situation: Mapping[str, Any], action: Mapping[str, Any], attempt_seed: int
+    ) -> Mapping[str, float]:
         self.calls += 1
+        self.seen.append((world, attempt_seed))
+        if self.on_episode is not None:
+            self.on_episode(world, situation, action, attempt_seed)
         if self.crash_at is not None and self.calls == self.crash_at:
             raise RuntimeError(f"throwaway crash at call {self.calls} (file-mechanics check)")
         return {"separation": 1.0, "contact": 0.0}
 
 
-def throwaway_world_factory(seed: int) -> None:
-    """THROWAWAY: returns None. Not a world; only FileMechanicsSpec.episode accepts it."""
-    return None
+class ThrowawayWorldToken:
+    """THROWAWAY identity marker, NOT a world: no reset, no step, no physics. It only records the
+    seed the factory got, so a check can see which world object each episode was handed."""
+
+    def __init__(self, seed: int) -> None:
+        self.seed = seed
+
+    def __repr__(self) -> str:
+        return f"ThrowawayWorldToken(seed={self.seed})"
+
+
+def throwaway_world_factory(seed: int) -> ThrowawayWorldToken:
+    """THROWAWAY: returns a ThrowawayWorldToken. Not a world; only FileMechanicsSpec.episode accepts it."""
+    return ThrowawayWorldToken(seed)
+
+
+FIXTURE_WORLD_SEED = 11  # fixture world seed of the throwaway runs
 
 
 def fixed_clock() -> str:
@@ -134,8 +162,9 @@ def throwaway_compare_run(
     """Run harness.compare_methods with the THROWAWAY FileMechanicsSpec in ``out_dir``.
 
     Every method plays the action (0, 0) on situations of the (open) ``split`` of the fixture
-    spec. Returns {method: MethodEvaluation}. File mechanics only: the rows are constants, not
-    measurements.
+    spec, in throwaway world tokens made from FIXTURE_WORLD_SEED, with the split's per-episode
+    seeds as attempt seeds. Returns {method: MethodEvaluation}. File mechanics only: the rows
+    are constants, not measurements.
     """
     from learned_judgment.config import config_digest, load_config
     from learned_judgment.eval.harness import compare_methods
@@ -148,7 +177,8 @@ def throwaway_compare_run(
                         n_situations=n_situations, n_repeats=n_repeats)
     policies = {method: (lambda s: np.zeros((s.shape[0], 2))) for method in methods}
     return compare_methods(
-        spec, policies, world_factory=throwaway_world_factory, situations=situations, noise_seeds=seeds,
+        spec, policies, world_factory=throwaway_world_factory, world_seed=FIXTURE_WORLD_SEED,
+        situations=situations, attempt_seeds=seeds, command_schema=FIXTURE_COMMAND_SCHEMA,
         run_id=run_id, world_preset=world_preset, split=split, base_seed=base_seed,
         config_digest=config_digest(load_config()), out_dir=out_dir, clock=fixed_clock,
     )

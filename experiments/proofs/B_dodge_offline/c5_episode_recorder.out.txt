@@ -1,0 +1,69 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+CallRecorder: a call recorder that returns fixed dictionaries; it is not a simulator
+
+== the command sequence ==
+  ('reset', {'ball_rel_x_m': 4.0, 'ball_rel_y_m': 0.2, 'ball_rel_z_m': 0.3, 'ball_vel_x_m_s': -5.0, 'ball_vel_y_m_s': -0.2, 'ball_vel_z_m_s': 3.0, 'dog_forward_speed_m_s': 0.4}, 17)
+  ('step', {'vel_x': 0.4, 'vel_y': 0.0, 'yaw_rate': 0.0}, 0.2)
+  ('step', {'vel_x': 0.4, 'vel_y': 0.5, 'yaw_rate': 0.0}, 0.6)
+  ('step', {'vel_x': 0.4, 'vel_y': 0.0, 'yaw_rate': 0.0}, 0.8000000000000002)
+  ('finish_episode',)
+PASS  calls: reset, step, step, step, finish_episode
+PASS  reset gets exactly the seven ball/dog keys, in order  [('ball_rel_x_m', 'ball_rel_y_m', 'ball_rel_z_m', 'ball_vel_x_m_s', 'ball_vel_y_m_s', 'ball_vel_z_m_s', 'dog_forward_speed_m_s')]
+PASS  reset gets the situation's values as floats
+PASS  declared values are not requested from the world
+PASS  attempt_seed passed to reset
+PASS  first step: nominal command for the start delay
+PASS  second step: dodge command for the hold
+PASS  third step: nominal command for the rest
+PASS  durations add up to the episode duration
+PASS  every command has the three verified fields, each a Python float
+PASS  every duration is a Python float
+
+== the returned outcome ==
+  {'min_separation_m': 0.12, 'collision': 0.0, 'fall': 0.0, 'recovery_time_s': 0.0, 'lateral_command_m': 0.3}
+PASS  exactly the five outcome keys, in outcome order
+PASS  the four world keys are read from finish_episode
+PASS  lateral_command_m = |side| x hold of the commands issued
+PASS  every value is a Python float
+
+== zero start delay, and nothing left after the hold ==
+PASS  zero delay skips the first step
+PASS  then nominal for the rest
+PASS  negative side: lateral_command_m uses |side|
+PASS  delay 0.6 + hold 1.0 = the episode: no zero-length third step  [durations [0.6, 1.0]]
+PASS  all 108 grid actions: positive durations adding up to the episode
+
+== refused before the world is stepped ==
+PASS  side velocity 1.5 (outside the verified vel_y range)  [ValueError: side_velocity_m_s=1.5 is outside [-1.0, 1.0]]
+PASS    ... no world call
+PASS  schema narrowed after build: action range exceeds the verified vel_y range  [SkillSpecError: action 'side_velocity_m_s' range [-1.0, 1.0] exceeds the verified range [-0.5, 0.5] of 'vel_y']
+PASS    ... no world call
+PASS  forward command 0.4 outside a verified vel_x range of [-0.3, 0.3]  [ValueError: command vel_x=0.4 m/s is outside the verified range [-0.3, 0.3]]
+PASS    ... no world call
+PASS  a hidden value in the situation  [ValueError: row keys do not match the schema; missing=[] extra=['payload_mass_kg']]
+PASS    ... no world call
+PASS  a missing situation key  [ValueError: row keys do not match the schema; missing=['ball_rel_z_m'] extra=[]]
+PASS    ... no world call
+PASS  forward speed outside its declared range  [ValueError: dog_forward_speed_m_s=0.9 is outside [0.0, 0.8]]
+PASS    ... no world call
+PASS  attempt_seed -1  [ValueError: attempt_seed must be an int >= 0; got -1]
+PASS    ... no world call
+PASS  attempt_seed True  [ValueError: attempt_seed must be an int >= 0; got True]
+PASS    ... no world call
+PASS  attempt_seed 1.5  [ValueError: attempt_seed must be an int >= 0; got 1.5]
+PASS    ... no world call
+
+== declared values come from the world ==
+PASS  the world declares another payload  [ValueError: the world declares declared_payload_kg=2.0 but the situation has 1.0: declared values are read from the world, not requested]
+PASS    ... only reset was called, no step
+PASS  the world declares another surface  [ValueError: the world declares declared_surface='fixture_surface_b' but the situation has 'fixture_surface_a': declared values are read from the world, not requested]
+PASS    ... only reset was called, no step
+PASS  an observation without declared keys is accepted
+
+== the world's outcome is checked ==
+PASS  outcome without recovery_time_s  [ValueError: the world's outcome lacks ['recovery_time_s']; it has ['collision', 'commands_received', 'fall', 'fall_time_s', 'min_separation_m', 'recovered', 'trace_path']]
+PASS  collision 0.5  [ValueError: collision=0.5 must be 0 or 1]
+PASS  negative separation  [ValueError: the world measured min_separation_m=-0.01, outside [0.0, inf]]
+PASS  non-finite recovery time  [ValueError: recovery_time_s=nan is not finite]
+
+47 passed, 0 failed

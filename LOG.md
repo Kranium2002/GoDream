@@ -79,6 +79,39 @@
 - Simulator facts re-checked on mujoco 3.11.0 with Unitree's model (velocity frames; bad-state warnings survive MuJoCo's auto-reset): `artifacts/env/20261121T155604-m2-world-facts`, `experiments/EXPERIMENTS_LOG.md` entry M2.
 - Cost on this machine (`artifacts/env/20261121T160704-world-cost`, medians): building a `Go2World` 0.12 s (0.70 s the first in a process); `reset()` 0.58 s for 6 s simulated; `step()` real-time factor 7.96 (one 10 s call) and 7.79 (0.02 s calls); `finish_episode()` 0.03 s writing a 20 s trace.
 
+## 2026-11-21 — Person A: the ball, the throw protocol and the DODGE measurements (Task 5)
+
+- `Go2World` throws a physical IHF size 3 handball when a situation holds all six ball keys (frame fixed at the decision instant: origin at the trunk origin, x along the heading, y left, z up); partial keys raise; without them the scene has no ball body. New outcome keys `collision`, `first_collision_time_s`, `min_separation_m`, `recovery_time_s`, `recovered`; observation `ball`; trace arrays `ball_pos_m`, `ball_vel_m_s`. `sample_dodge_situations(config, rng, n)` (`learned_judgment/env/throws.py`, exported) and `Go2World.sample_dodge_situation()`. `learned_judgment/env/calibrate.py`: `calibrate_throws`, `situation_ranges`, `step_response`, `save_dodge_example`.
+- `config.yaml`: `ball` contact, inertia and throw ranges; `robot.recovery`; `skills.dodge.situation_ranges`, `episode_duration_s` 3.0 (proposed, to be confirmed by the project owner), `physics.body_half_length_m` 0.293, `body_radius_m` 0.107, `base_height_m` 0.3234, `declared_surfaces` [default].
+- Evidence: E6 simulator half (`artifacts/env/20261121T170836-e6-sim-facts`), calibration (final hit rate 0.408 over dev seeds 11–13, 120 throws), ball tests 13 passed (`artifacts/env/20261121T171926-dodge`), step response while trotting (no falls; faster than Person B's 0.05 s / 0.3 s model), saved example `artifacts/env/dodge-example/`. Details: `experiments/EXPERIMENTS_LOG.md`, the three entries of this date after "Single-threaded policy inference".
+- Task 4 review items folded in: observations returned as copies, stream key `(4, k)` literal, bad `attempt_seed` and non-number `settle_s` rejected before the open episode is abandoned, a test of a fall before the decision instant, test traces under `tmp_path`.
+
+## 2026-11-21 — Person B: review fixes, DODGE SkillSpec, first run on the real Go2World
+
+- Independent reviews: teacher, engine and evaluation (three reviewers) and the SNN code (two reviewers); every finding reproduced by execution. Fixed with regression checks: teacher (never pay twice after a failure, cache lock, ledger, chunked requests), evaluation (calibration for binary and clipped outcomes, honest baseline intervals, reports only from saved run files, sealed test split), engine (command check before any simulator step, stale physics, request provenance, unique attempts), per-skill SNN (refuses a changed command grid, a silent network, parity on spike trains).
+- Contracts changed with Person A's agreement: `reset(situation, attempt_seed)` and `SkillSpec.episode(world, situation, action, attempt_seed)`; the hidden world is fixed by the world's constructor seed.
+- DODGE SkillSpec written (`learned_judgment/skills/dodge.py`) against Person A's verified command schema. It refuses to build until Person A fills the `skills.dodge` keys that are still null.
+- Person A's `Go2World`, live viewer and recorder hook are merged into `person-b`. `tests/env` in the merged tree: 67 passed, 1 failed (the known 0.3 m/s condition).
+- First run of Person B's command sequence on the real simulator (dev run, no ball, 13 episodes, no falls): experiment B-contact in experiments/EXPERIMENTS_LOG.md.
+- Communication with Person A's session runs through the `messages` branch (one Markdown file).
+- In progress: shared SNN on reserved skill slots and the measurement code, being adapted to the new contracts.
+- NOT RUN: any DODGE episode with the ball, any SNN training on real dreams.
+
+## 2026-11-21 — Person B: first real TabPFN request
+
+- One real billed prediction through the project's teacher on fixture data shaped like one DODGE decision (experiment E7-settle). The real response has the layout the teacher parses; the charge was 10,000 tokens, equal to the free quote; the repeated call came from the cache with no second request. Account usage 50,000 of 35,000,000 tokens. Ledger: `results/tabpfn_calls.jsonl`.
+- NOT RUN: a TabPFN prediction on real simulator attempts; multi-chunk requests; verified rate limits.
+
+## 2026-11-21 — Person B: the whole chain runs on the real Go2 simulator (development skill, no ball)
+
+- Round three finished and re-run by the lead: the shared SNN on 8 reserved skill slots with a separate retention split, and the measurement code for any deployed student (both energy estimates, intervals, the H4 verdict rule, full-path latency). A check both lanes had left NOT RUN (measuring a real shared-SNN view) was added and passes.
+- `SkillSpec` gained `reset_situation` and `commands` for replay; SNN training reports each evaluation to an observer; `engine.dream.select_rows` added.
+- A no-ball development skill, `sidestep_reach`, was built and validated on the real `Go2World` (experiments/proofs/B_sidestep_dev).
+- One command now runs the chain on the real simulator with real TabPFN requests and opens the live MuJoCo window: `prototype_chain.py` (experiment B-chain). On 60 dev situations the mean sideways error was 0.080 m for the formula alone, 0.021 m for the teacher after 40 attempts and 0.026 m for the SNN trained in the teacher's dream. DEV RUN, one world, one seed; not an evaluation result.
+- TabPFN usage: 100,000 of 35,000,000 tokens.
+- In progress: `learned_judgment/pipeline.py` (built, under independent review and a real-simulator run); Person A's ball, throw model and `skills.dodge` settings.
+- NOT RUN: any DODGE episode with the ball; the shared SNN on real dreams; the oracle; any evaluation on a test or shift split.
+
 ## 2026-11-21 — Person A: hidden effects and the five world presets (Task 6, E5)
 
 - `Go2World` now applies five hidden effects, each switched in `config.yaml` `world.hidden_effects.enabled`: a payload box on the trunk (`scene.py`), the floor type's friction on the foot geoms, a slope as tilted gravity (the policy senses true gravity), motor strength scaling every torque and its limit (`policy.py`), and command latency as a delay line of whole control periods with −1/0/+1 period of jitter per attempt. With all five off an episode is bit-identical to one without them.

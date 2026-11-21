@@ -11,25 +11,27 @@ scores come from the real decide step. There is no world; episode() refuses to r
     fx_alpha  3  4          vy float x delay timing     (7, 5)        35          1000
     fx_beta   5  5          speed float                 (15,)         15          800
     fx_gamma  2  3          side categorical x yaw float (3, 6)       18          600
-    fx_delta  4  4          speed float                 (11,)         11          600   (added after load)
+    fx_delta  4  4          speed float                 (11,)         11          600   (added later)
     fx_wide   7  7          speed float                 (5,)          5           50    (too wide: refused)
-    fx_omega  2  2          speed float                 (5,)          5           50    (not a shared skill)
+
+Spec variants (for the grid guard): fx_alpha with other side-speed bounds (its action records
+change) and fx_alpha with its candidate order reversed (only the grid digest can see it).
 
 The check config is config.yaml loaded in memory with students.snn.shared_feature_width filled in
-(6, fixture value) and students.snn.shared_skills replaced by the fixture names: the real list
-names the project skills, and a fixture must not run or print under a project skill's name.
-config.yaml itself is never modified.
+(6, fixture value; config.yaml leaves it null until the project specs exist). Every other value,
+including students.snn.shared_skill_slots, is config.yaml's. config.yaml itself is never modified.
 
 Nothing computed with these fixtures is evidence about the robot, the simulator, TabPFN or any
-trained student, and none of it may enter a report or results/.
+model, and none of it may enter a report or results/.
 """
 
 from __future__ import annotations
 
 import copy
+import dataclasses
 import sys
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
@@ -45,11 +47,23 @@ from learned_judgment.engine.streams import stream_rng  # noqa: E402
 from learned_judgment.engine.types import OutcomeDistribution  # noqa: E402
 from learned_judgment.skills.base import ActionDim, Outcome, SkillSpec, Variable  # noqa: E402
 
-BANNER = "FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student"
+BANNER = "FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model"
 FIXTURE_FEATURE_WIDTH = 6  # fixture value of students.snn.shared_feature_width (widest fixture skill encodes 5)
-FIXTURE_SHARED_SKILLS = ["fx_alpha", "fx_beta", "fx_gamma", "fx_delta", "fx_wide"]
 FIXTURE_DREAM_SEED = 20261121  # fixture seed of the dreamed situations
 SEQUENCE = ("fx_alpha", "fx_beta", "fx_gamma")  # the three fixture skills added in order
+PER_ROW_FIELDS = (
+    "situations",
+    "candidates",
+    "scores",
+    "chosen",
+    "physics_choice",
+    "chosen_spread",
+    "request_group",
+    "chosen_physics",
+    "chosen_mean",
+    "chosen_median",
+    "chosen_outcome_spread",
+)
 
 
 def _float(name: str, unit: str, low: float, high: float) -> Variable:
@@ -65,6 +79,7 @@ class FixtureSharedSpec(SkillSpec):
         situation: tuple[Variable, ...],
         actions: tuple[ActionDim, ...],
         mixing_seed: int,
+        reverse_grid: bool = False,
     ) -> None:
         self.name = name
         self.description = "FIXTURE spec for shared spiking-student mechanics checks; not a project skill"
@@ -77,6 +92,7 @@ class FixtureSharedSpec(SkillSpec):
         self.primary_outcome = "fx_miss"
         self.hidden_effects = ("fixture: none; this spec never runs an episode",)
         self._mixing = np.random.default_rng(mixing_seed).normal(0.0, 1.0, size=(len(situation), len(actions)))
+        self._reverse_grid = reverse_grid
 
     @staticmethod
     def _unit(variables: tuple[Variable, ...], values: np.ndarray) -> np.ndarray:
@@ -88,6 +104,10 @@ class FixtureSharedSpec(SkillSpec):
             else:
                 columns.append(2.0 * (column - variable.low) / (variable.high - variable.low) - 1.0)
         return np.column_stack(columns)
+
+    def candidate_actions(self, situation: np.ndarray, points_per_dim: Sequence[int]) -> np.ndarray:
+        grid = super().candidate_actions(situation, points_per_dim)
+        return grid[::-1].copy() if self._reverse_grid else grid
 
     def physics_guess(self, situations: np.ndarray, actions: np.ndarray) -> np.ndarray:
         situations = np.asarray(situations, dtype=np.float64)
@@ -101,7 +121,9 @@ class FixtureSharedSpec(SkillSpec):
     def objective(self, predicted: OutcomeDistribution) -> np.ndarray:
         return -predicted.median_of("fx_miss") - 0.5 * predicted.mean_of("fx_fall")
 
-    def episode(self, world: Any, situation: Mapping[str, Any], action: Mapping[str, Any]) -> Mapping[str, float]:
+    def episode(
+        self, world: Any, situation: Mapping[str, Any], action: Mapping[str, Any], attempt_seed: int
+    ) -> Mapping[str, float]:
         raise RuntimeError("the fixture spec has no world; these checks never run episodes")
 
     def loss(self, measured: np.ndarray) -> np.ndarray:
@@ -117,9 +139,17 @@ def _speed(name: str, low: float, high: float) -> ActionDim:
     return ActionDim(name, "float", "m/s", f"fixture: {name}", low=low, high=high, role="command", command_field="fixture_vx")
 
 
-def fixture_spec(name: str, *, alpha_speed_high: float = 2.0) -> FixtureSharedSpec:
+def fixture_spec(
+    name: str,
+    *,
+    alpha_speed_high: float = 2.0,
+    alpha_vy_bounds: tuple[float, float] = (-0.6, 0.6),
+    reverse_grid: bool = False,
+) -> FixtureSharedSpec:
     """The named fixture spec (see the module table). ``alpha_speed_high`` changes fx_alpha's
-    declared speed range (used to show that a spec with another encoding is refused)."""
+    declared speed range (another situation encoding); ``alpha_vy_bounds`` changes its side-speed
+    action bounds (other action records, other grid); ``reverse_grid`` reverses the candidate
+    order of any fixture spec (same action records, other grid digest)."""
     if name == "fx_alpha":
         situation = (
             _float("fx_a_offset", "m", -1.0, 1.0),
@@ -127,10 +157,13 @@ def fixture_spec(name: str, *, alpha_speed_high: float = 2.0) -> FixtureSharedSp
             Variable("fx_a_surface", "categorical", "label", "fixture: surface", levels=("grip", "slip")),
         )
         actions = (
-            ActionDim("fx_a_vy", "float", "m/s", "fixture: side speed", low=-0.6, high=0.6, role="command", command_field="fixture_vy"),
+            ActionDim(
+                "fx_a_vy", "float", "m/s", "fixture: side speed", low=alpha_vy_bounds[0], high=alpha_vy_bounds[1],
+                role="command", command_field="fixture_vy",
+            ),
             ActionDim("fx_a_delay", "float", "s", "fixture: delay", low=0.0, high=0.4, role="timing"),
         )
-        return FixtureSharedSpec(name, situation, actions, mixing_seed=101)
+        return FixtureSharedSpec(name, situation, actions, mixing_seed=101, reverse_grid=reverse_grid)
     if name == "fx_beta":
         situation = (
             _float("fx_b_x", "m", -2.0, 2.0),
@@ -139,7 +172,7 @@ def fixture_spec(name: str, *, alpha_speed_high: float = 2.0) -> FixtureSharedSp
             _float("fx_b_vy", "m/s", -1.0, 1.0),
             _float("fx_b_slope", "deg", -5.0, 5.0),
         )
-        return FixtureSharedSpec(name, situation, (_speed("fx_b_speed", 0.0, 0.9),), mixing_seed=102)
+        return FixtureSharedSpec(name, situation, (_speed("fx_b_speed", 0.0, 0.9),), mixing_seed=102, reverse_grid=reverse_grid)
     if name == "fx_gamma":
         situation = (
             _float("fx_g_gap", "m", 0.2, 1.2),
@@ -148,20 +181,17 @@ def fixture_spec(name: str, *, alpha_speed_high: float = 2.0) -> FixtureSharedSp
         actions = (
             ActionDim(
                 "fx_g_side", "categorical", "label", "fixture: side", levels=("left", "stay", "right"),
-                role="command", command_field="fixture_side",
+                role="command", command_field="fixture_side", command_values=(0.3, 0.0, -0.3),
             ),
             ActionDim("fx_g_yaw", "float", "rad/s", "fixture: yaw rate", low=-0.5, high=0.5, role="command", command_field="fixture_yaw"),
         )
-        return FixtureSharedSpec(name, situation, actions, mixing_seed=103)
+        return FixtureSharedSpec(name, situation, actions, mixing_seed=103, reverse_grid=reverse_grid)
     if name == "fx_delta":
         situation = tuple(_float(f"fx_d_{letter}", "1", -1.0, 1.0) for letter in "pqrs")
-        return FixtureSharedSpec(name, situation, (_speed("fx_d_speed", -0.3, 0.9),), mixing_seed=104)
+        return FixtureSharedSpec(name, situation, (_speed("fx_d_speed", -0.3, 0.9),), mixing_seed=104, reverse_grid=reverse_grid)
     if name == "fx_wide":
         situation = tuple(_float(f"fx_w_{index}", "1", -1.0, 1.0) for index in range(7))
-        return FixtureSharedSpec(name, situation, (_speed("fx_w_speed", 0.0, 0.9),), mixing_seed=105)
-    if name == "fx_omega":
-        situation = (_float("fx_o_a", "1", -1.0, 1.0), _float("fx_o_b", "1", -1.0, 1.0))
-        return FixtureSharedSpec(name, situation, (_speed("fx_o_speed", 0.0, 0.9),), mixing_seed=106)
+        return FixtureSharedSpec(name, situation, (_speed("fx_w_speed", 0.0, 0.9),), mixing_seed=105, reverse_grid=reverse_grid)
     raise ValueError(f"unknown fixture spec {name!r}")
 
 
@@ -171,9 +201,8 @@ POINTS = {
     "fx_gamma": (3, 6),
     "fx_delta": (11,),
     "fx_wide": (5,),
-    "fx_omega": (5,),
 }
-N_DREAMS = {"fx_alpha": 1000, "fx_beta": 800, "fx_gamma": 600, "fx_delta": 600, "fx_wide": 50, "fx_omega": 50}
+N_DREAMS = {"fx_alpha": 1000, "fx_beta": 800, "fx_gamma": 600, "fx_delta": 600, "fx_wide": 50}
 
 
 def fixture_dreams(spec: SkillSpec, config: Mapping[str, Any], n: int | None = None) -> DreamSet:
@@ -191,11 +220,16 @@ def fixture_dreams(spec: SkillSpec, config: Mapping[str, Any], n: int | None = N
     )
 
 
+def repeated_dreams(dreams: DreamSet, times: int) -> DreamSet:
+    """FIXTURE: the dream with every row repeated ``times`` times (rows i, i + n, i + 2n, ... are
+    the same situation), as a dream assembled from overlapping batches would be."""
+    return dataclasses.replace(dreams, **{name: np.concatenate([getattr(dreams, name)] * times) for name in PER_ROW_FIELDS})
+
+
 def fixture_config(config: Mapping[str, Any]) -> dict[str, Any]:
-    """config.yaml (already loaded) with the fixture shared_feature_width and fixture skill names."""
+    """config.yaml (already loaded) with the fixture students.snn.shared_feature_width."""
     result = copy.deepcopy(dict(config))
     result["students"]["snn"]["shared_feature_width"] = FIXTURE_FEATURE_WIDTH
-    result["students"]["snn"]["shared_skills"] = list(FIXTURE_SHARED_SKILLS)
     return result
 
 
@@ -226,7 +260,7 @@ class Checks:
             function()
         except error as caught:
             message = self.clean(str(caught)).replace("\n", " ")
-            self.expect(needle in message, f"{label} -> {type(caught).__name__}: {message[:170]}")
+            self.expect(needle in message, f"{label} -> {type(caught).__name__}: {message[:190]}")
             return
         except Exception as other:  # noqa: BLE001
             self.expect(False, f"{label} raised {type(other).__name__} instead of {error.__name__}: {other}")

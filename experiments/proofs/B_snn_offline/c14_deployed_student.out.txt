@@ -1,0 +1,40 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+== SNNStudent.deployed() ==
+  [ok] deployed() returns one DeployedStudent per student (the same object each call)
+  [ok] skill, network, points_per_dim, n_candidates and digest are the student's
+  [ok] action records, grid probe and grid digest come from the stored record
+  [ok] training situation digests = optimiser + early-stopping digests
+  [ok] meta and the out_of_range policy are carried
+  [ok] encode: (n, S) -> (200, 4)
+  [ok] encode_one: (S,) -> (D,), bitwise the row of encode
+
+== SNNStudent decides through it ==
+  [ok] SNNStudent.decide_index = DeployedStudent.decide_index
+  [ok] SNNStudent.decide = DeployedStudent.decide
+  [ok] decide_index_one (student and deployed) = batched index on every situation
+  [ok] decide_one agrees
+  [ok] operation_counts agree
+  [ok] one out_of_range log for both paths: {'policy': 'error', 'decisions': 1202, 'decisions_with_clipping': 0, 'values_clipped': 0, 'per_feature': {'fx_lateral': 0, 'fx_speed': 0, 'fx_surface': 0}}
+
+== a DeployedStudent built by hand from other parts (as a shared network's view would be) ==
+  [ok] the hand-built view decides like the student
+  [ok] and maps to the same commands through the same grid checks
+  [ok] encode that does not fit the network -> ValueError: encode gives (1, 4) and encode_one (5,); the network takes 5 inputs
+  [ok] encode_one that differs from encode -> ValueError: encode_one(situation) differs from encode(situation[None, :])[0]
+  [ok] no action records -> ValueError: action_records is empty: the student's candidate grid is unknown
+  [ok] an action record without command_values -> ValueError: action record 0 must have exactly the keys ['name', 'kind', 'unit', 'low', 'high', 'levels', 'role', 'command_field', 'command_values']; got ['command_field', 'high', 'kind', 'levels', 'low', 'name', 'role', 'unit']
+  [ok] an unknown out_of_range policy -> ValueError: out_of_range must be one of ('error', 'clip'); got 'ignore'
+  [ok] n_candidates that differs from the network -> ValueError: n_candidates 34 differs from the network's 35 outputs
+  [ok] a 17-row grid probe -> ValueError: grid_probe must have shape (1..16, 3); got (17, 3)
+
+== labels, refusals and old names ==
+  [ok] in-dream numbers are stored as early-stopping rows, labelled NOT held out
+  [ok] the student's label says so too
+  [ok] old private names are aliases of the public helpers
+  [ok] learned_judgment.students.measure still imports (it uses the old names)
+  [ok] learned_judgment.students.shared_snn still imports (it uses the old names)
+  [ok] SNNStudent with a meta lacking the student record -> ValueError: meta['student'] is missing; this student cannot be checked against a spec and is refused
+  [ok] SNNStudent whose record names other points_per_dim -> ValueError: meta['student']['points_per_dim'] is [5, 7] but the student has [7, 5]
+
+CHECK RESULT: 29 assertions held, 0 failed 

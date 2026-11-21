@@ -1,7 +1,13 @@
-FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
-  learned_judgment.students.measure: imported in 5.33 s; public: ['DREAM_SOURCES', 'RECORD_FORMAT', 'agreement_with_dream', 'dream_source', 'measure_decision_latency', 'measure_operations', 'student_record', 'write_record']
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+  learned_judgment.students.measure: imported in 3.97 s; public: ['DREAM_SOURCES', 'H4_ENERGY_RULE', 'H4_ENERGY_VERDICTS', 'HeldOutOverlapError', 'RECORD_FORMAT', 'SEEN_IN_TRAINING_LABEL', 'agreement_with_dream', 'dream_source', 'h4_energy_criterion', 'measure_decision_latency', 'measure_operations', 'student_record', 'write_record']
   torch_in_sys_modules=False snntorch_in_sys_modules=False
   [ok] learned_judgment.students.measure imports (exit 0)
   [ok] learned_judgment.students.measure leaves torch and snntorch unimported
+  [ok] learned_judgment.students.measure exports ['HeldOutOverlapError', 'agreement_with_dream', 'h4_energy_criterion', 'measure_decision_latency', 'measure_operations', 'student_record', 'write_record']
+  learned_judgment.students.snn: imported in 0.81 s; public: ['ACTION_RECORD_KEYS', 'BoundStudent', 'DeployedStudent', 'GRID_PROBE_MAX_ROWS', 'GridMismatchError', 'OutOfRangeError', 'OutOfRangeLog', 'SNNStudent', 'STUDENT_KIND', 'STUDENT_RECORD_FORMAT', 'action_record', 'candidate_grid_sha256', 'check_dreams', 'check_points_per_dim', 'dream_content_sha256', 'situation_digests', 'situation_row_digests', 'split_rows_by_situation', 'student_record', 'variable_from_record', 'variable_record']
+  torch_in_sys_modules=False snntorch_in_sys_modules=False
+  [ok] learned_judgment.students.snn imports (exit 0)
+  [ok] learned_judgment.students.snn leaves torch and snntorch unimported
+  [ok] learned_judgment.students.snn exports ['BoundStudent', 'DeployedStudent']
 
-CHECK RESULT: 2 assertions held, 0 failed 
+CHECK RESULT: 6 assertions held, 0 failed 

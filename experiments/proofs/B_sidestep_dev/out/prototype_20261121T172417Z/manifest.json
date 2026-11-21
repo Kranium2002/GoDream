@@ -1,0 +1,226 @@
+{
+  "label": "DEV RUN on the real Go2 simulator (Person A's Go2World, preset default, no ball) - development check of the sidestep_reach dev skill; not an evaluation result, not in any report or table",
+  "started_utc": "2026-11-21T17:24:17.625177+00:00",
+  "finished_utc": "2026-11-21T17:27:15.111058+00:00",
+  "command": "experiments/proofs/B_sidestep_dev/prototype_chain.py",
+  "config_digest": "ff5f4cad143a645a46f0811070cc45bca3d0a8778a2e222eb168a05648e867dd",
+  "base_seed": 20261121,
+  "world_seed": 1015552365,
+  "world_seed_stream": "sidestep_reach/dev/world",
+  "world_preset": "default",
+  "skill": "sidestep_reach",
+  "n_context": 40,
+  "n_dev": 60,
+  "n_dreams": 2000,
+  "dreams_kept": 2000,
+  "confidence_threshold": null,
+  "candidate_points_per_dim": [
+    9,
+    7
+  ],
+  "exploration_stream": "sidestep_reach/context/default/exploration",
+  "runs": {
+    "context/explore": {
+      "run_id": "sidestep_reach/prototype/20261121T172417Z/context/explore",
+      "episodes": 40,
+      "wall_s": 31.894885000016075
+    },
+    "dev/physics_only": {
+      "run_id": "sidestep_reach/prototype/20261121T172417Z/dev/physics_only",
+      "episodes": 60,
+      "wall_s": 32.26870119999512
+    },
+    "dev/teacher": {
+      "run_id": "sidestep_reach/prototype/20261121T172417Z/dev/teacher",
+      "episodes": 60,
+      "wall_s": 36.7996562999906
+    },
+    "dev/snn_per_skill": {
+      "run_id": "sidestep_reach/prototype/20261121T172417Z/dev/snn_per_skill",
+      "episodes": 60,
+      "wall_s": 32.48675040001399
+    }
+  },
+  "timings_s": {
+    "teacher_dev_decisions_s": 3.7281130000192206,
+    "dream_s": 18.808567900006892,
+    "train_s": 15.047067299979972,
+    "snn_dev_decisions_s": 0.004276099993148819
+  },
+  "tabpfn": {
+    "billed_requests": 5,
+    "tokens_quoted": 50000,
+    "cache_hits": 0,
+    "usage_before": {
+      "current_usage": 50000,
+      "usage_limit": 35000000,
+      "reset_time": "2026-12-01 00:00:00 UTC",
+      "daily_tokens_used": 50000,
+      "daily_token_limit": 35000000,
+      "daily_usage": 50000,
+      "daily_limit": 35000000,
+      "daily_reset_time": "2026-11-22 00:00:00 UTC",
+      "monthly_tokens_used": 50000,
+      "monthly_token_limit": 35000000,
+      "monthly_usage": 50000,
+      "monthly_limit": 35000000,
+      "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+      "thinking_fit_count": 0,
+      "thinking_fit_limit": 0
+    },
+    "usage_after": {
+      "current_usage": 100000,
+      "usage_limit": 35000000,
+      "reset_time": "2026-12-01 00:00:00 UTC",
+      "daily_tokens_used": 100000,
+      "daily_token_limit": 35000000,
+      "daily_usage": 100000,
+      "daily_limit": 35000000,
+      "daily_reset_time": "2026-11-22 00:00:00 UTC",
+      "monthly_tokens_used": 100000,
+      "monthly_token_limit": 35000000,
+      "monthly_usage": 100000,
+      "monthly_limit": 35000000,
+      "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+      "thinking_fit_count": 0,
+      "thinking_fit_limit": 0
+    },
+    "request_hashes": [
+      "27bc3911c663c2976a5b2720433a87114c02670177eae64f918b77bdf85bc5ff",
+      "2fc38fa455b94ec4836c443e4d60a26e9d74dfea2d74f2b85ddb2861c00de7b8",
+      "ccde6d26686205c89cdad443491383e5919da14f5d05eaf560901a36544492bb",
+      "d9958d2146f692264c4a5de6dd9f6cb4186f44319ac198314d6bc73f0538e3c5",
+      "df93ad5ca6ad295d0ec2b33757e5e816f6f90203945697eb6a4847c212b5474c"
+    ]
+  },
+  "student": {
+    "digest": "b5c4ba42274d6ee73844baeb05ec0c2df4648485eaba5313e071a06c3417e18b",
+    "path": "student.npz"
+  },
+  "training_error": null,
+  "summary": {
+    "physics_only": {
+      "n": 60,
+      "mean_abs_error_m": 0.07985940486111114,
+      "mean_error_m": 0.07985940486111114,
+      "median_abs_error_m": 0.07859502481309448,
+      "max_abs_error_m": 0.15532932785333448,
+      "fall_rate": 0.0,
+      "success_rate": 0.16666666666666666
+    },
+    "teacher": {
+      "n": 60,
+      "mean_abs_error_m": 0.021010524512053562,
+      "mean_error_m": -0.008040033158267457,
+      "median_abs_error_m": 0.018576644230879624,
+      "max_abs_error_m": 0.06288897004699484,
+      "fall_rate": 0.0,
+      "success_rate": 0.95,
+      "paired_mean_abs_error_minus_physics_m": -0.058848880349057574
+    },
+    "snn_per_skill": {
+      "n": 60,
+      "mean_abs_error_m": 0.025650735347419202,
+      "mean_error_m": -0.006165085466577704,
+      "median_abs_error_m": 0.021189967801838044,
+      "max_abs_error_m": 0.09942861741878972,
+      "fall_rate": 0.0,
+      "success_rate": 0.8833333333333333,
+      "paired_mean_abs_error_minus_physics_m": -0.05420866951369192
+    }
+  },
+  "watch_index": 25,
+  "watch": {
+    "physics_only": {
+      "action": {
+        "side_velocity_m_s": -1.0,
+        "hold_duration_s": 0.30000000000000004
+      },
+      "commands": [
+        [
+          {
+            "vel_x": 0.41648065441538185,
+            "vel_y": -1.0,
+            "yaw_rate": 0.0
+          },
+          0.3
+        ],
+        [
+          {
+            "vel_x": 0.41648065441538185,
+            "vel_y": 0.0,
+            "yaw_rate": 0.0
+          },
+          1.5
+        ]
+      ],
+      "measured_sideways_error_m": 0.15532932785333448,
+      "viewer_command": [
+        "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+        "-m",
+        "app.view_episode",
+        "--seed",
+        "1015552365",
+        "--preset",
+        "default",
+        "--situation",
+        "D:\\BerlinPrior\\experiments\\proofs\\B_sidestep_dev\\out\\prototype_20261121T172417Z\\watch_situation.json",
+        "--command",
+        "0.41648065441538185,-1.0,0.0,0.3",
+        "--command",
+        "0.41648065441538185,0.0,0.0,1.5",
+        "--command",
+        "0.41648065441538185,0.0,0.0,3.0"
+      ]
+    },
+    "snn_per_skill": {
+      "action": {
+        "side_velocity_m_s": -0.75,
+        "hold_duration_s": 0.5
+      },
+      "commands": [
+        [
+          {
+            "vel_x": 0.41648065441538185,
+            "vel_y": -0.75,
+            "yaw_rate": 0.0
+          },
+          0.5
+        ],
+        [
+          {
+            "vel_x": 0.41648065441538185,
+            "vel_y": 0.0,
+            "yaw_rate": 0.0
+          },
+          1.3
+        ]
+      ],
+      "measured_sideways_error_m": 0.050145327123337635,
+      "viewer_command": [
+        "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+        "-m",
+        "app.view_episode",
+        "--seed",
+        "1015552365",
+        "--preset",
+        "default",
+        "--situation",
+        "D:\\BerlinPrior\\experiments\\proofs\\B_sidestep_dev\\out\\prototype_20261121T172417Z\\watch_situation.json",
+        "--command",
+        "0.41648065441538185,-0.75,0.0,0.5",
+        "--command",
+        "0.41648065441538185,0.0,0.0,1.3",
+        "--command",
+        "0.41648065441538185,0.0,0.0,3.0"
+      ]
+    }
+  },
+  "versions": {
+    "python": "3.13.16",
+    "numpy": "2.5.5",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.0",
+    "mujoco": "3.11.0"
+  }
+}

@@ -1,0 +1,32 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+== situation digests ==
+  [ok] 300 distinct fixture situations -> 300 distinct digests
+  [ok] situation_digests returns the set of the row digests
+  [ok] the digest depends on the values only (copies give the same digests)
+  [ok] -0.0 and 0.0 give the same digest
+  [ok] one ulp of difference gives another digest
+  [ok] digests of NaN situations -> ValueError: situations contain non-finite values (first at row 0, column 0)
+
+== split_rows_by_situation ==
+  [ok] with distinct situations the split equals the previous row permutation (same rows on each side)
+  [ok] dream with every situation twice: no situation on both sides (60 held rows, 540 training rows)
+  [ok] 30 distinct situations held -> 60 rows
+  (old row split on the same dream: 54 of 60 early-stopping rows have a training copy)
+  [ok] the old row permutation puts copies of one situation on both sides of this dream
+  [ok] one distinct situation -> ValueError: 10 rows hold 1 distinct situation(s): holding out 1 of them (fraction 0.1) leaves no training rows
+
+== training on a dream whose situations repeat ==
+  dream: 900 rows, 300 distinct situations, 810 training rows, 90 early-stopping rows; split: by distinct situation (learned_judgment.students.snn.split_rows_by_situation): rows with identical situations are all training rows or all early-stopping rows
+  [ok] no situation is both an optimiser row and an early-stopping row
+  [ok] every situation of the dream is recorded, as an optimiser or an early-stopping situation
+  [ok] meta counts 300 distinct situations; each early-stopping situation contributes its 3 copies
+  [ok] digests are stored sorted, with their definition
+  [ok] student.training_situation_digests = every situation training saw
+
+== later code can find overlapping held-out dreams ==
+  [ok] fresh dreams from another stream: no overlap
+  [ok] a subset of the training dream: every row is flagged as seen
+  [ok] a superset: exactly the 5 training rows are flagged
+
+CHECK RESULT: 19 assertions held, 0 failed 

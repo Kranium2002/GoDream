@@ -397,6 +397,164 @@ Rebound tests stated by the rules, with the implied coefficient of restitution `
 
 **Cost.** TabPFN calls: 0.
 
+## E6 (simulator half) — the ball in the Go2 scene — 2026-11-21 — Person A
+
+**Question.** On the pinned stack (mujoco 3.11.0, Unitree `go2.xml` on the flat scene), does `mj_geomDistance` exist, which geoms can a ball collide with, which contact parameters make the IHF size 3 handball bounce as its rule says, and what do the model and the saved traces give for the trunk capsule, the trotting base height and the recovery limits? Entry M established `mj_geomDistance` only on mujoco 4.0.1 and 3.17.0 with another model; the collision groups were not established.
+
+**Command.**
+
+    uv run python -m learned_judgment.env.evidence e6-sim-facts -- uv run python -X utf8 artifacts/env/research/e6_sim_facts.py
+
+**Result.** Exit code 0, `artifacts/env/20261121T170836-e6-sim-facts/stdout.txt`:
+- **Distance.** `mujoco.mj_geomDistance` exists in 3.11.0. Ball centre on the trunk's x axis 1.0 m ahead of the trunk origin: 0.718 m to the trunk box (1.0 − 0.1881 − 0.0939); 0.2 m ahead: −0.082 m (overlap is negative).
+- **Collision masks.** (group, contype, conaffinity): (0, 1, 1) the floor and the ball; (2, 0, 0) the 33 visual meshes; (3, 1, 1) the 23 collision geoms of the 13 robot bodies (3 on `base_link`, 5 per leg). A ball with contype 1 and conaffinity 1 collides with the floor and every robot collision geom, and with no visual mesh. `config.yaml` `ball.collision_masks`.
+- **Trunk capsule.** `base_link`'s collision geoms: box half sizes 0.1881 × 0.04675 × 0.057 at the origin, cylinder r 0.05 half height 0.045 at x 0.285, z 0.01, sphere r 0.047 at x 0.293, z −0.06; they span x −0.1881 to 0.3400 m. On the trunk's x axis through its origin the smallest radius that can hold them is 0.1070 m (the sphere), and with it the shortest segment is ±0.2930 m (the capsule reaches ±0.4000 m). `skills.dodge.physics.body_radius_m` 0.107, `body_half_length_m` 0.293.
+- **Base height.** Mean trunk origin height after 5 s in the Gate 1 trots: 0.3118 (0.3 m/s), 0.3248 (0.6), 0.3335 m (0.9); mean 0.3234 m. `skills.dodge.physics.base_height_m`.
+- **Recovery limits.** Largest tilt and tilt rate (horizontal part of the world-frame angular velocity) over all 13 saved commanded walking runs (Gate 1 and the command proof, whole runs): 8.859° (`yaw_rate_max`) and 2.6552 rad/s (`vel_y_max`). With a 25% margin: `robot.recovery.max_tilt_deg` 11.07, `max_tilt_rate_rad_s` 3.32. Gait period from the FL knee angle: 0.5682 s (0.3 m/s), 0.3521 s (0.6), 0.2941 s (0.9); `hold_s` 0.6 s.
+- **Bounce.** Drop from 2.0 m (ball bottom), rebound of the ball bottom, for `solref` [time constant, damping ratio]. At MuJoCo's default time constant 0.02 s the rebound jumps around as the damping ratio rises (0.686, 1.89, 1.553, 0.955 m at 0.05–0.08), so contact there is not resolved by the 0.002 s step; at 0.03 s it still rises once (1.092 → 1.122). At 0.04 s it falls steadily (1.512 at 0.05 to 0.592 m at 0.20); 0.1 gives 1.052 m, the value nearest 1.0 m, inside IHF Rule 3:2's 90–110 cm. Restitution at [0.04, 0.1] for drops of 0.5, 1, 2, 4 m: 0.770, 0.743, 0.725, 0.798 (the rule's 0.671–0.742 is for 2 m). `ball.solref` [0.04, 0.1]; `tests/env/test_ball.py::test_ball_rebounds_like_a_handball` checks 0.9–1.1 m.
+
+**Cost of the ball.** `artifacts/env/research/ball_cost.py`: eight 3 s DODGE episodes against the same episodes without a ball, alternating. The machine was heavily loaded by other agents (wall-clock real-time factor without a ball 1.3–6.1, against 7.8 in Gate 1), so the comparison uses CPU seconds of the process as well. Separation exact at every physics step against all 23 geoms (`artifacts/env/20261121T171323-ball-cost`, exit 0): CPU real-time factor median 3.660 with the ball, 5.909 without; per pair ball / no ball median 0.662. That was judged expensive, so `Go2World` now measures exactly only the robot geoms whose cheap lower bound (centre distance less both bounding radii) could beat the smallest separation so far or be within contact margin, and stops after the first contact. On the 40 dev throws of seed 11 every outcome (collision, first collision time, minimum separation, fall, recovery) is equal to the exact-every-step run (`artifacts/env/20261121T171505-ball-bound-check`, exit 0, "40 of 40"). With it (`artifacts/env/20261121T171710-ball-cost-bound`, exit 0): CPU real-time factor median 3.766 with the ball, 4.936 without; per pair median 0.756. The per-step ball check alone took 60–95 µs, 12–16% of the step's CPU time, in a separate profile on the same loaded machine.
+
+**Limitations.**
+- The drop test is ball on floor only; how the restitution maps to ball-on-robot contacts is not measured. Rolling friction is not modelled (`condim` 3).
+- The cost numbers come from a machine shared with other simulations; they show the order of the cost, not a stable value.
+- The capsule covers the trunk only; legs and the gait's vertical bob are outside it.
+
+**Versions.** mujoco 3.11.0, efferent 0.5.0, onnxruntime 1.32.0, numpy 2.5.5, Python 3.13.18, Windows-10-10.0.19045-SP0 (recorder `run.json`). Git `197f6a5`, dirty (the Task 5 code was not yet committed).
+
+**Cost.** TabPFN calls: 0.
+
+## E6 — throw protocol and DODGE measurements — 2026-11-21 — Person A
+
+**Question.** Does the physical ball give DODGE episodes with both hits and misses, measured on the real Go2 simulator and walking policy, and what situation ranges does the throw protocol produce?
+
+**Protocol.** `learned_judgment/env/throws.py`, `sample_dodge_situations(config, rng, n)`; ranges in `config.yaml` `ball`. Per throw: the dog's forward speed, the release point's horizontal distance and bearing from the trunk origin and its height above it, the ball's horizontal speed and an aim error along the dog's y, each uniform. The thrower aims at trunk-origin height where a dog keeping its commanded speed will be; the ball is placed in flight at the decision instant (`Go2World.reset`). Pass criterion (the brief, before any run): on dev seeds, 30–70% of throws hit a dog that holds its initial command (`calibrate_throws`, 3.0 s episodes).
+
+**Calibration (dev seeds 11, 12, 13, 40 throws each).**
+
+| Run | Change | Hit rate per seed | All 120 | Recorder |
+|---|---|---|---|---|
+| 1 | starting ranges, aim error ±0.5 m | 0.725 / 0.550 / 0.550 | 0.608 | `artifacts/env/20261121T165323-dodge-calibration-1` |
+| 2 | aim error ±0.7 m (`DECISIONS.md`) | 0.425 / 0.375 / 0.425 | 0.408 | `artifacts/env/20261121T170357-dodge-calibration-2` |
+
+Both exit 0; each throw and its outcome in `artifacts/env/dodge-calibration/<run>/seed<k>/throws.json`. Run 2 is final. In it: no fall, no unstable simulation, no throw left the recovery limits (every `recovery_time_s` 0.0); first contacts at 0.692–1.266 s; ball flights to the aim point 0.604–1.303 s; misses passed 0.0079–0.4485 m from the robot (median 0.1307 m).
+
+**Published ranges.** `skills.dodge.situation_ranges` from 100,000 throws of the final protocol, widened by 2% of each span per side and rounded outward (`artifacts/env/20261121T171139-dodge-situation-ranges`, exit 0): `ball_rel_x_m` [1.69, 5.07], `ball_rel_y_m` [−4.49, 4.5], `ball_rel_z_m` [0.58, 1.22], `ball_vel_x_m_s` [−4.89, −0.68], `ball_vel_y_m_s` [−4.75, 4.73], `ball_vel_z_m_s` [0.68, 7.38], `dog_forward_speed_m_s` [0.28, 0.92].
+
+**Tests.** `uv run python -m learned_judgment.env.evidence dodge -- uv run pytest tests/env/test_ball.py -v`: exit 0, 13 passed (`artifacts/env/20261121T171926-dodge`). A centre throw hits a standing dog (separation 0, contact after the start); a throw 1.5 m wide misses with separation above 0, bounces on the floor and leaves recovery at 0.0; the ball's path in the first 0.1 s does not depend on the command; seed 11's 40 throws hit at 0.425; of its first 10 hits, at least one is avoided by one of the 8 commands at the ends of the command ranges; the ball keys are in the decision instant's heading frame; partial ball keys raise; an episode without ball keys has no ball body; the ball scene keeps the robot's indices and spawn; the dog's state with and without a far ball agrees within 1e-4 (not bit for bit, `DECISIONS.md`); the ball rebounds 90–110 cm from 2 m. Pure functions (`tests/env/test_dodge_functions.py`): sampler output and key order, n at once equals n single draws, flights of 0.6–1.6 s aimed where the dog will be, an independent sample inside the published ranges, the recovery measure.
+
+**Saved episode for Person B.** `artifacts/env/dodge-example/` (`episode.npz` trace, `episode.json` with situation, action, commands and outcome), made by `save_dodge_example(config, seed=11, side_speed=1.0, start_delay_s=0.2, hold_s=0.6)` (`artifacts/env/20261121T171908-dodge-example`, exit 0). The action is fixed in advance, not chosen from the outcome: seed 11's first throw comes from the front left, the dog steps left into it and is hit at 0.872 s, no fall, recovery 0.0.
+
+**Limitations.**
+- No hit in 240 dev throws knocked the dog outside the normal walking envelope, so `recovery_time_s` was 0.0 throughout; the recovery measure is exercised by its unit test, not yet by a real disturbance.
+- The thrower aims with the commanded forward speed; the dog trots slower at 0.3 m/s (Gate 1), so slow-dog throws land slightly ahead of it.
+- Three dev seeds; the hit rate of other seeds varies by a few throws in 40.
+
+**Versions.** As E6 (simulator half). Git `197f6a5`, dirty.
+
+**Cost.** TabPFN calls: 0.
+
+## DODGE step response while trotting — 2026-11-21 — Person A
+
+**Question.** How fast does the dog move sideways after a `vel_y` step while it trots forward, and does any `vel_x` and `vel_y` combination make it fall? (Promised to Person B, whose physics guess models the step as 0.05 s of delay and a first-order rise with time constant 0.3 s.)
+
+**Command.** Through `Go2World`: reset trotting at 0.3, 0.6 and 0.9 m/s (`world.settle_s` 2.0 s), then `vel_x` unchanged, `vel_y` +1, −1, +0.5, −0.5 and 0 (a baseline), `yaw_rate` 0, for 2 s, observed at 50 Hz.
+
+    uv run python -m learned_judgment.env.evidence dodge-step-response -- uv run python -X utf8 -c "from learned_judgment.env import load_config; from learned_judgment.env.calibrate import step_response; step_response(load_config(), [0.3, 0.6, 0.9], [1.0, -1.0, 0.5, -0.5, 0.0], 2.0, 'artifacts/env/dodge-step-response')"
+
+**Result.** Exit code 0, `artifacts/env/20261121T170732-dodge-step-response`; traces and `summary.json` in `artifacts/env/dodge-step-response/`. No fall in any of the 15 runs, and none left the recovery limits. Sideways displacement in the decision instant's heading frame (single sample) and sideways speed in the current heading frame (mean of the 5 samples within 0.04 s); yaw rate at each time is in `summary.json`:
+
+| vel_x | vel_y | displacement at 0.2 / 0.4 / 0.6 / 1.0 s (m) | sideways speed at 0.2 / 0.4 / 0.6 / 1.0 s (m/s) | mean yaw rate over 2 s (rad/s) |
+|---|---|---|---|---|
+| 0.3 | +1.0 | 0.079 / 0.220 / 0.377 / 0.742 | 0.573 / 0.746 / 0.828 / 0.959 | 0.272 |
+| 0.3 | −1.0 | −0.060 / −0.185 / −0.352 / −0.743 | −0.487 / −0.719 / −0.887 / −1.013 | −0.093 |
+| 0.3 | +0.5 | 0.062 / 0.137 / 0.219 / 0.414 | 0.373 / 0.410 / 0.439 / 0.428 | 0.220 |
+| 0.3 | −0.5 | −0.042 / −0.116 / −0.196 / −0.373 | −0.347 / −0.413 / −0.412 / −0.450 | −0.037 |
+| 0.3 | 0 | 0.009 / 0.004 / 0.009 / 0.014 | −0.005 / −0.027 / 0.089 / −0.046 | 0.104 |
+| 0.6 | +1.0 | 0.074 / 0.219 / 0.396 / 0.768 | 0.573 / 0.773 / 0.878 / 0.826 | 0.255 |
+| 0.6 | −1.0 | −0.059 / −0.170 / −0.329 / −0.729 | −0.432 / −0.603 / −0.853 / −0.887 | −0.117 |
+| 0.6 | +0.5 | 0.050 / 0.137 / 0.234 / 0.444 | 0.350 / 0.444 / 0.442 / 0.446 | 0.212 |
+| 0.6 | −0.5 | −0.036 / −0.120 / −0.214 / −0.399 | −0.295 / −0.474 / −0.447 / −0.389 | −0.037 |
+| 0.6 | 0 | 0.005 / 0.013 / 0.017 / 0.035 | −0.006 / 0.047 / 0.011 / 0.030 | 0.064 |
+| 0.9 | +1.0 | 0.057 / 0.173 / 0.332 / 0.714 | 0.412 / 0.618 / 0.796 / 0.846 | 0.244 |
+| 0.9 | −1.0 | −0.057 / −0.176 / −0.343 / −0.761 | −0.401 / −0.636 / −0.834 / −1.004 | −0.122 |
+| 0.9 | +0.5 | 0.041 / 0.114 / 0.194 / 0.382 | 0.308 / 0.360 / 0.345 / 0.392 | 0.174 |
+| 0.9 | −0.5 | −0.043 / −0.136 / −0.230 / −0.425 | −0.327 / −0.480 / −0.442 / −0.422 | −0.032 |
+| 0.9 | 0 | −0.003 / −0.002 / 0.002 / 0.016 | −0.029 / 0.003 / 0.004 / 0.006 | 0.061 |
+
+**Against Person B's model.** `artifacts/env/research/step_fit.py` (`artifacts/env/20261121T172251-dodge-step-fit`, exit 0) compares the displacement minus the `vel_y` 0 run, per m/s commanded, over the first 1.0 s of the 12 runs. Measured per m/s: 0.054–0.107 m at 0.2 s, 0.174–0.268 at 0.4, 0.330–0.464 at 0.6, 0.698–0.883 at 1.0. The 0.05 s / 0.3 s model gives 0.032, 0.143, 0.298, 0.663: it predicts less travel than every run at every one of these times (rms error 0.092 m per m/s). The least-squares fit over all 12 runs is no delay and a time constant of 0.222 s (rms 0.039 m per m/s; 0.068, 0.215, 0.393, 0.781).
+
+**Observed beyond the question.** A left step turns the dog left (mean yaw rate 0.17–0.27 rad/s, against 0.06–0.10 at `vel_y` 0); a right step nearly cancels the usual anticlockwise drift (−0.03 to −0.12 rad/s). Half commands reach 0.35–0.48 m/s sideways, close to or above the command; full commands 0.83–1.01 m/s by 1.0 s.
+
+**Limitations.** One run per condition, seed 20261121, attempt seed 0; single displacement samples include the gait's oscillation; flat floor, no hidden effects. The fit is a two-parameter summary, not a model of the yaw coupling or the left/right difference.
+
+**Versions.** As E6 (simulator half); `config_sha256` 2aaac75b…ca362 (before the final aim error and situation ranges, which a run without a ball does not read).
+
+**Cost.** TabPFN calls: 0.
+
+## B-contact — first run of Person B's command sequence on the real Go2World (dev, no ball) — 2026-11-21 — Person B
+
+- Question: does the command sequence the DODGE SkillSpec sends run on Person A's `Go2World`, and how far is the dog-motion part of the DODGE physics guess from the dog's measured sideways travel?
+- Status: DEV RUN on the real simulator. It informs the formula's constants and checks the interface. It is not an evaluation result and enters no report or table.
+- Versions: `person-b` at `3c55be3` with `person-a/go2-env` merged at `8084642`; mujoco 3.11.0, efferent 0.5.0, onnxruntime 1.32.0, Python 3.13.16. Walking policy and model as pinned in `config.yaml`.
+- Config and seeds: config digest `dc09cf80bcc6`; preset `default`; world seed 3157987105 (stream `dodge/dev/sidestep_contact/world` under `runtime.seed` 20261121); attempt seeds 0 to 12; one world reused for all episodes.
+- Command: `.venv\Scripts\python.exe experiments\proofs\B_go2world_contact\sidestep_dev_run.py`, exit code 0. Output: `experiments/proofs/B_go2world_contact/sidestep_dev_run.out.txt`. Traces went to a temporary directory and were not kept.
+- Protocol: 13 episodes. Each: `reset({"dog_forward_speed_m_s": v}, attempt_seed)`, trot 0.20 s, sideways command for 0.60 s, trot 1.00 s, `finish_episode()`. Forward 0.3, 0.6 and 0.9 m/s; sideways +1, -1, +0.5 and -0.5 m/s; one episode with no sideways command at 0.6 m/s.
+- Measured (sideways travel of the trunk in the dog's heading frame at the decision instant, + is left):
+  - Interface: every episode accepted the three commands and stayed stable; no falls in 13 episodes; the world reported declared payload 0.0 kg and surface `default`. About 0.8 s of wall time per episode.
+  - At the end of the hold, full command: 0.30 to 0.34 m left and 0.29 to 0.32 m right, against 0.298 m from the formula.
+  - At the end of the hold, half command: 0.20 to 0.23 m, against 0.149 m from the formula. The dog moves more than half as far at half the command.
+  - At the end of the episode, full command: 0.45 to 0.63 m left and 0.36 to 0.47 m right, against 0.589 m from the formula. Right dodges fall short of left ones.
+  - Heading change over the episode: 11 to 17 degrees for left dodges, 2 to 6 degrees for right dodges, 6.8 degrees with no sideways command (which also drifted 0.09 m left).
+  - Measured over formula at the end of the episode: 0.61 to 1.39, median 0.80.
+- TabPFN calls: 0.
+- Limitations: one world, one seed, one delay and hold; single episodes per case; no ball; the formula constants (delay 0.05 s, time constant 0.3 s) were starting values taken from Person A's standstill traces and were not changed here.
+- Decision: the interface works as agreed. The formula is the right size for full commands during the hold and misses the half-command response, the left/right difference and the turning. Those are left to the residual model, as designed; the constants stay as they are until Person A's step-response traces exist.
+
+## E7-settle — first real TabPFN prediction through the project's teacher — 2026-11-21 — Person B
+
+- Question: does the provider's real response have the layout the teacher parses, is the charge equal to the free quote, and is a repeated identical call answered from the cache without a second request? The offline checks could not answer these.
+- Status: CONTRACT PROOF on fixture data. One real billed request. The predicted numbers are not evidence about the robot, the simulator or the quality of any model.
+- Versions: tabpfn-client 0.10.1; model `v3.5_default`, 8 estimators, random state 0; `engine.multi_outcome_mode: stacked`. Config digest `dc09cf80bcc6`.
+- Data: a fixture shaped like one DODGE decision. 40 context rows, 17 feature columns (one categorical with 2 levels), 5 outcomes (3 regression, 2 binary), 108 candidate rows for one situation. Generated from `numpy.random.default_rng(20261121)`; residual = a smooth function of two action columns plus noise of standard deviation 0.02.
+- Command: `.venv\Scripts\python.exe experiments\proofs\E7_tabpfn_contract\p6_first_real_request.py`, exit code 0. Output: `experiments/proofs/E7_tabpfn_contract/p6_first_real_request.txt`. Ledger: `results/tabpfn_calls.jsonl` (3 lines: dispatch, completed, cache hit). Cache entry: `.cache/tabpfn/416a06c4….npz` (git-ignored).
+- Before the request: account usage 40,000 of 35,000,000 tokens; quote 10,000 tokens for the stacked request (200 training rows, 540 query rows, 18 columns). The teacher's gate read both before dispatch.
+- Measured:
+  - One request, answered in 2.98 s. Request hash `416a06c40ddd…`.
+  - Layout: mean and median (108, 5), quantiles (108, 5, 5) at levels 0.1, 0.25, 0.5, 0.75, 0.9, spread (108, 5); all finite; quantiles do not decrease with the level; the 0.5 quantile equals the median exactly.
+  - Charge: the account's `current_usage`, `daily_tokens_used` and `monthly_tokens_used` each rose by 10,000, equal to the quote. Usage after: 50,000.
+  - The same call again: answered from the cache in 0.010 s, bit-for-bit the same arrays, no second request, account counters unchanged.
+  - The account reports `usage_limit`, `daily_token_limit` and `monthly_token_limit` of 35,000,000 each.
+  - On this fixture the predicted mean correlated 0.92 to 0.99 with the fixture's noise-free residual per outcome (printed for information; not a result).
+- TabPFN calls: 1 billed (10,000 tokens). Project ledger total: 10,000 tokens.
+- Limitations: one request, one shape, fixture data. Rate limits per minute and per hour are still not verified (`tabpfn.verified_request_limit_per_minute` and `_per_hour` stay null). Multi-chunk requests (more than 32,000 query rows) have not been sent for real.
+- Decision: the teacher's request path is confirmed against the real service for the DODGE shape. No code change was needed.
+
+## B-chain — the whole learning chain on the real Go2 simulator, no-ball development skill — 2026-11-21 — Person B
+
+- Question: does the chain (real attempts, TabPFN residual teacher, dream, SNN trained in the dream, decisions measured on the simulator) run end to end on Person A's `Go2World` with real TabPFN requests, before the simulated ball exists?
+- Status: DEV RUN on the real simulator with the development skill `sidestep_reach` ("reach a given sideways displacement"; it isolates the dog-motion half of the DODGE physics guess; decision of 2026-11-21). One world, one seed. These are development measurements. They are not evaluation results and enter no report or table. No DODGE episode was run: the ball does not exist yet.
+- Versions: `person-b` at `a113afb` plus the working tree committed with this entry; mujoco 3.11.0, tabpfn-client 0.10.1 (model `v3.5_default`, 8 estimators), torch 2.15.0+cpu, snntorch 1.0.0, Python 3.13. `Go2World` has no hidden effects yet, so the gap between formula and simulator is the walking policy's own response.
+- Config and seeds: config digest `ff5f4cad143a`; `runtime.seed` 20261121; world seed 1015552365 (stream `sidestep_reach/dev/world`); preset `default`; situations and attempt seeds from the `context` and `dev` splits of `learned_judgment.eval.splits`; settings under `dev_checks.sidestep_reach`, `engine`, `tabpfn`, `students.snn`.
+- Command: `.venv\Scripts\python.exe experiments\proofs\B_sidestep_dev\prototype_chain.py`, exit code 0. Output: `experiments/proofs/B_sidestep_dev/prototype_chain.out.txt`; artifacts in `experiments/proofs/B_sidestep_dev/out/prototype_20261121T172417Z/` (attempt rows, dream header, student record, table, manifest; the `.npz` arrays are git-ignored).
+- Protocol: 40 real context attempts with exploration actions; the teacher fitted on them; 2000 situations dreamed by the teacher (63 candidates each); a spiking network (one hidden layer of 64, 10 time steps) trained in that dream; then physics only, the teacher and the SNN each decided the same 60 dev situations, and every decision was run on the simulator with the same attempt seeds (180 episodes).
+- Measured (sideways error = measured sideways travel at the end of the episode minus the target):
+
+  | Method | n | Mean abs error (m) | Median (m) | Max (m) | Falls | Within 0.05 m |
+  |---|---|---|---|---|---|---|
+  | physics_only | 60 | 0.0799 | 0.0786 | 0.1553 | 0.00 | 0.17 |
+  | teacher | 60 | 0.0210 | 0.0186 | 0.0629 | 0.00 | 0.95 |
+  | snn_per_skill | 60 | 0.0257 | 0.0212 | 0.0994 | 0.00 | 0.88 |
+
+  - Paired with physics only on the same situation and attempt seed: the teacher was closer in 56 of 60 situations (mean difference -0.0588 m), the SNN in 54 of 60 (-0.0542 m).
+  - The SNN chose the teacher's action in 45 of the 60 dev situations.
+  - Residual of the 40 context attempts (measured minus formula): mean +0.0790 m, standard deviation 0.0351 m.
+  - Time: 40 attempts 31.9 s; teacher decisions for 60 dev situations 3.7 s; 2000 dreams 18.8 s; SNN training 15.0 s (1500 steps, validation loss 1.1309 to 0.0010); the SNN decided the 60 dev situations in 4.3 ms; dev episodes 0.54 to 0.61 s each.
+- Earlier the same day, with local residual models in place of the teacher (`c3_baselines_real.py`, same skill, 60 dev situations): constant bias 0.0259 m, Gaussian process 0.0258 m, gradient boosting 0.0288 m, against 0.0799 m for physics only.
+- TabPFN calls: 5 billed requests, 50,000 tokens quoted. Account usage 100,000 of 35,000,000 tokens after the run.
+- Limitations: one world and one seed, no intervals, 1 repeat per situation; no hidden effects in the world yet; a development skill, not one of the project's skills; no confidence threshold was set, so every dream was kept; the constant-bias baseline does about as well as the teacher here, because the formula's error on this skill is mostly one offset, so this run does not show that TabPFN is needed, only that the chain works and that 40 attempts remove most of the formula's error.
+- Decision: the chain is ready for DODGE. The next run is the same chain on DODGE once Person A's ball, throw model and `skills.dodge` settings land.
+
 ## E5 — hidden effects and world presets — 2026-11-21 — Person A
 
 **Question.** Do the five hidden effects of MISSION.md (payload, floor friction, slope, motor strength, command latency) each change the simulated Go2 on their own, switch off without a trace and stay out of what Person B sees, and do the five presets load and stand?

@@ -23,3 +23,6 @@ experiments/proofs/E7_provider_terms/text/
 experiments/proofs/**/*.npz
 experiments/proofs/**/*.pt
 experiments/proofs/**/*.lock
+
+# MuJoCo writes this into the working directory when a simulation goes unstable.
+MUJOCO_LOG.TXT

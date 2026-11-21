@@ -2,49 +2,60 @@
 
 Lane contract (Person B, evaluation)
 ------------------------------------
-:func:`evaluate_actions` runs ONE ACTUAL episode per (situation, action) through
-``spec.episode(world, situation, action)`` on a fresh world from ``world_factory(seed)``,
-where ``seed`` is the per-episode noise seed shared by every method
-(:func:`learned_judgment.eval.splits.noise_seed`). Each measured episode is appended at once
-to a JSON Lines attempt file as a ``source="real"``
-:class:`~learned_judgment.engine.rows.AttemptRow` (canonical line from
-``AttemptRow.to_json_line``; the row's ``seed`` is the seed the world was built with), so a
-crash loses nothing already measured. The measured outcome comes only from
-``spec.episode``; nothing here derives an outcome from the intended action.
+Two levels of seed (DECISIONS.md, "Two levels of seed"): Person A's
+``Go2World(config, world_seed, preset)`` fixes the hidden world for the life of the object,
+and ``world.reset(situation, attempt_seed)`` fixes one episode's noise.
 
-:func:`compare_methods` asks every method for its actions on the SAME situations, then runs
-every method on the SAME noise seeds, and returns per-method per-episode losses
-(``spec.loss``) shaped for :mod:`learned_judgment.eval.bootstrap`.
+:func:`evaluate_actions` runs ONE ACTUAL episode per (situation, action) in ONE given world,
+through ``spec.episode(world, situation, action, attempt_seed)``, where ``attempt_seed`` is
+the per-episode seed shared by every method (:func:`learned_judgment.eval.splits.noise_seed`).
+:func:`compare_methods` builds a FRESH world ``world_factory(world_seed)`` for each method,
+so every method faces the same hidden world and, episode by episode, the same attempt seed.
+
+Each measured episode is appended at once to a JSON Lines attempt file as a
+``source="real"`` :class:`~learned_judgment.engine.rows.AttemptRow` (the row's ``seed`` is
+the attempt seed), so a crash loses nothing already measured. The measured outcome comes
+only from ``spec.episode``; nothing here derives an outcome from the intended action.
+
+Before any world is built or stepped (and before any policy is asked for actions), every
+function that runs episodes checks the spec's command dimensions against the verified
+command schema (:func:`learned_judgment.skills.base.check_command_binding`) and validates
+every input: situations, actions, the world seed, the attempt seeds (non-negative, distinct
+within a run, since ``(run id, attempt seed)`` names one attempt), the run fields and the
+clock's format.
 
 Run files (review finding: a rerun appended to the old attempt file)
     A run never touches an existing file: it refuses to start (FileExistsError) when its
     attempt file or its manifest already exists. Before the first episode it writes a
     manifest next to the attempt file (:func:`manifest_path`, ``<stem>.manifest.json``)::
 
-        format          "learned_judgment.run_manifest/v1"
+        format          "learned_judgment.run_manifest/v2"
         run_id          the run id given to the call; row_run_id: the run_id stamped on rows
         method, skill, split, world_preset, base_seed, config_digest (sha256 hex of config.yaml)
+        world_seed      the seed the run's world was built from (the hidden world)
         n_situations, n_repeats
-        episodes        ordered [situation_index, repeat, seed] -- row k of the attempt file
-                        is episode k (rows themselves carry no split, repeat or index)
+        episodes        ordered [situation_index, repeat, attempt_seed] -- row k of the attempt
+                        file is episode k (rows themselves carry no split, repeat or index)
         attempt_file    file name of the attempt file, in the manifest's directory
         started_utc     clock() before the first episode
         completed       false until the last episode is written and read back, then true
         finished_utc    null, then clock() after the last episode
 
     After the last episode the attempt file is read back and checked against the planned
-    episodes (count, order of seeds, row run id), and only then is the manifest rewritten
-    with ``completed: true``. A crashed run keeps ``completed: false``; run-result files
-    (:mod:`learned_judgment.eval.report`) may only be written from completed manifests.
+    episodes (count, order of attempt seeds, row run id, physics of the current spec), and
+    only then is the manifest rewritten with ``completed: true``. A crashed run keeps
+    ``completed: false``; run-result files (:mod:`learned_judgment.eval.report`) may only be
+    written from completed manifests. A ``v1`` manifest (one fresh world per episode, built
+    from the episode seed) is refused by :func:`read_manifest`.
 
 :func:`measure_latency` times a decision function with ``time.perf_counter_ns``.
 
-Never call these with a stand-in world: the only valid ``world_factory`` builds Person A's
-Go2World. Episodes run sequentially in one process (single writer per attempt file);
-parallel episodes are out of scope until seed parity is verified on the real simulator.
+Never call these with a stand-in world: the only valid world (and ``world_factory``) is
+Person A's Go2World. Episodes run sequentially in one process (single writer per attempt
+file); parallel episodes are out of scope until seed parity is verified on the real simulator.
 
 Arrays: situations (n, S), actions (n, A), measured (n, K) / (n, R, K), losses (n, R),
-noise seeds int (n,) / (n, R); float64 unless stated.
+attempt seeds int (n,) / (n, R); float64 unless stated.
 """
 
 from __future__ import annotations
@@ -61,10 +72,17 @@ from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
-from learned_judgment.engine.rows import AttemptRow, append_rows, build_real_row, read_rows, rows_to_arrays
+from learned_judgment.engine.rows import (
+    AttemptRow,
+    append_rows,
+    build_real_row,
+    check_new_attempts,
+    read_rows,
+    rows_to_arrays,
+)
 from learned_judgment.eval.splits import SPLITS
 from learned_judgment.fileio import atomic_write_text
-from learned_judgment.skills.base import SkillSpec, World
+from learned_judgment.skills.base import CommandSchema, SkillSpec, World, check_command_binding
 
 __all__ = [
     "MANIFEST_FORMAT",
@@ -76,7 +94,14 @@ __all__ = [
     "read_manifest",
 ]
 
-MANIFEST_FORMAT = "learned_judgment.run_manifest/v1"
+MANIFEST_FORMAT = "learned_judgment.run_manifest/v2"
+# Earlier manifest formats read_manifest refuses, with the reason.
+_RETIRED_MANIFESTS = {
+    "learned_judgment.run_manifest/v1": (
+        "its episodes each ran in a fresh world built from the episode seed, so the hidden world changed "
+        "from episode to episode and no world seed was recorded; rerun with the two-level seed harness"
+    ),
+}
 _ATTEMPT_SUFFIX = ".jsonl"
 _MANIFEST_SUFFIX = ".manifest.json"
 _MANIFEST_KEYS = frozenset(
@@ -90,6 +115,7 @@ _MANIFEST_KEYS = frozenset(
         "world_preset",
         "base_seed",
         "config_digest",
+        "world_seed",
         "n_situations",
         "n_repeats",
         "episodes",
@@ -101,6 +127,7 @@ _MANIFEST_KEYS = frozenset(
 )
 _NAME = re.compile(r"^[A-Za-z0-9_.-]+$")
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
+_INT64_MAX = int(np.iinfo(np.int64).max)
 # Definition of "p95" (03_METRICS.md) and its estimator (numpy type 7).
 _P95 = 0.95
 _QUANTILE_METHOD = "linear"
@@ -151,6 +178,14 @@ def _check_utc(label: str, value: Any) -> str:
     return value
 
 
+def _check_schema(spec: SkillSpec, command_schema: Any) -> None:
+    if not isinstance(command_schema, CommandSchema):
+        raise TypeError(
+            f"command_schema must be the verified CommandSchema (CommandSchema.from_config); got {type(command_schema).__name__}"
+        )
+    check_command_binding(spec, command_schema)
+
+
 def _check_situations(spec: SkillSpec, situations: Any) -> np.ndarray:
     array = np.asarray(situations, dtype=np.float64)
     if array.ndim != 2 or array.shape[1] != spec.n_situation or array.shape[0] < 1:
@@ -173,12 +208,23 @@ def _check_actions(spec: SkillSpec, actions: Any, n: int, label: str) -> np.ndar
     return array
 
 
-def _check_seeds(seeds: Any, shape: tuple[int, ...]) -> np.ndarray:
+def _check_attempt_seeds(seeds: Any, shape: tuple[int, ...]) -> np.ndarray:
+    """int64 array of ``shape``: every attempt seed >= 0 and distinct within the run."""
     array = np.asarray(seeds)
     if array.shape != shape or not np.issubdtype(array.dtype, np.integer):
-        raise ValueError(f"noise_seeds must be an integer array of shape {shape}; got {array.dtype} {array.shape}")
+        raise ValueError(f"attempt_seeds must be an integer array of shape {shape}; got {array.dtype} {array.shape}")
     if np.any(array < 0):
-        raise ValueError("noise_seeds must be non-negative")
+        raise ValueError("attempt_seeds must be non-negative")
+    if array.size and int(array.max()) > _INT64_MAX:
+        raise ValueError(f"attempt_seeds must fit in int64; got {int(array.max())}")
+    flat = array.astype(np.int64).reshape(-1)
+    values, counts = np.unique(flat, return_counts=True)
+    if np.any(counts > 1):
+        repeated = values[counts > 1][:5].tolist()
+        raise ValueError(
+            f"attempt_seeds repeat {repeated}: within one run every episode needs its own attempt seed, "
+            "since (run id, attempt seed) names one attempt"
+        )
     return array.astype(np.int64)
 
 
@@ -231,8 +277,9 @@ def read_manifest(path: str | Path) -> dict[str, Any]:
     """Read and validate a run manifest written by this module; returns its fields as a dict.
 
     Raises ValueError for anything that is not a well-formed manifest (format tag, exact key
-    set, types, episode list of n_situations x n_repeats entries, completed/finished_utc
-    consistency). It does not open the attempt file.
+    set, types, world seed, episode list of n_situations x n_repeats entries with distinct
+    attempt seeds, completed/finished_utc consistency), and names the reason for a manifest
+    of a retired format (``v1``). It does not open the attempt file.
     """
     path = Path(path)
     try:
@@ -241,7 +288,10 @@ def read_manifest(path: str | Path) -> dict[str, Any]:
         )
     except (ValueError, UnicodeDecodeError) as error:
         raise ValueError(f"{path} is not a run manifest: {error}") from error
-    if not isinstance(record, dict) or record.get("format") != MANIFEST_FORMAT:
+    found = record.get("format") if isinstance(record, dict) else None
+    if isinstance(found, str) and found in _RETIRED_MANIFESTS:
+        raise ValueError(f"{path} is a {found} manifest, which is no longer read: {_RETIRED_MANIFESTS[found]}")
+    if found != MANIFEST_FORMAT:
         raise ValueError(f"{path} is not a run manifest (format tag {MANIFEST_FORMAT!r} missing)")
     if set(record) != _MANIFEST_KEYS:
         raise ValueError(
@@ -254,6 +304,7 @@ def read_manifest(path: str | Path) -> dict[str, Any]:
     _check_name(f"{where}: method", record["method"])
     _check_split(record["split"])
     _check_int(f"{where}: base_seed", record["base_seed"], 0)
+    _check_int(f"{where}: world_seed", record["world_seed"], 0)
     _check_digest(record["config_digest"])
     n_situations = _check_int(f"{where}: n_situations", record["n_situations"], 1)
     n_repeats = _check_int(f"{where}: n_repeats", record["n_repeats"], 1)
@@ -262,13 +313,15 @@ def read_manifest(path: str | Path) -> dict[str, Any]:
         raise ValueError(f"{where}: episodes must be a non-empty list")
     for position, episode in enumerate(episodes):
         if not isinstance(episode, list) or len(episode) != 3:
-            raise ValueError(f"{where}: episodes[{position}] must be [situation_index, repeat, seed]")
-        for label, value in zip(("situation_index", "repeat", "seed"), episode):
+            raise ValueError(f"{where}: episodes[{position}] must be [situation_index, repeat, attempt_seed]")
+        for label, value in zip(("situation_index", "repeat", "attempt_seed"), episode):
             _check_int(f"{where}: episodes[{position}].{label}", value, 0)
         if episode[0] >= n_situations:
             raise ValueError(f"{where}: episodes[{position}] situation index {episode[0]} >= n_situations")
     if len(episodes) != n_situations * n_repeats or len({(e[0], e[1]) for e in episodes}) != len(episodes):
         raise ValueError(f"{where}: episodes must list each (situation, repeat) once: {n_situations} x {n_repeats}")
+    if len({e[2] for e in episodes}) != len(episodes):
+        raise ValueError(f"{where}: episodes repeat an attempt seed; each episode of a run has its own")
     if Path(record["attempt_file"]).name != record["attempt_file"]:
         raise ValueError(f"{where}: attempt_file must be a bare file name in the manifest's directory")
     _check_utc(f"{where}: started_utc", record["started_utc"])
@@ -288,7 +341,7 @@ def read_manifest(path: str | Path) -> dict[str, Any]:
 
 def _run_plan(
     spec: SkillSpec,
-    world_factory: Callable[[int], World],
+    world: World,
     situations: np.ndarray,
     actions: np.ndarray,
     plan: Sequence[tuple[int, int, int]],
@@ -297,10 +350,11 @@ def _run_plan(
     manifest: dict[str, Any],
     clock: Callable[[], str],
 ) -> np.ndarray:
-    """Write the manifest, run every planned episode in order, verify, complete the manifest.
+    """Write the manifest, run every planned episode in ``world`` in order, verify, complete
+    the manifest.
 
-    plan: ordered (situation_index, repeat, seed); returns measured (len(plan), K) read back
-    from the attempt file in plan order.
+    plan: ordered (situation_index, repeat, attempt_seed); returns measured (len(plan), K)
+    read back from the attempt file in plan order.
     """
     _refuse_existing(path)
     record = dict(manifest)
@@ -312,13 +366,19 @@ def _run_plan(
         completed=False,
         finished_utc=None,
     )
+    row_run_id = record["row_run_id"]
+    check_new_attempts(
+        path,
+        run_id=row_run_id,
+        world_preset=record["world_preset"],
+        seeds=[int(seed) for _, _, seed in plan],
+        timestamp_utc=record["started_utc"],
+    )
     manifest_file = manifest_path(path)
     _write_manifest(manifest_file, record)
-    row_run_id = record["row_run_id"]
     for index, _, seed in plan:
-        world = world_factory(int(seed))
         measured_map = spec.episode(
-            world, spec.decode_situation(situations[index]), spec.decode_action(actions[index])
+            world, spec.decode_situation(situations[index]), spec.decode_action(actions[index]), int(seed)
         )
         row = build_real_row(
             spec,
@@ -330,7 +390,7 @@ def _run_plan(
             measured_outcome=measured_map,
             timestamp_utc=clock(),
         )
-        append_rows(path, [row])
+        append_rows(path, [row], spec=spec)
     rows: list[AttemptRow] = read_rows(path, spec=spec)
     expected_seeds = [int(seed) for _, _, seed in plan]
     if (
@@ -339,18 +399,21 @@ def _run_plan(
         or any(row.run_id != row_run_id for row in rows)
     ):
         raise RuntimeError(f"{path} does not hold exactly the planned episodes; the manifest stays incomplete")
+    measured = rows_to_arrays(spec, rows, on_physics_mismatch="error").measured
     record.update(completed=True, finished_utc=_check_utc("clock()", clock()))
     _write_manifest(manifest_file, record)
-    return rows_to_arrays(spec, rows).measured
+    return measured
 
 
 def evaluate_actions(
     spec: SkillSpec,
-    world_factory: Callable[[int], World],
+    world: World,
     situations: np.ndarray,
     actions: np.ndarray,
     *,
-    noise_seeds: np.ndarray,
+    attempt_seeds: np.ndarray,
+    command_schema: CommandSchema,
+    world_seed: int,
     run_id: str,
     method: str,
     world_preset: str,
@@ -361,32 +424,37 @@ def evaluate_actions(
     out_path: str | Path,
     clock: Callable[[], str],
 ) -> np.ndarray:
-    """Run one actual episode per row and return the measured outcomes (n, K).
+    """Run one actual episode per row in ``world`` and return the measured outcomes (n, K).
 
     Args:
-        world_factory: ``seed -> Go2World`` for ``world_preset``; called once per episode with
-                       that episode's noise seed, so every episode starts from a fresh world.
-        situations:    (n, S) encoded situations; row i is situation index i of ``split`` (the
-                       index its noise seed was drawn for).
-        actions:       (n, A) encoded actions, all inside the spec's declared bounds.
-        noise_seeds:   int (n,) per-episode seeds (identical for every method being compared).
-        run_id:        run id stamped on every row and recorded in the manifest.
-        method:        method label recorded in the manifest.
-        split:         one of ``splits.SPLITS``; base_seed: the split's base seed; repeat: the
-                       noise repeat these seeds belong to (all recorded in the manifest).
-        config_digest: ``learned_judgment.config.config_digest`` of the config the run used.
-        out_path:      new JSON Lines attempt file (``.jsonl``); refused if it or its manifest
-                       already exists.
-        clock:         current time as an ISO 8601 string with a zero UTC offset; called for
-                       the manifest start, after each episode, and for the manifest finish.
+        world:          Person A's Go2World for ``world_preset``, built by the caller from
+                        ``world_seed``; every episode of this call runs in it.
+        situations:     (n, S) encoded situations; row i is situation index i of ``split`` (the
+                        index its attempt seed was drawn for).
+        actions:        (n, A) encoded actions, all inside the spec's declared bounds.
+        attempt_seeds:  int (n,) distinct per-episode seeds (identical for every method being
+                        compared); episode i calls ``spec.episode(world, ..., attempt_seeds[i])``.
+        command_schema: the verified command schema; the spec's command dimensions must lie
+                        inside it (checked before anything else).
+        world_seed:     the seed ``world`` was built from (int >= 0), recorded in the manifest.
+        run_id:         run id stamped on every row and recorded in the manifest.
+        method:         method label recorded in the manifest.
+        split:          one of ``splits.SPLITS``; base_seed: the split's base seed; repeat: the
+                        noise repeat these seeds belong to (all recorded in the manifest).
+        config_digest:  ``learned_judgment.config.config_digest`` of the config the run used.
+        out_path:       new JSON Lines attempt file (``.jsonl``); refused if it or its manifest
+                        already exists.
+        clock:          current time as an ISO 8601 string with a zero UTC offset; called for
+                        the manifest start, after each episode, and for the manifest finish.
 
-    Every input is validated before the manifest is written and before the first world is
-    built. The returned array is read back from the attempt file through ``rows_to_arrays``.
+    Every input is validated before the manifest is written and before the first episode.
+    The returned array is read back from the attempt file through ``rows_to_arrays``.
     """
+    _check_schema(spec, command_schema)
     situations = _check_situations(spec, situations)
     n = situations.shape[0]
     actions = _check_actions(spec, actions, n, "actions")
-    seeds = _check_seeds(noise_seeds, (n,))
+    seeds = _check_attempt_seeds(attempt_seeds, (n,))
     repeat = _check_int("repeat", repeat, 0)
     manifest = {
         "run_id": _check_text("run_id", run_id),
@@ -397,23 +465,24 @@ def evaluate_actions(
         "world_preset": _check_text("world_preset", world_preset),
         "base_seed": _check_int("base_seed", base_seed, 0),
         "config_digest": _check_digest(config_digest),
+        "world_seed": _check_int("world_seed", world_seed, 0),
         "n_situations": n,
         "n_repeats": 1,
     }
     path = _check_attempt_path(out_path)
     _refuse_existing(path)
     plan = [(index, repeat, int(seeds[index])) for index in range(n)]
-    return _run_plan(spec, world_factory, situations, actions, plan, path=path, manifest=manifest, clock=clock)
+    return _run_plan(spec, world, situations, actions, plan, path=path, manifest=manifest, clock=clock)
 
 
 @dataclass(frozen=True, eq=False)
 class MethodEvaluation:
-    """Actual-episode results of one method on the shared situations and noise seeds.
+    """Actual-episode results of one method on the shared situations, world and attempt seeds.
 
     Attributes:
         method:        method label (a key of ``policies``).
         actions:       (n, A) actions the method chose, one per situation.
-        measured:      (n, R, K) measured outcomes, repeat r used noise_seeds[:, r].
+        measured:      (n, R, K) measured outcomes, repeat r used attempt_seeds[:, r].
         losses:        (n, R) ``spec.loss`` of each episode (input of the paired bootstrap).
         rows_path:     attempt file holding this method's real rows.
         manifest_path: the run manifest of that attempt file (completed when returned).
@@ -432,8 +501,10 @@ def compare_methods(
     policies: Mapping[str, Callable[[np.ndarray], np.ndarray]],
     *,
     world_factory: Callable[[int], World],
+    world_seed: int,
     situations: np.ndarray,
-    noise_seeds: np.ndarray,
+    attempt_seeds: np.ndarray,
+    command_schema: CommandSchema,
     run_id: str,
     world_preset: str,
     split: str,
@@ -442,18 +513,26 @@ def compare_methods(
     out_dir: str | Path,
     clock: Callable[[], str],
 ) -> dict[str, MethodEvaluation]:
-    """Evaluate every method on the SAME situations (n, S) and noise seeds int (n, R).
+    """Evaluate every method on the SAME situations (n, S), the SAME hidden world and the SAME
+    attempt seeds int (n, R).
+
+    ``world_factory(world_seed)`` must build Person A's Go2World for ``world_preset``; it is
+    called once per method, right before that method's first episode, so each method starts
+    from a fresh world with the same hidden world. Repeat r of situation i runs with attempt
+    seed ``attempt_seeds[i, r]`` for every method; all n x R seeds must be distinct.
 
     Rows of method m go to ``out_dir / f"{run_id}__{m}.jsonl"`` with row run_id
     ``f"{run_id}/{m}"``, and its manifest to ``out_dir / f"{run_id}__{m}.manifest.json"``.
-    Before any policy is called, every target attempt file and manifest is checked: if one
-    exists the call raises FileExistsError and nothing runs. Each policy then maps all
-    situations (n, S) to actions (n, A) in one call (so a batched teacher makes one request);
-    every method's actions are validated before the first episode of any method. Episodes of
-    a method run repeat by repeat (all situations of repeat 0, then repeat 1, ...), which is
-    the row order of its attempt file and the episode order of its manifest.
-    Returns {method: MethodEvaluation} in ``policies`` order.
+    Before any policy is called and before any world is built, the command binding of the
+    spec is checked against ``command_schema``, every input is validated, and every target
+    attempt file and manifest is checked: if one exists the call raises FileExistsError and
+    nothing runs. Each policy then maps all situations (n, S) to actions (n, A) in one call (so
+    a batched teacher makes one predict call); every method's actions are validated before
+    the first world is built. Episodes of a method run repeat by repeat (all situations of
+    repeat 0, then repeat 1, ...), which is the row order of its attempt file and the episode
+    order of its manifest. Returns {method: MethodEvaluation} in ``policies`` order.
     """
+    _check_schema(spec, command_schema)
     run_id = _check_name("run_id", run_id)
     if not policies:
         raise ValueError("policies must name at least one method")
@@ -461,10 +540,10 @@ def compare_methods(
         _check_name("method", method)
     situations = _check_situations(spec, situations)
     n = situations.shape[0]
-    seeds = np.asarray(noise_seeds)
+    seeds = np.asarray(attempt_seeds)
     if seeds.ndim != 2 or seeds.shape[0] != n or seeds.shape[1] < 1:
-        raise ValueError(f"noise_seeds must have shape ({n}, R >= 1); got {seeds.shape}")
-    seeds = _check_seeds(seeds, seeds.shape)
+        raise ValueError(f"attempt_seeds must have shape ({n}, R >= 1); got {seeds.shape}")
+    seeds = _check_attempt_seeds(seeds, seeds.shape)
     n_repeats = seeds.shape[1]
     common = {
         "skill": spec.name,
@@ -472,9 +551,11 @@ def compare_methods(
         "world_preset": _check_text("world_preset", world_preset),
         "base_seed": _check_int("base_seed", base_seed, 0),
         "config_digest": _check_digest(config_digest),
+        "world_seed": _check_int("world_seed", world_seed, 0),
         "n_situations": n,
         "n_repeats": n_repeats,
     }
+    _check_utc("clock()", clock())
     directory = Path(out_dir)
     paths = {method: directory / f"{run_id}__{method}{_ATTEMPT_SUFFIX}" for method in policies}
     for path in paths.values():
@@ -489,7 +570,8 @@ def compare_methods(
     for method, actions in chosen.items():
         path = paths[method]
         manifest = {**common, "run_id": run_id, "row_run_id": f"{run_id}/{method}", "method": method}
-        flat = _run_plan(spec, world_factory, situations, actions, plan, path=path, manifest=manifest, clock=clock)
+        world = world_factory(common["world_seed"])
+        flat = _run_plan(spec, world, situations, actions, plan, path=path, manifest=manifest, clock=clock)
         measured = np.ascontiguousarray(flat.reshape(n_repeats, n, spec.n_outcome).transpose(1, 0, 2))
         losses = np.asarray(spec.loss(measured.reshape(n * n_repeats, spec.n_outcome)), dtype=np.float64)
         if losses.shape != (n * n_repeats,) or not np.all(np.isfinite(losses)):

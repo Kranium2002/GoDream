@@ -7,7 +7,7 @@ skills.fixture_snn.candidate_points_per_dim = the fixture grid. config.yaml is n
 Writes no file.
 """
 
-print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 import copy  # noqa: E402
 import sys  # noqa: E402

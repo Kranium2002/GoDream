@@ -1,0 +1,7 @@
+REVIEW REPRODUCTION - fixture, not evidence
+a. collect with run_id=''                   : spec.episode reached (the world would be stepped)
+a. collect with seed=-1                     : spec.episode reached (the world would be stepped)
+a. collect with world_preset=''             : spec.episode reached (the world would be stepped)
+a. collect with clock returns a naive time  : spec.episode reached (the world would be stepped)
+   ... and the row built after that episode is rejected: run_id must be a non-empty string; got ''
+b. kept 7 of 13 | situations aligned: True | chosen aligned: True | hashes per row aligned: True | request_hashes kept: ('fixture-A', 'fixture-B')

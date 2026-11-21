@@ -8,25 +8,29 @@ chosen by one of the policies compared on dev data (03_METRICS.md, "Adaptation")
     "all"     every real attempt, in file order
     "recent"  the last ``recent_window`` real attempts, in file order
     + world ID: either policy, with the declared preset name as an extra categorical
-              feature (``world_id_variable`` / ``world_id_column``). The preset name is an
-              observed label of the experiment, never a hidden simulator value.
+              feature (``world_id_variable`` / ``world_id_column``), in a layout built by
+              :func:`world_id_layout`, which requires the hidden simulator value names so the
+              extra block is checked against them. The preset name is an observed label of the
+              experiment, never a hidden simulator value.
 
 Dream rows are never context: they are teacher decisions, not measurements.
 
 :func:`recovery_attempts` reads off how many new attempts were needed to come back within
 ``tolerance_fraction`` of the pre-shift error (config.yaml
-``evaluation.recovery_tolerance_fraction``); ``None`` means not reached.
+``evaluation.recovery_tolerance_fraction``): the first count that reaches the threshold and
+the count from which the error stays there; ``None`` means not reached.
 """
 
 from __future__ import annotations
 
 import math
-from typing import Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 import numpy as np
 
+from learned_judgment.engine.features import FeatureLayout, build_layout
 from learned_judgment.engine.rows import AttemptRow
-from learned_judgment.skills.base import Variable
+from learned_judgment.skills.base import SkillSpec, Variable
 
 __all__ = [
     "CONTEXT_POLICIES",
@@ -34,6 +38,7 @@ __all__ = [
     "recovery_attempts",
     "select_context",
     "world_id_column",
+    "world_id_layout",
     "world_id_variable",
 ]
 
@@ -85,6 +90,48 @@ def world_id_variable(world_presets: Sequence[str]) -> Variable:
     return variable
 
 
+def world_id_layout(
+    spec: SkillSpec,
+    world_presets: Sequence[str],
+    *,
+    hidden_value_names: Iterable[str],
+    include_physics: bool,
+) -> FeatureLayout:
+    """Layout of ``spec`` with the world-id feature as its extra block (one categorical column).
+
+    Built through ``build_layout(spec, include_physics=..., extra=(world_id_variable(world_presets),),
+    hidden_value_names=...)``, so the extra block is refused if it carries the name of a hidden
+    simulator value.
+
+    Args:
+        world_presets:      the DECLARED preset names (keys of config.yaml ``world.presets``),
+                            which become the levels of ``world_id`` in this order.
+        hidden_value_names: names of the hidden simulator values (keys of config.yaml
+                            ``world.hidden_effects``); required and non-empty. A single string
+                            is refused (it would be read as its characters).
+        include_physics:    True for the residual layout with a physics block, False for the
+                            direct (no physics feature) layout.
+
+    Raises TypeError / ValueError naming the offending argument.
+    """
+    if isinstance(hidden_value_names, (str, bytes)):
+        raise TypeError("hidden_value_names must be a collection of names, not one string")
+    hidden = tuple(hidden_value_names)
+    if not hidden or not all(isinstance(name, str) and name for name in hidden):
+        raise ValueError(
+            "hidden_value_names must list the hidden simulator values by name (keys of config.yaml "
+            f"world.hidden_effects); got {hidden!r}"
+        )
+    if not isinstance(include_physics, bool):
+        raise TypeError(f"include_physics must be True or False; got {include_physics!r}")
+    return build_layout(
+        spec,
+        include_physics=include_physics,
+        extra=(world_id_variable(world_presets),),
+        hidden_value_names=hidden,
+    )
+
+
 def world_id_column(rows_or_presets: Sequence[AttemptRow] | Sequence[str], variable: Variable) -> np.ndarray:
     """(n, 1) float64 level index of each row's ``world_preset`` (or of each preset name).
 
@@ -106,16 +153,27 @@ def world_id_column(rows_or_presets: Sequence[AttemptRow] | Sequence[str], varia
 
 def recovery_attempts(
     errors_by_new_attempts: Mapping[int, float], pre_shift_error: float, tolerance_fraction: float
-) -> int | None:
-    """Smallest new-attempt count whose error <= ``pre_shift_error * (1 + tolerance_fraction)``.
+) -> dict[str, Any]:
+    """How many new attempts after a world change bring the error back to the pre-shift level.
 
     Args:
         errors_by_new_attempts: {new attempts after the shift (int >= 0): measured error (finite)}.
         pre_shift_error:        measured error before the shift (finite, >= 0).
         tolerance_fraction:     config.yaml ``evaluation.recovery_tolerance_fraction`` (>= 0).
 
-    Returns the count, or ``None`` when no measured count reaches the threshold. The
-    comparison is exact.
+    Returns a dict (comparisons are exact, ``error <= threshold``)::
+
+        threshold                 pre_shift_error * (1 + tolerance_fraction)
+        first                     smallest measured count whose error is at or below the
+                                  threshold; None when no count reaches it
+        sustained                 smallest measured count from which the error of EVERY larger
+                                  measured count stays at or below the threshold (so a single
+                                  dip that is lost again does not count); None when the largest
+                                  measured count is above the threshold
+        pre_shift_error_is_zero   True when pre_shift_error == 0: the threshold is then 0 and
+                                  any non-zero error counts as not recovered, so a None above
+                                  says nothing about adaptation and the caller must report it
+                                  separately (e.g. as undefined) instead of as "not recovered"
     """
     for label, value in (("pre_shift_error", pre_shift_error), ("tolerance_fraction", tolerance_fraction)):
         if isinstance(value, bool) or not isinstance(value, (int, float, np.floating)):
@@ -125,12 +183,23 @@ def recovery_attempts(
     if not errors_by_new_attempts:
         raise ValueError("errors_by_new_attempts is empty")
     threshold = float(pre_shift_error) * (1.0 + float(tolerance_fraction))
-    reached = []
+    within: dict[int, bool] = {}
     for count, error in errors_by_new_attempts.items():
         if isinstance(count, bool) or not isinstance(count, (int, np.integer)) or count < 0:
             raise ValueError(f"attempt count {count!r} must be an int >= 0")
         if isinstance(error, bool) or not isinstance(error, (int, float, np.floating)) or not math.isfinite(error):
             raise ValueError(f"error at {count} attempts must be a finite number; got {error!r}")
-        if float(error) <= threshold:
-            reached.append(int(count))
-    return min(reached) if reached else None
+        within[int(count)] = float(error) <= threshold
+    counts = sorted(within)
+    reached = [count for count in counts if within[count]]
+    sustained = None
+    for count in reversed(counts):
+        if not within[count]:
+            break
+        sustained = count
+    return {
+        "first": reached[0] if reached else None,
+        "sustained": sustained,
+        "threshold": threshold,
+        "pre_shift_error_is_zero": float(pre_shift_error) == 0.0,
+    }
