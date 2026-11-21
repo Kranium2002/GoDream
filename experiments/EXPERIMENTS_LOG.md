@@ -101,3 +101,25 @@ Do not enter planned outcomes as results. Mark an unexecuted item NOT RUN. Synth
 - TabPFN calls: 0. No SNN was trained in this entry.
 - Limitations: one copy of the Horowitz PDF was decoded; several papers were read as preprints; the prior-work search was limited to about ten searches.
 - Decision: PASS. Constants and citation are in config.yaml (students.snn.energy); the formula and the required caveats are in learned_judgment/students/energy.py.
+
+## E15 — SNN student contract: PyTorch (CPU) and snnTorch, executed
+
+- Date and owner: 2026-11-21, Person B. UltraCode workflow `person-b-snn-research`, agent `research:snn-install-api-poc`.
+- Question: can a spiking student be built, trained, and deployed on this machine with PyTorch (CPU) and snnTorch under Python 3.13 on Windows next to the pinned packages, and what are the exact APIs, neuron dynamics, small-data behaviour, latency, and operation counts?
+- Pass criteria: both packages install and import next to the pins, and a proof-of-concept network trains, exports, and matches a numpy forward pass.
+- Versions: Python 3.13.16, Windows 11, Intel Core Ultra 7 155H; torch 2.15.0+cpu, snntorch 1.0.0 (MIT), numpy 2.5.5, pandas 2.3.3, scikit-learn 1.9.0, scipy 1.18.1. Installs ran in throwaway environments outside the repository; the project venv was only dry-run and read by this agent.
+- Commands and outputs: `experiments/proofs/E15_snn_contract/`, scripts `p01*` to `p10*` with their `.out.txt` files; the full list with exit codes is `p00_commands_and_exit_codes.txt`. Verified model, training loop, and export: `snn_common.py`; numpy forward pass: `np_forward.py`.
+- Data: an analytic fixture task defined in `snn_common.py`. Every accuracy, loss, firing-rate, operation, and latency number below is a mechanics number on that fixture. None is evidence about the Go2, the simulator, TabPFN, or the project's student.
+- Measured:
+  - Install: adding the two packages added eleven packages and left the pinned ones unchanged. The portable pyproject setup uses the explicit PyTorch CPU index; it resolved and synced in a scratch copy.
+  - Dynamics of `snntorch.Leaky`: the reset uses the previous step's membrane; a neuron fires on a strict "greater than"; the default surrogate is atan with alpha 2.
+  - Pitfalls found by execution: membrane state carries over unless passed explicitly; `utils.reset` misses nested modules; `.double()` leaves spikes in float32 and widens float32(0.9); `deepcopy` and `torch.save(module)` fail after a forward.
+  - Training on soft targets (KL to a softmax of the scores) generalised far better than hard labels on the fixture.
+  - numpy forward pass against the trained torch model: float64 bit-exact (zero logit difference, zero spike mismatches in 1.28 million); float32 logit difference 1.1e-5 with zero spike mismatches.
+  - Determinism: bitwise identical across processes at 1 and 4 threads, different at 16 threads.
+  - Single-decision latency: numpy 0.06–0.43 ms median; torch 1.1–9.3 ms median. Importing torch takes about 10 s warm on this machine.
+  - Operation counts for a (64, 64) network at 10 steps: mean 32,619 synaptic operations per decision at firing rates of 0.31 and 0.49, against 8,704 multiply-accumulates for the dense reference. At such rates an energy advantage is not given; it needs lower firing rates or fewer steps.
+  - Shared trunk with one head per skill: works; without rehearsal the earlier fixture skills were lost, with rehearsal they were mostly kept. A new head must be added to the optimizer.
+- TabPFN calls: 0.
+- NOT RUN: Linux and macOS installs; early stopping and spike-rate regularisation; any training on real dreams.
+- Decision: PASS. PyTorch 2.15.0 (CPU index) and snnTorch 1.0.0 are declared in pyproject.toml and installed. The student is a classifier over the candidate grid, trained in float64 at one thread, and deployed through the numpy network in learned_judgment/students/snn_core.py.

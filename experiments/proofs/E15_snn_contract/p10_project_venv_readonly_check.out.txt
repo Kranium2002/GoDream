@@ -1,0 +1,7 @@
+# project venv was changed by another actor at ~15:24 (not this agent); read-only verification with -B (no .pyc writes)
+$ D:/BerlinPrior/.venv/Scripts/python.exe -B -c 'import torch, snntorch, numpy, pandas, sklearn, scipy, mujoco; ...'
+torch 2.15.0+cpu cuda None False | snntorch 1.0.0 | numpy 2.5.5 pandas 2.3.3 sklearn 1.9.0 scipy 1.18.1 mujoco 3.3.6
+exit=0
+$ D:/BerlinPrior/.venv/Scripts/python.exe -B p04_determinism.py 1 1
+threads=1 deterministic=True final_loss=0.881748 state_sha256=a689cf478c2b0de4e8cee7efa354946672867881029ac369bb02d0f3ba99d3b2 holdout_logits_sha256=60c9c31cef3cb1d62705fed675992155f335ad54f6b3921357b6328522a17ed6
+exit=0

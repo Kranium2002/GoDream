@@ -1,0 +1,3 @@
+(a) MSE regression onto 2-D argmax action: loss 0.5850 -> 0.0079; hold-out RMSE per dim [0.097  0.0945]
+(b) bimodal targets (+-0.8, 0): MSE-regression mean prediction [-0.036  0.002], mean |u_pred| 0.181 (modes at |u|=0.8); fraction of predictions within 0.2 of a mode: 0.021
+(b) grid classifier: mean prob on mode cells [0.714 0.143]/[-0.714  0.143] = 0.492/0.508; argmax lands on a mode cell for 1.000 of inputs; argmax |u| mean 0.714

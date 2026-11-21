@@ -1,0 +1,83 @@
+python 3.13.16 (main, Oct 14 2026, 01:05:56) [MSC v.1944 64 bit (AMD64)]
+executable C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\snn_probe\venv_pypi\Scripts\python.exe
+import numpy 2.5.5: 7.738s
+import torch: 50.035s
+import snntorch: 0.238s  snntorch.__version__=1.0.0
+import snntorch.functional/surrogate/utils: 0.093s
+  module 'matplotlib' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'pandas' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'scipy' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'sklearn' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'sympy' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'networkx' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'jinja2' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'IPython' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'tqdm' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'nir' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'torchvision' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'h5py' loaded after torch? False; after snntorch? False; after functional/utils? False
+  module 'tonic' loaded after torch? False; after snntorch? False; after functional/utils? False
+new top-level modules added by `import snntorch` (beyond torch): ['snntorch']
+new top-level modules added by snntorch.functional/surrogate/utils: ['snntorch']
+import snntorch.spikeplot -> ModuleNotFoundError No module named 'matplotlib'
+import snntorch.spikegen: OK
+import snntorch.export_nir -> ModuleNotFoundError No module named 'nir'
+torch.__version__: 2.15.0+cpu
+torch.version.cuda: None
+torch.cuda.is_available(): False
+torch.backends.mkldnn.is_available(): True
+torch.backends.openmp.is_available(): True
+torch.get_num_threads(): 16  os.cpu_count(): 22
+parallel_info: ATen/Parallel: | at::get_num_threads() : 16 | at::get_num_interop_threads() : 16 | OpenMP 2019 | omp_get_max_threads() : 16 | Intel(R) oneAPI Math Kernel Library Version 2026.2-Product Build 20260915 for Intel(R) 64 architecture applications | mkl_get_max_threads() : 16 | Intel(R) MKL-DNN v3.13.3 (Git Hash b38f97eb6f2173513112f15a0481750b8a66e901)
+config.show (first 6 lines):
+    PyTorch built with:
+      - C++ Version: 202002
+      - MSVC 194234444
+      - Intel(R) oneAPI Math Kernel Library Version 2026.2-Product Build 20260915 for Intel(R) 64 architecture applications
+      - Intel(R) MKL-DNN v3.13.3 (Git Hash b38f97eb6f2173513112f15a0481750b8a66e901)
+      - OpenMP 2019
+    - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, COMMIT_SHA=d0f2af8b66b20da4baa50644c0cd3f887a2eae2e, CUDA_FLAGS= -DLIBCUDACXX_ENABLE_SIMPLIFIED_COMPLEX_OPERATIONS -Xcompiler /Zc:__cplusplus -Xcom
+--- pinned packages ---
+  numpy==2.5.5
+  pandas==2.3.3
+  scikit-learn==1.9.0
+  scipy==1.18.1
+  torch==2.15.0
+  snntorch==1.0.0
+--- licenses from METADATA (License-Expression / License / license classifiers) ---
+  cloudpickle==3.1.3: License-Expression='BSD-3-Clause' License=None classifiers=[]
+  filelock==4.2.12: License-Expression='MIT' License=None classifiers=[]
+  fsspec==2026.9.0: License-Expression='BSD-3-Clause' License=None classifiers=[]
+  Jinja2==3.1.6: License-Expression=None License=None classifiers=['OSI Approved :: BSD License']
+  joblib==1.6.0: License-Expression='BSD-3-Clause' License=None classifiers=[]
+  MarkupSafe==3.0.4: License-Expression='BSD-3-Clause' License=None classifiers=[]
+  mpmath==1.3.0: License-Expression=None License='BSD' classifiers=['OSI Approved :: BSD License']
+  narwhals==2.29.0: License-Expression='MIT' License=None classifiers=[]
+  networkx==3.7: License-Expression='BSD-3-Clause' License=None classifiers=[]
+  numpy==2.5.5: License-Expression='BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0' License=None classifiers=[]
+  pandas==2.3.3: License-Expression=None License='BSD 3-Clause License ...(truncated)' classifiers=['OSI Approved :: BSD License']
+  python-dateutil==4.0.0: License-Expression='BSD-3-Clause' License=None classifiers=[]
+  pytz==2026.6: License-Expression=None License='MIT' classifiers=['OSI Approved :: MIT License']
+  scikit-learn==1.9.0: License-Expression='BSD-3-Clause' License=None classifiers=[]
+  scipy==1.18.1: License-Expression=None License='Copyright (c) 2001-2002 Enthought, Inc. 2003, SciPy Developers. ...(truncated)' classifiers=['OSI Approved :: BSD License']
+  setuptools==84.2.1: License-Expression='MIT' License=None classifiers=[]
+  snntorch==1.0.0: License-Expression=None License='MIT License' classifiers=['OSI Approved :: MIT License']
+  sympy==1.14.0: License-Expression=None License='BSD' classifiers=['OSI Approved :: BSD License']
+  threadpoolctl==3.8.0: License-Expression='BSD-3-Clause' License=None classifiers=[]
+  torch==2.15.0: License-Expression='Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND ISC AND MIT AND Zlib' License=None classifiers=[]
+  typing_extensions==4.16.0: License-Expression='PSF-2.0' License=None classifiers=[]
+  tzdata==2026.6: License-Expression=None License='Apache-2.0' classifiers=[]
+--- on-disk sizes ---
+  torch: 495.4 MB
+  snntorch: 0.9 MB
+  sympy: 26.6 MB
+  networkx: 7.2 MB
+  numpy: 23.0 MB
+  scipy: 87.4 MB
+  pandas: 44.8 MB
+  sklearn: 27.1 MB
+  functorch: 0.1 MB
+  torchgen: 2.4 MB
+  whole venv (C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\snn_probe\venv_pypi): 773.1 MB
+--- warnings captured during imports ---
+n_warnings: 0

@@ -1,0 +1,45 @@
+### variant 1 (dry-run): --index-url https://download.pytorch.org/whl/cpu (replaces PyPI)
+$ uv pip install --dry-run --python C:/Users/vidhu/AppData/Local/Temp/claude/07d910646a9cb71e/82e647f3-13a8-4067-91a4-d0b43ab8dda2/scratchpad/snn_probe/venv_cpuidx/Scripts/python.exe --cache-dir D:/BerlinPrior/.uv-cache --index-url https://download.pytorch.org/whl/cpu numpy==2.5.5 pandas==2.3.3 scikit-learn==1.9.0 scipy==1.18.1 torch snntorch
+Using Python 3.13.16 environment at: C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\snn_probe\venv_cpuidx
+error: No solution found when resolving dependencies
+  cause: Because there is no version of numpy==2.5.5 and you require numpy==2.5.5, we can conclude that your requirements are unsatisfiable.
+exit=1
+
+### variant 2 (dry-run): --extra-index-url https://download.pytorch.org/whl/cpu (uv default index-strategy first-index)
+$ uv pip install --dry-run --python C:/Users/vidhu/AppData/Local/Temp/claude/07d910646a9cb71e/82e647f3-13a8-4067-91a4-d0b43ab8dda2/scratchpad/snn_probe/venv_cpuidx/Scripts/python.exe --cache-dir D:/BerlinPrior/.uv-cache --extra-index-url https://download.pytorch.org/whl/cpu numpy==2.5.5 pandas==2.3.3 scikit-learn==1.9.0 scipy==1.18.1 torch snntorch
+Using Python 3.13.16 environment at: C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\snn_probe\venv_cpuidx
+error: No solution found when resolving dependencies
+  cause: Because there is no version of numpy==2.5.5 and you require numpy==2.5.5, we can conclude that your requirements are unsatisfiable.
+
+hint: `numpy` was found on https://download.pytorch.org/whl/cpu, but not at the requested version (numpy==2.5.5). A compatible version may be available on a subsequent index (e.g., https://pypi.org/simple). By default, uv will only consider versions that are published on the first index that contains a given package, to avoid dependency confusion attacks. If all indexes are equally trusted, use `--index-strategy unsafe-best-match` to consider all versions from all indexes, regardless of the order in which they were defined.
+exit=1
+
+### variant 3 (dry-run): --torch-backend cpu
+$ uv pip install --dry-run --python C:/Users/vidhu/AppData/Local/Temp/claude/07d910646a9cb71e/82e647f3-13a8-4067-91a4-d0b43ab8dda2/scratchpad/snn_probe/venv_cpuidx/Scripts/python.exe --cache-dir D:/BerlinPrior/.uv-cache --torch-backend cpu numpy==2.5.5 pandas==2.3.3 scikit-learn==1.9.0 scipy==1.18.1 torch snntorch
+Using Python 3.13.16 environment at: C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\snn_probe\venv_cpuidx
+Resolved 22 packages in 33ms
+Would download 1 package
+Would install 22 packages
+ + cloudpickle==3.1.3
+ + filelock==4.2.12
+ + fsspec==2026.9.0
+ + jinja2==3.1.6
+ + joblib==1.6.0
+ + markupsafe==3.0.4
+ + mpmath==1.3.0
+ + narwhals==2.29.0
+ + networkx==3.7
+ + numpy==2.5.5
+ + pandas==2.3.3
+ + python-dateutil==4.0.0
+ + pytz==2026.6
+ + scikit-learn==1.9.0
+ + scipy==1.18.1
+ + setuptools==84.2.1
+ + snntorch==1.0.0
+ + sympy==1.14.0
+ + threadpoolctl==3.8.0
+ + torch==2.15.0+cpu
+ + typing-extensions==4.16.0
+ + tzdata==2026.6
+exit=0

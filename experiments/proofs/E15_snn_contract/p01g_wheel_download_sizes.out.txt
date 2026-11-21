@@ -1,0 +1,11 @@
+$ curl -sSI https://download.pytorch.org/whl/cpu/torch-2.15.0%2Bcpu-cp313-cp313-win_amd64.whl
+HTTP/1.1 200 OK
+Content-Length: 126626022
+Last-Modified: Wed, 28 Oct 2026 13:19:11 GMT
+exit=0
+$ curl -sSI https://files.pythonhosted.org (PyPI torch 2.15.0 cp313 win_amd64 wheel url from pypi_torch.json)
+https://files.pythonhosted.org/packages/3d/6c/f26ed528d197859cf8a634bbfafc3bc136f5590b6620df179d1858a34fdc/torch-2.15.0-cp313-cp313-win_amd64.whl
+HTTP/1.1 200 OK
+Content-Length: 126736947
+Last-Modified: Wed, 28 Oct 2026 15:17:43 GMT
+torch-2.15.0%2Bcpu-cp313-cp313-win_amd64.whl#sha256=086f79c78c941b428410dc15f898ce2420a4580ae6983ea314692d71ce76c619

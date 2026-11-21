@@ -1,0 +1,44 @@
+=== torch ===
+latest version: 2.15.0
+requires_python: >=3.11
+license: None
+license_expression: Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND ISC AND MIT AND Zlib
+classifiers(license): []
+requires_dist:
+    filelock
+    typing-extensions>=4.13.0
+    setuptools>=77.0.3
+    sympy>=1.13.3
+    networkx>=2.5.1
+    jinja2
+    fsspec>=0.8.5
+    cuda-toolkit[cublas,cudart,cufft,cufile,cupti,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.2.2; platform_system == "Linux"
+    cuda-bindings<14,>=13.0.3; platform_system == "Linux" and python_version < "3.15"
+    nvidia-cudnn-cu13==9.26.0.51; platform_system == "Linux"
+    nvidia-cusparselt-cu13==0.8.1; platform_system == "Linux"
+    nvidia-nccl-cu13==2.30.7; platform_system == "Linux"
+    nvidia-nvshmem-cu13==3.7.2; platform_system == "Linux"
+    triton~=3.9.0; platform_system == "Linux" and python_version < "3.16"
+    optree>=0.13.0; extra == "optree"
+    opt-einsum>=3.3; extra == "opt-einsum"
+    pyyaml; extra == "pyyaml"
+file: torch-2.15.0-cp313-cp313-win_amd64.whl size 126736947 sha256 e079089d36401261ebe145504309d0114fb9a00529eac4b33048221d2376a15c uploaded 2026-10-28T15:17:36.768371Z
+last 8 releases: ['2.5.0', '2.5.1', '2.6.0', '2.7.0', '2.7.1', '2.8.0', '2.9.0', '2.9.1']
+all files for latest: 28
+   win file: torch-2.15.0-cp311-cp311-win_amd64.whl 126720349
+   win file: torch-2.15.0-cp312-cp312-win_amd64.whl 126738207
+   win file: torch-2.15.0-cp313-cp313-win_amd64.whl 126736947
+   win file: torch-2.15.0-cp314-cp314t-win_amd64.whl 127025368
+   win file: torch-2.15.0-cp314-cp314-win_amd64.whl 126735321
+   win file: torch-2.15.0-cp315-cp315t-win_amd64.whl 127024483
+   win file: torch-2.15.0-cp315-cp315-win_amd64.whl 126735953
+=== snntorch ===
+latest version: 1.0.0
+requires_python: >=3.9
+license: 'MIT License'
+license_expression: None
+classifiers(license): ['License :: OSI Approved :: MIT License']
+requires_dist:
+file: snntorch-1.0.0-py2.py3-none-any.whl size 133558 sha256 b5a85f6f44c6d27c8a1dcea16cb18a630d00b8d2f3cfec85b7e580cb177e606b uploaded 2026-06-29T13:30:13.384648Z
+file: snntorch-1.0.0.tar.gz size 101429 sha256 93c33506a5975c1d0d2387a130def02382789197314cefb2c70511b05a03536e uploaded 2026-06-29T13:30:14.765234Z
+last 8 releases: ['0.6.4', '0.7.0', '0.8.0', '0.8.1', '0.9.0', '0.9.1', '0.9.4', '1.0.0']
