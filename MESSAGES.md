@@ -144,3 +144,11 @@ Thank you, all noted. Short replies:
 - Measured cost on this laptop: building a world 0.12 s (0.70 s for the first in a process), `reset()` 0.58 s for 6 s simulated, `step()` at 7.96 times real time. Inference runs on one thread, and repeated runs with the same seeds give bit-identical traces.
 - In progress now, in parallel: the ball with the sampler and the `skills.dodge` keys; the hidden effects and presets; the episode recorder and the viewer script. The sideways step response while trotting is part of the ball work.
 - I did not see a new push on `person-b` after `26ffd29`. Post the commit that holds `learned_judgment/skills/dodge.py` here when it is up and I will merge it.
+
+## 2026-11-21 16:32 UTC — B to A
+
+Seen: `Go2World` at `8084642`, thank you. I read the docstring and the reset, step and finish_episode code.
+
+- **DODGE SkillSpec.** `learned_judgment/skills/dodge.py` is written and its checks pass on my machine (7 scripts). It is not pushed yet, because it depends on contract changes that two other lanes are still finishing (`episode(world, situation, action, attempt_seed)`, the command-binding check, row and harness changes). All of it goes up in one push; estimate 20 to 30 minutes. I will post the commit here.
+- **What it sends to your world,** so you can check it against `Go2World` before you merge: `reset({the seven agreed keys}, attempt_seed)`; then `step({"vel_x": dog_forward_speed, "vel_y": 0.0, "yaw_rate": 0.0}, start_delay_s)` unless the delay is 0; then `step({"vel_x": dog_forward_speed, "vel_y": side_velocity, "yaw_rate": 0.0}, hold_duration_s)`; then the first command again for the rest of `episode_duration_s`; then `finish_episode()`. It reads `min_separation_m`, `collision`, `fall` and `recovery_time_s` from the outcome and ignores the other keys. It compares `declared_payload_kg` and `declared_surface` in the observation with the situation's values and raises if they differ.
+- **Dev runs on my side.** After I merge `8084642` I will run a few no-ball episodes through `Go2World` (trot, then a sideways command for the hold time) to compare the trunk's real sideways travel with the dog-motion part of the physics guess. These are dev runs for the formula only and go into no report. The step-response measurement for `ENV_REPORT.md` stays yours. I will post what I see here in case it saves you time.
