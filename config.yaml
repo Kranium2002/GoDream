@@ -180,7 +180,11 @@ world:
   # floor and a level plateau after it: flat, slope, flat. Both are boxes on mocap bodies, so placing them per episode
   # needs no recompile and collides exactly like boxes compiled there (proof: scratchpad poc-w3/reposition.py).
   incline:
-    range_deg: [5.0, 15.0]  # Supported angles, published for sample_ramp_situations; set from the W3 sweep.
+    # Supported angles, published for sample_ramp_situations. From the W3 sweep (artifacts/env/
+    # 20261121T214147-w3-incline-sweep-2, vel_x 0.6 held, 3 attempts each): every run reached the plateau up to 12.5
+    # degrees (slower as the angle grows), none at 15 or above (no falls: the dog stalls). 5 is where the climb is
+    # clearly not flat; 15 is the first angle where the constant-command baseline fails, so the range holds room to learn.
+    range_deg: [5.0, 15.0]
     max_deg: 20.0  # Largest incline_deg reset accepts (0 to this): the geometry below stays gap-free up to it.
     start_x_m: 1.0  # Floor distance ahead of the trunk origin at the decision instant to the foot of the slope.
     length_m: 2.0  # Slope length along its surface (rise length_m x sin(angle): 0.35 m at 10 degrees).
@@ -198,6 +202,9 @@ world:
       attempt_seeds: [0, 1, 2]  # Three attempts per angle (the plan's minimum).
       duration_s: 10.0  # Long enough to reach the plateau at 0.5 m/s (slope foot 1 m, end at most 2.9 m ahead).
       vel_x: 0.6  # Constant forward command, m/s: the speed of Gate 1's middle condition and of the earlier proof.
+      # yaw_rate trims tried on flat ground; the one that turns least is used for the trimmed sweep. Small steps near 0:
+      # the first sweep (artifacts/env/20261121T212102-w3-incline-sweep) found -0.07 turned the dog about 180 degrees.
+      trim_candidates_rad_s: [0.0, -0.005, -0.01, -0.015, -0.02, -0.025, -0.03]
   # The hidden world (Go2World._hidden_effects). A preset's values are applied only for the effects switched on in
   # `enabled`; with all five off an episode is bit-identical to one without hidden effects. The ranges bound the
   # experiments (MISSION.md); presets are not range-checked, so a test can build a world outside them.

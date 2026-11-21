@@ -174,8 +174,8 @@ class Go2World:
         recovered           0 or 1. 0 if they never held for hold_s after first leaving them.
         final_forward_m, final_sideways_m  m. Trunk travel from the decision instant to the end, along the dog's
                             heading at the decision instant (yaw only) and to its left.
-        final_yaw_change_rad  rad. Heading at the end minus heading at the decision instant, wrapped to [-pi, pi);
-                            + is anticlockwise seen from above.
+        final_yaw_change_rad  rad. Heading change from the decision instant to the end, summed over the control
+                            periods, so whole turns count (not wrapped); + is anticlockwise seen from above.
         final_speed_m_s     m/s. Trunk speed over the ground (horizontal) at the end.
         ramp_start_m, ramp_end_m  m, for scoring. Floor distance along the decision-instant heading from the trunk
                             origin then to where the slope begins and ends; None without an incline.
@@ -296,6 +296,7 @@ class Go2World:
         if ball:
             self._throw(throw)
         self._start_pos, self._start_yaw = self.policy.data.qpos[0:2].copy(), _yaw(self.policy.data.qpos[3:7])
+        self._turned, self._yaw_last = 0.0, self._start_yaw  # heading change so far, summed per control period
         self._ramp = None  # (ramp_start_m, ramp_end_m)
         if incline:
             self._ramp = place_incline(self.model, self.policy.data, self.config["world"]["incline"], incline,
@@ -355,7 +356,7 @@ class Go2World:
             "recovered": recovered,
             "final_forward_m": float(travel @ [math.cos(yaw0), math.sin(yaw0)]),
             "final_sideways_m": float(travel @ [-math.sin(yaw0), math.cos(yaw0)]),
-            "final_yaw_change_rad": (_yaw(last["base_quat_wxyz"]) - yaw0 + math.pi) % (2 * math.pi) - math.pi,
+            "final_yaw_change_rad": self._turned,
             "final_speed_m_s": float(np.hypot(*last["base_lin_vel_m_s"][:2])),
             "ramp_start_m": None if self._ramp is None else self._ramp[0],
             "ramp_end_m": None if self._ramp is None else self._ramp[1],
@@ -486,6 +487,9 @@ class Go2World:
             **self._declared,
         }
         q, cos_tilt, max_rate = obs["base_quat_wxyz"], *self._recovery_limits
+        yaw = _yaw(q)  # a control period turns far less than pi, so each step's change unwraps exactly
+        self._turned += (yaw - self._yaw_last + math.pi) % (2 * math.pi) - math.pi
+        self._yaw_last = yaw
         self._recovery.add(obs["t_s"], bool(1 - 2 * (q[1] ** 2 + q[2] ** 2) >= cos_tilt
                                             and np.hypot(ang_vel[0], ang_vel[1]) <= max_rate))
         self._last = obs

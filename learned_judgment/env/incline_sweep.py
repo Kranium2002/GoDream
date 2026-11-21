@@ -3,9 +3,11 @@
     python -m learned_judgment.env.incline_sweep
 
 Settings: config.yaml world.incline.sweep. Every episode: reset({"dog_forward_speed_m_s": vel_x, "incline_deg": a},
-attempt_seed=k) on the default preset, then the command held for duration_s. The trim is measured here, not chosen: the
-mean yaw drift per second of the untrimmed flat (0 degree) episodes, with its sign reversed. Prints one JSON line per
-episode, then a table per mode. A development measurement, not an evaluation result.
+attempt_seed=k) on the default preset, then the command held for duration_s. The trim is measured here, not chosen: of
+trim_candidates_rad_s, the one whose flat (0 degree) episodes turn least on average. Negating the untrimmed drift rate
+does not work: the policy's yaw response is steep near zero (-0.07 rad/s turned the dog about 180 degrees in 10 s
+where 0 turned it +40). Prints one JSON line per episode, then a table per mode. A development measurement, not an
+evaluation result.
 """
 import json
 import math
@@ -64,12 +66,18 @@ def main() -> None:
     sw = config["world"]["incline"]["sweep"]
     world = Go2World(config, config["runtime"]["seed"])
     zero = {name: 0.0 for name in world.command_schema["fields"]}
-    tables = {}
+    turns = {}
+    for trim in sw["trim_candidates_rad_s"]:
+        command = zero | {"vel_x": sw["vel_x"], "yaw_rate": float(trim)}
+        flat = [episode(world, 0.0, seed, command, sw["duration_s"]) for seed in sw["attempt_seeds"]]
+        turns[trim] = float(np.mean([abs(r["final_yaw_change_rad"]) for r in flat]))
+        print(json.dumps({"mode": "trim_calibration", "trim_rad_s": trim, "mean_abs_yaw_change_rad": turns[trim],
+                          "yaw_change_rad": [r["final_yaw_change_rad"] for r in flat]}), flush=True)
+    best = min(turns, key=turns.get)
+    lines = [f"| trim {t:+.3f} rad/s | mean abs yaw change {math.degrees(v):.1f} deg |" for t, v in turns.items()]
+    tables = {"trim calibration on flat ground": "\n".join(lines + [f"chosen trim: {best:+.3f} rad/s"])}
     for mode in ("untrimmed", "trimmed"):
-        if mode == "trimmed":
-            flat = [r for r in rows if r["incline_deg"] == 0.0]
-            trim = -float(np.mean([r["final_yaw_change_rad"] for r in flat])) / sw["duration_s"]
-        command = zero | {"vel_x": sw["vel_x"], "yaw_rate": 0.0 if mode == "untrimmed" else round(trim, 3)}
+        command = zero | {"vel_x": sw["vel_x"], "yaw_rate": 0.0 if mode == "untrimmed" else float(best)}
         rows = []
         for deg in sw["angles_deg"]:
             for seed in sw["attempt_seeds"]:

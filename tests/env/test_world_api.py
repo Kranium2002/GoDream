@@ -218,6 +218,15 @@ def test_final_yaw_change_follows_a_left_turn(world, zero):
     assert abs(out["final_forward_m"]) < 0.1 and abs(out["final_sideways_m"]) < 0.1  # turned on the spot
 
 
+def test_final_yaw_change_counts_whole_turns(world, zero):
+    # 0.8 rad/s for 5 s turns about 3.5 rad: past pi, where a wrapped angle would read negative.
+    world.reset()
+    world.step(zero | {"yaw_rate": 0.8}, 5.0)
+    out = world.finish_episode()
+    yaw = np.unwrap(yaw_of(np.load(out["trace_path"])["base_quat_wxyz"]))
+    assert out["final_yaw_change_rad"] > np.pi and out["final_yaw_change_rad"] == pytest.approx(yaw[-1] - yaw[0])
+
+
 def shoved_episode(config, save_traces, zero, period):
     """150 control periods standing, shoved sideways at 2.5 m/s after 0.2 s: out of the recovery limits, then back."""
     w = Go2World(config | {"world": config["world"] | {"save_traces": save_traces}}, seed=1)
