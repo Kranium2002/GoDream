@@ -47,7 +47,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Callable, ClassVar, Mapping
+from typing import Any, Callable, ClassVar, Mapping, Sequence
 
 import numpy as np
 
@@ -73,6 +73,9 @@ __all__ = [
     "SPEC_CLASS",
     "ThrowSampler",
     "WORLD_OUTCOME_KEYS",
+    "declared_values",
+    "for_world",
+    "throw_sampler_from",
 ]
 
 ThrowSampler = Callable[[np.random.Generator, int], np.ndarray]
@@ -750,6 +753,68 @@ class DodgeSpec(SkillSpec):
             if not low <= value <= high:
                 raise ValueError(f"the world measured {outcome_spec.name}={value}, outside [{low}, {high}]")
         return {outcome_spec.name: float(value) for outcome_spec, value in zip(world_outcomes, vector)}
+
+
+def declared_values(world: Any) -> tuple[float, str]:
+    """(declared_payload_kg, declared_surface) of ``world``.
+
+    Reads the attributes ``world.declared_payload_kg`` and ``world.declared_surface`` when the
+    world has them (agreed with Person A). Until they exist, reads them from the observation of
+    ``world.reset()``; that reset starts an episode which the next ``reset`` abandons.
+    """
+    payload = getattr(world, "declared_payload_kg", None)
+    surface = getattr(world, "declared_surface", None)
+    if payload is None or surface is None:
+        observation = world.reset()
+        payload, surface = observation["declared_payload_kg"], observation["declared_surface"]
+    return float(payload), str(surface)
+
+
+def throw_sampler_from(
+    sample: Callable[[Mapping[str, Any], np.random.Generator, int], Sequence[Mapping[str, Any]]],
+    config: Mapping[str, Any],
+) -> Callable[[np.random.Generator, int], np.ndarray]:
+    """Adapt a throw model ``sample(config, rng, n) -> n mappings`` to the spec's sampler.
+
+    Each mapping must hold exactly the seven ball and dog keys (:data:`BALL_DOG_KEYS`); the
+    result is the float64 array (n, 7) in that key order. Nothing is filled in or clipped: a
+    missing key, an extra key or a wrong count raises ValueError.
+    """
+
+    def sampler(rng: np.random.Generator, n: int) -> np.ndarray:
+        throws = sample(config, rng, n)
+        if len(throws) != n:
+            raise ValueError(f"the throw model returned {len(throws)} situations for n={n}")
+        rows = np.empty((n, len(BALL_DOG_KEYS)), dtype=np.float64)
+        for index, throw in enumerate(throws):
+            if set(throw) != set(BALL_DOG_KEYS):
+                raise ValueError(
+                    f"throw {index} must hold exactly the keys {list(BALL_DOG_KEYS)}; got {sorted(throw)}"
+                )
+            rows[index] = [float(throw[key]) for key in BALL_DOG_KEYS]
+        return rows
+
+    return sampler
+
+
+def for_world(config: Mapping[str, Any], world: Any) -> "DodgeSpec":
+    """The DODGE spec for ``world``: its declared values, and throws from Person A's throw model.
+
+    The throw model is ``learned_judgment.env.sample_dodge_situations(config, rng, n)``; it is
+    imported here, at call time, so this module still imports while the model does not exist.
+    The spec is built and validated through :func:`learned_judgment.skills.load_skill`.
+    """
+    from learned_judgment.env import sample_dodge_situations  # Person A's throw model
+    from learned_judgment.skills import load_skill
+
+    payload, surface = declared_values(world)
+    return load_skill(
+        "dodge",
+        config,
+        throw_sampler=throw_sampler_from(sample_dodge_situations, config),
+        declared_payload_kg=payload,
+        declared_surface=surface,
+    )
 
 
 SPEC_CLASS = DodgeSpec

@@ -94,3 +94,13 @@
 
 - One real billed prediction through the project's teacher on fixture data shaped like one DODGE decision (experiment E7-settle). The real response has the layout the teacher parses; the charge was 10,000 tokens, equal to the free quote; the repeated call came from the cache with no second request. Account usage 50,000 of 35,000,000 tokens. Ledger: `results/tabpfn_calls.jsonl`.
 - NOT RUN: a TabPFN prediction on real simulator attempts; multi-chunk requests; verified rate limits.
+
+## 2026-11-21 — Person B: the whole chain runs on the real Go2 simulator (development skill, no ball)
+
+- Round three finished and re-run by the lead: the shared SNN on 8 reserved skill slots with a separate retention split, and the measurement code for any deployed student (both energy estimates, intervals, the H4 verdict rule, full-path latency). A check both lanes had left NOT RUN (measuring a real shared-SNN view) was added and passes.
+- `SkillSpec` gained `reset_situation` and `commands` for replay; SNN training reports each evaluation to an observer; `engine.dream.select_rows` added.
+- A no-ball development skill, `sidestep_reach`, was built and validated on the real `Go2World` (experiments/proofs/B_sidestep_dev).
+- One command now runs the chain on the real simulator with real TabPFN requests and opens the live MuJoCo window: `prototype_chain.py` (experiment B-chain). On 60 dev situations the mean sideways error was 0.080 m for the formula alone, 0.021 m for the teacher after 40 attempts and 0.026 m for the SNN trained in the teacher's dream. DEV RUN, one world, one seed; not an evaluation result.
+- TabPFN usage: 100,000 of 35,000,000 tokens.
+- In progress: `learned_judgment/pipeline.py` (built, under independent review and a real-simulator run); Person A's ball, throw model and `skills.dodge` settings.
+- NOT RUN: any DODGE episode with the ball; the shared SNN on real dreams; the oracle; any evaluation on a test or shift split.

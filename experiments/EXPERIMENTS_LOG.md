@@ -434,3 +434,28 @@ Rebound tests stated by the rules, with the implied coefficient of restitution `
 - TabPFN calls: 1 billed (10,000 tokens). Project ledger total: 10,000 tokens.
 - Limitations: one request, one shape, fixture data. Rate limits per minute and per hour are still not verified (`tabpfn.verified_request_limit_per_minute` and `_per_hour` stay null). Multi-chunk requests (more than 32,000 query rows) have not been sent for real.
 - Decision: the teacher's request path is confirmed against the real service for the DODGE shape. No code change was needed.
+
+## B-chain — the whole learning chain on the real Go2 simulator, no-ball development skill — 2026-11-21 — Person B
+
+- Question: does the chain (real attempts, TabPFN residual teacher, dream, SNN trained in the dream, decisions measured on the simulator) run end to end on Person A's `Go2World` with real TabPFN requests, before the simulated ball exists?
+- Status: DEV RUN on the real simulator with the development skill `sidestep_reach` ("reach a given sideways displacement"; it isolates the dog-motion half of the DODGE physics guess; decision of 2026-11-21). One world, one seed. These are development measurements. They are not evaluation results and enter no report or table. No DODGE episode was run: the ball does not exist yet.
+- Versions: `person-b` at `a113afb` plus the working tree committed with this entry; mujoco 3.11.0, tabpfn-client 0.10.1 (model `v3.5_default`, 8 estimators), torch 2.15.0+cpu, snntorch 1.0.0, Python 3.13. `Go2World` has no hidden effects yet, so the gap between formula and simulator is the walking policy's own response.
+- Config and seeds: config digest `ff5f4cad143a`; `runtime.seed` 20261121; world seed 1015552365 (stream `sidestep_reach/dev/world`); preset `default`; situations and attempt seeds from the `context` and `dev` splits of `learned_judgment.eval.splits`; settings under `dev_checks.sidestep_reach`, `engine`, `tabpfn`, `students.snn`.
+- Command: `.venv\Scripts\python.exe experiments\proofs\B_sidestep_dev\prototype_chain.py`, exit code 0. Output: `experiments/proofs/B_sidestep_dev/prototype_chain.out.txt`; artifacts in `experiments/proofs/B_sidestep_dev/out/prototype_20261121T172417Z/` (attempt rows, dream header, student record, table, manifest; the `.npz` arrays are git-ignored).
+- Protocol: 40 real context attempts with exploration actions; the teacher fitted on them; 2000 situations dreamed by the teacher (63 candidates each); a spiking network (one hidden layer of 64, 10 time steps) trained in that dream; then physics only, the teacher and the SNN each decided the same 60 dev situations, and every decision was run on the simulator with the same attempt seeds (180 episodes).
+- Measured (sideways error = measured sideways travel at the end of the episode minus the target):
+
+  | Method | n | Mean abs error (m) | Median (m) | Max (m) | Falls | Within 0.05 m |
+  |---|---|---|---|---|---|---|
+  | physics_only | 60 | 0.0799 | 0.0786 | 0.1553 | 0.00 | 0.17 |
+  | teacher | 60 | 0.0210 | 0.0186 | 0.0629 | 0.00 | 0.95 |
+  | snn_per_skill | 60 | 0.0257 | 0.0212 | 0.0994 | 0.00 | 0.88 |
+
+  - Paired with physics only on the same situation and attempt seed: the teacher was closer in 56 of 60 situations (mean difference -0.0588 m), the SNN in 54 of 60 (-0.0542 m).
+  - The SNN chose the teacher's action in 45 of the 60 dev situations.
+  - Residual of the 40 context attempts (measured minus formula): mean +0.0790 m, standard deviation 0.0351 m.
+  - Time: 40 attempts 31.9 s; teacher decisions for 60 dev situations 3.7 s; 2000 dreams 18.8 s; SNN training 15.0 s (1500 steps, validation loss 1.1309 to 0.0010); the SNN decided the 60 dev situations in 4.3 ms; dev episodes 0.54 to 0.61 s each.
+- Earlier the same day, with local residual models in place of the teacher (`c3_baselines_real.py`, same skill, 60 dev situations): constant bias 0.0259 m, Gaussian process 0.0258 m, gradient boosting 0.0288 m, against 0.0799 m for physics only.
+- TabPFN calls: 5 billed requests, 50,000 tokens quoted. Account usage 100,000 of 35,000,000 tokens after the run.
+- Limitations: one world and one seed, no intervals, 1 repeat per situation; no hidden effects in the world yet; a development skill, not one of the project's skills; no confidence threshold was set, so every dream was kept; the constant-bias baseline does about as well as the teacher here, because the formula's error on this skill is mostly one offset, so this run does not show that TabPFN is needed, only that the chain works and that 40 attempts remove most of the formula's error.
+- Decision: the chain is ready for DODGE. The next run is the same chain on DODGE once Person A's ball, throw model and `skills.dodge` settings land.

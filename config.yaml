@@ -291,6 +291,15 @@ engine:
   adaptation_context_policy: null  # Compare all/recent/world-ID on dev sets.
   adaptation_recent_window: null  # Attempts kept by the recent-only policy; choose on dev.
 
+pipeline:  # learned_judgment.pipeline: one run of one skill in one world, with saved state.
+  manifests_dir: results/pipeline/manifests  # One JSON manifest per run, <run_id>.json: identity, seeds, every step's state.
+  students_dir: results/pipeline/students  # Dream-trained spiking student of each run, <run_id>.npz + <run_id>.json.
+  evaluation_rows_dir: results/pipeline/evaluation_rows  # Attempt files and harness manifests of each evaluation, <run_id>/<evaluation_id>/.
+  run_results_dir: results/pipeline/run_results  # Run-result files (eval.report), <run_id>/<evaluation_id>/<method>.json.
+  default_attempts: 40  # Context attempts the command line collects without --attempts; the top of MISSION.md's 10-40.
+  evaluation_repeats: 1  # Noise repeats per situation the command line evaluates without --eval-repeats.
+  on_physics_mismatch: error  # A stored attempt whose physics guess differs from the current spec: error or recompute (engine.rows).
+
 evaluation:
   dev_situations_per_skill: 100
   test_situations_per_skill: 100
@@ -346,6 +355,32 @@ tabpfn:
   lock_timeout_s: 120  # How long a process waits for another process using the same cache before giving up.
   lock_poll_s: 0.05  # Pause between attempts to take the cache lock.
   project_token_budget: 35000000  # Total tokens this project may spend. Set by the lead on 2026-11-21: the allowance Prior Labs gave for the track.
+
+dev_checks:  # Development checks on the real simulator (Person B). Their numbers are DEV RUN outputs, never evaluation results.
+  sidestep_reach:  # Dev skill "reach a sideways displacement", no ball (experiments/proofs/B_sidestep_dev/sidestep_reach_spec.py).
+    episode_duration_s: 1.8  # Simulated seconds per attempt after the decision instant (hold, then trot tail); whole 0.02 s control periods.
+    min_tail_s: 1.0  # Shortest trot tail after the longest hold: over 3 response times (skills.dodge.physics.response_time_s 0.3 s).
+    situation_ranges:
+      dog_forward_speed_m_s: [0.3, 0.9]  # Forward trot speed, sent as vel_x; the speeds of Gate 1 and of the lead's first sidestep run.
+      target_sideways_m: [-0.4, 0.4]  # Sideways travel to reach at the end of the episode, + left; reasoning in the spec's docstring.
+      declared_payload_kg: [0.0, 3.6]  # Same declared-payload range as skills.dodge (payload 0-3 kg, label up to 20% wrong).
+    declared_surfaces: [default]  # Level names of declared_surface; only the default preset exists today.
+    hold_duration_s: [0.2, 0.8]  # How long the sideways command is held from the decision instant; grid points are whole control periods.
+    candidate_points_per_dim: [9, 7]  # Candidate grid per action dimension: side velocity (0.25 m/s steps over the verified range), hold (0.1 s steps).
+    objective_weights:  # Risk-aware objective, higher is better. Fixed before any run; not tuned on these dev checks.
+      fall: 10.0  # Per unit of predicted fall probability.
+      abs_error: 1.0  # Per metre of expected absolute sideways error.
+      spread: 0.5  # Per metre of predictive spread of the sideways error (half width between engine.spread_levels).
+      motion: 0.05  # Per metre of commanded sideways travel, |side velocity| x hold.
+    success_tolerance_m: 0.05  # An attempt succeeds when |sideways error| is at most this and the dog did not fall.
+    save_traces: false  # world.save_traces for these runs: the outcome is read from observations, so no trace files are written.
+    world_preset: default  # The only preset Go2World supports today.
+    formula_match_tolerance_m: 1.0e-12  # c0: largest allowed difference between this spec's sideways travel and DodgeSpec's.
+    view_tail_s: 3.0  # prototype_chain.py --watch: extra seconds of trot shown in the live window after the episode's commands; not part of a measured episode.
+    determinism_other_attempt_seeds: 3  # c2: episodes run with other attempt seeds, to see the noise between attempts.
+    context_attempts: 40  # c3: context situations; one physics-action attempt and one exploration attempt on each.
+    dev_situations: 60  # c3: dev situations run by every method.
+    residual_baselines: [constant_bias, gaussian_process, gradient_boosting]  # c3: residual baselines (learned_judgment/eval/baselines.py) fitted on the context attempts.
 
 persistence:  # Retry of the atomic file move on Windows, where an open reader blocks os.replace (proof p10_persist).
   replace_attempts: 10

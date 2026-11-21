@@ -1,0 +1,558 @@
+{
+  "attempt_seed_streams": {
+    "context": "sidestep_reach/context/default/noise/0, index = situation index",
+    "dev": "sidestep_reach/dev/default/noise/0, index = situation index"
+  },
+  "attempts_file": "attempts.jsonl",
+  "baselines": {
+    "constant_bias": {
+      "decisions_unlike_physics": 60,
+      "describe": {
+        "fit_details": {},
+        "fit_warnings": [],
+        "layout": {
+          "blocks": {
+            "action": 2,
+            "extra": 0,
+            "physics": 3,
+            "situation": 4
+          },
+          "categorical": [
+            [
+              3,
+              [
+                "default"
+              ]
+            ]
+          ],
+          "names": [
+            "dog_forward_speed_m_s",
+            "target_sideways_m",
+            "declared_payload_kg",
+            "declared_surface",
+            "side_velocity_m_s",
+            "hold_duration_s",
+            "physics_sideways_error_m",
+            "physics_fall",
+            "physics_lateral_command_m"
+          ],
+          "outcome_kinds": [
+            "regression",
+            "binary",
+            "regression"
+          ],
+          "outcome_names": [
+            "sideways_error_m",
+            "fall",
+            "lateral_command_m"
+          ],
+          "skill": "sidestep_reach"
+        },
+        "method": "constant_bias",
+        "min_attempts": 1,
+        "n_train": 40,
+        "quantile_levels": [
+          0.1,
+          0.25,
+          0.5,
+          0.75,
+          0.9
+        ],
+        "quantile_method": "in-sample empirical quantiles (numpy 'linear', type 7) of the training residuals of each outcome; the same quantiles, median and spread for every query row; features are ignored",
+        "seed": 3358204426,
+        "settings": {},
+        "spread_levels": [
+          0.1,
+          0.9
+        ]
+      },
+      "fit_warnings": 0,
+      "seed": 3358204426,
+      "seed_stream": "sidestep_reach/c3/baselines/constant_bias"
+    },
+    "gaussian_process": {
+      "decisions_unlike_physics": 60,
+      "describe": {
+        "fit_details": {},
+        "fit_warnings": [
+          "sideways_error_m: ConvergenceWarning: The optimal value found for dimension 1 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "sideways_error_m: ConvergenceWarning: The optimal value found for dimension 5 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "fall: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k1__constant_value is close to the specified lower bound 0.001. Decreasing the bound and calling fit again may find a better value.",
+          "fall: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "fall: ConvergenceWarning: The optimal value found for dimension 1 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "fall: ConvergenceWarning: The optimal value found for dimension 4 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "fall: ConvergenceWarning: The optimal value found for dimension 5 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "fall: ConvergenceWarning: The optimal value found for dimension 6 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "fall: ConvergenceWarning: The optimal value found for dimension 8 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "fall: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-06. Decreasing the bound and calling fit again may find a better value.",
+          "lateral_command_m: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k1__constant_value is close to the specified lower bound 0.001. Decreasing the bound and calling fit again may find a better value.",
+          "lateral_command_m: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "lateral_command_m: ConvergenceWarning: The optimal value found for dimension 1 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "lateral_command_m: ConvergenceWarning: The optimal value found for dimension 4 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "lateral_command_m: ConvergenceWarning: The optimal value found for dimension 5 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "lateral_command_m: ConvergenceWarning: The optimal value found for dimension 6 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "lateral_command_m: ConvergenceWarning: The optimal value found for dimension 8 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.",
+          "lateral_command_m: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-06. Decreasing the bound and calling fit again may find a better value."
+        ],
+        "layout": {
+          "blocks": {
+            "action": 2,
+            "extra": 0,
+            "physics": 3,
+            "situation": 4
+          },
+          "categorical": [
+            [
+              3,
+              [
+                "default"
+              ]
+            ]
+          ],
+          "names": [
+            "dog_forward_speed_m_s",
+            "target_sideways_m",
+            "declared_payload_kg",
+            "declared_surface",
+            "side_velocity_m_s",
+            "hold_duration_s",
+            "physics_sideways_error_m",
+            "physics_fall",
+            "physics_lateral_command_m"
+          ],
+          "outcome_kinds": [
+            "regression",
+            "binary",
+            "regression"
+          ],
+          "outcome_names": [
+            "sideways_error_m",
+            "fall",
+            "lateral_command_m"
+          ],
+          "skill": "sidestep_reach"
+        },
+        "method": "gaussian_process",
+        "min_attempts": 2,
+        "n_train": 40,
+        "quantile_levels": [
+          0.1,
+          0.25,
+          0.5,
+          0.75,
+          0.9
+        ],
+        "quantile_method": "Normal(mean, std) of each outcome's Gaussian process (predict with return_std=True, std includes the fitted WhiteKernel noise); quantile = mean + std * Phi^-1(level); heteroscedastic per query row",
+        "seed": 3232209174,
+        "settings": {
+          "constant_value_bounds": [
+            0.001,
+            1000.0
+          ],
+          "kernel": "1**2 * RBF(length_scale=[1, 1, 1, 1, 1, 1, 1, 1, 1]) + WhiteKernel(noise_level=1)",
+          "length_scale_bounds": [
+            0.01,
+            1000.0
+          ],
+          "n_restarts_optimizer": 5,
+          "noise_level_bounds": [
+            1e-06,
+            10.0
+          ],
+          "normalize_y": true
+        },
+        "spread_levels": [
+          0.1,
+          0.9
+        ]
+      },
+      "fit_warnings": 18,
+      "seed": 3232209174,
+      "seed_stream": "sidestep_reach/c3/baselines/gaussian_process"
+    },
+    "gradient_boosting": {
+      "decisions_unlike_physics": 60,
+      "describe": {
+        "fit_details": {
+          "fold_stream": "baselines/gradient_boosting/interval_folds",
+          "folds_used": 5,
+          "out_of_fold_interval_coverage": [
+            {
+              "count": 19,
+              "coverage": 0.475,
+              "high_level": 0.75,
+              "low_level": 0.25,
+              "n": 40,
+              "nominal": 0.5,
+              "outcome": "sideways_error_m"
+            },
+            {
+              "count": 30,
+              "coverage": 0.75,
+              "high_level": 0.9,
+              "low_level": 0.1,
+              "n": 40,
+              "nominal": 0.8,
+              "outcome": "sideways_error_m"
+            },
+            {
+              "count": 40,
+              "coverage": 1.0,
+              "high_level": 0.75,
+              "low_level": 0.25,
+              "n": 40,
+              "nominal": 0.5,
+              "outcome": "fall"
+            },
+            {
+              "count": 40,
+              "coverage": 1.0,
+              "high_level": 0.9,
+              "low_level": 0.1,
+              "n": 40,
+              "nominal": 0.8,
+              "outcome": "fall"
+            },
+            {
+              "count": 40,
+              "coverage": 1.0,
+              "high_level": 0.75,
+              "low_level": 0.25,
+              "n": 40,
+              "nominal": 0.5,
+              "outcome": "lateral_command_m"
+            },
+            {
+              "count": 40,
+              "coverage": 1.0,
+              "high_level": 0.9,
+              "low_level": 0.1,
+              "n": 40,
+              "nominal": 0.8,
+              "outcome": "lateral_command_m"
+            }
+          ],
+          "out_of_fold_note": "cross-validated coverage on the training attempts: an honesty indicator, not a result"
+        },
+        "fit_warnings": [],
+        "layout": {
+          "blocks": {
+            "action": 2,
+            "extra": 0,
+            "physics": 3,
+            "situation": 4
+          },
+          "categorical": [
+            [
+              3,
+              [
+                "default"
+              ]
+            ]
+          ],
+          "names": [
+            "dog_forward_speed_m_s",
+            "target_sideways_m",
+            "declared_payload_kg",
+            "declared_surface",
+            "side_velocity_m_s",
+            "hold_duration_s",
+            "physics_sideways_error_m",
+            "physics_fall",
+            "physics_lateral_command_m"
+          ],
+          "outcome_kinds": [
+            "regression",
+            "binary",
+            "regression"
+          ],
+          "outcome_names": [
+            "sideways_error_m",
+            "fall",
+            "lateral_command_m"
+          ],
+          "skill": "sidestep_reach"
+        },
+        "method": "gradient_boosting",
+        "min_attempts": 5,
+        "n_train": 40,
+        "quantile_levels": [
+          0.1,
+          0.25,
+          0.5,
+          0.75,
+          0.9
+        ],
+        "quantile_method": "homoscedastic, out-of-fold: point prediction of the squared-error HistGradientBoostingRegressor of each outcome fitted on all attempts, plus the empirical quantiles (numpy 'linear', type 7) of OUT-OF-FOLD errors from a K-fold refit of the same model with the same settings (K = min(interval_folds, number of attempts), folds from the stream 'baselines/gradient_boosting/interval_folds' of the seed); the spread is one value per outcome, identical for every query row",
+        "seed": 1234768605,
+        "settings": {
+          "categorical_features": [
+            3
+          ],
+          "coverage_intervals": [
+            [
+              0.25,
+              0.75
+            ],
+            [
+              0.1,
+              0.9
+            ]
+          ],
+          "early_stopping": false,
+          "interaction_cst": null,
+          "interval_folds": 5,
+          "l2_regularization": 0.0,
+          "learning_rate": 0.05,
+          "loss": "squared_error",
+          "max_bins": 255,
+          "max_depth": null,
+          "max_features": 1.0,
+          "max_iter": 200,
+          "max_leaf_nodes": 4,
+          "min_samples_leaf": 2,
+          "monotonic_cst": null,
+          "n_iter_no_change": 10,
+          "quantile": null,
+          "random_state": 1234768605,
+          "scoring": "loss",
+          "tol": 1e-07,
+          "validation_fraction": 0.1,
+          "verbose": 0,
+          "warm_start": false
+        },
+        "spread_levels": [
+          0.1,
+          0.9
+        ]
+      },
+      "fit_warnings": 0,
+      "seed": 1234768605,
+      "seed_stream": "sidestep_reach/c3/baselines/gradient_boosting"
+    }
+  },
+  "command": "D:\\BerlinPrior\\.venv\\Scripts\\python.exe experiments/proofs/B_sidestep_dev/c3_baselines_real.py",
+  "config_digest": "356e923b5ac8edd72d752d847fa51e7feeae5c87f4db79d30e8173bb3bfe1478",
+  "context_attempt_seeds": [
+    3320300909,
+    468542896,
+    1623103196,
+    2725584581,
+    431582853,
+    4226153464,
+    2707222695,
+    674759301,
+    1351441290,
+    3299235381,
+    1745328570,
+    1732684036,
+    457035251,
+    1537262648,
+    2469074877,
+    1773190697,
+    4078562796,
+    3226770870,
+    262583190,
+    3184693624,
+    3603702940,
+    3118862965,
+    318043686,
+    2047078475,
+    3972845146,
+    3071960015,
+    1068883444,
+    75250940,
+    2163545845,
+    4142654503,
+    4018639207,
+    4199767764,
+    3594341242,
+    3701412255,
+    3167416665,
+    1742697829,
+    397468740,
+    835467065,
+    2197347338,
+    1318384150
+  ],
+  "declared": 0.0,
+  "dev_attempt_seeds": [
+    2896971162,
+    2581309890,
+    3846457954,
+    984852431,
+    3287192990,
+    4059582072,
+    1740797749,
+    1467155283,
+    358624035,
+    1489830194,
+    112614727,
+    961702484,
+    4154969581,
+    1122468795,
+    516755512,
+    1067080463,
+    1699584868,
+    3063878048,
+    3401805559,
+    1050017768,
+    2930155146,
+    1294420664,
+    179055858,
+    573671805,
+    3416471785,
+    483324972,
+    3922027392,
+    1079712176,
+    783529335,
+    671188768,
+    3942882494,
+    2442917152,
+    1661625673,
+    3387725456,
+    744885922,
+    4047533046,
+    4505532,
+    1200134521,
+    1636329022,
+    759580337,
+    1174983414,
+    2061024418,
+    1615713630,
+    36983517,
+    1655061213,
+    971185586,
+    1485741203,
+    2008121702,
+    4003810015,
+    2750193663,
+    1247380225,
+    789554425,
+    2474458164,
+    2785903112,
+    495383637,
+    3901834201,
+    3363742456,
+    2312762203,
+    1781795671,
+    1864781413
+  ],
+  "exploration_fraction": 0.5,
+  "exploration_stream": "sidestep_reach/context/default/exploration",
+  "finished_utc": "2026-11-21T17:20:02.136061+00:00",
+  "label": "DEV RUN on the real Go2 simulator; not an evaluation result",
+  "runs": {
+    "context/explore": {
+      "episodes": 40,
+      "run_id": "sidestep_reach/c3/20261121T171526Z/context/explore",
+      "wall_s": 27.414936000015587
+    },
+    "context/physics_only": {
+      "episodes": 40,
+      "run_id": "sidestep_reach/c3/20261121T171526Z/context/physics_only",
+      "wall_s": 46.669271499995375
+    },
+    "dev/constant_bias": {
+      "episodes": 60,
+      "run_id": "sidestep_reach/c3/20261121T171526Z/dev/constant_bias",
+      "wall_s": 38.83522880001692
+    },
+    "dev/gaussian_process": {
+      "episodes": 60,
+      "run_id": "sidestep_reach/c3/20261121T171526Z/dev/gaussian_process",
+      "wall_s": 44.588995599973714
+    },
+    "dev/gradient_boosting": {
+      "episodes": 60,
+      "run_id": "sidestep_reach/c3/20261121T171526Z/dev/gradient_boosting",
+      "wall_s": 48.70697040000232
+    },
+    "dev/physics_only": {
+      "episodes": 60,
+      "run_id": "sidestep_reach/c3/20261121T171526Z/dev/physics_only",
+      "wall_s": 62.180562599998666
+    }
+  },
+  "runtime_seed": 20261121,
+  "situation_streams": {
+    "context": "sidestep_reach/context/default/situations",
+    "dev": "sidestep_reach/dev/default/situations"
+  },
+  "started_utc": "2026-11-21T17:15:26.454149+00:00",
+  "summary": {
+    "context/explore": {
+      "fall_rate": 0.0,
+      "max_abs_error_m": 1.005396580178147,
+      "mean_abs_error_m": 0.21075019343409745,
+      "mean_error_m": 0.16200051760344455,
+      "median_abs_error_m": 0.10231666818852643,
+      "n": 40,
+      "success_rate": 0.15,
+      "wall_s_per_episode": 0.6853734000003897
+    },
+    "context/physics_only": {
+      "fall_rate": 0.0,
+      "max_abs_error_m": 0.19667861357447086,
+      "mean_abs_error_m": 0.08068793248031293,
+      "mean_error_m": 0.07482676164707613,
+      "median_abs_error_m": 0.08208342024382184,
+      "n": 40,
+      "success_rate": 0.2,
+      "wall_s_per_episode": 1.1667317874998844
+    },
+    "dev/constant_bias": {
+      "fall_rate": 0.0,
+      "max_abs_error_m": 0.13450892935919162,
+      "mean_abs_error_m": 0.025872444064587902,
+      "mean_error_m": 0.0018201373974930351,
+      "median_abs_error_m": 0.020093229947548016,
+      "n": 60,
+      "paired_mean_abs_error_change_m": -0.05398696079652323,
+      "success_rate": 0.8833333333333333,
+      "wall_s_per_episode": 0.6472538133336153
+    },
+    "dev/gaussian_process": {
+      "fall_rate": 0.0,
+      "max_abs_error_m": 0.14247719922155638,
+      "mean_abs_error_m": 0.025762213758847147,
+      "mean_error_m": -0.011671608937971112,
+      "median_abs_error_m": 0.01987818004365896,
+      "n": 60,
+      "paired_mean_abs_error_change_m": -0.05409719110226398,
+      "success_rate": 0.9166666666666666,
+      "wall_s_per_episode": 0.7431499266662286
+    },
+    "dev/gradient_boosting": {
+      "fall_rate": 0.0,
+      "max_abs_error_m": 0.10508587595202995,
+      "mean_abs_error_m": 0.02879157748572741,
+      "mean_error_m": -0.012560733720598505,
+      "median_abs_error_m": 0.021312416245371626,
+      "n": 60,
+      "paired_mean_abs_error_change_m": -0.05106782737538372,
+      "success_rate": 0.8333333333333334,
+      "wall_s_per_episode": 0.8117828400000386
+    },
+    "dev/physics_only": {
+      "fall_rate": 0.0,
+      "max_abs_error_m": 0.15532932785333448,
+      "mean_abs_error_m": 0.07985940486111114,
+      "mean_error_m": 0.07985940486111114,
+      "median_abs_error_m": 0.07859502481309448,
+      "n": 60,
+      "success_rate": 0.16666666666666666,
+      "wall_s_per_episode": 1.0363427099999778
+    }
+  },
+  "versions": {
+    "mujoco": "3.11.0",
+    "numpy": "2.5.5",
+    "python": "3.13.16",
+    "scikit-learn": "1.9.0",
+    "scipy": "1.18.1"
+  },
+  "world_preset": "default",
+  "world_seed": 1015552365,
+  "world_seed_stream": "sidestep_reach/dev/world"
+}

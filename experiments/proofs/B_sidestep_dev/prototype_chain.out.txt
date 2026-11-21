@@ -1,0 +1,50 @@
+DEV RUN on the real Go2 simulator (Person A's Go2World, preset default, no ball) - development check of the sidestep_reach dev skill; not an evaluation result, not in any report or table
+config digest ff5f4cad143a | runtime.seed 20261121 | world seed 1015552365 (stream 'sidestep_reach/dev/world') | preset default
+output directory experiments/proofs/B_sidestep_dev/out/prototype_20261121T172417Z
+
+== 1. attempts: 40 real episodes with exploration actions ==
+  ran context/explore         40 episodes in   31.9 s (0.80 s per episode)
+  residual of the sideways error (measured - formula): mean +0.0790 m, std 0.0351 m
+
+== 2. TabPFN: the residual teacher on those attempts (real requests) ==
+  account usage before: 50000 of 35000000 tokens; at most 10000 tokens per request; project budget 35000000
+  the teacher decided 60 dev situations x 63 candidates in 3.7 s; 60 of 60 decisions differ from the physics action
+
+== 3. dream: the teacher decides 2000 sampled situations ==
+  2000 dreams in 18.8 s; no confidence threshold is set for this skill in engine.confidence_thresholds_by_skill, so every dream is kept
+  in 2000 of 2000 kept dreams the teacher's choice differs from the physics choice
+  TabPFN in this run: 5 billed requests, 50000 tokens quoted, 0 cache hits; account usage now 100000 of 35000000
+
+== 4. SNN: a spiking network trained inside the 2000 dreams ==
+  trained in 15.0 s; network digest b5c4ba42274d; hidden sizes [64], 10 time steps; training report: {'steps_run': 1500, 'best_step': 1500, 'stopped_early': False, 'initial_validation_loss': 1.1308544599352575, 'best_validation_loss': 0.0010418194368406327, 'firing_rate_per_layer': [0.269765625]}
+
+== 5. measure: every method decides the same 60 dev situations; each decision is run on the simulator ==
+  the SNN decided 60 dev situations in 4.3 ms; 45 of 60 decisions equal the teacher's
+  ran dev/physics_only        60 episodes in   32.3 s (0.54 s per episode)
+  ran dev/teacher             60 episodes in   36.8 s (0.61 s per episode)
+  ran dev/snn_per_skill       60 episodes in   32.5 s (0.54 s per episode)
+
+Sideways error = measured sideways travel at the end of the episode - target, metres (+ is left).
+DEV RUN, real Go2World, preset default, world seed 1015552365, 40 context attempts; not an evaluation result.
+
+method             n mean |error| median |e|  max |e| falls success
+physics_only      60       0.0799     0.0786   0.1553  0.00    0.17
+teacher           60       0.0210     0.0186   0.0629  0.00    0.95
+snn_per_skill     60       0.0257     0.0212   0.0994  0.00    0.88
+(success: |error| <= dev_checks.sidestep_reach.success_tolerance_m and no fall; falls and success are rates)
+
+Paired on the dev situations (same situation, same attempt seed): mean of |error(method)| - |error(physics only)|;
+negative = the method is closer to the target; and how many situations it is closer / farther / equal.
+  teacher          -0.0588 m   closer 56, farther  4, equal  0
+  snn_per_skill    -0.0542 m   closer 54, farther  6, equal  0
+
+== 6. watch: dev situation 25, where the physics-only decision missed by the most ==
+  situation: {'dog_forward_speed_m_s': 0.41648065441538185, 'target_sideways_m': -0.3115940818521497, 'declared_payload_kg': 0.0, 'declared_surface': 'default'}
+  physics_only     action {'side_velocity_m_s': -1.0, 'hold_duration_s': 0.30000000000000004} -> measured sideways error +0.1553 m
+    python -m app.view_episode --seed 1015552365 --preset default --situation D:\BerlinPrior\experiments\proofs\B_sidestep_dev\out\prototype_20261121T172417Z\watch_situation.json --command 0.41648065441538185,-1.0,0.0,0.3 --command 0.41648065441538185,0.0,0.0,1.5 --command 0.41648065441538185,0.0,0.0,3.0
+  snn_per_skill    action {'side_velocity_m_s': -0.75, 'hold_duration_s': 0.5} -> measured sideways error +0.0501 m
+    python -m app.view_episode --seed 1015552365 --preset default --situation D:\BerlinPrior\experiments\proofs\B_sidestep_dev\out\prototype_20261121T172417Z\watch_situation.json --command 0.41648065441538185,-0.75,0.0,0.5 --command 0.41648065441538185,0.0,0.0,1.3 --command 0.41648065441538185,0.0,0.0,3.0
+  (the window plays the episode's commands, then 3.0 s more of the trot for viewing; that tail is not part of the measured episode. The window's episode is a separate run with the world's default attempt seed.)
+
+written: experiments/proofs/B_sidestep_dev/out/prototype_20261121T172417Z/ (attempts.jsonl, dreams.npz, student, table.txt, manifest.json)
+exit 0

@@ -1,0 +1,24 @@
+Sideways error = measured sideways travel at the end of the episode - target, metres (+ is left).
+DEV RUN, real Go2World, preset default; not an evaluation result.
+
+run                            n mean |error| mean error median |e|  max |e| falls success s/episode
+context/physics_only          40       0.0807     0.0748     0.0821   0.1967  0.00    0.20      1.17
+dev/physics_only              60       0.0799     0.0799     0.0786   0.1553  0.00    0.17      1.04
+context/explore               40       0.2108     0.1620     0.1023   1.0054  0.00    0.15      0.69
+dev/constant_bias             60       0.0259     0.0018     0.0201   0.1345  0.00    0.88      0.65
+dev/gaussian_process          60       0.0258    -0.0117     0.0199   0.1425  0.00    0.92      0.74
+dev/gradient_boosting         60       0.0288    -0.0126     0.0213   0.1051  0.00    0.83      0.81
+(success: |error| <= 0.05 m and no fall; falls and success are rates)
+
+Paired on the 60 dev situations (same situation, same attempt seed): mean of |error(method)| - |error(physics only)|,
+negative = the method is closer to the target; and how many situations it is closer / farther / equal.
+  constant_bias        -0.0540 m   closer 55, farther  5, equal  0
+  gaussian_process     -0.0541 m   closer 54, farther  6, equal  0
+  gradient_boosting    -0.0511 m   closer 54, farther  6, equal  0
+
+Context attempts (exploration, n=40): residual of sideways error (measured - formula) mean +0.0790 m, std 0.0356 m, min -0.0422, max +0.1879
+  left (side > 0)   n=23: residual mean +0.0716 m
+  right (side < 0)  n=14: residual mean +0.0897 m
+  zero command      n= 3: residual mean +0.0853 m
+
+Simulator episodes 320, wall time in collect 268.4 s, 0.84 s per episode (reset, steps and finish, one process).
