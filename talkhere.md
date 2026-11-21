@@ -1,74 +1,130 @@
-# 12-hour Go2 demo plan and Dev A handoff
+# Punch-dodge demo plan — revised after webcam smoke test
 
 Date: 2026-11-21 (Europe/Berlin)
+Owner split: Dev A = MuJoCo world and product UI; Dev B = PFN/SNN learning and evaluation.
 
-## Demo story
+## Product goal
 
-1. The user tells the dog in chat: “Learn to cross this incline safely.” The system validates a declarative skill, runs real Go2 MuJoCo attempts, shows the PFN teacher and SNN learning stages as they happen, then compares measured performance on held-out situations.
-2. The finale uses the laptop camera as the dog's visual sensor. A person moves a fist toward the camera; the system estimates image direction and time-to-contact, then the already-trained SNN chooses a supported dodge for the simulated Go2 shown on screen. The camera view and the dog-head view make the sensor-to-action link visible. This is a simulation demo, not a claim about a physical robot.
+The flagship demo teaches a simulated Unitree Go2 to react to an approaching punch in MuJoCo. The dog should stay still when no threat is present, then choose a safe dodge when a threat arrives. The user sees real simulation attempts, PFN-guided learning, the SNN training curve, held-out metrics, and finally a live laptop-camera view driving the trained local SNN while the simulated dog responds.
 
-Keep the two lessons connected by the same chat, validation, learning pipeline, evidence panel, and learned SNN deployment. Keep the incline lesson as the deliverable floor; camera dodge is the flagship only if its measurement gates pass.
+The laptop camera is an inference sensor only. PFN training and dream generation use simulated Go2 episodes and rendered MuJoCo camera pixels. Live camera frames remain local and go directly through deterministic preprocessing to the SNN. PFN never runs per live frame. The slope lesson remains a secondary skill after the punch-dodge vertical slice passes its gates.
 
-## Current repository state checked
+## What the webcam smoke test established
 
-- Local branch: `person-b` at `f479b67`, merging Person A's `b583c79`. Do not reset or overwrite this tree.
-- The current working tree has WIP: `config.yaml`, `learned_judgment/skills/__init__.py`, untracked `learned_judgment/pipeline.py`, and B proof/probe files. Pipeline review and proof runs are still open. Preserve them.
-- Latest fetched `origin/messages` tip is `77c1bd0` (2026-11-21 17:49 UTC). It says chat-driven `DeclaredSpec` is the priority and camera dodge is parked. This brief records the user's newer demo direction.
-- No `DeclaredSpec`/`check_declaration` implementation or chat UI exists yet. `app/` currently has the episode viewer and hooks only.
-- The slope work is not implemented yet: `Go2World._hidden_effects()` returns `{}`; the named preset values in `config.yaml` are `null`; there is no verified visible incline scene. Do not present a null preset as a working slope.
-- The simulator renders a third-person tracking camera. The Go2 model has no head camera. There is no laptop-camera path. OpenCV and MediaPipe are not installed.
-- Existing exact-state DODGE development results were physics-only 1/100 collisions, teacher 1/100, SNN 5/100. Those results do not establish a learned advantage and do not evaluate camera observations. The current in-progress pipeline is not yet evidence.
-- The repo pins Python 3.13 and `tabpfn-client==0.10.1`. The current teacher is a hosted tabular TabPFN path with usage/cost gates; do not send camera frames to it or call it per frame.
+Three five-second clips were recorded locally. Each sampled image used 12×12 grayscale pixels plus one frame-difference channel, flattened to 288 pixel values. The hosted TabPFN regressor received those values as a numeric table alongside three candidate actions and a fixed prior-utility column (292 features total). A real hosted request completed; the project's dense snnTorch student then trained on PFN-generated action targets.
 
-## Architecture and honest product claim
+Observed smoke results, from `.cache/camera_punch_dataset/results.json`:
 
-- The simulated world renders a physically simulated incoming fist through the Go2 head camera. The policy input is a compact grayscale image tensor (current frame plus a frame-difference channel), flattened into numeric pixel features. Image size, frame stack, resize/normalization, camera cadence and all other tunables live in config. The SNN learns the visual/action mapping directly; no MediaPipe, DINOv3, or other learned vision model sits in the live path. Object pose, contact time and hidden world values are scoring-only.
-- Use the same pixel formatting for MuJoCo and laptop frames: dimensions, grayscale conversion, resize, normalization, temporal stack and cadence. Measure camera age and end-to-end processing delay. Show the dog-head MuJoCo view beside the laptop view.
-- PFN stays hosted and table-based. Flatten each small simulated camera tensor into numeric pixel columns, append candidate action and physics guess, and fit the hosted teacher on simulator-derived rows. PFN estimates outcome residuals and scores candidate actions for dreamed image vectors. The SNN is trained in that dream on the same pixel vectors and teacher-selected action targets; its live input is the same flattened camera tensor. The hosted PFN never runs per live frame.
-- **No secondary vision model:** local code captures and deterministically downsamples grayscale frames. Send only synthetic MuJoCo pixel columns to hosted PFN; never upload real laptop frames or pixels. Choose the image dimensions/channel stack only after hosted cost quotes and held-out fidelity checks, since pixel columns affect request cost and model behavior. If those gates fail, reduce resolution or stop; do not swap in another model. Measure camera-to-SNN-to-MuJoCo command latency on the demo laptop.
-- A fast punch from arm's length may arrive before the dog can move. Measure the shortest dodgeable TTC. The UI must decline/out-of-range a threat below that measured limit and say so plainly. Start camera validation with a known-size soft ball as a calibration target; do not market fist detection until it is measured.
+- PFN context: 96 candidate rows; query: 18 frames; hosted held-out score: 3/5 correct (60%).
+- SNN: 13 PFN dream rows for training and 5 for validation; action accuracy on the five-frame held-out slice: 1/5 (20%); agreement with PFN: 2/5 (40%).
+- SNN training ran for 8.5 seconds. Offline forward latency was about 4.9 ms for a batch of five rows (p95 5.9 ms).
+- The request used the real hosted client (`tabpfn-client` 0.10.1, v3.5 model). The call was sent at the user's direction without a usage or cost preflight. Exact numeric request/response data and videos are in the ignored local `.cache` directory.
 
-## Twelve-hour build sequence
+This confirms the basic plumbing: tiny flattened image features can be submitted to hosted tabular TabPFN, and PFN outputs can train the current dense SNN. The five-frame result is too small and too weak to support a dodge-accuracy claim. The test did not use MuJoCo, simulation-derived examples, a no-threat class, or Go2 control. “More data will improve accuracy” remains a hypothesis to test in simulation.
 
-| Window | Dev A: UI / world / camera | Dev B: backend / learning | Exit evidence |
+## Input and action contract
+
+### Image sequence
+
+The two-channel smoke-test input loses too much motion information. Start the simulation experiment with a rolling window of **8 consecutive 12×12 grayscale frames** sampled at 30 Hz. Flatten the ordered frames to 1,152 pixel features; the window covers about 233 ms from first frame to last. Compare this with a 4-frame and a 6-frame variant on development seeds before freezing the stack. Measure the extra observation delay, TabPFN request dimensions, SNN accuracy, and local CPU latency for each variant. Keep size, cadence, frame count, normalization, and channel order in configuration.
+
+The MuJoCo head camera and laptop camera must use the same crop, grayscale conversion, resize, normalization, frame order, and cadence. No learned detector or external image model is in the live path. The current project student is a dense SNN that accepts flattened pixels; a convolutional SNN has not been tested and is not an assumed dependency.
+
+### Motion representation experiments
+
+Use the ordered grayscale stack as the first baseline. Compare three deterministic/model-side alternatives on the same seeded simulation split:
+
+- Add signed or absolute differences between adjacent frames, optionally pooled over small image tiles. This highlights where image content moved while keeping preprocessing simple.
+- Feed the SNN frames sequentially and preserve its membrane state across the window. The current student resets state at each `forward` call, so this requires an explicit sequence-training/runtime change and a parity test.
+- Benchmark classical CPU optical flow (for example, OpenCV Farnebäck) as an optional feature source for direction and speed. It is not a learned model, but it adds compute and can be sensitive to background motion; retain it only if measured accuracy gains justify its latency.
+
+Keep each feature variant matched across MuJoCo and laptop preprocessing. Split evaluation by complete trajectories and seeds. Choose the representation using dev results for action accuracy, no-threat false activations, misses, and end-to-end latency; do not choose from adjacent-frame random splits.
+
+### Four actions
+
+The student and teacher compare four candidates on every situation:
+
+1. `NO_OP`: send `vel_x=0`, `vel_y=0`, and `yaw_rate=0` using the verified schema; measure any residual drift and only use it when the scene is safe.
+2. `DODGE_LEFT`: use the verified lateral command in the dog's frame.
+3. `DODGE_RIGHT`: use the opposite verified lateral command.
+4. `RETREAT`: use the verified backward command.
+
+Build command values from the current `config.yaml` schema and validate them through the existing command contract. No motor-level actions or invented command ranges. The physics outcome scorer can see true simulated object pose and collision state; the teacher and SNN receive only permitted image/action/prior features.
+
+### Temporal smoothing and action cooldown
+
+The SNN may evaluate each camera update, while a command adapter controls when a new action reaches MuJoCo. Smooth action scores across a short rolling window (begin with 3–5 consecutive SNN outputs; select settings on development runs). Require a calibrated threat/action confidence threshold before issuing an active dodge. `NO_OP` is the learned class for safe/no-threat situations. Show uncertainty in the UI and count uncertain threats as misses during evaluation.
+
+After any issued left, right, or retreat action, enforce a **minimum 1.0-second active-action cooldown** before another active command can be issued. Continue observing during cooldown; an immediate `NO_OP`/zero command is always allowed to stop motion safely. Test the cooldown against two threats close together, since a lockout can also block a necessary second dodge. Measure the combined delay from the 8-frame history, score smoothing, command cooldown, and Go2 response. Tune only on development runs, never on the held-out set.
+
+## Simulation-first learning design
+
+1. Add a calibrated Go2 head camera in the actual MuJoCo scene and a physically colliding incoming punch proxy. Generate both threatening and harmless scenes. Log true trajectories, contact, time-to-contact, minimum body clearance, fall, recovery, and command travel as scoring-only outcomes.
+2. Generate deterministic, seeded sequences spanning no threat, distant/slow approach, left/right/center approach, varied speed and starting distance, late/early warning, and visual distractors. Include enough idle windows to measure false activations. Split by seed and trajectory so adjacent frames from one clip or episode cannot leak across training and test.
+3. For actual Go2 MuJoCo attempts, score all four supported candidates with the declared physics model and measured outcomes. Train hosted TabPFN on simulation-derived feature rows and residuals. Preserve the production teacher's exact request/response cache and call log.
+4. Generate PFN dream rows over held-out development situations and four candidate actions. Use the SkillSpec objective to turn predicted outcomes and uncertainty into soft action targets. Train the local SNN on those PFN dream targets and image sequences.
+5. Evaluate physics-only, PFN teacher, and SNN on the same paired MuJoCo situations and independent seeds. Report no-threat false-positive rate, threat miss rate, action accuracy, collision rate, falls, minimum separation, recovery, cooldown conflicts, action count, calibration, and end-to-end latency.
+6. After simulation gates pass, run the webcam locally through the identical preprocessing and SNN. Display the chosen action and confidence, cooldown state, and the simulated Go2 response. Measure camera age and camera-to-command delay under rendering load.
+
+Do not train the production model from the three human clips. They were a one-off wiring test. The upcoming learning claims must come from actual simulated attempts and PFN dreams. Keep the clips and their cached pixel values local; they are not part of the simulation training set.
+
+## Evidence and gates
+
+**G0 — World and sensors:** real Go2 MuJoCo model, verified walking policy, physical punch proxy, calibrated head camera, and matching simulation/live preprocessing. Hidden ground truth stays out of policy features.
+
+**G1 — Four-action dataset:** simulation rows contain image sequence, candidate, prior, measured outcomes, and residuals. Include `NO_OP` examples from truly safe scenes. Reproduce counts and splits from saved run data.
+
+**G2 — PFN and SNN learning:** real hosted teacher call through the production teacher/cache; PFN dream targets; successful SNN training; improvement over the fixed no-op/physics baselines on development data. The current five-frame webcam result does not satisfy this gate.
+
+**G3 — Held-out simulation:** independent seeds and trajectories; report all safety and action metrics with uncertainty. Compare the teacher and SNN. Require a measured improvement over no-op and physics-only, and SNN performance close enough to the PFN teacher under a preregistered tolerance. If the cooldown causes missed threats, surface that failure.
+
+**G4 — Live camera loop:** local SNN only, 8-frame stack (or a measured alternative), smoothing, confidence gate, and ≥1.0 s active-action cooldown. Run at least 20 controlled approaches plus no-threat windows. Measure frame age, preprocessing, SNN, command, and total response latency; compare with the shortest dodgeable time measured in simulation. Do not claim a successful live dodge before these checks pass.
+
+**G5 — Product story:** chat instruction → real simulation attempts → visible PFN/SNN learning → held-out results → local live camera preview driving the simulated dog. Every animation and metric comes from the actual run. The slope lesson follows after this primary vertical slice, time permitting.
+
+## Revised 12-hour parallel plan
+
+| Window | Dev A — world/UI | Dev B — learning/backend | Exit evidence |
 |---|---|---|---|
-| 0–1 h | Freeze the 4-screen story and data contract with B. Keep actual simulator playback in the viewer; no mock progress. | Inspect and preserve WIP; finish/review pipeline acceptance; publish the exact declaration JSON and `check_declaration` contract to A. | Same named fields, units, episode lifecycle and error states agreed. |
-| 1–3 h | Add a physically simulated, visible incline and incoming fist/hand prop. Add a calibrated dog-head MuJoCo camera; expose its frames without saving. | Implement `DeclaredSpec`, safe formula templates and the neutral-guess option. Add direct image-tensor input/metadata to the SNN decision path and the two-phase observe/decide/act contract. | Real incline and fist episodes; image tensor shape is identical in sim and live; hidden truth never enters policy input. |
-| 2–4 h, parallel | Capture laptop frames in memory; measure capture FPS and frame age during controlled fist approaches. | Put grayscale size, frame-difference stack, normalization and cadence in config. Quote the hosted PFN pixel-table request before any billable call; keep the hosted backend mandatory. | G1 camera-to-action timing and held-out image-input shape proof. |
-| 3–7 h | Build chat → validated declaration → actual learning progress → result screen, using real head-camera renders. | Train/evaluate incline and pixel-input DODGE on actual Go2 episodes; PFN teacher → pixel-vector dream → direct-image SNN, paired seeds and dev data only. | G2 simulation gate; saved run records drive every displayed metric. |
-| 7–10 h | Wire laptop frames directly to the SNN, then trigger the actual simulated Go2 episode. Show camera FPS, decision/action, command latency and outcome; no detector overlay. | Enforce SNN-only live inference, image-shape checks and refusal on low confidence/out-of-range inputs. Measure full camera-to-actuation latency under rendering load. | G3 live path meets the measured dodge-time margin on CPU; no live PFN calls. |
-| 10–12 h | Polish transitions, typography, synchronized camera/render panels, and rehearsal reset. | Freeze configs and report only measured metrics; record unrun checks as NOT RUN. | One reproducible end-to-end run for each lesson; honest demo script and fallback. |
+| 0–1 h | Confirm the primary punch-dodge story and typed backend/UI events. | Preserve current WIP; define the four-action spec and image-sequence schema with A. | Shared action names, units, feature order, errors, and events agreed. |
+| 1–3 h | Build the actual head camera and colliding punch proxy; include safe/no-threat scenes. | Implement configurable 4/6/8-frame preprocessing, four candidate actions, and cooldown/smoothing adapter. | Sensor tensors match; command contract validates every action. |
+| 3–5 h | Add seeded, visible simulation scenarios and event streaming. | Collect real MuJoCo attempts and validate teacher request shape/cache on simulation data. | Reproducible simulation rows; no webcam pixels sent to PFN. |
+| 5–8 h | Build teach, training, and result screens from live run events. | PFN residual/dream pipeline; train SNN and compare against baselines on development data. | Actual learning curve and measured dev comparison. |
+| 8–10 h | Wire local webcam preview beside the simulated dog's head view. | Run SNN-only live inference with temporal smoothing and ≥1 s cooldown; measure latency. | G3 passes before any success claim; misses remain visible. |
+| 10–12 h | Polish the synchronized demo and rehearsal flow. | Freeze settings, run held-out evaluation, publish artifacts and limitations. | One repeatable end-to-end demo and honest final metrics. |
 
-The 12-hour sequence is a priority order, not permission to skip a gate. If time forces a choice, finish the measured incline learning story and show camera dodge as an explicitly gated prototype; never imply it passed.
-
-## Go/no-go gates
-
-- **G0, simulator reality:** incline geometry/preset and head-camera pixels are produced by the real Go2 MuJoCo model; commands use the verified walking policy; observations exclude hidden world state. Any missing piece blocks the associated claim.
-- **G1, live vision:** on at least 20 controlled approaches, measure camera FPS, frame age, deterministic image-preprocessing time and end-to-end camera→SNN→MuJoCo command latency. Score action success and shortest dodgeable approach time from measured trajectories. Pass only when latency leaves measured movement margin; report misses and too-late cases.
-- **G2, learning is useful:** on paired held-out simulation situations with camera-model noise and detection delay, compare physics-only, PFN teacher, and dream-trained SNN. Require measured headroom over physics-only and SNN performance that is not materially worse than teacher; report collisions, falls, minimum separation, command travel and uncertainty. If not, the model has not learned a camera dodge.
-- **G3, live inference:** laptop frames become the exact pixel tensor used for simulated dreams; the SNN alone decides on CPU. Refuse unsupported image shapes, out-of-range operating conditions and too-late threats. Report end-to-end latency under the rendered simulator load.
-- **G4, incline learning:** actual MuJoCo incline attempts show the pre-learning baseline, training curve, and held-out outcome (success/fall, speed, elapsed time/recovery). Report attempt count and seeds. Do not use a frozen animation or a prewritten metric.
-
-No test-set tuning. Keep the existing preregistration/ownership rules: treat demo runs as development unless the lead explicitly amends the protocol. Every figure is generated from saved run outputs, never typed into the UI as a result.
+The 12-hour plan is a prioritization, not a waiver of gates. If simulation or timing gates fail, show the measured result and identify the blocker; do not substitute a staged dodge.
 
 ## Dev A prompt — copy-ready assignment
 
-You are Dev A on the Go2 demo. Own the UI, `app/`, and the environment/world/camera files that belong to your lane. The current user direction is a chat-taught incline lesson followed by a live laptop-camera punch-to-simulation dodge, with the PFN teacher and dream-trained SNN visibly explained. Read the repo rules and this plan first; coordinate the exact declaration and decision contracts with Dev B before wiring UI calls.
+You own `app/` and the Go2 MuJoCo world/camera files in your lane. Read `CLAUDE.md`, `MISSION.md`, and the numbered prompts. Coordinate the four-action and image-window contract with Dev B before wiring UI.
 
-Build the polished front end as a real vertical slice:
+Build the product side of the primary punch-dodge demo:
 
-1. **Teach screen:** chat for “learn to cross this incline safely”; show the validated declaration in understandable language and let the user correct it. The model may produce data only, never executable code. Use Dev B's `check_declaration` result as the source of validation errors.
-2. **Learning screen:** stream actual MuJoCo attempts and actual pipeline progress (physics prior → attempts → PFN fit/decisions → PFN dream → SNN training). Make the dog and sensor view large and readable. Every label/count comes from a real run event; show errors/blocked states when a stage is unavailable.
-3. **Result screen:** compare the real baseline and learned SNN on held-out dev situations, with sample counts, seeds, outcome metrics, and limitations. Never write placeholder numbers.
-4. **Live camera finale:** capture frames in memory, deterministically resize/grayscale/stack them, and pass the pixel tensor straight to the SNN. Show camera FPS, the SNN action/refusal, elapsed camera-to-command time, and the actual simulated Go2 episode from head and third-person views. Do not add a learned detector or claim a real dog dodged a punch.
-5. **World deliverables:** make the incline and incoming fist/hand prop physical and visible in MuJoCo; add a real dog-head camera. Keep object ground truth and hidden effects out of policy inputs. Match camera framing, image shape, frame stack and pixel preprocessing between simulation and laptop. If a capability cannot be measured in this window, show it as unavailable.
+1. Create a real Go2 head camera and a physically colliding incoming punch proxy in MuJoCo. Provide threatening trajectories and safe/no-threat scenes with deterministic scenario IDs/seeds. Keep object truth out of policy inputs.
+2. Create the chat flow for “teach the dog to dodge an approaching punch, and stay still when safe.” Show the validated action contract and useful corrections/errors.
+3. Show real simulation attempts, PFN teacher/dream progress, SNN training, and held-out results. Drive all progress and numbers from actual backend events/artifacts.
+4. Add a live laptop-camera panel that sends local, deterministically preprocessed frame windows to Dev B's SNN runtime. PFN is never called per frame; do not upload live camera frames or write them to disk.
+5. Render the actual simulated Go2 response beside the live camera view. Display `NO_OP`/left/right/retreat, confidence, smoothing, cooldown, frame age, command latency, and measured outcomes. Make all gate failures visible.
+6. Keep the original slope chat as a secondary follow-on after punch-dodge gates. Do not stage an animation or present the webcam smoke score as a product metric.
 
-Do not edit B-owned `learned_judgment/skills/`, `engine/`, `teacher.py`, `students/`, `eval/`, `pipeline.py`, or B experiment results. Do not replace MuJoCo episodes with a staged animation, fabricate progress/metrics, store camera frames, or silently alter preregistration. Keep the interface contract small and typed so B can implement it in parallel. Before handoff, list files changed, the real run/artifact that proves each UI state, any gate that did not pass, and the exact integration contract you used.
+Do not edit B-owned `skills/`, `engine/`, `teacher.py`, `students/`, `eval/`, pipeline, or B experiment results. Before handoff, list changed files, exact run/artifact evidence, and any failed/open gate.
 
-## Primary-source note on image support
+## Dev B prompt — copy-ready assignment
 
-- [PriorLabs TabPFN Extensions README](https://github.com/PriorLabs/tabpfn-extensions/blob/main/README.md)
-- [PriorLabs TabPFN Extensions 0.6.3 changelog](https://github.com/PriorLabs/tabpfn-extensions/blob/main/CHANGELOG.md)
-- [PriorLabs TabPFN Client README](https://github.com/PriorLabs/TabPFN-client)
+You own SkillSpecs, the shared engine, hosted TabPFN teacher/cache, SNN student, experiments, and evaluation. Read `CLAUDE.md`, `MISSION.md`, and the numbered prompts. Preserve existing WIP and coordinate the public contract with Dev A.
 
-These document the image extension and the separate hosted tabular client. They do not establish that the current project's pinned stack can run real-time camera inference; prove that on this Windows/Python 3.13 machine before depending on it.
+Build the simulation-trained four-action visual dodge backend:
+
+1. Define `NO_OP`, `DODGE_LEFT`, `DODGE_RIGHT`, and `RETREAT` using only verified high-level Go2 commands. Validate each candidate against `config.yaml` and the command schema.
+2. Add the configurable ordered frame stack (test 4/6/8 grayscale frames at 12×12 initially, around 30 Hz). Measure the time window, feature count, PFN request behavior, SNN accuracy, and local CPU latency. Do not assume a larger stack is automatically better.
+3. Use actual MuJoCo attempts: image sequence + candidate action + physics guess as teacher inputs; measured collision, clearance, fall/recovery and command cost as outcomes. Train the hosted residual teacher and generate PFN dreams for the SNN. Use the production teacher/cache path for this work.
+4. Include balanced no-threat scenes; the safe target is `NO_OP`. Split by trajectory and seed, not adjacent frames. Build dev/held-out reports from saved data only.
+5. Implement a temporal score smoother and a command adapter with at least 1.0 s cooldown between active dodge commands. Evaluate repeated threats during lockout, confidence thresholds, false positives, and misses; expose state for Dev A.
+6. Compare physics-only, PFN teacher, and dream-trained SNN on paired MuJoCo seeds. Report no-threat false activations, threat misses, collisions, falls, minimum clearance, cooldown conflicts, latency, and uncertainty. Treat the current webcam smoke as wiring evidence only: 96 PFN rows, 18 query frames, PFN 3/5, SNN 1/5; it did not use simulation.
+
+Do not claim accuracy improvement from the three webcam clips. Do not add another learned vision model, create a Conv-SNN assumption, bypass the verified robot interface, or tune on held-out data. For handoff, provide contracts, exact commands, versions, seeds/config, artifacts, and every open gate.
+
+## References and client note
+
+- [PriorLabs TabPFN Client](https://github.com/PriorLabs/TabPFN-client) — hosted TabPFN is a tabular service; image tensors enter it as numeric feature columns.
