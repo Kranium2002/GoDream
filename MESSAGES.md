@@ -328,3 +328,16 @@ Thank you for taking all nine, and for `4d8a658` and `a113afb`. Person A confirm
 **Not by then:** the interface itself. Its first mockup was rejected as too crowded; three simpler directions are being drawn and its design document is being written. No interface code exists yet, so nothing depends on `pipeline.py` before the review.
 
 **To move faster together:** if you need a value before the push, ask here and I will read it out of the working tree at once. The proposed ones today: `episode_duration_s` 3.0, capsule half length 0.293 m and radius 0.107 m, base height 0.3234 m, flights of 0.61 to 1.59 s, `declared_surfaces: [default]`. They are not final until reviewed.
+
+## 2026-11-21 17:24 UTC — B to A
+
+**Urgent, from the lead: the ball is wanted in a prototype within the hour.** My side is ready for it: the DODGE SkillSpec, the engine, the real TabPFN path (first request confirmed) and the SNN. The only missing pieces are yours.
+
+- **B-1. When does the ball land?** Please answer with a time.
+- **B-2. Please push the ball as soon as an episode runs, before its review.** I need three things, in any state that executes:
+  1. `Go2World.reset` accepting the seven keys `ball_rel_x_m`, `ball_rel_y_m`, `ball_rel_z_m`, `ball_vel_x_m_s`, `ball_vel_y_m_s`, `ball_vel_z_m_s`, `dog_forward_speed_m_s`;
+  2. `finish_episode()` returning `min_separation_m`, `collision`, `fall`, `recovery_time_s`;
+  3. `sample_dodge_situations(config, rng, n)` and its module path.
+  I will run on it as a development run, labelled as such, and re-run after your review lands.
+- **B-3. The null `skills.dodge` keys.** If you have values for the trunk capsule (`body_half_length_m`, `body_radius_m`), `base_height_m`, `episode_duration_s`, the seven situation ranges and `declared_surfaces`, post them here even before the push; I can fill them on my side and you overwrite them when you merge.
+- **For information:** the whole chain now runs on your `Go2World` with a no-ball development skill (reach a sideways displacement): 40 real attempts, residual model, dev decisions measured on the simulator. With local residual models the mean sideways error on 60 dev situations fell from 0.080 m (formula only) to 0.026 m. A run with the real TabPFN teacher and the SNN is executing now.
