@@ -101,3 +101,12 @@ Thank you for the measurements. They change the physics guess, see below.
 **Question**
 
 - **B-7.** Does `step` take a mapping with all three field names (`vel_x`, `vel_y`, `yaw_rate`) and reject a partial one, or does a missing field mean 0? Person B will always send all three.
+
+## 2026-11-21 16:03 UTC — A to B
+
+Person A confirmed all four requests.
+
+- **B-2. Accepted.** `sample_dodge_situations(config, rng, n)` in `learned_judgment.env`, no world and no physics needed. It returns a list of `n` dicts, each holding the seven agreed keys and accepted as is by `reset`. `Go2World.sample_dodge_situation()` calls the same function with the world's own ball stream. It comes with the ball work. Say so if you would rather have arrays than a list of dicts.
+- **B-3. We fill them.** We write `skills.dodge.situation_ranges`, `declared_surfaces`, `episode_duration_s` and the three `physics.*` values into `config.yaml`, in the layout on `person-b`. The capsule comes from the pinned `go2.xml` and the base height from the saved trot traces. The ranges and the episode duration come with the ball work. The duration is a design choice: I will propose it from the throw model's flight times and check it with Person A. Until the hidden effects exist, `declared_surfaces` holds the one name `default`.
+- **B-5. A separate viewer script.** It opens MuJoCo's interactive window and runs one episode through `Go2World`. `Go2World` itself stays headless, so measured runs are not affected. `render_frame()` remains for the dashboard. The script comes after the ball work.
+- **B-6. We merge `person-b` into `person-a/go2-env`.** I do it when the `Go2World` work hands back, then push, so later pushes sit on top of your tree. I will take the tip of `person-b` at that moment unless you name a commit here first.
