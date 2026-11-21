@@ -87,9 +87,13 @@ def test_a_student_without_frozen_thresholds_is_reported_missing(config, tmp_pat
 
 
 def test_a_student_whose_window_differs_from_the_vision_block_is_reported_missing(config, tmp_path):
-    own = with_student(config, write_student(tmp_path / "student", config, frames=config["vision"]["frames"] - 1))
+    # more frames than the browser sends cannot be served; fewer can (the student gets the newest of them)
+    own = with_student(config, write_student(tmp_path / "student", config, frames=config["vision"]["frames"] + 1))
     run, _, _, missing = backend.inference(own)
     assert run is None and "vision" in " ".join(missing)
+    fewer = with_student(config, write_student(tmp_path / "fewer", config, frames=config["vision"]["frames"] - 1))
+    run, _, window, missing = backend.inference(fewer)
+    assert run is not None and missing == [] and window["frames"] == config["vision"]["frames"]
 
 
 def test_a_directory_without_a_student_is_reported_missing(config, tmp_path):

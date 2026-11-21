@@ -196,23 +196,26 @@ def inference(config: dict):
             except Exception:
                 log.exception("The student at app.infer.student_dir does not load")
                 return None, None, None, ["a student at app.infer.student_dir that loads (the server log has why)"]
-            if (model.frames, model.frame_size) != (published["frames"], published["height"]):
+            # A student may read fewer frames than the browser sends (the frame count is chosen on simulation dev
+            # data): it is then given the newest of them. More frames, or another frame size, cannot be served.
+            if model.frame_size != published["height"] or model.frames > published["frames"]:
                 return None, None, None, [f"a student whose window ({model.frames} frames of {model.frame_size} x "
-                                          f"{model.frame_size}) matches config.yaml vision"]
+                                          f"{model.frame_size}) fits config.yaml vision"]
             student = json.loads((ROOT / directory / "student.json").read_text(encoding="utf-8"))
             calibration, spec = student.get("calibration"), student.get("input") or {}
             gate_passed = calibration.get("gate_passed") if isinstance(calibration, dict) else None
             _loaded.update(key=(directory, repr(dev)), model=model, thresholds=mode, last_t=-math.inf,
                            window_encoding=spec.get("window_encoding", "raw"), diff_floor=spec.get("diff_floor"),
                            gate_passed=gate_passed if isinstance(gate_passed, bool) else None,
-                           window={"frames": model.frames, "height": model.frame_size, "width": model.frame_size})
+                           window={"frames": published["frames"], "height": model.frame_size, "width": model.frame_size},
+                           student_frames=model.frames)
         model, window, mode = _loaded["model"], _loaded["window"], _loaded["thresholds"]
         extra = {"thresholds": mode} | ({} if _loaded["gate_passed"] is None else {"gate_passed": _loaded["gate_passed"]})
 
     def run(frames, t_capture_s):
         with _runtime_lock:
             t = _loaded["last_t"] = max(t_capture_s, _loaded["last_t"])  # a skewed frame age must not step back
-            return {**model.infer(frames, t), **extra}  # "development" must be impossible to miss
+            return {**model.infer(frames[-model.frames:], t), **extra}  # "development" must be impossible to miss
 
     def reset():
         with _runtime_lock:
