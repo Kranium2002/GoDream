@@ -78,6 +78,18 @@ Consequences for the skills: low forward commands under-deliver by about a quart
 
 `make_streams(seed)` spawns the four streams (`situation`, `world`, `ball`, `noise`) from `numpy.random.SeedSequence(seed)`; the per-attempt streams of `reset(attempt_seed=k)` spawn from `SeedSequence(seed, spawn_key=(4, k))`. Seeding with the plain list `[seed, k]` was rejected: NumPy pads short entropy with zeros, so `[seed, 0]` gives the same streams as `seed` and attempt 0 would repeat the world's own draws (`tests/env/test_determinism.py` checks they differ). Changing this rule changes every recorded attempt's noise, so it is fixed from now on.
 
+## 2026-11-21 — A no-ball development skill rehearses the chain on the real simulator (Person B)
+
+DODGE cannot run until Person A's simulated ball exists. Half of the DODGE physics guess is the formula for the dog's sideways travel after a sideways command. A development skill, `sidestep_reach` ("reach a given sideways displacement"), isolates that half so the whole chain (attempts, residual model, dreams, SNN trained in the dream, evaluation) runs on the real `Go2World` before the ball lands. It lives under `experiments/proofs/B_sidestep_dev/`, is not registered in `learned_judgment/skills/`, and its settings sit under `dev_checks.sidestep_reach` in `config.yaml`. Its numbers are development measurements: they enter no report, table or claim. It is part of the DODGE work, not one of the later skills, so the rule that no later skill starts before the DODGE gate is resolved is unchanged.
+
+## 2026-11-21 — One pipeline module is the interface to Person B's code (Person B)
+
+`learned_judgment/pipeline.py` composes the engine's steps into one run per skill and world, with a manifest per run. Person A's local web interface and the command line both call it; neither assembles engine calls itself. A step that would send a billed TabPFN request runs only when the caller passes a confirmation for the quoted cost; the default refuses. The held-out test split is reachable only through an explicit final-evaluation argument.
+
+## 2026-11-21 — The first real TabPFN request was a contract proof on fixture data (Person B)
+
+The offline checks could not show that the real response has the layout the teacher parses. One billed request (10,000 tokens, the minimum charge) on fixture data shaped like one DODGE decision settled that before any simulator attempts existed (experiment E7-settle). It is a proof about the service's contract and the project's request path. It is not a result about the robot or about any model's quality.
+
 ## 2026-11-21 — Ball scene and DODGE measurements: choices the Task 5 brief left open
 
 Made by the Task 5 implementer; the integrator can reverse any of them.
@@ -97,18 +109,6 @@ Made by the Task 5 implementer; the integrator can reverse any of them.
 
 `ball.throw_aim_error_range_m`, the only throw range changed, from `calibrate_throws` output on dev seeds 11, 12 and 13 (40 throws each, dog holding its initial command for 3.0 s). Before: hit rate 0.725 / 0.550 / 0.550, 73 of 120 (0.608), seed 11 above the 30–70% target. After: 0.425 / 0.375 / 0.425, 49 of 120 (0.408). Records: `artifacts/env/20261121T165323-dodge-calibration-1`, `artifacts/env/20261121T170357-dodge-calibration-2`.
 
-## 2026-11-21 — A no-ball development skill rehearses the chain on the real simulator (Person B)
-
-DODGE cannot run until Person A's simulated ball exists. Half of the DODGE physics guess is the formula for the dog's sideways travel after a sideways command. A development skill, `sidestep_reach` ("reach a given sideways displacement"), isolates that half so the whole chain (attempts, residual model, dreams, SNN trained in the dream, evaluation) runs on the real `Go2World` before the ball lands. It lives under `experiments/proofs/B_sidestep_dev/`, is not registered in `learned_judgment/skills/`, and its settings sit under `dev_checks.sidestep_reach` in `config.yaml`. Its numbers are development measurements: they enter no report, table or claim. It is part of the DODGE work, not one of the later skills, so the rule that no later skill starts before the DODGE gate is resolved is unchanged.
-
-## 2026-11-21 — One pipeline module is the interface to Person B's code (Person B)
-
-`learned_judgment/pipeline.py` composes the engine's steps into one run per skill and world, with a manifest per run. Person A's local web interface and the command line both call it; neither assembles engine calls itself. A step that would send a billed TabPFN request runs only when the caller passes a confirmation for the quoted cost; the default refuses. The held-out test split is reachable only through an explicit final-evaluation argument.
-
-## 2026-11-21 — The first real TabPFN request was a contract proof on fixture data (Person B)
-
-The offline checks could not show that the real response has the layout the teacher parses. One billed request (10,000 tokens, the minimum charge) on fixture data shaped like one DODGE decision settled that before any simulator attempts existed (experiment E7-settle). It is a proof about the service's contract and the project's request path. It is not a result about the robot or about any model's quality.
-
 ## 2026-11-21 — Ranges of the hidden world that are designed, not measured
 
 These are properties of the simulated world we design, not of a real Go2, so each is chosen from something we can point to (Task 6; values in `config.yaml` `world.hidden_effects`):
@@ -126,3 +126,15 @@ The preset values (`world.presets`) are a proposal for the integrator and Person
 - **Motor strength** scales the PD gains and feed-forward torque after Efferent's torque clamp, so every joint torque and the torque limit scale together, from the spawn hold and soft start on: a motor that is tired is tired during the spawn too.
 - **Slope** tilts gravity instead of the floor (the plan's shortcut, exact for an infinite flat floor). So that the policy is not blind to it, the trunk orientation it reads (from which Efferent computes projected gravity) is turned to be relative to true gravity, as an IMU on a real slope would sense it. Observations stay in the floor frame. A consequence: `policy_obs[3:6]` shows the slope, as a real robot's sensors would.
 - **Latency jitter** is drawn from a child stream of the attempt's `noise` stream (`Generator.spawn`), not from the stream itself, so `attempt_streams` still reach their user untouched (`tests/env/test_determinism.py` checks this unmodified).
+
+## 2026-11-21 — The command the policy receives is hidden truth
+
+The command the walking policy actually receives, after the latency, is saved per control period as `policy_command` in `<trace>.hidden.json`, never in the observation or the `.npz` trace. `command_active` in the observation is the caller's last issued command. Reason: the delayed command, and the command and gravity terms in `policy_obs`, gave the latency and the slope exactly.
+
+## 2026-11-21 — Outcome measurements `final_*`
+
+They are taken in the heading frame fixed at the decision instant (yaw only, + left, + anticlockwise). `final_yaw_change_rad` is wrapped to [−π, π). `final_speed_m_s` is the horizontal trunk speed at the last control period, not a window mean.
+
+## 2026-11-21 — How the Person A work for the chat-taught demo is run
+
+Three lanes (world, server, front end) work on their own branches with fixed file ownership and are merged into `person-a/go2-env` when a milestone's tests pass. Each lane proves the API it relies on with a small command before a slice and reports the output; this replaces a separate research agent per slice, as `CLAUDE.md` allows when the substitution is recorded. Read-only proof runs (incline, head camera, objects) were done by separate agents first. Contracts with Person B are agreed in `talkhere.md` on the `messages` branch and Person B's code is reached through one adapter module in `app/`.

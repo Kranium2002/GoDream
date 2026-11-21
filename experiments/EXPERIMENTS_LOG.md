@@ -397,6 +397,69 @@ Rebound tests stated by the rules, with the implied coefficient of restitution `
 
 **Cost.** TabPFN calls: 0.
 
+## B-contact — first run of Person B's command sequence on the real Go2World (dev, no ball) — 2026-11-21 — Person B
+
+- Question: does the command sequence the DODGE SkillSpec sends run on Person A's `Go2World`, and how far is the dog-motion part of the DODGE physics guess from the dog's measured sideways travel?
+- Status: DEV RUN on the real simulator. It informs the formula's constants and checks the interface. It is not an evaluation result and enters no report or table.
+- Versions: `person-b` at `3c55be3` with `person-a/go2-env` merged at `8084642`; mujoco 3.11.0, efferent 0.5.0, onnxruntime 1.32.0, Python 3.13.16. Walking policy and model as pinned in `config.yaml`.
+- Config and seeds: config digest `dc09cf80bcc6`; preset `default`; world seed 3157987105 (stream `dodge/dev/sidestep_contact/world` under `runtime.seed` 20261121); attempt seeds 0 to 12; one world reused for all episodes.
+- Command: `.venv\Scripts\python.exe experiments\proofs\B_go2world_contact\sidestep_dev_run.py`, exit code 0. Output: `experiments/proofs/B_go2world_contact/sidestep_dev_run.out.txt`. Traces went to a temporary directory and were not kept.
+- Protocol: 13 episodes. Each: `reset({"dog_forward_speed_m_s": v}, attempt_seed)`, trot 0.20 s, sideways command for 0.60 s, trot 1.00 s, `finish_episode()`. Forward 0.3, 0.6 and 0.9 m/s; sideways +1, -1, +0.5 and -0.5 m/s; one episode with no sideways command at 0.6 m/s.
+- Measured (sideways travel of the trunk in the dog's heading frame at the decision instant, + is left):
+  - Interface: every episode accepted the three commands and stayed stable; no falls in 13 episodes; the world reported declared payload 0.0 kg and surface `default`. About 0.8 s of wall time per episode.
+  - At the end of the hold, full command: 0.30 to 0.34 m left and 0.29 to 0.32 m right, against 0.298 m from the formula.
+  - At the end of the hold, half command: 0.20 to 0.23 m, against 0.149 m from the formula. The dog moves more than half as far at half the command.
+  - At the end of the episode, full command: 0.45 to 0.63 m left and 0.36 to 0.47 m right, against 0.589 m from the formula. Right dodges fall short of left ones.
+  - Heading change over the episode: 11 to 17 degrees for left dodges, 2 to 6 degrees for right dodges, 6.8 degrees with no sideways command (which also drifted 0.09 m left).
+  - Measured over formula at the end of the episode: 0.61 to 1.39, median 0.80.
+- TabPFN calls: 0.
+- Limitations: one world, one seed, one delay and hold; single episodes per case; no ball; the formula constants (delay 0.05 s, time constant 0.3 s) were starting values taken from Person A's standstill traces and were not changed here.
+- Decision: the interface works as agreed. The formula is the right size for full commands during the hold and misses the half-command response, the left/right difference and the turning. Those are left to the residual model, as designed; the constants stay as they are until Person A's step-response traces exist.
+
+## E7-settle — first real TabPFN prediction through the project's teacher — 2026-11-21 — Person B
+
+- Question: does the provider's real response have the layout the teacher parses, is the charge equal to the free quote, and is a repeated identical call answered from the cache without a second request? The offline checks could not answer these.
+- Status: CONTRACT PROOF on fixture data. One real billed request. The predicted numbers are not evidence about the robot, the simulator or the quality of any model.
+- Versions: tabpfn-client 0.10.1; model `v3.5_default`, 8 estimators, random state 0; `engine.multi_outcome_mode: stacked`. Config digest `dc09cf80bcc6`.
+- Data: a fixture shaped like one DODGE decision. 40 context rows, 17 feature columns (one categorical with 2 levels), 5 outcomes (3 regression, 2 binary), 108 candidate rows for one situation. Generated from `numpy.random.default_rng(20261121)`; residual = a smooth function of two action columns plus noise of standard deviation 0.02.
+- Command: `.venv\Scripts\python.exe experiments\proofs\E7_tabpfn_contract\p6_first_real_request.py`, exit code 0. Output: `experiments/proofs/E7_tabpfn_contract/p6_first_real_request.txt`. Ledger: `results/tabpfn_calls.jsonl` (3 lines: dispatch, completed, cache hit). Cache entry: `.cache/tabpfn/416a06c4….npz` (git-ignored).
+- Before the request: account usage 40,000 of 35,000,000 tokens; quote 10,000 tokens for the stacked request (200 training rows, 540 query rows, 18 columns). The teacher's gate read both before dispatch.
+- Measured:
+  - One request, answered in 2.98 s. Request hash `416a06c40ddd…`.
+  - Layout: mean and median (108, 5), quantiles (108, 5, 5) at levels 0.1, 0.25, 0.5, 0.75, 0.9, spread (108, 5); all finite; quantiles do not decrease with the level; the 0.5 quantile equals the median exactly.
+  - Charge: the account's `current_usage`, `daily_tokens_used` and `monthly_tokens_used` each rose by 10,000, equal to the quote. Usage after: 50,000.
+  - The same call again: answered from the cache in 0.010 s, bit-for-bit the same arrays, no second request, account counters unchanged.
+  - The account reports `usage_limit`, `daily_token_limit` and `monthly_token_limit` of 35,000,000 each.
+  - On this fixture the predicted mean correlated 0.92 to 0.99 with the fixture's noise-free residual per outcome (printed for information; not a result).
+- TabPFN calls: 1 billed (10,000 tokens). Project ledger total: 10,000 tokens.
+- Limitations: one request, one shape, fixture data. Rate limits per minute and per hour are still not verified (`tabpfn.verified_request_limit_per_minute` and `_per_hour` stay null). Multi-chunk requests (more than 32,000 query rows) have not been sent for real.
+- Decision: the teacher's request path is confirmed against the real service for the DODGE shape. No code change was needed.
+
+## B-chain — the whole learning chain on the real Go2 simulator, no-ball development skill — 2026-11-21 — Person B
+
+- Question: does the chain (real attempts, TabPFN residual teacher, dream, SNN trained in the dream, decisions measured on the simulator) run end to end on Person A's `Go2World` with real TabPFN requests, before the simulated ball exists?
+- Status: DEV RUN on the real simulator with the development skill `sidestep_reach` ("reach a given sideways displacement"; it isolates the dog-motion half of the DODGE physics guess; decision of 2026-11-21). One world, one seed. These are development measurements. They are not evaluation results and enter no report or table. No DODGE episode was run: the ball does not exist yet.
+- Versions: `person-b` at `a113afb` plus the working tree committed with this entry; mujoco 3.11.0, tabpfn-client 0.10.1 (model `v3.5_default`, 8 estimators), torch 2.15.0+cpu, snntorch 1.0.0, Python 3.13. `Go2World` has no hidden effects yet, so the gap between formula and simulator is the walking policy's own response.
+- Config and seeds: config digest `ff5f4cad143a`; `runtime.seed` 20261121; world seed 1015552365 (stream `sidestep_reach/dev/world`); preset `default`; situations and attempt seeds from the `context` and `dev` splits of `learned_judgment.eval.splits`; settings under `dev_checks.sidestep_reach`, `engine`, `tabpfn`, `students.snn`.
+- Command: `.venv\Scripts\python.exe experiments\proofs\B_sidestep_dev\prototype_chain.py`, exit code 0. Output: `experiments/proofs/B_sidestep_dev/prototype_chain.out.txt`; artifacts in `experiments/proofs/B_sidestep_dev/out/prototype_20261121T172417Z/` (attempt rows, dream header, student record, table, manifest; the `.npz` arrays are git-ignored).
+- Protocol: 40 real context attempts with exploration actions; the teacher fitted on them; 2000 situations dreamed by the teacher (63 candidates each); a spiking network (one hidden layer of 64, 10 time steps) trained in that dream; then physics only, the teacher and the SNN each decided the same 60 dev situations, and every decision was run on the simulator with the same attempt seeds (180 episodes).
+- Measured (sideways error = measured sideways travel at the end of the episode minus the target):
+
+  | Method | n | Mean abs error (m) | Median (m) | Max (m) | Falls | Within 0.05 m |
+  |---|---|---|---|---|---|---|
+  | physics_only | 60 | 0.0799 | 0.0786 | 0.1553 | 0.00 | 0.17 |
+  | teacher | 60 | 0.0210 | 0.0186 | 0.0629 | 0.00 | 0.95 |
+  | snn_per_skill | 60 | 0.0257 | 0.0212 | 0.0994 | 0.00 | 0.88 |
+
+  - Paired with physics only on the same situation and attempt seed: the teacher was closer in 56 of 60 situations (mean difference -0.0588 m), the SNN in 54 of 60 (-0.0542 m).
+  - The SNN chose the teacher's action in 45 of the 60 dev situations.
+  - Residual of the 40 context attempts (measured minus formula): mean +0.0790 m, standard deviation 0.0351 m.
+  - Time: 40 attempts 31.9 s; teacher decisions for 60 dev situations 3.7 s; 2000 dreams 18.8 s; SNN training 15.0 s (1500 steps, validation loss 1.1309 to 0.0010); the SNN decided the 60 dev situations in 4.3 ms; dev episodes 0.54 to 0.61 s each.
+- Earlier the same day, with local residual models in place of the teacher (`c3_baselines_real.py`, same skill, 60 dev situations): constant bias 0.0259 m, Gaussian process 0.0258 m, gradient boosting 0.0288 m, against 0.0799 m for physics only.
+- TabPFN calls: 5 billed requests, 50,000 tokens quoted. Account usage 100,000 of 35,000,000 tokens after the run.
+- Limitations: one world and one seed, no intervals, 1 repeat per situation; no hidden effects in the world yet; a development skill, not one of the project's skills; no confidence threshold was set, so every dream was kept; the constant-bias baseline does about as well as the teacher here, because the formula's error on this skill is mostly one offset, so this run does not show that TabPFN is needed, only that the chain works and that 40 attempts remove most of the formula's error.
+- Decision: the chain is ready for DODGE. The next run is the same chain on DODGE once Person A's ball, throw model and `skills.dodge` settings land.
+
 ## E6 (simulator half) — the ball in the Go2 scene — 2026-11-21 — Person A
 
 **Question.** On the pinned stack (mujoco 3.11.0, Unitree `go2.xml` on the flat scene), does `mj_geomDistance` exist, which geoms can a ball collide with, which contact parameters make the IHF size 3 handball bounce as its rule says, and what do the model and the saved traces give for the trunk capsule, the trotting base height and the recovery limits? Entry M established `mj_geomDistance` only on mujoco 4.0.1 and 3.17.0 with another model; the collision groups were not established.
@@ -492,69 +555,6 @@ Both exit 0; each throw and its outcome in `artifacts/env/dodge-calibration/<run
 
 **Cost.** TabPFN calls: 0.
 
-## B-contact — first run of Person B's command sequence on the real Go2World (dev, no ball) — 2026-11-21 — Person B
-
-- Question: does the command sequence the DODGE SkillSpec sends run on Person A's `Go2World`, and how far is the dog-motion part of the DODGE physics guess from the dog's measured sideways travel?
-- Status: DEV RUN on the real simulator. It informs the formula's constants and checks the interface. It is not an evaluation result and enters no report or table.
-- Versions: `person-b` at `3c55be3` with `person-a/go2-env` merged at `8084642`; mujoco 3.11.0, efferent 0.5.0, onnxruntime 1.32.0, Python 3.13.16. Walking policy and model as pinned in `config.yaml`.
-- Config and seeds: config digest `dc09cf80bcc6`; preset `default`; world seed 3157987105 (stream `dodge/dev/sidestep_contact/world` under `runtime.seed` 20261121); attempt seeds 0 to 12; one world reused for all episodes.
-- Command: `.venv\Scripts\python.exe experiments\proofs\B_go2world_contact\sidestep_dev_run.py`, exit code 0. Output: `experiments/proofs/B_go2world_contact/sidestep_dev_run.out.txt`. Traces went to a temporary directory and were not kept.
-- Protocol: 13 episodes. Each: `reset({"dog_forward_speed_m_s": v}, attempt_seed)`, trot 0.20 s, sideways command for 0.60 s, trot 1.00 s, `finish_episode()`. Forward 0.3, 0.6 and 0.9 m/s; sideways +1, -1, +0.5 and -0.5 m/s; one episode with no sideways command at 0.6 m/s.
-- Measured (sideways travel of the trunk in the dog's heading frame at the decision instant, + is left):
-  - Interface: every episode accepted the three commands and stayed stable; no falls in 13 episodes; the world reported declared payload 0.0 kg and surface `default`. About 0.8 s of wall time per episode.
-  - At the end of the hold, full command: 0.30 to 0.34 m left and 0.29 to 0.32 m right, against 0.298 m from the formula.
-  - At the end of the hold, half command: 0.20 to 0.23 m, against 0.149 m from the formula. The dog moves more than half as far at half the command.
-  - At the end of the episode, full command: 0.45 to 0.63 m left and 0.36 to 0.47 m right, against 0.589 m from the formula. Right dodges fall short of left ones.
-  - Heading change over the episode: 11 to 17 degrees for left dodges, 2 to 6 degrees for right dodges, 6.8 degrees with no sideways command (which also drifted 0.09 m left).
-  - Measured over formula at the end of the episode: 0.61 to 1.39, median 0.80.
-- TabPFN calls: 0.
-- Limitations: one world, one seed, one delay and hold; single episodes per case; no ball; the formula constants (delay 0.05 s, time constant 0.3 s) were starting values taken from Person A's standstill traces and were not changed here.
-- Decision: the interface works as agreed. The formula is the right size for full commands during the hold and misses the half-command response, the left/right difference and the turning. Those are left to the residual model, as designed; the constants stay as they are until Person A's step-response traces exist.
-
-## E7-settle — first real TabPFN prediction through the project's teacher — 2026-11-21 — Person B
-
-- Question: does the provider's real response have the layout the teacher parses, is the charge equal to the free quote, and is a repeated identical call answered from the cache without a second request? The offline checks could not answer these.
-- Status: CONTRACT PROOF on fixture data. One real billed request. The predicted numbers are not evidence about the robot, the simulator or the quality of any model.
-- Versions: tabpfn-client 0.10.1; model `v3.5_default`, 8 estimators, random state 0; `engine.multi_outcome_mode: stacked`. Config digest `dc09cf80bcc6`.
-- Data: a fixture shaped like one DODGE decision. 40 context rows, 17 feature columns (one categorical with 2 levels), 5 outcomes (3 regression, 2 binary), 108 candidate rows for one situation. Generated from `numpy.random.default_rng(20261121)`; residual = a smooth function of two action columns plus noise of standard deviation 0.02.
-- Command: `.venv\Scripts\python.exe experiments\proofs\E7_tabpfn_contract\p6_first_real_request.py`, exit code 0. Output: `experiments/proofs/E7_tabpfn_contract/p6_first_real_request.txt`. Ledger: `results/tabpfn_calls.jsonl` (3 lines: dispatch, completed, cache hit). Cache entry: `.cache/tabpfn/416a06c4….npz` (git-ignored).
-- Before the request: account usage 40,000 of 35,000,000 tokens; quote 10,000 tokens for the stacked request (200 training rows, 540 query rows, 18 columns). The teacher's gate read both before dispatch.
-- Measured:
-  - One request, answered in 2.98 s. Request hash `416a06c40ddd…`.
-  - Layout: mean and median (108, 5), quantiles (108, 5, 5) at levels 0.1, 0.25, 0.5, 0.75, 0.9, spread (108, 5); all finite; quantiles do not decrease with the level; the 0.5 quantile equals the median exactly.
-  - Charge: the account's `current_usage`, `daily_tokens_used` and `monthly_tokens_used` each rose by 10,000, equal to the quote. Usage after: 50,000.
-  - The same call again: answered from the cache in 0.010 s, bit-for-bit the same arrays, no second request, account counters unchanged.
-  - The account reports `usage_limit`, `daily_token_limit` and `monthly_token_limit` of 35,000,000 each.
-  - On this fixture the predicted mean correlated 0.92 to 0.99 with the fixture's noise-free residual per outcome (printed for information; not a result).
-- TabPFN calls: 1 billed (10,000 tokens). Project ledger total: 10,000 tokens.
-- Limitations: one request, one shape, fixture data. Rate limits per minute and per hour are still not verified (`tabpfn.verified_request_limit_per_minute` and `_per_hour` stay null). Multi-chunk requests (more than 32,000 query rows) have not been sent for real.
-- Decision: the teacher's request path is confirmed against the real service for the DODGE shape. No code change was needed.
-
-## B-chain — the whole learning chain on the real Go2 simulator, no-ball development skill — 2026-11-21 — Person B
-
-- Question: does the chain (real attempts, TabPFN residual teacher, dream, SNN trained in the dream, decisions measured on the simulator) run end to end on Person A's `Go2World` with real TabPFN requests, before the simulated ball exists?
-- Status: DEV RUN on the real simulator with the development skill `sidestep_reach` ("reach a given sideways displacement"; it isolates the dog-motion half of the DODGE physics guess; decision of 2026-11-21). One world, one seed. These are development measurements. They are not evaluation results and enter no report or table. No DODGE episode was run: the ball does not exist yet.
-- Versions: `person-b` at `a113afb` plus the working tree committed with this entry; mujoco 3.11.0, tabpfn-client 0.10.1 (model `v3.5_default`, 8 estimators), torch 2.15.0+cpu, snntorch 1.0.0, Python 3.13. `Go2World` has no hidden effects yet, so the gap between formula and simulator is the walking policy's own response.
-- Config and seeds: config digest `ff5f4cad143a`; `runtime.seed` 20261121; world seed 1015552365 (stream `sidestep_reach/dev/world`); preset `default`; situations and attempt seeds from the `context` and `dev` splits of `learned_judgment.eval.splits`; settings under `dev_checks.sidestep_reach`, `engine`, `tabpfn`, `students.snn`.
-- Command: `.venv\Scripts\python.exe experiments\proofs\B_sidestep_dev\prototype_chain.py`, exit code 0. Output: `experiments/proofs/B_sidestep_dev/prototype_chain.out.txt`; artifacts in `experiments/proofs/B_sidestep_dev/out/prototype_20261121T172417Z/` (attempt rows, dream header, student record, table, manifest; the `.npz` arrays are git-ignored).
-- Protocol: 40 real context attempts with exploration actions; the teacher fitted on them; 2000 situations dreamed by the teacher (63 candidates each); a spiking network (one hidden layer of 64, 10 time steps) trained in that dream; then physics only, the teacher and the SNN each decided the same 60 dev situations, and every decision was run on the simulator with the same attempt seeds (180 episodes).
-- Measured (sideways error = measured sideways travel at the end of the episode minus the target):
-
-  | Method | n | Mean abs error (m) | Median (m) | Max (m) | Falls | Within 0.05 m |
-  |---|---|---|---|---|---|---|
-  | physics_only | 60 | 0.0799 | 0.0786 | 0.1553 | 0.00 | 0.17 |
-  | teacher | 60 | 0.0210 | 0.0186 | 0.0629 | 0.00 | 0.95 |
-  | snn_per_skill | 60 | 0.0257 | 0.0212 | 0.0994 | 0.00 | 0.88 |
-
-  - Paired with physics only on the same situation and attempt seed: the teacher was closer in 56 of 60 situations (mean difference -0.0588 m), the SNN in 54 of 60 (-0.0542 m).
-  - The SNN chose the teacher's action in 45 of the 60 dev situations.
-  - Residual of the 40 context attempts (measured minus formula): mean +0.0790 m, standard deviation 0.0351 m.
-  - Time: 40 attempts 31.9 s; teacher decisions for 60 dev situations 3.7 s; 2000 dreams 18.8 s; SNN training 15.0 s (1500 steps, validation loss 1.1309 to 0.0010); the SNN decided the 60 dev situations in 4.3 ms; dev episodes 0.54 to 0.61 s each.
-- Earlier the same day, with local residual models in place of the teacher (`c3_baselines_real.py`, same skill, 60 dev situations): constant bias 0.0259 m, Gaussian process 0.0258 m, gradient boosting 0.0288 m, against 0.0799 m for physics only.
-- TabPFN calls: 5 billed requests, 50,000 tokens quoted. Account usage 100,000 of 35,000,000 tokens after the run.
-- Limitations: one world and one seed, no intervals, 1 repeat per situation; no hidden effects in the world yet; a development skill, not one of the project's skills; no confidence threshold was set, so every dream was kept; the constant-bias baseline does about as well as the teacher here, because the formula's error on this skill is mostly one offset, so this run does not show that TabPFN is needed, only that the chain works and that 40 attempts remove most of the formula's error.
-- Decision: the chain is ready for DODGE. The next run is the same chain on DODGE once Person A's ball, throw model and `skills.dodge` settings land.
-
 ## E5 — hidden effects and world presets — 2026-11-21 — Person A
 
 **Question.** Do the five hidden effects of MISSION.md (payload, floor friction, slope, motor strength, command latency) each change the simulated Go2 on their own, switch off without a trace and stay out of what Person B sees, and do the five presets load and stand?
@@ -618,3 +618,32 @@ Exit code 0, `artifacts/env/20261121T171133-effects`, `20 passed`. Each test wri
 **Cost.** TabPFN calls: 0.
 
 **Decision and next step.** Presets proposed in `config.yaml` `world.presets`; floor types for `skills.dodge.declared_surfaces`: `default`, `slippery`. The integrator confirms the values at the merge.
+
+## B-dodge-chain — the whole learning chain on DODGE with the simulated ball — 2026-11-21 — Person B
+
+- Question: does the chain run end to end on DODGE with Person A's ball, and what do physics only, the teacher and the SNN each achieve on unseen throws?
+- Status: DEV RUN on the real simulator. One world, one seed, one repeat per throw. Person A's ball code was merged at `c4a35eb` before its independent review, at Person B's request. These are development measurements. They are not evaluation results and enter no report or table.
+- Versions: `person-b` at `bcf4ad3`; mujoco 3.11.0, tabpfn-client 0.10.1 (model `v3.5_default`, 8 estimators), torch 2.15.0+cpu, snntorch 1.0.0, Python 3.13. `Go2World` in the `default` preset has no hidden effects yet (no payload, no added latency, default floor).
+- Config and seeds: config digest `6aef6cb771af`; `runtime.seed` 20261121; world seed 774610046 (stream `dodge/dev/world/default`); situations from Person A's throw model through the `context` and `dev` splits; candidate grid 9 x 4 x 3 = 108 actions; episode 3.0 s.
+- Command: `.venv\Scripts\python.exe experiments\proofs\B_dodge_real\dodge_chain.py --preset default`, exit code 0. Output: `experiments/proofs/B_dodge_real/dodge_chain.out.txt`; artifacts in `experiments/proofs/B_dodge_real/out/chain_default_20261121T173315Z/`.
+- Protocol: 40 real context throws with exploration actions; the teacher fitted on them; 2000 throws dreamed by the teacher; a spiking network (one hidden layer of 64, 10 time steps) trained in that dream; then physics only, the teacher and the SNN each decided the same 100 dev throws, and every decision was run on the simulator with the same attempt seeds (300 episodes).
+- Measured on the 100 dev throws:
+
+  | Method | Collisions | Falls | Mean closest distance (m) | Mean commanded sideways travel (m) |
+  |---|---|---|---|---|
+  | physics_only | 1 of 100 | 0 | 0.3115 | 0.448 |
+  | teacher | 1 of 100 | 0 | 0.4119 | 0.626 |
+  | snn_per_skill | 5 of 100 | 0 | 0.5024 | 0.875 |
+
+  - Paired with physics only on the same throw and attempt seed: the teacher's primary loss (a collision or a fall) was equal in all 100 throws; the SNN's was higher in 4 throws and equal in 96.
+  - The 40 exploration attempts: 11 collisions (27.5%), no fall. Residual of the closest distance (measured minus formula): mean -0.086 m, standard deviation 0.109 m; the formula predicts more clearance than the simulator gives.
+  - The teacher's decision differed from the physics action in 69 of 100 dev throws and in 1339 of 2000 dreams. The SNN chose the teacher's action in 22 of 100 dev throws.
+  - SNN training: 1500 steps (the limit), validation loss 1.016 to 0.482, still falling at the last step.
+  - Time: 40 attempts 26.8 s; teacher decisions for 100 dev throws 5.2 s; 2000 dreams 80.4 s; SNN training 18.7 s; the SNN decided 100 throws in 9.5 ms; dev episodes 0.79 to 0.95 s each.
+- TabPFN calls: 15 billed requests, 150,000 tokens quoted. Account usage 250,000 of 35,000,000 tokens after the run.
+- What this shows, stated plainly:
+  - The chain works on DODGE with the real ball.
+  - **DODGE in this world is too easy for the formula.** With the ball's exact position and velocity given at the throw and no hidden effects in the world, the formula's own decision avoids the ball in 99 of 100 throws. The teacher has nothing left to gain on collisions; it only buys more clearance with more motion. The project's difficulty target (physics-only error at least 3 times the noise floor) is not met for DODGE in the `default` preset as it stands.
+  - **The SNN is worse than the formula here** (5 collisions against 1). Its training had not converged at the step limit, and it agrees with the teacher on 22 of 100 decisions. This is a negative result for the current SNN settings on DODGE.
+- Limitations: one world, one seed, one repeat, no intervals, no oracle; unreviewed ball code; no hidden effects; no confidence threshold, so every dream was kept; SNN settings are the starting values and were not tuned.
+- Decision: do not tune anything on these numbers yet. Open questions for the lead and Person A: make DODGE need learning by (a) the hidden effects and presets (in review on Person A's side), (b) harder throws, or (c) replacing the exact ball state by what a simulated onboard sensor reports. Then choose the SNN's size and step limit on dev data.

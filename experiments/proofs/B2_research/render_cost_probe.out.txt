@@ -1,0 +1,25 @@
+GL_RENDERER/GL_VERSION: Intel(R) Arc(TM) Graphics | 4.6.0 - Build 32.0.101.6874
+vis.quality shadowsize/offsamples/numslices/numstacks/numquads: 4096 4 28 16 4
+--- round 1 of 2 (ms, medians over 60 renders of the same state)
+default_96 {"update_scene": 0.057, "make_current": 0.101, "mjr_render": 39.466, "glFinish": 7.5, "mjr_readPixels": 1.07, "public_update_scene_plus_render_median_ms": 49.068, "public_p95_ms": 58.806, "n": 60}
+shadow_off_96 {"update_scene": 0.07, "make_current": 0.128, "mjr_render": 15.736, "glFinish": 4.771, "mjr_readPixels": 1.285, "public_update_scene_plus_render_median_ms": 21.796, "public_p95_ms": 23.151, "n": 60}
+shadow_reflection_off_96 {"update_scene": 0.071, "make_current": 0.135, "mjr_render": 16.9, "glFinish": 4.877, "mjr_readPixels": 1.33, "public_update_scene_plus_render_median_ms": 22.982, "public_p95_ms": 25.267, "n": 60}
+shadow_off_robot_meshes_hidden_96 {"update_scene": 0.043, "make_current": 0.092, "mjr_render": 0.946, "glFinish": 0.947, "mjr_readPixels": 0.839, "public_update_scene_plus_render_median_ms": 2.398, "public_p95_ms": 2.636, "n": 60}
+shadow_off_offsamples0_96 {"update_scene": 0.066, "make_current": 0.121, "mjr_render": 14.124, "glFinish": 4.689, "mjr_readPixels": 1.217, "public_update_scene_plus_render_median_ms": 22.12, "public_p95_ms": 24.977, "n": 60}
+shadow_off_robot_hidden_offsamples0_96 {"update_scene": 0.036, "make_current": 0.08, "mjr_render": 0.917, "glFinish": 1.097, "mjr_readPixels": 0.85, "public_update_scene_plus_render_median_ms": 2.387, "public_p95_ms": 2.823, "n": 60}
+shadow_off_64 {"update_scene": 0.067, "make_current": 0.125, "mjr_render": 14.981, "glFinish": 4.654, "mjr_readPixels": 1.085, "public_update_scene_plus_render_median_ms": 19.917, "public_p95_ms": 21.75, "n": 60}
+shadow_off_12 {"update_scene": 0.071, "make_current": 0.129, "mjr_render": 16.067, "glFinish": 4.769, "mjr_readPixels": 1.043, "public_update_scene_plus_render_median_ms": 20.523, "public_p95_ms": 22.929, "n": 60}
+shadow_off_robot_meshes_hidden_12 {"update_scene": 0.035, "make_current": 0.078, "mjr_render": 0.949, "glFinish": 0.992, "mjr_readPixels": 0.599, "public_update_scene_plus_render_median_ms": 2.008, "public_p95_ms": 2.385, "n": 60}
+--- round 2 of 2 (ms, medians over 60 renders of the same state)
+default_96 {"update_scene": 0.07, "make_current": 0.131, "mjr_render": 44.126, "glFinish": 12.949, "mjr_readPixels": 1.329, "public_update_scene_plus_render_median_ms": 66.463, "public_p95_ms": 71.554, "n": 60}
+shadow_off_96 {"update_scene": 0.069, "make_current": 0.129, "mjr_render": 15.784, "glFinish": 4.82, "mjr_readPixels": 1.415, "public_update_scene_plus_render_median_ms": 20.474, "public_p95_ms": 23.57, "n": 60}
+shadow_reflection_off_96 {"update_scene": 0.072, "make_current": 0.132, "mjr_render": 17.418, "glFinish": 5.289, "mjr_readPixels": 1.442, "public_update_scene_plus_render_median_ms": 22.306, "public_p95_ms": 24.984, "n": 60}
+shadow_off_robot_meshes_hidden_96 {"update_scene": 0.039, "make_current": 0.087, "mjr_render": 0.944, "glFinish": 1.058, "mjr_readPixels": 0.982, "public_update_scene_plus_render_median_ms": 2.365, "public_p95_ms": 3.138, "n": 60}
+shadow_off_offsamples0_96 {"update_scene": 0.074, "make_current": 0.137, "mjr_render": 16.345, "glFinish": 4.803, "mjr_readPixels": 1.382, "public_update_scene_plus_render_median_ms": 29.279, "public_p95_ms": 37.996, "n": 60}
+shadow_off_robot_hidden_offsamples0_96 {"update_scene": 0.089, "make_current": 0.182, "mjr_render": 1.536, "glFinish": 2.462, "mjr_readPixels": 1.827, "public_update_scene_plus_render_median_ms": 5.548, "public_p95_ms": 7.217, "n": 60}
+shadow_off_64 {"update_scene": 0.095, "make_current": 0.186, "mjr_render": 26.274, "glFinish": 10.944, "mjr_readPixels": 1.999, "public_update_scene_plus_render_median_ms": 35.185, "public_p95_ms": 39.347, "n": 60}
+shadow_off_12 {"update_scene": 0.074, "make_current": 0.138, "mjr_render": 18.778, "glFinish": 6.082, "mjr_readPixels": 1.217, "public_update_scene_plus_render_median_ms": 22.577, "public_p95_ms": 24.572, "n": 60}
+shadow_off_robot_meshes_hidden_12 {"update_scene": 0.038, "make_current": 0.085, "mjr_render": 0.929, "glFinish": 1.029, "mjr_readPixels": 0.653, "public_update_scene_plus_render_median_ms": 2.046, "public_p95_ms": 2.356, "n": 60}
+default_96 vs shadow_off_96: max |pixel difference| 10, pixels differing 7 of 9216
+default_96 vs shadow_off_robot_meshes_hidden_96: max |pixel difference| 10, pixels differing 7 of 9216
+default_96 vs shadow_off_robot_hidden_offsamples0_96: max |pixel difference| 78, pixels differing 135 of 9216

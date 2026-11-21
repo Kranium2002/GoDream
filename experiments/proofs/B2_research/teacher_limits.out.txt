@@ -1,0 +1,131 @@
+utc_now = 2026-11-21T20:41:10+00:00
+python = 3.13.16 | numpy = 2.5.5
+teacher settings: {"client_version": "0.10.1", "model_path": "v3.5_default", "n_estimators": 8, "random_state": 0, "quantile_levels": [0.1, 0.25, 0.5, 0.75, 0.9], "spread_levels": [0.1, 0.9], "multi_outcome_mode": "stacked", "max_tokens_per_request": 10000, "max_query_rows_per_request": 32000, "project_token_budget": 35000000, "verified_request_limit_per_minute": null, "verified_request_limit_per_hour": null, "call_log": "results\\tabpfn_calls.jsonl"}
+
+====================================================================================================
+1  LEDGER results/tabpfn_calls.jsonl (read-only; parsed with teacher_cache.parse_log_text, no lock taken)
+====================================================================================================
+records = 43 | events = {'dispatch': 21, 'completed': 21, 'cache_hit': 1}
+tokens_quoted over dispatch records (the project gate's spend) = 210000
+completed records whose usage_delta.current_usage != quote_tokens: none (checked 21)
+charged per completed request (usage_delta.current_usage): [10000]
+
+per request shape: skill, n_train, n_query, n_features | count | wall fit s | wall predict s | server fit elapsed s | server predict_s | queue waits
+  ('fixture_first_request', 200, 540, 18) | 1 | 2.03-2.03 | 0.75-0.75 | 0.72-0.72 | 0.51-0.51 | 0.28-0.28
+  ('sidestep_reach', 40, 3780, 9) | 1 | 2.09-2.09 | 1.37-1.37 | 0.63-0.63 | 0.89-0.89 | 0.32-0.32
+  ('dodge', 80, 16000, 18) | 1 | 1.73-1.73 | 2.10-2.10 | 0.67-0.67 | 1.42-1.42 | 0.58-0.58
+  ('dodge', 80, 21600, 18) | 1 | 2.15-2.15 | 2.57-2.57 | 0.65-0.65 | 1.65-1.65 | 0.56-0.56
+  ('sidestep_reach', 40, 30000, 9) | 1 | 1.75-1.75 | 2.65-2.65 | 0.65-0.65 | 1.84-1.84 | 0.62-0.62
+  ('sidestep_reach', 40, 32000, 9) | 3 | 0.71-1.73 | 2.87-3.02 | 0.52-0.83 | 1.92-2.03 | 0.58-0.81
+  ('dodge', 80, 32000, 18) | 13 | 1.69-1.75 | 3.22-3.61 | 0.56-1.26 | 2.20-2.54 | 0.59-1.04
+dispatch -> completed seconds (includes usage/quote reads, disk writes): min 2.85 max 5.54 mean 4.86 n 21
+
+====================================================================================================
+2  TEACHER STACKING / CHUNKING (teacher.stack_training, teacher.stack_query on small arrays)
+====================================================================================================
+n=7 F=12 m=9 A=4: x_long (28, 13) y_long (28,) q_long (36, 13) -> rows A*n, A*m; width F+1
+last column of q_long (outcome index, outcome-major blocks): [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+A=1: stack_query returns (9, 12) (no extra column)
+chunks of 32000 stacked rows at cap 32000: [32000] | 32001 rows: [32000, 1]
+
+====================================================================================================
+3  OFFLINE VALIDATION OF WIDE SHAPES (client validators read limits from GET /tabpfn/get_settings)
+====================================================================================================
+tabpfn_client 0.10.1 | base_url https://api.priorlabs.ai:443
+  ACCEPTED  S1 stacked train (1600, 1161)
+  ACCEPTED  S1 stacked query (32000, 1161) with 1600 train rows
+  ACCEPTED  query (172265, 1161) = 199,999,665 cells
+  REJECTED  NEG query (172266, 1161) = 200,000,826 cells: The number of test cells (200000826) exceeds the maximum of 200000000. Split the test set across multiple calls to reduce the number of cells.
+  REJECTED  NEG train (100, 23001) columns: The number of train columns (23001) exceeds the maximum of 23000.
+  ACCEPTED  train (100, 23000) columns
+  REJECTED  NEG query rows over predict_row_pairs_budget // train_rows (train 1000000 rows, query 250001): The number of test rows (250001) exceeds the maximum of 250000. Split the test set across multiple calls to reduce the number of rows.
+  ACCEPTED  query (250000, 1) with 1000000 train rows
+  ACCEPTED  TabPFNProvider.validate_request train (1600, 1161) query (8000, 1161) categorical (1159, 1160)
+  ACCEPTED  TabPFNProvider.validate_request train (1600, 1161) query (32000, 1161) categorical (1159, 1160)
+
+====================================================================================================
+4  ACCOUNT USAGE (allow-listed fields) AND SERVER LIMITS
+====================================================================================================
+usage_before = {"current_usage": 260000, "usage_limit": 35000000, "reset_time": "2026-12-01 00:00:00 UTC", "daily_tokens_used": 260000, "daily_token_limit": 35000000, "daily_usage": 260000, "daily_limit": 35000000, "daily_reset_time": "2026-11-22 00:00:00 UTC", "monthly_tokens_used": 260000, "monthly_token_limit": 35000000, "monthly_usage": 260000, "monthly_limit": 35000000, "monthly_reset_time": "2026-12-01 00:00:00 UTC", "thinking_fit_count": 0, "thinking_fit_limit": 0}
+remaining_tokens(usage) = 34740000
+default_model_version = v3.5
+model_limits[v3.5] = {"train_set_max_rows": 1100000, "train_set_max_cells": 200000000, "train_set_max_upload_cells": 500000000, "test_set_max_rows": 1100000, "max_classes": 160, "max_cols": 23000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 200000000}
+model_limits[v3.5-fast] = {"train_set_max_rows": 1100000, "train_set_max_cells": 200000000, "train_set_max_upload_cells": 500000000, "test_set_max_rows": 1100000, "max_classes": 160, "max_cols": 23000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 200000000}
+model_limits[v3] = {"train_set_max_rows": 1000000, "train_set_max_cells": 200000000, "train_set_max_upload_cells": 200000000, "test_set_max_rows": 1000000, "max_classes": 160, "max_cols": 2000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 200000000}
+dataset_max_size_bytes = 10737418240 | inline_test_set_max_parquet_bytes = 2000000
+async_settings = {"use_above_trainset_size_bytes": 52428800, "poll_timeout_secs": 105900.0, "predict_use_above": {"train_rows": 50000, "test_rows": 100000}, "thinking_predict_use_above": {"train_rows": 25000, "test_rows": 10000}}
+
+====================================================================================================
+5  QUOTA_V3 FORMULA FROM A DENSE QUOTE GRID (model_version v3.5, operation predict)
+====================================================================================================
+column cap: quote(1600, 254400, F) is constant for F >= 768 (387621 tokens); F = 767 differs (387289)
+train/test symmetry (quote depends on N + M):
+   N=   400 M= 64000 F=13:   14566   F=601:   63641
+   N= 64000 M=   400 F=13:   14566   F=601:   63641
+   N= 32200 M= 32200 F=13:   14566   F=601:   63641
+   N=128000 M=  1600 F=13:   40254   F=601:  139014
+   N=  1600 M=128000 F=13:   40254   F=601:  139014
+n_estimators linearity at (1600, 128000, 1161): {1: 20883, 2: 41766, 4: 83532, 8: 167063}
+least squares on 85 above-floor quotes, cost8 = a + b*T + c*T^2 + d*T*min(F,768), T = N + M:
+   a = 5418.6741  b = -3.6648e-07  c = 1.943981e-06  d = 1.295988e-03  max|resid| = 0.528
+without the T term: a = 5418.6236  c = 1.943981e-06  d = 1.295988e-03  max|resid| = 0.554
+formula vs all 88 grid quotes (incl. floor): max |diff| = 1 tokens
+
+====================================================================================================
+6  REQUESTED GRID through TabPFNProvider.quote (teacher's own free quote path, pinned model/n_estimators)
+====================================================================================================
+    N     M | F=   12 F=   60 F=  160 F=  300 F=  600 F= 1160 | formula max|diff|
+  200   400 |   10000   10000   10000   10000   10000   10000 | 0
+  200  2000 |   10000   10000   10000   10000   10000   10000 | 0
+  200  8000 |   10000   10000   10000   10000   11926   13711 | 0
+  400   400 |   10000   10000   10000   10000   10000   10000 | 0
+  400  2000 |   10000   10000   10000   10000   10000   10000 | 0
+  400  8000 |   10000   10000   10000   10000   12088   13916 | 0
+  800   400 |   10000   10000   10000   10000   10000   10000 | 0
+  800  2000 |   10000   10000   10000   10000   10000   10000 | 0
+  800  8000 |   10000   10000   10000   10000   12412   14328 | 0
+(N context rows, M query rows, F feature columns exactly as sent; one request each; 8 estimators)
+
+====================================================================================================
+7  SCENARIOS: 400 context attempts, K=A=4 active outcomes, dream situations x 4 actions, ONE dream call
+====================================================================================================
+project budget 35000000 | quoted for dispatched requests so far 210000 | project remaining 34790000
+account remaining (min over daily/monthly/usage_limit pairs) 34740000
+scen        mode     F | requests (n_train, n_query, width) x count | tokens/request | total | refused@10000 | dream calls in project remainder
+  S1     stacked    12 | (1600, 32000, 13) x1 | [10000] | 10000 | 0/1 | 3479
+  S1     stacked    60 | (1600, 32000, 61) x1 | [10270] | 10270 | 1/1 | 3387
+  S1     stacked   160 | (1600, 32000, 161) x1 | [14624] | 14624 | 1/1 | 2378
+  S1     stacked  1160 | (1600, 32000, 1161) x1 | [41056] | 41056 | 1/1 | 847
+  S1 per_outcome    12 | (400, 8000, 12) x4 | [10000] | 40000 | 0/4 | 869
+  S1 per_outcome    60 | (400, 8000, 60) x4 | [10000] | 40000 | 0/4 | 869
+  S1 per_outcome   160 | (400, 8000, 160) x4 | [10000] | 40000 | 0/4 | 869
+  S1 per_outcome  1160 | (400, 8000, 1160) x4 | [13916] | 55664 | 4/4 | 625
+  S2     stacked    12 | (1600, 8000, 13) x1 | [10000] | 10000 | 0/1 | 3479
+  S2     stacked    60 | (1600, 8000, 61) x1 | [10000] | 10000 | 0/1 | 3479
+  S2     stacked   160 | (1600, 8000, 161) x1 | [10000] | 10000 | 0/1 | 3479
+  S2     stacked  1160 | (1600, 8000, 1161) x1 | [15153] | 15153 | 1/1 | 2295
+  S2 per_outcome    12 | (400, 2000, 12) x4 | [10000] | 40000 | 0/4 | 869
+  S2 per_outcome    60 | (400, 2000, 60) x4 | [10000] | 40000 | 0/4 | 869
+  S2 per_outcome   160 | (400, 2000, 160) x4 | [10000] | 40000 | 0/4 | 869
+  S2 per_outcome  1160 | (400, 2000, 1160) x4 | [10000] | 40000 | 0/4 | 869
+
+keeping max_tokens_per_request = 10000 instead: largest chunk whose quote stays at the floor (stacked, n_train 1600)
+  width 61: chunk 30701 rows -> quote 10000 (chunk 30702 -> 10001); S1 = 2 requests = 20000 tokens vs one 32000-row request 10270
+  width 161: chunk 17100 rows -> quote 10000 (chunk 17101 -> 10001); S1 = 2 requests = 20000 tokens vs one 32000-row request 14624
+  width 1161: chunk 2962 rows -> quote 10000 (chunk 2963 -> 10001); S1 = 11 requests = 110000 tokens vs one 32000-row request 41056
+
+====================================================================================================
+8  PAYLOAD SIZE OF A WIDE TEST SET (tabpfn_client.client._serialize_to_parquet, zstd; SYNTHETIC arrays, sizing only)
+====================================================================================================
+  8-bit pixel levels k/255 uniform: 6429830 bytes for 4000 rows (1607 B/row) -> 32000 rows ~ 51.4 MB; in-memory float64 32000x1161 = 297 MB
+  continuous uniform float64: 42503200 bytes for 4000 rows (10626 B/row) -> 32000 rows ~ 340.0 MB; in-memory float64 32000x1161 = 297 MB
+  mostly flat frame: 90% of cells 0.5, rest k/255: 2785912 bytes for 4000 rows (696 B/row) -> 32000 rows ~ 22.3 MB; in-memory float64 32000x1161 = 297 MB
+  inline_test_set_max_parquet_bytes = 2000000: above it the client uploads the test set to a signed URL instead (client.py:2203-2214)
+
+====================================================================================================
+USAGE AFTER
+====================================================================================================
+usage_after = {"current_usage": 260000, "usage_limit": 35000000, "reset_time": "2026-12-01 00:00:00 UTC", "daily_tokens_used": 260000, "daily_token_limit": 35000000, "daily_usage": 260000, "daily_limit": 35000000, "daily_reset_time": "2026-11-22 00:00:00 UTC", "monthly_tokens_used": 260000, "monthly_token_limit": 35000000, "monthly_usage": 260000, "monthly_limit": 35000000, "monthly_reset_time": "2026-12-01 00:00:00 UTC", "thinking_fit_count": 0, "thinking_fit_limit": 0}
+usage unchanged by this script: True
+prediction_calls_started = 0 (must be 0)
+DONE (no fit, predict or upload called)
