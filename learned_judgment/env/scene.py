@@ -26,6 +26,7 @@ def build_model(config: dict, hidden: dict | None = None, ball: bool | str = Fal
     grey = [render["backdrop_grey"]] * 3  # a plain skybox: a backdrop with no geometry, so stat.extent is unchanged
     spec.add_texture(name="backdrop", type=mujoco.mjtTexture.mjTEXTURE_SKYBOX, builtin=mujoco.mjtBuiltin.mjBUILTIN_FLAT,
                      rgb1=grey, rgb2=grey, width=8, height=8)
+    spec.visual.rgba.haze = [*grey, 1.0]  # the floor's horizon haze, white by default, drew a bright line there
     if hidden.get("payload", {}).get("mass_kg", 0) > 0:
         # A box resting on the top face of the trunk's collision box, offset in x, y; it adds mass and touches nothing.
         trunk = spec.body("base_link")

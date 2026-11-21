@@ -48,6 +48,7 @@ def test_the_head_view_shows_the_backdrop_and_not_the_dog(config, world):
     frame = world.render_frame(camera="head")
     grey = round(config["world"]["render"]["backdrop_grey"] * 255)
     assert np.abs(frame[0].astype(int) - grey).max() <= 2  # the top row is the plain backdrop
+    assert frame.max() <= grey + 2  # nothing brighter: no white haze line at the horizon
     # Raise both front legs forward: a camera that saw the dog's own meshes would show them; this one does not.
     d = world.policy.data
     for leg in ("FL", "FR"):

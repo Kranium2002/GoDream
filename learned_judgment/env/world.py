@@ -101,10 +101,14 @@ class Go2World:
 
     Episode. reset(situation) spawns the dog, runs the policy's settle and soft start, trots at
     dog_forward_speed_m_s (default 0.0, a vel_x command) for settle_s (default world.settle_s) and returns the
-    observation at the decision instant, t_s 0.0. step(command, duration_s, on_period=None) holds a command, validated
-    strictly against command_schema, for duration_s rounded to whole control periods (at least one), any number of
-    times, and returns the last observation; on_period, if given, is called after every control period with a copy of
-    that period's observation, and an exception it raises ends step after that period with the episode still open.
+    observation at the decision instant, t_s 0.0. step(command, duration_s, on_period=None, on_physics_step=None)
+    holds a command, validated strictly against command_schema, for duration_s rounded to whole control periods (at
+    least one), any number of times, and returns the last observation; on_period, if given, is called after every
+    control period with a copy of that period's observation, and an exception it raises ends step after that period
+    with the episode still open. on_physics_step, if given, is called with t_s after every physics step (0.002 s), for
+    example to render at the step nearest each 1/30 s; an exception it raises leaves the control period unfinished,
+    so finish or reset after it. render_frame (see its docstring) may be called from either without changing
+    the episode.
     finish_episode() ends the episode and returns the outcome; reset may follow for a new episode. A reset during an
     episode abandons it without a trace. With world.save_traces false nothing is kept per control period: the outcome
     comes from the last observation and measures updated as the episode runs.
@@ -301,6 +305,8 @@ class Go2World:
         if incline:
             self._ramp = place_incline(self.model, self.policy.data, self.config["world"]["incline"], incline,
                                        self._start_pos, self._start_yaw)
+        if ball or incline:  # positions of what was just placed, for any reader of policy.data; the policy reads qpos
+            mujoco.mj_kinematics(self.model, self.policy.data)
         self._slip = 0.0
         self._issued = self._command = {name: float(v) for name, v in trot.items()}  # last issued; policy's (delayed)
         self._queue = deque([(native, self._command)] * self._delay)  # the trot, issued long enough ago
