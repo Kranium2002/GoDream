@@ -1,42 +1,45 @@
-# Person B handoff and interface requests
+# Person B handoff and notes for Person A
 
-Branch `person-b`. Status on 2026-11-21: Person B's code is written and passes its mechanics checks. No Go2 episode, no TabPFN prediction request, and no training on real dreams has been run, so every acceptance criterion in 06_PERSON_B.md is OPEN. The next step for all of them is Person A's simulator.
+Branch `person-b`. Updated 2026-11-21 after merging `person-a/go2-env` (up to `e4ddadd`) into it. Person B's code is written and passes its mechanics checks. No Person B result has been measured on the robot yet: that needs `Go2World`.
 
-## What Person B needs from Person A
+## Notes for Person A: what to build next
 
-These block every measured result. Items marked "proposed" are not frozen; change them and tell Person B.
+Ordered by how much each item unblocks. Thank you for adopting the proposed names; they are now in Person B's code and config.
 
-1. **The world class.** `from learned_judgment.env import Go2World`, with `Go2World(config, seed)`, `reset(situation) -> observation`, `step(command, duration_s) -> observation`, `finish_episode() -> measured_outcome`. Person B builds one fresh world per episode and passes the per-episode seed.
-2. **How a world preset is selected** (default, heavy_payload, slippery_floor, tired_motors, downhill). Proposed: a `preset` key inside `config`, or a third constructor argument. Either works; Person B needs to know which.
-3. **The verified command schema in config.yaml**, in the layout Person B's loader reads. Extra keys per field (frame, sign, native name and index) are welcome and ignored by the loader.
+1. **A minimal `Go2World` first, before hidden effects.** `reset`, `step`, `finish_episode` on the default preset with the ball, even with every hidden effect off. With that alone Person B can run real DODGE attempts, the first real TabPFN request and the first SNN trained on real dreams. Hidden effects and the other presets can follow.
+2. **Verify `vel_y` first in the command schema.** DODGE is a sideways step, so it depends on the sideways-speed field. Person B's code refuses to build any skill until `robot.walking_policy.status` is `verified` and the field's `min` and `max` are published. `vel_x` and `yaw_rate` can come after.
+3. **Two levels of seed.** Evaluation needs the hidden world fixed for a whole run while each attempt has its own noise, and every method must face the same noise on the same episode. Proposed: the constructor seed fixes the hidden world and `reset(situation, attempt_seed)` seeds one attempt. Person B's SkillSpec will call it that way. If you prefer another form, say which.
+4. **A throw sampler that needs no running world.** Dreams need about 2,000 situations per skill without stepping physics. Proposed: a function `sample_dodge_situations(config, rng, n)` in `learned_judgment.env` returning the seven agreed keys. `Go2World.sample_dodge_situation()` can call the same function.
+5. **Fill these config keys** (Person B added them as `null` under `skills.dodge`; the SkillSpec refuses to build while they are null):
+   - `situation_ranges`: minimum and maximum of each of the seven situation keys.
+   - `declared_surfaces`: the level names `declared_surface` can take.
+   - `episode_duration_s`: total simulated time of one attempt.
+   - `physics.body_half_length_m`, `physics.body_radius_m`, `physics.base_height_m`: a capsule around the trunk and the base height while trotting, from your model and runs. They are used only by the physics guess.
+6. **Outcome keys as you listed them.** The SkillSpec reads `min_separation_m`, `collision`, `fall` and `recovery_time_s` and ignores the rest. Please keep `commands_received`.
+7. **A way to watch an episode live.** The project lead wants to see the dog dodge in MuJoCo: a viewer flag or `render_frame()` is enough.
+8. **Gate 1 at 0.3 m/s is yours and the lead's to resolve.** One data point from the look-ahead research: the candidate training config sets planar commands with norm up to 0.2 to zero, and your measured speeds are below the commanded ones at all three speeds (75%, 90% and 96%).
 
-        robot:
-          walking_policy:
-            status: verified
-            command_schema:
-              update_period_s: <seconds between accepted commands>
-              fields:
-                <field_name>: {unit: <m/s | rad/s>, min: <float>, max: <float>, description: <text>}
+## What changed on `person-b` that affects you
 
-   Until `status` is `verified` and the fields are present, Person B's code refuses to build any skill. It never guesses a field or a range.
-4. **DODGE situation, proposed.** Values Person B samples and passes to `reset`, and uses as model features. Dog base frame at the decision instant, SI units: `ball_rel_x_m`, `ball_rel_y_m`, `ball_rel_z_m`, `ball_vel_x_m_s`, `ball_vel_y_m_s`, `ball_vel_z_m_s`, `dog_forward_speed_m_s`. Person A's throw distribution in config.yaml (`ball.*`) defines the ranges.
-5. **Declared world values.** The declared payload mass and the declared surface type of the current world, as the judge would state them, available from the world or from every observation. Proposed keys: `declared_payload_kg`, `declared_surface`. They are model features. The true hidden values must not appear under any key Person B reads.
-6. **DODGE measured outcome, proposed.** Keys in `finish_episode()`: `min_separation_m` (smallest distance between ball surface and robot, 0 on contact), `collision` (0 or 1), `fall` (0 or 1), `recovery_time_s`. Traces and anything else can sit under other keys; the SkillSpec reads only its outcome fields and rejects nothing extra from the world.
-7. **Episode timing.** When the ball is released relative to `reset`, how long an episode lasts, and whether `step` may be called several times with different commands before `finish_episode` (Person B plans: nominal command for a delay, dodge command for a hold time, nominal command until the end).
-8. **Two levels of seed.** Evaluation needs the hidden world (payload offset, friction draw, label error) held fixed across a run while per-attempt noise varies, and needs every method to face the same noise on the same episode. A single `Go2World(config, seed)` that reseeds everything cannot do both. Proposed: the constructor seed fixes the hidden world, and each episode takes its own seed, `reset(situation, attempt_seed)`. If Person A prefers another form (for example a noise stream indexed by episode number), say which, and Person B will adapt.
-9. **One saved real episode** with its raw artifact, and the measured real-time factor, so run times can be planned.
-10. **mujoco in pyproject.toml.** It is installed in the venv but not declared, so a plain `uv sync` uninstalls it together with glfw and pyopengl. Declare it, or use `uv sync --inexact`.
+- **Dependencies.** `pyproject.toml` now holds both sets, and `uv.lock` was regenerated. `mujoco` is declared, so `uv sync` no longer removes it. PyTorch comes from the CPU index. The shared venv has `mujoco` 3.11.0, `efferent` 0.5.0, `onnxruntime` 1.32.0 and `pytest`.
+- **Your tests in the merged tree:** `tests/env` gives 31 passed and 1 failed, the same as on your branch.
+- **config.yaml.** Person B added the sections `engine`, `tabpfn`, `persistence`, `baselines`, `students`, `evaluation`, and keys under `skills.dodge`. Your sections merged without conflict.
+- **Mission documents.** The only student is a spiking neural network trained inside the PFN dream; no MLP student is built. `PREREGISTRATION.md` has dated amendments.
+- **Logs.** `LOG.md`, `DECISIONS.md` and `experiments/EXPERIMENTS_LOG.md` hold both branches' entries. Appending at the end keeps future merges simple.
+- **Branching.** To avoid resolving the same conflicts again, base further work on `person-b`, or merge `person-b` into your branch before the next pull request.
 
-## Look-ahead findings that concern Person A (unverified)
+## What Person B delivers to you
 
-Read-only source inspection, no policy was run. Details and pinned commits: experiments/EXPERIMENTS_LOG.md, entry B-lookahead.
+- **The DODGE SkillSpec** (`learned_judgment/skills/dodge.py`): `physics_guess`, `episode` and `candidate_actions`, which you need for the oracle and the difficulty rows of `ENV_REPORT.md`. It is being written now against the names in your handoff.
+- **How it calls the world:**
 
-- The Efferent go2_walk checkpoint and the rl_sar robot_lab checkpoint are the same file.
-- Both learned candidates take forward velocity, lateral velocity, and yaw rate in the base frame at 50 Hz. Native names and observation scaling differ; trained command ranges are not established for either.
-- Upstream HIMLoco is licensed CC BY-NC-SA 4.0 and has no Go2 config.
-- Vendored unitree_mujoco Go2 model: timestep 0.002, base body `base_link`, no ball in the scene, static step boxes from x = 1.2 m to 3.4 m.
-- The trunk collision geoms have no names and geom ids shift between go2.xml and scene.xml, so contact detection by robot body ids is safer than by geom name.
-- Foot geoms have contact priority 1 over the floor, so a floor-friction preset must change the foot geoms or the priority.
+        observation = world.reset(situation, attempt_seed)
+        world.step({"vel_x": forward_speed, "vel_y": 0.0, "yaw_rate": 0.0}, start_delay_s)
+        world.step({"vel_x": forward_speed, "vel_y": side_velocity, "yaw_rate": 0.0}, hold_duration_s)
+        world.step({"vel_x": forward_speed, "vel_y": 0.0, "yaw_rate": 0.0}, remaining_s)
+        outcome = world.finish_episode()
+
+  The action is three numbers: sideways speed (its sign picks the side), start delay and hold duration. Every command is checked against the verified schema before the world is stepped.
 
 ## What exists on this branch
 
@@ -47,14 +50,14 @@ All tunables are in config.yaml; code has no built-in defaults.
 | Skill contract | `learned_judgment/skills/base.py` | `SkillSpec`, `validate_spec`, `CommandSchema.from_config` |
 | Decide | `learned_judgment/engine/decide.py` | `decide`, `decide_batch` (one residual-model call per batch) |
 | Attempt rows | `learned_judgment/engine/rows.py` | `build_real_row`, `append_rows`, `read_rows`, `rows_to_arrays` |
-| Collect, learn, dream, adapt | `learned_judgment/engine/` | `collect`, `fit_residual_model`, `dream`, `keep_confident`, `select_context` |
+| Collect, learn, dream, adapt | `learned_judgment/engine/` | `collect`, `fit_residual_model`, `dream`, `keep_confident`, `select_context`, `train_in_dream` |
 | Teacher | `learned_judgment/teacher.py` | `TabPFNTeacher.fit`, `predict_residuals`, `predict_residual_distribution` |
 | Baselines and evaluation | `learned_judgment/eval/` | residual baselines, `split_situations`, `test_situations`, `compare_methods`, `paired_difference_ci`, `build_final_table` |
-| SNN student | `learned_judgment/students/` | `SpikingNetwork` (numpy inference), `InputEncoder`, `estimate_energy`; training code is being added |
+| SNN student | `learned_judgment/students/` | `SNNStudent`, `SharedSNNStudent`, `SpikingNetwork` (numpy inference), `measure`, `estimate_energy` |
 
 Array order is fixed per skill: situation features, then action dimensions, then one physics-guess column per outcome. Residual = measured outcome − physics guess, per outcome, in the SkillSpec's outcome order.
 
-Attempt rows are JSON Lines, one file per run under `results/attempts/`. The row's `seed` is the seed of the world that attempt ran in.
+Attempt rows are JSON Lines, one file per run under `results/attempts/`.
 
 ## Provider use
 
@@ -64,6 +67,5 @@ Attempt rows are JSON Lines, one file per run under `results/attempts/`. The row
 
 ## Limitations
 
-- Every executed check uses fixtures and tests mechanics only. None is evidence about the robot, the simulator, TabPFN, or the SNN student.
-- The DODGE SkillSpec is not written; it needs items 3 to 8.
+- Every executed Person B check uses fixtures and tests mechanics only. None is evidence about the robot, the simulator, TabPFN, or the SNN student.
 - The teacher's real-response handling (shape and order of the returned quantiles, actual charge against quote) is written from the client's source and is unverified until the first real request.
