@@ -321,6 +321,60 @@ skills:
     status: planned
   kick:
     status: stretch
+  dodge_vision:  # DODGE from the head camera (Person B): one of four commands chosen from an image window.
+    status: primary
+    # The four candidate commands, in readout order. Every value is a field of the verified command schema at 0 or at
+    # a range end proven by a recorded run (E4, artifacts/env/commands/commands.json). An active command is held for
+    # hold_s, then the zero command is sent again. NO_OP is the zero command.
+    actions:
+      NO_OP: {vel_x: 0.0, vel_y: 0.0, yaw_rate: 0.0}
+      DODGE_LEFT: {vel_x: 0.0, vel_y: 1.0, yaw_rate: 0.0}
+      DODGE_RIGHT: {vel_x: 0.0, vel_y: -1.0, yaw_rate: 0.0}
+      RETREAT: {vel_x: -1.0, vel_y: 0.0, yaw_rate: 0.0}
+    # Seconds an active command is held. Starting value from Person A's step response while trotting (messages log,
+    # 2026-11-21 17:49 UTC: a full sideways command moves the trunk about 0.35 m in 0.6 s); tune on dev data only.
+    hold_s: 0.6
+    settle_s: 1.0  # Seconds the dog stands on the zero command before the object is launched (t_s 0). Starting value; the stand is checked by the collection run.
+    episode_duration_s: 3.0  # Simulated seconds per episode after the launch: slowest arrival (about 1.8 s), hold 0.6 s, recovery hold 0.6 s.
+    decision_time_range_s: [0.3, 1.3]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
+    windows_per_dream_episode: 4  # Decision instants taken from one rendered dream episode (the dog stays on the zero command, so one episode gives several windows).
+    teacher_features: [window, action, physics]  # Columns given to the residual teacher. Compared on dev with [action, physics]; the wider one is talkhere.md's plan.
+    threat_target_scale: 0.05  # Threat target = logistic((best active score - NO_OP score) / this). Small against the motion cost of an active command (0.3), so a scene where NO_OP is best gives about 0.
+    # Scenario kinds (Person A's nine names, messages log 2026-11-21 20:29 UTC) and their sampling weights. The kind shapes the
+    # draw only; whether a scene is a threat is measured by the simulator (a NO_OP episode that ends in a collision).
+    kind_weights: {empty: 1.0, static: 1.0, receding: 1.0, off_path: 1.5, background_motion: 1.0, ambiguous: 1.5, incoming_left: 2.0, incoming_center: 2.0, incoming_right: 2.0}
+    object_kinds: [ball]  # punch is added when Person A's proxy exists (Go2World situation key object_kind).
+    scenarios:  # Ranges of the draws, in the dog's frame at the launch (x ahead, y left). Starting values; change only from dev runs, logged in DECISIONS.md.
+      launch_modes: {roll: 0.6, throw: 0.4}  # roll: on the floor, no vertical speed. throw: ballistic, aimed at the head camera's height.
+      distance_m: [2.5, 5.0]  # Launch distance ahead of the trunk origin.
+      bearing_deg: [-12.0, 12.0]  # Bearing of the launch point; inside the 45 degree view.
+      roll_speed_m_s: [1.5, 4.0]  # Ground speed of a rolling ball.
+      throw_speed_m_s: [4.0, 7.0]  # Horizontal speed of a thrown ball.
+      throw_release_height_m: [0.0, 0.5]  # Release height above the trunk origin.
+      aim_center_m: [0.0, 0.08]  # |sideways offset| of the aim point at the dog, incoming_center.
+      aim_side_m: [0.08, 0.22]  # incoming_left (+y) and incoming_right (-y).
+      aim_ambiguous_m: [0.25, 0.45]  # Near misses and grazes.
+      aim_off_path_m: [0.6, 1.5]  # Clear misses.
+      static_distance_m: [1.0, 4.0]  # A ball at rest on the floor, in view.
+      receding_distance_m: [1.0, 2.5]  # Start of a ball rolling away at roll_speed_m_s.
+      background_distance_m: [3.0, 5.0]  # A ball crossing sideways at roll_speed_m_s, never approaching.
+    physics:  # Constants of the physics guess (ballistic or rolling ball, first-order dog response). The residual teacher absorbs the rest.
+      gravity_m_s2: 9.81
+      assumed_latency_s: 0.05  # As skills.dodge.physics.
+      response_time_s: 0.3  # As skills.dodge.physics.
+      time_step_s: 0.02
+      collision_softness_m: 0.05
+      body_half_length_m: 0.293
+      body_radius_m: 0.107
+      base_height_m: null  # Trunk origin height of the standing dog; set from the collection run's measured stand (never assumed).
+    objective_weights:  # As skills.dodge.objective_weights; fixed before any data of this skill.
+      collision: 10.0
+      fall: 10.0
+      separation: 1.0
+      separation_cap_m: 0.5
+      contact_margin_m: 0.02
+      motion: 0.5  # Per metre of commanded travel (speed x hold time): 0.3 for an active command.
+      recovery: 0.5
 
 engine:
   candidate_batch_size: null  # Determine with verified API limits and dev runs.
@@ -397,13 +451,26 @@ tabpfn:
   random_state: 0
   cache_dir: .cache/tabpfn  # Git-ignored. One entry per request hash: request, response, quote, usage.
   call_log: results/tabpfn_calls.jsonl  # One line per call or cache hit; never contains credentials.
-  max_tokens_per_request: 10000  # Refuse an uncached request quoted above this (10000 = minimum charge, E7).
+  max_tokens_per_request: 60000  # Refuse an uncached request quoted above this. Raised from 10000 on 2026-11-21 for image-window tables: 32000 query rows at 1161 columns quote 41056 (experiments/proofs/B2_research/teacher_limits.out.txt), 0.12% of the budget.
   max_query_rows_per_request: 32000  # Larger query sets are split into requests of at most this many rows. 32000 rows at 40 training rows still quoted the minimum charge (E7 proof p3b_cost_scaling.txt).
   lock_timeout_s: 120  # How long a process waits for another process using the same cache before giving up.
   lock_poll_s: 0.05  # Pause between attempts to take the cache lock.
   project_token_budget: 35000000  # Total tokens this project may spend. Set by the lead on 2026-11-21: the allowance Prior Labs gave for the track.
 
 dev_checks:  # Development checks on the real simulator (Person B). Their numbers are DEV RUN outputs, never evaluation results.
+  snn_inputs_in_dream:  # experiments/proofs/B_dodge_real/snn_inputs_in_dream.py: what the SNN is given as input, compared inside a saved dream.
+    heldout_fraction: 0.15  # Share of the dream's situations kept out of every training; the same rows as snn_settings_in_dream.
+    validation_fraction: 0.1  # Share of the remaining rows used for early stopping.
+    max_steps: 6000  # Step limit for every variant (the configured 1500 was reached without convergence on DODGE).
+    inputs: [situation, situation_and_physics_action, situation_and_physics_scores]  # What the network sees.
+    hidden_sizes: [[64], [128, 64]]  # Network shapes tried with every input.
+  snn_settings_in_dream:  # experiments/proofs/B_dodge_real/snn_settings_in_dream.py: SNN sizes and step limits compared inside a saved dream (E11).
+    heldout_fraction: 0.15  # Share of the dream's situations kept out of every training and used only to compare the variants.
+    variants:  # Each overrides students.snn for one training; everything else stays as configured.
+      - {name: start, hidden_sizes: [64], max_steps: 1500}  # The configured starting values.
+      - {name: longer, hidden_sizes: [64], max_steps: 6000}
+      - {name: wider, hidden_sizes: [128], max_steps: 6000}
+      - {name: two_layers, hidden_sizes: [128, 64], max_steps: 6000}
   sidestep_reach:  # Dev skill "reach a sideways displacement", no ball (experiments/proofs/B_sidestep_dev/sidestep_reach_spec.py).
     episode_duration_s: 1.8  # Simulated seconds per attempt after the decision instant (hold, then trot tail); whole 0.02 s control periods.
     min_tail_s: 1.0  # Shortest trot tail after the longest hold: over 3 response times (skills.dodge.physics.response_time_s 0.3 s).
@@ -494,3 +561,79 @@ students:
       e_mac_pj: 4.6  # 32-bit float multiply 3.7 pJ + add 0.9 pJ.
       e_ac_pj: 0.9  # 32-bit float add.
       source: "Horowitz, ISSCC 2014, Fig. 1.1.9 (45 nm, 0.9 V), doi:10.1109/ISSCC.2014.6757323"
+
+declared:  # learned_judgment.declared (Person B): what a chat request may declare. Data only; nothing in a declaration is executed.
+  max_source_text_chars: 500  # Longest source_text accepted with a declaration.
+  skills:
+    RAMP:
+      spec: ramp  # SkillSpec module under learned_judgment/skills that runs this skill.
+      description: "Cross an incline safely: the nominal walking command passes through unchanged on flat ground; speed and heading are corrected only while on the slope."
+      keywords: [slope, incline, ramp, hill, uphill, climb]  # parse_request maps a request holding one of these words to this skill.
+      requires: [incline]  # Simulator capabilities the skill needs; a missing one makes it unavailable and is named.
+      actions: [climb_speed_m_s, climb_yaw_rate_rad_s]
+      outcomes: [progress_m, reached_top, fall, sideways_m, slip_m]
+      params:
+        incline_deg: {type: number, min: 5.0, max: 15.0, default: 12.0, unit: deg, description: "Angle of the incline. Person A's proof runs (messages log, 2026-11-21 20:29 UTC): at 0.6 m/s the dog climbs 5 and 10 degrees and stalls at 15."}
+        nominal_speed_m_s: {type: number, min: 0.4, max: 0.8, default: 0.6, unit: m/s, description: "Forward speed commanded on flat ground (vel_x); inside the speeds the locomotion gate measured."}
+    DODGE:
+      spec: dodge_vision
+      description: "Dodge an object coming at the dog, seen by the head camera, and stay on the zero command when the scene is safe or unclear."
+      keywords: [dodge, punch, ball, avoid, evade, incoming, duck]
+      requires: [ball]
+      actions: [NO_OP, DODGE_LEFT, DODGE_RIGHT, RETREAT]
+      outcomes: [min_separation_m, collision, fall, recovery_time_s, command_travel_m]
+      params:
+        threats: {type: choices, choices: [ball, punch], default: [ball, punch], requires: {punch: punch_proxy}, description: "Kinds of incoming object to train against."}
+  # Skills named in MISSION.md that have no SkillSpec yet: a request holding one of these words is refused, naming the skill.
+  planned:
+    BRAKE: [brake, braking]
+    TURN: [turn, gate]
+    KICK: [kick]
+
+vision:  # learned_judgment.vision (Person B): the image-window contract, identical in MuJoCo and in the browser.
+  frame_size: 12  # A frame is frame_size x frame_size grey pixels.
+  frame_rate_hz: 30.0  # Camera cadence: the laptop camera's native rate.
+  frames: 8  # Frames per window, oldest first: 8 x 12 x 12 = 1152 numbers, 233 ms from first to last. Frozen after the dev comparison of frame_variants.
+  frame_variants: [4, 6, 8]  # Window lengths compared on simulation dev data.
+  luma_weights: [0.299, 0.587, 0.114]  # Grey = these weights x (R, G, B): ITU-R BT.601.
+  pixel_scale: 255.0  # Grey levels are divided by this: float32 in [0, 1].
+  # Simulation frames are taken at the 0.02 s control period nearest each k / frame_rate_hz (at most 6.7 ms off) until
+  # Go2World offers a physics-step hook (asked of Person A, messages log 2026-11-21); then physics_step (at most 1 ms off).
+  sim_timing: nearest_control_period
+  head_camera:  # Head view rendered on Person B's side until world.render_frame(camera="head") exists. Pose: Person A's proof camera (messages log, 2026-11-21 20:29 UTC).
+    pos_m: [0.34, 0.0, 0.017]  # Camera position in the trunk (base_link) frame, m; it looks along trunk +x.
+    pitch_up_deg: 0.0  # Upward tilt of the optical axis from trunk +x.
+    fovy_deg: 45.0  # Vertical field of view; the image is square. A 16:9 laptop camera of about 75-78 degrees diagonal has about 43 degrees vertically, which the centre crop keeps both ways.
+    render_size: 96  # Square render in pixels: 8 x 8 source pixels per output cell.
+  augmentation:  # Image-space variation of simulation frames only (never live frames), one seeded draw per window: uniform in each range.
+    exposure_gain: [0.7, 1.3]  # Multiplies the grey levels.
+    exposure_bias: [-0.1, 0.1]  # Added to the grey levels (0-1 scale).
+    noise_std: [0.0, 0.03]  # Standard deviation of independent Gaussian noise per pixel and frame (0-1 scale).
+    blur_mix: [0.0, 0.5]  # Share of a 3 x 3 box blur mixed into each frame.
+  test_vectors: artifacts/vision/preprocess_vectors.json  # Input images and expected 12 x 12 outputs, for the browser's parity test.
+
+inference:  # learned_judgment.runtime (Person B): the frozen student behind the gate, on this computer only.
+  gate:
+    votes_needed: 3  # An active command needs the same action voted in at least this many ...
+    of_last: 4  # ... of the last this many outputs (talkhere.md, "Threat gate").
+    cooldown_s: 1.0  # Minimum time between two issued active commands.
+    uncertain_floor: 0.5  # A threat score at or above this without a passed gate is shown as UNCERTAIN; below it as NO_OP. Both send the zero command.
+    precision_target: 0.99  # Preregistered: share of issued active commands on simulation dev trajectories that answer a true threat.
+    # Thresholds tried on simulation dev trajectories; the frozen choice is saved with the exported student, not here.
+    calibration_grid:
+      threat: [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99]
+      action: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+      margin: [0.1, 0.2, 0.3, 0.5, 0.7]
+
+observed:  # learned_judgment.observed (Person B): the learning run of a skill whose inputs are observed inside the episode (dodge_vision, ramp).
+  runs_dir: results/runs  # One directory per run: events.jsonl (progress, one JSON line per event), result.json, arrays and the exported student.
+  world_seed: 0  # Constructor seed of every Go2World of a run (the hidden world).
+  world_preset: default
+  workers: 6  # Processes running independent episodes side by side (episodes are deterministic; tests/env/test_determinism.py).
+  dodge_vision:
+    context_scenarios: 120  # Scenarios whose four actions are all run for the teacher's context: 480 measured rows.
+    dream_episodes: 1500  # Rendered zero-command episodes; x windows_per_dream_episode dream situations.
+    dev_scenarios: 240  # Dev split: thresholds, frame count and settings are chosen here.
+    test_scenarios: 240  # Held-out split: run once, after the freeze.
+    snn_hidden_sizes: [128]  # Starting value; compare on dev.
+    snn_max_steps: 6000  # The configured 1500 was reached without convergence on DODGE (dev check E11).

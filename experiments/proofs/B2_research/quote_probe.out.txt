@@ -1,0 +1,11 @@
+usage (free read): {'current_usage': 260000, 'usage_limit': 35000000}
+model_path v3.5_default, n_estimators 8, max_query_rows_per_request 32000, max_tokens_per_request 10000
+dodge today: 40 attempts x 2 active outcomes, one full dream chunk: quote(n_train=80, n_query=32000, n_features=18) -> 10000 tokens (pricing quota_v3)
+dodge today: 100 dev throws x 108 candidates x 2 outcomes: quote(n_train=80, n_query=21600, n_features=18) -> 10000 tokens (pricing quota_v3)
+vision: 40 attempts x 2 outcomes, 2000 dreams x 4 candidates x 2 outcomes: quote(n_train=80, n_query=16000, n_features=1156) -> 21926 tokens (pricing quota_v3)
+vision: same, one full chunk: quote(n_train=80, n_query=32000, n_features=1156) -> 39349 tokens (pricing quota_v3)
+vision: 100 dev situations x 4 candidates x 2 outcomes: quote(n_train=80, n_query=800, n_features=1156) -> 10000 tokens (pricing quota_v3)
+vision: one decision, 4 candidates x 2 outcomes: quote(n_train=80, n_query=8, n_features=1156) -> 10000 tokens (pricing quota_v3)
+vision: 40 attempts x 3 outcomes, 2000 x 4 x 3: quote(n_train=120, n_query=24000, n_features=1156) -> 30557 tokens (pricing quota_v3)
+exit 0
+process exit code 0

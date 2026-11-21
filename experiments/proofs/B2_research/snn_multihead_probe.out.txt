@@ -1,0 +1,12 @@
+settings: {"hidden_sizes": [64], "time_steps": 10, "beta": 0.9, "threshold": 1.0, "readout_beta": 0.9, "learn_beta": false, "learn_threshold": false, "surrogate": "atan", "surrogate_alpha": 2.0, "target_temperature": 0.5, "target_spread": "global_median", "spike_rate_penalty": 0.0, "learning_rate": 0.002, "adam_beta1": 0.9, "adam_beta2": 0.999, "adam_eps": 1e-08, "weight_decay": 0.0, "batch_size": 64, "max_steps": 1000, "validation_fraction": 0.1, "evaluate_every_steps": 100, "patience_evaluations": 1000, "torch_threads": 1, "parity_logit_tolerance": 1e-09, "out_of_range": "error"}
+two-head fit on the same rows: steps_run 1000 best_step 900 | wall_seconds 15.87 | per 1000 steps 15.87 | outer wall 15.88
+validation KL per head (initial -> best): {'threat': 0.36700050869167555, 'action': 0.4579060058534287} -> {'threat': 0.3448657613273414, 'action': 0.3654567413940395} | constant predictor: {'threat': 0.3453943171221948, 'action': 0.3702497481740526}
+firing rate per layer: (0.214234375,)
+one-head fit: steps_run 1000 | per 1000 steps 7.4
+check_parity head 'threat': max |logit diff| 0, spike mismatches [0], decisions differing 0
+check_parity head 'action': max |logit diff| 1.94e-16, spike mismatches [0], decisions differing 0
+combined network layer_sizes (1152, 64, 6) | trunks identical: True | readout_beta threat/action: 0.9 0.9
+max |combined[:, :2] - threat| 1.6653345369377348e-16 | max |combined[:, 2:] - action| 1.1102230246251565e-16
+argmax over all 6 outputs vs 2 + action argmax: differs on 0 of 2200 rows (any agreement depends on the two heads' logit scales; one argmax over 6 outputs mixes the heads and is not a defined decision)
+numpy forward of one row (D=1152, H=64, C=6, T=10): median ms 0.1302 p95 ms 0.1491
+operation counts: layer_sizes (1152, 64, 6) first_layer_macs 73728 neuron_updates 700 dense_reference_macs 74112 mean spikes per decision 137.164 mean synaptic ops 822.984
