@@ -143,3 +143,18 @@ test("runCards() asks for the summary list and runEvents() for a run's recorded 
   assert.equal(calls[0].url, "/api/runs?summary=1");
   assert.equal(calls[1].url, "/api/runs/v%200/events");
 });
+
+test("drive(), stop() and reset() POST to the existing stage controls", async () => {
+  const { calls, fetchFn } = recorder(() => json(200, {}));
+  const api = createApi(fetchFn);
+  await api.drive({ vel_x: 0.5, vel_y: 0, yaw_rate: 0 });
+  await api.stop();
+  await api.reset("slippery_floor");
+  await api.reset();
+  assert.deepEqual(calls.map((c) => [c.url, c.init.method, JSON.parse(c.init.body)]), [
+    ["/api/drive", "POST", { vel_x: 0.5, vel_y: 0, yaw_rate: 0 }],
+    ["/api/stop", "POST", {}],
+    ["/api/reset", "POST", { preset: "slippery_floor" }],
+    ["/api/reset", "POST", {}],
+  ]);
+});

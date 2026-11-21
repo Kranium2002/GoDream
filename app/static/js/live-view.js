@@ -4,8 +4,25 @@ import { cameraProblem, createFrameWindow, createRateMeter, createSampler, creat
 import { preprocess, readWindowSettings } from "./vision.js";
 import { readout } from "./readout.js";
 import { createStage } from "./stage.js";
+import { cropRect } from "./drive.js";
 
-const RETRY_MS = 3000; // after an unavailable answer, wait this long before offering the next window
+const RETRY_MS = 3000; // after an unavailable or failed answer, wait this long before offering the next window
+
+// What the student computes from the window the page sends (student.json input.window_encoding, via image_window);
+// the server's runtime does the encoding, the page only names it.
+const ENCODINGS = {
+  raw: "the grey cells of every frame as they are",
+  abs_diff: "how much each cell changed between adjacent frames",
+  signed_diff: "the signed change of each cell between adjacent frames (brighter or darker)",
+  signed_diff_first: "the signed change of each cell against the oldest frame of the window",
+  events: "event-camera ON and OFF events: cells that got brighter or darker than a threshold between adjacent frames",
+};
+function encodingText(s) {
+  if (!s.windowEncoding) return "";
+  const what = ENCODINGS[s.windowEncoding] ?? `the "${s.windowEncoding}" encoding`;
+  const from = s.encodingFrom === "student" ? "the loaded student's student.json" : "config.yaml vision (no student is loaded)";
+  return `The network reads ${what} of the ${s.frames}-frame window, computed on the server (${s.windowEncoding}, from ${from}).`;
+}
 
 export function initLiveView({ api, el }) {
   const $ = (id) => document.getElementById(id);
@@ -30,6 +47,15 @@ export function initLiveView({ api, el }) {
     $("window-note").textContent = r.ok ? "" : `The window settings are unavailable: ${r.problems.join(" ")} The preview works; nothing is sent to the model.`;
     $("window-text").hidden = !r.ok;
     if (r.ok) $("window-text").textContent = `Window: ${settings.frames} frames of ${settings.height} x ${settings.width} grey cells at ${settings.hz} Hz, oldest first.`;
+    // Whether a student answers: plainly when none is configured, and labelled when it runs on development thresholds.
+    const inferCap = capabilities.find((c) => c.name === "infer");
+    const note = $("infer-note");
+    note.hidden = Boolean(inferCap?.available && !inferCap.reason);
+    note.className = !inferCap?.available ? "cap-note" : /development thresholds/i.test(inferCap.reason) ? "cap-note cap-note--dev" : "cap-note cap-note--quiet";
+    note.textContent = !inferCap ? "" : inferCap.available ? inferCap.reason
+      : `No decisions: ${inferCap.reason} The camera preview works; no model answers and the dog gets no command.`;
+    $("encoding-text").textContent = r.ok ? encodingText(r.settings) : "";
+    if (!run && (r.ok ? $("cam-strip").children.length !== settings.frames : true)) r.ok ? buildStrip(settings) : $("cam-strip").replaceChildren(); // empty squares until the camera runs
     headCapability = capabilities.find((c) => c.name === "head_camera") ?? null;
     stage.setAspect(state?.frame?.width, state?.frame?.height);
     updateStage();
@@ -63,6 +89,7 @@ export function initLiveView({ api, el }) {
     video.srcObject = stream;
     try { await video.play(); } catch { /* muted inline video plays; a refusal shows as no frames */ }
     run = settings ? newRun(settings) : null;
+    document.body.classList.add("cam-on");
     $("cam-stop").disabled = false;
     $("cam-stop").focus();
     status(settings ? "Camera on. Frames are taken, turned into grey cells and sent to the model." : "Camera on, preview only: the window settings are unavailable.");
@@ -73,6 +100,7 @@ export function initLiveView({ api, el }) {
   function newRun(s) {
     const r = { settings: s, frameWindow: createFrameWindow(s.frames, s.height * s.width), sampler: createSampler(s.hz),
       decisions: 0, issued: 0, retryAt: 0, lastAction: null, sessionStart: true };
+    buildStrip(s);
     r.sender = createSender(async (snap) => {
       const sentAt = performance.now();
       const first = r.sessionStart; // until the server has answered one window of this session
@@ -96,6 +124,10 @@ export function initLiveView({ api, el }) {
     meter.clear();
     clearDecision("Camera off: no decision.");
     grey.width = grey.height = 1;
+    $("cam-greyfull").width = $("cam-greyfull").height = 1;
+    if (settings) buildStrip(settings); else $("cam-strip").replaceChildren();
+    $("cam-crop").hidden = true;
+    document.body.classList.remove("cam-on");
     $("grey-text").textContent = "Nothing yet.";
     $("st-fps").textContent = "not measured";
     $("st-fill").textContent = "not started";
@@ -127,27 +159,49 @@ export function initLiveView({ api, el }) {
     if (!W || !H) return;
     if (capture.width !== W || capture.height !== H) { capture.width = W; capture.height = H; }
     captureCtx.drawImage(video, 0, 0); // same size as the frame: no scaling, no mirroring
-    let cells;
+    let cells, square;
     try {
-      cells = preprocess(captureCtx.getImageData(0, 0, W, H).data, W, H, r.settings);
+      const px = captureCtx.getImageData(0, 0, W, H).data;
+      cells = preprocess(px, W, H, r.settings);
+      // For people only: the same centre square in grey at up to 96 x 96, by the same area averaging (levels 0-255).
+      const g = Math.min(96, W, H);
+      square = preprocess(px, W, H, { ...r.settings, height: g, width: g, divisor: 1 });
+      drawCells($("cam-greyfull"), square, g, g, 1);
     } catch (e) {
       status(e.message);
       return;
     }
-    drawGrey(cells, r.settings);
+    drawCells(grey, cells, r.settings.width, r.settings.height, 255);
+    $("grey-text").textContent = `${r.settings.height} x ${r.settings.width} grey cells of the newest frame, as sent to the model.`;
+    placeCrop(W, H);
     r.frameWindow.push(cells, t);
+    r.frameWindow.list().forEach((v, k) => { const c = $("cam-strip").children[k]?.querySelector("canvas"); if (c) drawCells(c, v, r.settings.width, r.settings.height, 255); });
     const snap = r.frameWindow.snapshot();
     $("st-fill").textContent = snap ? `${r.settings.frames} of ${r.settings.frames} frames` : "filling";
     if (snap && performance.now() >= r.retryAt) r.sender.offer(snap);
     $("st-dropped").textContent = String(r.sender.dropped());
   }
 
-  function drawGrey(cells, s) {
-    if (grey.width !== s.width || grey.height !== s.height) { grey.width = s.width; grey.height = s.height; }
-    const img = new ImageData(s.width, s.height);
-    cells.forEach((v, k) => { const g = Math.max(0, Math.min(255, Math.round(v * 255))); img.data.set([g, g, g, 255], 4 * k); });
-    grey.getContext("2d").putImageData(img, 0, 0);
-    $("grey-text").textContent = `${s.height} x ${s.width} grey cells of the newest frame, centre square, as sent to the model.`;
+  // Grey values (times toByte) into a canvas of w x h pixels; CSS scales it up with its pixels kept.
+  function drawCells(canvas, cells, w, h, toByte) {
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    const img = new ImageData(w, h);
+    cells.forEach((v, k) => { const g = Math.max(0, Math.min(255, Math.round(v * toByte))); img.data.set([g, g, g, 255], 4 * k); });
+    canvas.getContext("2d").putImageData(img, 0, 0);
+  }
+
+  // The centre square the model uses, outlined on the preview.
+  function placeCrop(W, H) {
+    const c = cropRect(W, H, video.clientWidth, video.clientHeight), box = $("cam-crop");
+    box.hidden = !c;
+    if (c) Object.assign(box.style, { left: `${c.left}px`, top: `${c.top}px`, width: `${c.size}px`, height: `${c.size}px` });
+  }
+
+  // One small canvas per frame of the window, oldest first.
+  function buildStrip(s) {
+    $("cam-strip").replaceChildren(...Array.from({ length: s.frames }, (_, k) => el("li", {},
+      el("canvas", { width: s.width, height: s.height, role: "img", "aria-label": `Frame ${k + 1} of ${s.frames}` }),
+      el("span", { class: "hint" }, k === 0 ? "oldest" : k === s.frames - 1 ? "newest" : String(k + 1)))));
   }
 
   // ---- decisions -------------------------------------------------------------------------------------------------
@@ -166,7 +220,7 @@ export function initLiveView({ api, el }) {
     if (r !== run) return;
     const view = readout(result);
     if (view.state !== "decision") {
-      if (view.state === "unavailable") r.retryAt = performance.now() + RETRY_MS;
+      r.retryAt = performance.now() + RETRY_MS; // unavailable or failed: pause instead of repeating the request 30 times a second
       setAction(r, `${view.state}:${view.message}`, view.state === "unavailable"
         ? `Inference is unavailable: ${view.message}`
         : `Inference failed: ${view.message} (${view.code})`);
@@ -175,9 +229,10 @@ export function initLiveView({ api, el }) {
     }
     r.decisions++;
     if (view.issued === true) r.issued++;
+    $("dev-flag").hidden = !view.development;
     $("st-decisions").textContent = String(r.decisions);
     $("st-issued").textContent = String(r.issued);
-    setAction(r, view.action.code, `${view.action.label} (${view.action.code})`);
+    setAction(r, `${view.action.code}:${view.development}`, `${view.action.label} (${view.action.code})${view.development ? ", development thresholds, not calibrated" : ""}`);
     $("dec-issued").textContent = view.issued === null ? "Command issued: not sent" : view.issued ? "Command issued to the simulated dog now." : "No command issued.";
     const rows = [...view.rows, ["Round trip measured here", `${rttMs.toFixed(1)} ms`], ["Frame age when the answer arrived", `${ageMs.toFixed(1)} ms`]];
     $("dec-rows").replaceChildren(...rows.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)]));

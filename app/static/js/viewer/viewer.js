@@ -2,7 +2,7 @@
 // before the first pose there is no dog to draw. Orbit by drag, zoom by wheel or pinch, keyboard: arrows orbit,
 // + and - zoom, 0 resets the view.
 import { lookAt, multiply, normalMatrix, perspective } from "./mat.js";
-import { createOrbit } from "./orbit.js";
+import { createOrbit, headingOf, smooth, smoothAngle } from "./orbit.js";
 import { buildScene, bodyMatrix } from "./scene.js";
 import { createPoseBuffer } from "./pose.js";
 import { createQuality } from "./quality.js";
@@ -104,7 +104,11 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
   const orbit = createOrbit({ target: [0, 0, 0.25], ...START, minDistance: 0.6, maxDistance: 8 });
   const poses = createPoseBuffer();
   const quality = createQuality(); // the internal resolution scale; its rule is in quality.js
-  let scene = null, vaos = new Map(), shift = [0, 0], shiftGoal = [0, 0], raf = 0, dirty = true;
+  let scene = null, vaos = new Map(), shift = [0, 0, 1], shiftGoal = [0, 0, 1], raf = 0, dirty = true;
+  // The follow camera: the trunk's position and heading, smoothed, so the dog keeps its place and size on screen and
+  // the floor moving under it shows the walking. The person's drag turns the view around the dog (orbit.yaw).
+  const FOLLOW_TAU_MS = 600;
+  let follow = null, lastDraw = 0; // {x, y, heading}
 
   const floorBuf = gl.createBuffer();
   const floorVao = gl.createVertexArray();
@@ -137,6 +141,7 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     vaos = new Map([...next.meshes].map(([k, g]) => [k, upload(g)]));
     scene = next;
     poses.clear();
+    follow = null;
     dirty = true;
   }
 
@@ -155,12 +160,20 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     // Draw only when something changed: a pose pair still being interpolated, a camera move, a resize, a new robot.
     if (!dirty && !(scene && poses.moving(now))) return;
     dirty = false;
+    const dt = Math.min(100, now - lastDraw);
+    lastDraw = now;
     quality.frame(now);
     resize();
     const pose = scene ? poses.sample(now) : null;
-    if (pose && scene.rootBody !== null) {
-      const p = pose.pos[scene.rootBody];
-      if (p) orbit.setTarget([p[0], p[1], scene.floorZ + 0.22]); // the camera follows the dog the simulator moves
+    const p = pose && scene.rootBody !== null ? pose.pos[scene.rootBody] : null;
+    if (p) {
+      const goal = { x: p[0], y: p[1], heading: headingOf(pose.quat[scene.rootBody]) };
+      if (!follow || reduceMotion.matches) follow = { ...goal };
+      else {
+        follow = { x: smooth(follow.x, goal.x, dt, FOLLOW_TAU_MS), y: smooth(follow.y, goal.y, dt, FOLLOW_TAU_MS), heading: smoothAngle(follow.heading, goal.heading, dt, FOLLOW_TAU_MS) };
+        if (Math.hypot(goal.x - follow.x, goal.y - follow.y) > 1e-4 || Math.abs(Math.sin(goal.heading - follow.heading)) > 1e-4) dirty = true; // still catching up
+      }
+      orbit.setTarget([follow.x, follow.y, scene.floorZ + 0.22]);
     }
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(...sky, 1);
@@ -169,7 +182,9 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     const proj = perspective((35 * Math.PI) / 180, canvas.width / canvas.height, 0.05, 80);
     proj[8] = -shift[0]; // lens shift: the dog sits in the free part of the stage, not under the text
     proj[9] = -shift[1];
-    const eye = orbit.eye();
+    proj[0] *= shift[2]; // framing scale: a smaller free region draws the dog smaller, the person's zoom untouched
+    proj[5] *= shift[2];
+    const eye = orbit.eye(follow ? follow.heading : 0);
     const view = lookAt(eye, orbit.target, [0, 0, 1]);
     const t = orbit.target, z = (scene?.floorZ ?? 0) - 0.0005, R = 30;
 
@@ -229,7 +244,13 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
   const lift = (e) => { pointers.delete(e.pointerId); pinch = null; };
   canvas.addEventListener("pointerup", lift);
   canvas.addEventListener("pointercancel", lift);
-  canvas.addEventListener("wheel", (e) => { e.preventDefault(); orbit.zoom(Math.exp(e.deltaY * 0.0012)); dirty = true; }, { passive: false });
+  // A plain wheel scrolls the page; Ctrl or Cmd with the wheel (and a trackpad pinch, which arrives that way) zooms.
+  canvas.addEventListener("wheel", (e) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    orbit.zoom(Math.exp(e.deltaY * 0.004));
+    dirty = true;
+  }, { passive: false });
   canvas.addEventListener("keydown", (e) => {
     const keys = { ArrowLeft: () => orbit.rotate(0.12, 0), ArrowRight: () => orbit.rotate(-0.12, 0), ArrowUp: () => orbit.rotate(0, 0.08),
       ArrowDown: () => orbit.rotate(0, -0.08), "+": () => orbit.zoom(0.9), "=": () => orbit.zoom(0.9), "-": () => orbit.zoom(1.1), 0: resetView };
@@ -257,7 +278,8 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     resolutionScale: () => quality.scale,
     hasPose: () => Boolean(scene && poses.sample(performance.now())),
     bodyCount: () => scene?.bodyCount ?? 0,
-    setShift(x, y = 0) { shiftGoal = [x, y]; },
+    setShift(x, y = 0, k = 1) { shiftGoal = [x, y, k]; },
+    zoomBy(f) { orbit.zoom(f); dirty = true; },
     resetView,
     destroy() { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVisibility); removeEventListener("resize", onResize); },
   };

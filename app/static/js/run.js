@@ -2,31 +2,34 @@
 //   blocked      no valid spec                     ready     a valid spec, start allowed
 //   starting     POST /api/runs in flight          confirm   409 cost_confirmation_required: {message, quote}
 //   started      202 {run_id}: {runId}             failed / unavailable   {code, message}; start allowed again
-// Events: {type: "spec", valid}, {type: "start"}, {type: "confirm"}, {type: "cancel"}, {type: "answer", result}
-// where result is an api.js result.
+// Events: {type: "spec", valid}, {type: "start", mode?}, {type: "confirm"}, {type: "cancel"}, {type: "answer", result}
+// where result is an api.js result. A start's mode ("full" or "fast") stays with the run through the quote, so the
+// confirmed request starts exactly the mode that was quoted.
 
 export const INITIAL_RUN = Object.freeze({ phase: "blocked" });
 
 export const canStart = (s) => s.phase === "ready" || s.phase === "failed" || s.phase === "unavailable";
+
+const withMode = (state, mode) => (typeof mode === "string" && mode ? { ...state, mode } : state);
 
 export function runStep(s, ev) {
   switch (ev.type) {
     case "spec":
       return s.phase === "starting" ? s : { phase: ev.valid ? "ready" : "blocked" };
     case "start":
-      return canStart(s) ? { phase: "starting", confirmCost: false } : s;
+      return canStart(s) ? withMode({ phase: "starting", confirmCost: false }, ev.mode) : s;
     case "confirm":
-      return s.phase === "confirm" ? { phase: "starting", confirmCost: true } : s;
+      return s.phase === "confirm" ? withMode({ phase: "starting", confirmCost: true }, s.mode) : s;
     case "cancel":
       return s.phase === "confirm" ? { phase: "ready" } : s;
     case "answer":
-      return s.phase === "starting" ? answer(ev.result) : s;
+      return s.phase === "starting" ? answer(ev.result, s.mode) : s;
     default:
       return s;
   }
 }
 
-function answer(r) {
+function answer(r, mode) {
   if (r.ok) {
     const id = r.data?.run_id;
     return typeof id === "string" && id
@@ -34,7 +37,7 @@ function answer(r) {
       : { phase: "failed", code: "invalid_response", message: "The server accepted the run but sent no run id." };
   }
   if (r.status === 409 && r.code === "cost_confirmation_required") {
-    return { phase: "confirm", message: r.message, quote: quoteRows(r.data) };
+    return withMode({ phase: "confirm", message: r.message, quote: quoteRows(r.data) }, mode);
   }
   return { phase: r.unavailable ? "unavailable" : "failed", code: r.code, message: r.message };
 }

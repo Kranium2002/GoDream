@@ -791,6 +791,21 @@ def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any], pred
     mode = require(config, "students.snn.target_spread")
     spread = score_spread(scores) if mode == "global_median" else None
     targets = {ACTION: soft_targets(scores, temperature=temperature, target_spread=mode, spread=spread)}
+    decision = optional(config, f"skills.{checked.name}.action_target")
+    if decision is not None and decision.get("mode") == "decision":
+        # The dream's DECISION as the target: the first action, in readout order, whose dream score is within
+        # tie_tolerance of the best one, with label smoothing. Two actions that the dream scores alike (stepping
+        # left or right from a punch at the centre) then give one consistent answer instead of a 50/50 target,
+        # which a command gate asking for one clear action can never pass; NO_OP comes first in the order, so a
+        # tie between acting and not acting stays NO_OP.
+        tolerance, smoothing = float(decision["tie_tolerance"]), float(decision["smoothing"])
+        if not (tolerance >= 0.0 and 0.0 <= smoothing < 1.0):
+            raise ConfigError(f"skills.{checked.name}.action_target needs tie_tolerance >= 0 and 0 <= smoothing < 1")
+        tied = scores >= scores.max(axis=1, keepdims=True) - tolerance
+        choice = tied.argmax(axis=1)
+        hard = np.full(scores.shape, smoothing / (scores.shape[1] - 1), dtype=np.float64)
+        hard[np.arange(scores.shape[0]), choice] = 1.0 - smoothing
+        targets[ACTION] = hard
     if checked.no_op_index is not None and optional(config, f"skills.{checked.name}.threat_target") == "collision_course":
         # Threat = the dream world (physics guess corrected by the teacher) says doing nothing ends in the outcome
         # named by skills.<name>.threat_outcome (a binary outcome: its predicted mean under NO_OP, clipped to [0, 1]).

@@ -6,6 +6,7 @@ import { canStart, INITIAL_RUN, runStep } from "./run.js";
 import { initLiveView } from "./live-view.js";
 import { initLearnView } from "./learn-view.js";
 import { initRobotStage } from "./robot-stage.js";
+import { initDriveView } from "./drive-view.js";
 
 const api = createApi((url, init) => fetch(url, init));
 const $ = (id) => document.getElementById(id);
@@ -24,11 +25,17 @@ const CAP_LABELS = { drive: "Drive the dog", head_camera: "Head camera", scenari
   runs: "Learning runs", results: "Results", infer: "Live inference" };
 
 const live = initLiveView({ api, el });
-const learn = initLearnView({ api, el });
+const learn = initLearnView({ api, el, catalogue: () => catalogue });
 
 // ---- the robot stage and the sections below it --------------------------------------------------------------
 const stage = initRobotStage({ api });
-const wide = matchMedia("(min-width: 1000px)");
+const wide = matchMedia("(min-width: 760px)"); // copy beside the dog; below this the dog sits above the copy
+// The stage fills the screen under the header, whatever height the header wraps to.
+new ResizeObserver(() => document.documentElement.style.setProperty("--bar-h", `${document.querySelector(".bar").offsetHeight}px`)).observe(document.querySelector(".bar"));
+const drive = initDriveView({ api, onOpen: () => {
+  scrollTo({ top: 0, behavior: "auto" }); // instant: a smooth scroll is cancelled by the focus that follows
+  placeDog();
+}, onClose: () => placeDog() });
 
 // Streams load only while their section is on screen; the camera itself is the person's to start and stop.
 const watched = { robot: (v) => stage.setVisible(v), learn: (v) => learn.setVisible(v), live: (v) => live.setVisible(v) };
@@ -53,24 +60,35 @@ function setDock(open) {
   }
   placeDog();
 }
-// The dog is centred in the part of the stage nothing covers: right of the introduction, left of the open dock,
-// or, on narrow screens where the introduction sits at the bottom, above it. Measured from the layout, as a lens shift.
+// The dog is centred in the part of the stage nothing covers: between the copy (or the drive pad, or the dock) and the
+// edge, above the bottom bar and the track; on narrow screens below the copy. Measured from the layout, as a lens shift.
 function placeDog() {
-  const s = $("robot").getBoundingClientRect();
+  const s = $("robot").getBoundingClientRect(); // the canvas covers the whole stage
   if (!s.width || !s.height) return;
-  const open = !$("dock").hidden;
-  let left = s.left, right = s.right, top = s.top, bottom = s.bottom;
-  if (open && wide.matches) right = $("dock").getBoundingClientRect().left;
-  else if (!open && wide.matches) left = $("hero-copy").getBoundingClientRect().right;
-  else if (!open) bottom = $("hero-copy").getBoundingClientRect().top; // narrow with the dock open: it covers the stage
-  const x = 2 * ((left + right) / 2 - s.left) / s.width - 1;
-  const y = 1 - 2 * ((top + bottom) / 2 - s.top) / s.height;
-  stage.setShift(x, y);
+  const main = document.querySelector(".stage-main").getBoundingClientRect();
+  const bar = document.querySelector(".stage-bar").getBoundingClientRect();
+  const dockOpen = !$("dock").hidden, side = $(document.body.classList.contains("drive-open") ? "drive" : "hero-copy").getBoundingClientRect();
+  let left = s.left, right = s.right, top = main.top, bottom = bar.top;
+  if (wide.matches) {
+    if (dockOpen) right = $("dock").getBoundingClientRect().left;
+    else left = side.right;
+  } else if (!dockOpen) {
+    if (document.body.classList.contains("drive-open")) top = side.bottom;
+    else bottom = side.top; // the copy sits at the bottom on narrow screens
+  }
+  // At full scale the dog spans about 0.68 x 0.57 of the stage's height (measured at 1440 x 900); a smaller free region
+  // scales it down so it fits with a margin, in width and in height.
+  const k = Math.max(0.3, Math.min(1, 0.85 * (right - left) / (0.68 * s.height), 0.85 * (bottom - top) / (0.57 * s.height)));
+  stage.setShift(2 * ((left + right) / 2 - s.left) / s.width - 1, 1 - 2 * ((top + bottom) / 2 - s.top) / s.height, k);
 }
 addEventListener("resize", placeDog);
 wide.addEventListener("change", placeDog);
+new ResizeObserver(placeDog).observe(document.querySelector(".stage-main")); // the track opening, the copy collapsing
 placeDog();
 $("teach-open").addEventListener("click", () => setDock(true));
+$("zoom-in").addEventListener("click", () => stage.zoomBy(0.85));
+$("zoom-out").addEventListener("click", () => stage.zoomBy(1 / 0.85));
+$("view-reset").addEventListener("click", () => stage.resetView());
 $("teach-close").addEventListener("click", () => setDock(false));
 $("dock").addEventListener("keydown", (e) => { if (e.key === "Escape") setDock(false); });
 
@@ -96,13 +114,17 @@ async function loadState() {
   if (typeof s.preset === "string") parts.push(`World: ${s.preset}`);
   $("sim-text").textContent = parts.join(" · ");
   capabilities = normaliseCapabilities(s.capabilities);
+  runModes = s.run_modes && typeof s.run_modes === "object" && !Array.isArray(s.run_modes) ? s.run_modes : {};
   renderCapabilities();
+  renderModes();
   live.setState(s, capabilities);
+  drive.setState(s, capabilities);
   learn.setState(s, capabilities);
 }
 
 function renderCapabilities() {
   $("caps-empty").hidden = true;
+  $("caps-count").textContent = `${capabilities.filter((c) => c.available).length} of ${capabilities.length} available`;
   $("caps").replaceChildren(...capabilities.map((c) => el("li", { class: c.available ? "is-good" : "is-bad" },
     el("span", { class: "mark", "aria-hidden": "true" }, c.available ? "✓" : "✕"),
     el("span", {}, el("span", { class: "caps__name" }, CAP_LABELS[c.name] ?? c.name), " ",
@@ -111,7 +133,7 @@ function renderCapabilities() {
   for (const [name, id] of [["chat", "chat-cap"], ["runs", "runs-cap"]]) {
     const c = capabilities.find((x) => x.name === name);
     $(id).hidden = !c || c.available;
-    if (c && !c.available) $(id).textContent = `${CAP_LABELS[name]} unavailable: ${c.reason}`;
+    if (c && !c.available) $(id).textContent = name === "runs" ? `Starting a new run is not available yet: ${c.reason}` : `${CAP_LABELS[name]} unavailable: ${c.reason}`;
   }
 }
 
@@ -163,6 +185,7 @@ async function loadCatalogue() {
   $("catalogue-note").textContent = problem
     ? `${r.unavailable ? "The skill catalogue is unavailable" : "The skill catalogue could not be read"}: ${problem} Supported ranges cannot be shown.`
     : "";
+  learn.catalogueChanged();
   const rows = catalogueRows(catalogue);
   $("skills-empty").hidden = rows.length > 0;
   $("skills-empty").textContent = catalogue ? "The catalogue lists no skills." : "Not known: the skill catalogue could not be read.";
@@ -182,7 +205,7 @@ function logEntry(who, text, cls) {
   $("log-empty").hidden = true;
   const item = el("li", { class: cls }, el("span", { class: "log__who" }, who), el("span", { class: "log__text" }, text));
   $("log").append(item);
-  $("log").scrollTop = $("log").scrollHeight;
+  $("dock-scroll").scrollTop = item.offsetTop - 8; // the newest message at the top of the dock's scrolling part
 }
 
 async function send() {
@@ -213,7 +236,7 @@ async function send() {
 function setBusy(busy) {
   $("send").disabled = busy;
   $("ask").setAttribute("aria-busy", String(busy));
-  $("send").textContent = busy ? "Waiting for the reply" : "Send message";
+  $("send").textContent = busy ? "Sending" : "Send";
 }
 
 $("ask").addEventListener("submit", (e) => { e.preventDefault(); send(); });
@@ -254,6 +277,7 @@ function renderSpec() {
   else if (!missing.length) body.push(el("p", { class: "empty" }, "The server did not declare a skill for this request."));
   $("spec-body").replaceChildren(...body);
 
+  renderModes();
   if (isValid(c, catalogue)) setVerdict(true, "Valid: ready to start a learning run");
   else if (missing.length) setVerdict(false, `Not supported: ${missing.length} missing ${missing.length === 1 ? "capability" : "capabilities"}`);
   else if (unsupported) setVerdict(false, `Not supported yet: ${unsupported.skill}`);
@@ -283,6 +307,38 @@ function specTable(rows) {
 
 // ---- learning run ----------------------------------------------------------------------------------------------
 let run = INITIAL_RUN;
+let runModes = {}; // /api/state run_modes: {skill: {mode: "" when Dev B's plan_run accepts it, else its refusal}}
+const MODE_LABELS = { full: "Full run", fast: "Fast run" };
+const MODE_HINTS = {
+  full: "Every configured context and dev scenario, every candidate.",
+  fast: "One real simulator attempt per context scenario and a smaller dream; the quote shows the exact counts.",
+};
+
+// The run modes of the declared skill: only the ones Dev B's run_skill accepts are offered; a refused one is named with
+// run_skill's own reason.
+function renderModes() {
+  const decl = lastChat && isValid(lastChat, catalogue) ? lastChat.declared_spec : null;
+  const modes = decl ? runModes[decl.skill] : null;
+  const box = $("run-modes");
+  box.hidden = !modes || typeof modes !== "object";
+  if (box.hidden) return;
+  const offered = Object.keys(modes).filter((m) => modes[m] === "");
+  const refused = Object.keys(modes).filter((m) => typeof modes[m] === "string" && modes[m] !== "");
+  const was = chosenMode();
+  const pick = offered.includes(was) ? was : offered.includes("full") ? "full" : offered[0];
+  $("run-mode-list").replaceChildren(...offered.map((m) => {
+    const input = el("input", { type: "radio", name: "run-mode", value: m, id: `run-mode-${m}` });
+    input.checked = m === pick;
+    return el("label", { class: "modes__item", for: `run-mode-${m}` }, input, " ",
+      el("span", { class: "caps__name" }, MODE_LABELS[m] ?? m), MODE_HINTS[m] ? el("span", { class: "note" }, MODE_HINTS[m]) : null);
+  }));
+  $("run-mode-note").textContent = refused.map((m) => `${MODE_LABELS[m] ?? m} is not offered for ${decl.skill}: ${modes[m]}.`).join(" ");
+  $("run-mode-note").hidden = !refused.length;
+}
+
+function chosenMode() {
+  return document.querySelector('input[name="run-mode"]:checked')?.value;
+}
 
 function dispatch(ev) {
   const before = run;
@@ -291,12 +347,13 @@ function dispatch(ev) {
 }
 
 async function requestRun(ev) {
-  dispatch(ev); // "start" or "confirm"
+  dispatch(ev.type === "start" ? { ...ev, mode: chosenMode() } : ev); // "start" (with the chosen mode) or "confirm"
   if (run.phase !== "starting") return;
-  dispatch({ type: "answer", result: await api.startRun(lastChat.declared_spec, run.confirmCost) });
+  dispatch({ type: "answer", result: await api.startRun(lastChat.declared_spec, run.confirmCost, run.mode) });
 }
 
 function renderRun(before) {
+  $("run-modes").disabled = run.phase === "starting" || run.phase === "confirm"; // the quoted mode is the one started
   $("start").disabled = !canStart(run);
   $("confirm").hidden = run.phase !== "confirm";
   $("start-row").hidden = run.phase === "confirm";
@@ -306,7 +363,7 @@ function renderRun(before) {
     case "ready": status.textContent = "Ready. Starting runs real simulator episodes on the server."; break;
     case "starting": status.textContent = run.confirmCost ? "Starting the run with the cost confirmed." : "Asking the server to start the run."; break;
     case "confirm":
-      status.textContent = "The server asks you to confirm the quoted usage before the run starts.";
+      status.textContent = `The server asks you to confirm the quoted usage before the ${MODE_LABELS[run.mode]?.toLowerCase() ?? "run"} starts.`;
       $("confirm-msg").textContent = run.message;
       $("confirm-quote").replaceChildren(...run.quote.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)]));
       if (before.phase !== "confirm") $("confirm-h").focus();

@@ -42,7 +42,8 @@ def test_image_window_is_published_from_the_vision_block_in_the_agreed_encoding(
         "frames": v["frames"], "height": v["frame_size"], "width": v["frame_size"], "hz": v["frame_rate_hz"],
         "order": "oldest_first", "normalization": v["pixel_scale"], "crop": "centre_square",
         "luma": v["luma_weights"], "mirrored": False,
-        "window_encoding": v["encoding"], "diff_floor": v["diff_floor"]}  # no student loaded for this config
+        "window_encoding": v["encoding"], "diff_floor": v["diff_floor"],
+        "window_encoding_from": "config"}  # no student loaded for this config
 
 
 def test_image_window_is_null_without_a_vision_block(config):
@@ -187,10 +188,11 @@ def test_a_failed_inference_leaks_the_window_nowhere(config, caplog):
     assert all(r.exc_info is None for r in caplog.records)  # no traceback
 
 
-def test_the_infer_event_carries_the_action_and_confidences_only():
+def test_the_infer_event_carries_the_action_confidences_and_thresholds_only():
     result = StandIn().infer(np.zeros((2, 3, 3), np.float32), 0.0)
     assert infer.event(result) == {"action": "DODGE_LEFT", "threat_confidence": result["threat_confidence"],
-                                   "action_confidence": 0.9}
+                                   "action_confidence": 0.9, "thresholds": None}  # the stand-in names none
+    assert infer.event({**result, "thresholds": "development"})["thresholds"] == "development"
 
 
 # ---- development thresholds ----------------------------------------------------------------------------------------
@@ -249,5 +251,5 @@ def test_image_window_shows_what_the_loaded_student_reads(config, tmp_path):
     own = with_student(config, write_student(tmp_path / "s", config))  # input without window_encoding: raw
     assert backend.inference(own)[3] == []
     shown = backend.image_window(own)
-    assert shown["window_encoding"] == "raw" and shown["diff_floor"] is None
+    assert shown["window_encoding"] == "raw" and shown["diff_floor"] is None and shown["window_encoding_from"] == "student"
     assert backend.image_window(config)["window_encoding"] == config["vision"]["encoding"]  # another config: vision's

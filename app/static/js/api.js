@@ -40,12 +40,16 @@ export function createApi(fetchFn) {
     state: () => call("/api/state"),
     skills: () => call("/api/skills"),
     robot: () => call("/api/robot"),
+    drive: (command) => call("/api/drive", command),
+    stop: () => call("/api/stop", {}),
+    reset: (preset) => call("/api/reset", preset === undefined ? {} : { preset }),
     chat: (messages) => call("/api/chat", { messages }),
     runs: () => call("/api/runs"),
     runCards: () => call("/api/runs?summary=1"),
     runEvents: (runId) => call(`/api/runs/${encodeURIComponent(runId)}/events`),
     run: (runId) => call(`/api/runs/${encodeURIComponent(runId)}`),
-    startRun: (declaredSpec, confirmCost) => call("/api/runs", { declared_spec: declaredSpec, confirm_cost: confirmCost }),
+    // mode: "full" or "fast" (Dev B's run_skill modes); left out, the server runs "full".
+    startRun: (declaredSpec, confirmCost, mode) => call("/api/runs", { declared_spec: declaredSpec, confirm_cost: confirmCost, ...(mode ? { mode } : {}) }),
     // The camera window goes here and nowhere else. captured_ms: the newest frame's capture time, ms since the epoch.
     // sessionStart: the first window after Start camera, so the server resets the gate and the cooldown clock.
     infer: (window, frames, capturedMs, sessionStart = false) => call("/api/infer", {

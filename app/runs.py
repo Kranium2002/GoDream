@@ -9,11 +9,14 @@
                              from <runs_dir>/<run_id>/events.jsonl and result.json, read as they are now
     GET  /api/runs/{run_id} also carries status: Dev B's run_status (state, step, alive, reason, history, ...) for a
                              run started through run_skill, null for a run recorded without run_status.json
-    POST /api/runs           {declared_spec, confirm_cost}: 202 with what run_skill.start_run returns ({run_id, pid,
-                             ...}); 422 invalid_declaration with Dev B's problems; 409 run_in_progress {run_id} while
-                             another run's worker is alive; without confirm_cost true 409 cost_confirmation_required
-                             with quote_run's fields flat plus plan_run's recorded_only; 503 runs_unavailable naming
-                             what is missing while learned_judgment.run_skill does not import
+    POST /api/runs           {declared_spec, confirm_cost, mode?}: 202 with what run_skill.start_run returns ({run_id,
+                             pid, ...}); 422 invalid_declaration with Dev B's problems; 422 mode_not_supported with
+                             run_skill's own sentence when plan_run refuses the mode (mode "fast" for DODGE); 409
+                             run_in_progress {run_id} while another run's worker is alive; without confirm_cost true
+                             409 cost_confirmation_required with quote_run's fields flat (mode among them) plus
+                             plan_run's recorded_only; 503 runs_unavailable naming what is missing while
+                             learned_judgment.run_skill does not import. mode is "full" (the default) or "fast", passed
+                             unchanged to plan_run, quote_run and start_run.
     POST /api/runs/{run_id}/stop  run_skill.stop_run's answer (the run's status); 409 run_not_started_here for a run
                              recorded without run_status.json
 Each new complete line of any run's events.jsonl is relayed as an SSE `run` event, unchanged. Dev B's `data` is
@@ -130,11 +133,12 @@ def report(folder) -> dict:
 
 def summary(folder, names: dict | None = None) -> dict:
     """A skill card for a run folder, from its files only: {run_id, skill, display_name, state, updated_utc,
-    steps_done, has_result, has_student}. skill and updated_utc come from the newest event line, else from
+    steps_done, has_result, has_student, timing}. skill and updated_utc come from the newest event line, else from
     result.json, else null; display_name is names[skill] (backend.skill_names: the catalogue's name of that spec), else
-    null; a folder whose files cannot be read is state "unreadable"."""
+    null; timing is result.json's top-level "timing" as Dev B's run_skill worker measured it (wall clock on this
+    machine), else null; a folder whose files cannot be read is state "unreadable"."""
     card = {"run_id": folder.name, "skill": None, "display_name": None, "state": "unreadable", "updated_utc": None,
-            "steps_done": 0, "has_result": False, "has_student": False}
+            "steps_done": 0, "has_result": False, "has_student": False, "timing": None}
     try:
         events_file, result_file = folder / EVENTS, folder / RESULT
         events, _, _ = parse_lines(events_file.read_bytes() if events_file.exists() else b"")
@@ -148,10 +152,12 @@ def summary(folder, names: dict | None = None) -> dict:
     fallback = result if isinstance(result, dict) else {}
     newest = events[-1] if events else {}
     skill = newest.get("skill", fallback.get("skill"))
+    timing = fallback.get("timing")
     return card | {"skill": skill, "display_name": (names or {}).get(skill), "state": run_state(events),
                    "updated_utc": newest.get("time_utc", fallback.get("updated_utc")),
                    "steps_done": sum(1 for s in summarize(events) if s["state"] == "done"),
-                   "has_result": result is not None, "has_student": has_student}
+                   "has_result": result is not None, "has_student": has_student,
+                   "timing": timing if isinstance(timing, dict) else None}
 
 
 def scan(root, offsets: dict, emit, first: bool = False) -> None:
@@ -222,17 +228,22 @@ def start_run(body: dict, config: dict, runner, root) -> dict:
     """Check a run request and start it through Dev B's runner; what start_run returns (at least run_id).
     Refusal 400 for a malformed request, 422 with Dev B's problems for an invalid declaration, 409 run_in_progress
     while another run is running, 409 cost_confirmation_required with the quote (flat) and what is only recorded until
-    the cost is confirmed. Billing is confirmed only by confirm_cost true."""
-    if not (set(body) <= {"declared_spec", "confirm_cost"} and isinstance(body.get("declared_spec"), dict)
-            and isinstance(body.get("confirm_cost", False), bool)):
-        raise Refusal(400, "invalid_body", "A run request is a declared_spec from the chat and confirm_cost, true or "
-                                           "false.")
-    declaration = body["declared_spec"]
+    the cost is confirmed. Billing is confirmed only by confirm_cost true. mode ("full" or "fast", default "full") goes
+    to every runner call unchanged; a mode plan_run refuses (ValueError, e.g. "fast" for DODGE) is 422
+    mode_not_supported with run_skill's own sentence."""
+    if not (set(body) <= {"declared_spec", "confirm_cost", "mode"} and isinstance(body.get("declared_spec"), dict)
+            and isinstance(body.get("confirm_cost", False), bool) and isinstance(body.get("mode", "full"), str)):
+        raise Refusal(400, "invalid_body", "A run request is a declared_spec from the chat, confirm_cost true or "
+                                           "false, and an optional mode, full or fast.")
+    declaration, mode = body["declared_spec"], body.get("mode", "full")
     try:
-        plan = runner.plan(declaration, config)
+        plan = runner.plan(declaration, config, mode=mode)
     except runner.DeclarationError as e:
         raise Refusal(422, "invalid_declaration", "The declaration does not pass its checks; problems lists them.",
                       {"problems": list(e.problems)}) from None
+    except ValueError as e:  # Dev B's refusal of the mode (or of a skill without a run chain), as Dev B wrote it
+        raise Refusal(422, "mode_not_supported", f"The run cannot start in mode {mode!r}: {str(e).rstrip('.')}.",
+                      {"mode": mode}) from None
     busy = running_run(root, runner, config)
     if busy:
         raise Refusal(409, "run_in_progress", "Another learning run is still running; stop it or wait for it to end.",
@@ -240,8 +251,8 @@ def start_run(body: dict, config: dict, runner, root) -> dict:
     if body.get("confirm_cost") is not True:
         raise Refusal(409, "cost_confirmation_required", "This run spends simulator time and hosted TabPFN usage; "
                                                          "confirm the quoted cost to start it.",
-                      {**runner.quote(declaration, config), "recorded_only": plan["recorded_only"]})
-    return runner.start(declaration, config, confirm_billing=True)
+                      {**runner.quote(declaration, config, mode=mode), "recorded_only": plan["recorded_only"]})
+    return runner.start(declaration, config, confirm_billing=True, mode=mode)
 
 
 def _needs(what: str, missing: list) -> str:

@@ -6,7 +6,8 @@ Serves on config.yaml app.host and app.port (--port 0 picks a free port) until C
 (app/simulation.py) owns the world; request threads only hand it requests and read what it publishes.
 
     GET  /api/state    what the page needs to draw its controls: command fields and ranges, presets, status,
-                       frame size and rate, the skill catalogue and which capabilities work, each with its reason
+                       frame size and rate, the skill catalogue and which capabilities work, each with its reason,
+                       and run_modes: per skill, the learning-run modes Dev B's run_skill accepts
     GET  /api/stream   multipart/x-mixed-replace stream of PNG frames rendered by MuJoCo, at app.stream_fps;
                        ?camera=tracking (the default); head is 503 until the head camera exists, anything else 400
     GET  /api/events   Server-Sent Events: observation (app.observation_hz), episode (start, end with the outcome),
@@ -176,6 +177,7 @@ def state(h: Handler) -> None:
         "frame": {"width": render["width"], "height": render["height"], "stream_fps": config["app"]["stream_fps"]},
         "capabilities": capabilities(h.server),
         "skills": backend.skill_catalog(config),
+        "run_modes": backend.run_modes(config),  # {skill: {mode: "" or Dev B's refusal}}, asked of run_skill.plan_run
         "image_window": backend.image_window(config),  # null until config.yaml has Dev B's vision block
         "actions": actions,  # {name: command} of skills.dodge_vision, unchanged
         "action_hold_s": hold_s,  # how long an emitted action's command is held (skills.dodge_vision.hold_s)

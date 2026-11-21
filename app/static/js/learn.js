@@ -118,14 +118,46 @@ function cell(c, unit) {
 // The proposed result shape {run_id, skill, declaration, seeds, scenario_ids, metrics: [{name, unit, higher_is_better,
 // values: {method: {value, ci_low, ci_high, n}}}], paired: [{name, a, b, diff, ci_low, ci_high, n}]} -> a table;
 // anything else -> {kind: "raw", rows}. This is the one function to change if Dev B's result file differs.
+// A result's top-level "timing" (Dev B's run_skill worker: wall-clock seconds of each step of a run started through
+// run_skill, measured on this machine) -> {mode, attempts, learnS, evaluateS, steps: [[step, s]], learnSteps, machine,
+// cpuCount, clock}; null without a readable timing (recorded runs have none). Every value is the file's.
+export function timingView(result) {
+  const t = result?.timing;
+  if (!t || typeof t !== "object" || Array.isArray(t) || !finite(t.learn_s)) return null;
+  const steps = t.steps && typeof t.steps === "object" && !Array.isArray(t.steps)
+    ? Object.entries(t.steps).filter(([, s]) => finite(s)) : [];
+  return {
+    mode: typeof t.mode === "string" ? t.mode : null,
+    attempts: finite(t.attempts) ? t.attempts : null,
+    learnS: t.learn_s,
+    evaluateS: finite(t.evaluate_s) ? t.evaluate_s : null,
+    steps,
+    learnSteps: Array.isArray(t.learn_steps) ? t.learn_steps.filter((s) => typeof s === "string") : [],
+    machine: typeof t.machine_note === "string" ? t.machine_note : null,
+    cpuCount: finite(t.cpu_count) ? t.cpu_count : null,
+    clock: typeof t.clock === "string" ? t.clock : null,
+  };
+}
+
+// One line for a skill card from a summary's timing: "fast run, 40 real attempts, learnt in 132 s on this laptop".
+export function timingLine(timing) {
+  const v = timingView({ timing });
+  if (!v) return null;
+  return [v.mode && `${v.mode} run`, v.attempts !== null && `${v.attempts} real attempts`,
+    `learnt in ${Math.round(v.learnS)} s on this laptop`].filter(Boolean).join(", ");
+}
+
 export function resultView(result) {
   if (result === null || result === undefined) return { kind: "none" };
   const metrics = result?.metrics;
   const fits = Array.isArray(metrics) && metrics.length > 0
     && metrics.every((m) => m && typeof m.name === "string" && m.values && typeof m.values === "object" && !Array.isArray(m.values));
-  if (!fits) return { kind: "raw", rows: flatRows(result) };
+  // A readable timing is shown in its own block (timingView); every other key stays here.
+  const shownApart = timingView(result) ? ["timing"] : [];
+  const others = (obj) => Object.fromEntries(Object.entries(obj).filter(([k]) => !shownApart.includes(k)));
+  if (!fits) return { kind: "raw", rows: flatRows(typeof result === "object" && !Array.isArray(result) ? others(result) : result) };
   const keys = [...new Set(metrics.flatMap((m) => Object.keys(m.values)))];
-  const { metrics: _m, paired: _p, seeds: _s, scenario_ids: _i, ...rest } = result;
+  const { metrics: _m, paired: _p, seeds: _s, scenario_ids: _i, ...rest } = others(result);
   return {
     kind: "table",
     extra: flatRows(rest), // every key the table does not show, as sent
@@ -161,6 +193,7 @@ export function inferLine(data) {
     if (finite(data[key])) parts.push(`${label} ${data[key].toFixed(2)}`);
   }
   if (view.gate.length) parts.push(view.gate[view.gate.length - 1].label.toLowerCase());
+  if (data.thresholds === "development") parts.push("development thresholds, not calibrated");
   return parts.join(", ");
 }
 

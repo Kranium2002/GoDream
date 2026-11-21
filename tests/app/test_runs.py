@@ -162,21 +162,27 @@ class StandInRunner:
     """Dev B's run_skill at the adapter boundary, for this server's route logic only: it starts, stops and bills
     nothing. Real plan_run and quote_run are tested below; the real start_run and stop_run are NOT RUN."""
 
-    def __init__(self, problems=None, statuses=None):
+    def __init__(self, problems=None, statuses=None, refuse_mode=None):
         self.started, self.stopped, self.problems, self.statuses = [], [], problems, statuses or {}
+        self.refuse_mode, self.modes_seen = refuse_mode, []
         from learned_judgment.declared import DeclarationError
         self.DeclarationError = DeclarationError
 
-    def plan(self, declaration, config):
+    def plan(self, declaration, config, *, mode="full"):
+        self.modes_seen.append(("plan", mode))
         if self.problems:
             raise self.DeclarationError(self.problems)
+        if mode == self.refuse_mode:
+            raise ValueError(f"mode {mode!r} is refused by the stand-in")
         return {"skill": declaration["skill"], "steps": [], "recorded_only": {"incline_deg": "recorded only: ..."}}
 
-    def quote(self, declaration, config):
-        return {"ok": True, "problems": [], "skill": declaration["skill"], "spec": "ramp",
+    def quote(self, declaration, config, *, mode="full"):
+        self.modes_seen.append(("quote", mode))
+        return {"ok": True, "problems": [], "skill": declaration["skill"], "spec": "ramp", "mode": mode,
                 "estimate": {"episodes": 1200, "tabpfn_tokens": {"value": 5_000_000}}}
 
-    def start(self, declaration, config, *, confirm_billing):
+    def start(self, declaration, config, *, confirm_billing, mode="full"):
+        self.modes_seen.append(("start", mode))
         self.started.append((declaration, confirm_billing))
         return {"run_id": "ramp-20261121T230000", "pid": 4242, "run_dir": "results/runs/ramp-20261121T230000"}
 
@@ -204,10 +210,17 @@ def test_a_confirmed_run_starts_with_billing_confirmed_and_answers_what_start_ru
     runner = StandInRunner()
     started = runs.start_run({"declared_spec": DECLARATION, "confirm_cost": True}, config, runner, tmp_path)
     assert started["run_id"] == "ramp-20261121T230000" and runner.started == [(DECLARATION, True)]
+    assert runner.modes_seen == [("plan", "full"), ("start", "full")]  # no mode given: full
+    with pytest.raises(Refusal) as refused:  # a mode goes to plan, quote and start unchanged
+        runs.start_run({"declared_spec": DECLARATION, "mode": "fast"}, config, runner, tmp_path)
+    assert refused.value.body()["mode"] == "fast" and runner.modes_seen[-2:] == [("plan", "fast"), ("quote", "fast")]
+    runs.start_run({"declared_spec": DECLARATION, "mode": "fast", "confirm_cost": True}, config, runner, tmp_path)
+    assert runner.modes_seen[-2:] == [("plan", "fast"), ("start", "fast")]
 
 
 @pytest.mark.parametrize("body", [{}, {"declared_spec": "RAMP"}, {"declared_spec": DECLARATION, "confirm_cost": 1},
-                                  {"declared_spec": DECLARATION, "extra": True}])
+                                  {"declared_spec": DECLARATION, "extra": True},
+                                  {"declared_spec": DECLARATION, "mode": 2}])
 def test_a_malformed_run_request_is_refused(config, tmp_path, body):
     runner = StandInRunner()
     with pytest.raises(Refusal) as refused:
@@ -222,6 +235,11 @@ def test_an_invalid_declaration_answers_422_with_dev_bs_problems(config, tmp_pat
         runs.start_run({"declared_spec": DECLARATION, "confirm_cost": True}, config, runner, tmp_path)
     assert refused.value.status == 422 and refused.value.code == "invalid_declaration"
     assert refused.value.body()["problems"] == [problem] and runner.started == []
+    runner = StandInRunner(refuse_mode="fast")  # a mode Dev B's plan refuses: 422 with its sentence
+    with pytest.raises(Refusal) as refused:
+        runs.start_run({"declared_spec": DECLARATION, "mode": "fast", "confirm_cost": True}, config, runner, tmp_path)
+    assert refused.value.status == 422 and refused.value.code == "mode_not_supported"
+    assert "refused by the stand-in" in refused.value.message and runner.started == []
 
 
 def test_one_run_at_a_time(config, tmp_path):
@@ -242,6 +260,11 @@ def test_dev_bs_run_skill_is_the_runner_now(config):
                                                                               "stop"))
     from learned_judgment.declared import DeclarationError
     assert runner.DeclarationError is DeclarationError
+    with pytest.raises(ValueError, match="fast"):  # Dev B's real plan_run (no side effect) refuses a fast DODGE run
+        runner.plan({"skill": "DODGE"}, config, mode="fast")
+    modes = backend.run_modes(config)  # what the page offers: plan_run's own answers
+    assert modes["MOVE"]["fast"] == "" and modes["RAMP"]["fast"] == "" and modes["DODGE"]["fast"]
+    assert modes["DODGE"]["full"] == ""
 
 
 @pytest.mark.parametrize("declaration", REAL_DECLARATIONS, ids=lambda d: d["skill"])
@@ -289,7 +312,11 @@ def test_a_summary_is_built_from_the_run_files(tmp_path):
     (folder / "student" / "student.json").write_text("{}")
     assert runs.summary(folder, {"ramp": "RAMP"}) == {
         "run_id": "r1", "skill": "RAMP", "display_name": None, "state": "running",
-        "updated_utc": "2026-11-21T22:00:00Z", "steps_done": 2, "has_result": True, "has_student": True}
+        "updated_utc": "2026-11-21T22:00:00Z", "steps_done": 2, "has_result": True, "has_student": True,
+        "timing": None}
+    timing = {"mode": "fast", "learn_s": 132.3, "attempts": 40}
+    (folder / runs.RESULT).write_text(json.dumps({"skill": "RAMP", "timing": timing}))
+    assert runs.summary(folder)["timing"] == timing  # Dev B's measured timing, passed through unchanged
     (folder / runs.EVENTS).write_bytes(line(skill="ramp"))
     assert runs.summary(folder, {"ramp": "RAMP"})["display_name"] == "RAMP"
 
@@ -298,7 +325,7 @@ def test_a_summary_of_a_bare_folder_invents_nothing(tmp_path):
     (tmp_path / "r2").mkdir()
     assert runs.summary(tmp_path / "r2") == {"run_id": "r2", "skill": None, "display_name": None, "state": "starting",
                                              "updated_utc": None, "steps_done": 0, "has_result": False,
-                                             "has_student": False}
+                                             "has_student": False, "timing": None}
 
 
 def test_a_summary_with_a_broken_result_says_it_has_none(tmp_path):
@@ -312,7 +339,8 @@ def test_a_run_folder_that_cannot_be_read_is_listed_as_unreadable(tmp_path):
     folder = tmp_path / "r4"
     (folder / runs.EVENTS).mkdir(parents=True)  # a directory where the event file should be: reading it fails
     assert runs.summary(folder) == {"run_id": "r4", "skill": None, "display_name": None, "state": "unreadable",
-                                    "updated_utc": None, "steps_done": 0, "has_result": False, "has_student": False}
+                                    "updated_utc": None, "steps_done": 0, "has_result": False, "has_student": False,
+                                    "timing": None}
 
 
 def test_dev_bs_v0_run_summarises_from_its_real_files(config):

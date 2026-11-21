@@ -9,7 +9,7 @@ captured_ms is the browser's wall-clock time of the newest frame, in epoch milli
 wall-clock receive time minus captured_ms; an age outside 0..app.infer.max_frame_age_ms is clock skew, taken as 0 and
 flagged. t_capture_s for Dev B is the monotonic receive time minus that age. session_start true calls Dev B's reset()
 first (a new camera session). The command Dev B returns is checked against the verified command schema and applied
-to the stage on the simulation thread; an SSE `infer` event carries the action and confidences only.
+to the stage on the simulation thread; an SSE `infer` event carries the action, confidences and thresholds only.
 
 The window is derived from the laptop camera: it is never logged, stored, put in an event, an error message or a
 traceback. Errors are logged by type only.
@@ -74,8 +74,9 @@ def run(body: dict, config: dict, infer_fn, reset_fn, window: dict, received_mon
 
 
 def event(result: dict) -> dict:
-    """The SSE `infer` event: the action and confidences only."""
-    return {key: result.get(key) for key in ("action", "threat_confidence", "action_confidence")}
+    """The SSE `infer` event: the action, the confidences and which thresholds gave them ("frozen" or
+    "development"), so development thresholds are labelled wherever the action shows."""
+    return {key: result.get(key) for key in ("action", "threat_confidence", "action_confidence", "thresholds")}
 
 
 @capability("infer")

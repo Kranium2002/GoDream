@@ -484,6 +484,7 @@ skills:
     window_repeat_tolerance: 0.01  # Largest allowed grey difference (0-1 scale) between the windows the episodes of one situation saw before acting; the render repeats to within 0.002 (seen twice in about 700 situations).
     pre_contact_margin_s: 0.05  # Decision frames are drawn only up to this long before the object's straight-line arrival at the dog.
     separation_clip_m: 2.0  # min_separation_m is reported at most this (measured and guessed); a scene without an object reads this value.
+    action_target: {mode: decision, tie_tolerance: 0.1, smoothing: 0.05}  # Action target of the student: the dream's decision, ties (scores within tie_tolerance, in objective units) broken in readout order. Chosen on dev (sweep v3, soft targets): for a punch at the centre the soft target was half left, half right, so no student could give the gate one clear action.
     threat_target: collision_course  # Threat target of the student: the dream world's predicted collision under NO_OP (scorer side). The decision-margin target (threat_target_scale) called late frames, where no dodge helps any more, 'no threat' although the image shows the object at its largest (development run v2).
     threat_outcome: collision
     threat_target_scale: 0.05  # Threat target = logistic((best active score - NO_OP score) / this). Small against the motion cost of an active command (0.3), so a scene where NO_OP is best gives about 0.

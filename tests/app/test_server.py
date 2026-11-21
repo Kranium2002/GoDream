@@ -362,7 +362,7 @@ def test_new_run_lines_are_relayed_as_events_and_the_run_can_be_read(own_server)
     assert request(own_server, "GET", "/api/runs?summary=1") == (200, [{
         "run_id": "r_test", "skill": "RAMP", "display_name": None, "state": "running",
         "updated_utc": "2026-11-21T22:00:00Z",
-        "steps_done": 1, "has_result": False, "has_student": False}])
+        "steps_done": 1, "has_result": False, "has_student": False, "timing": None}])
     status, run = request(own_server, "GET", "/api/runs/r_test")
     assert status == 200 and run["state"] == "running" and run["baseline"] == {"anything": [1, 2]}
     assert run["steps"] == [{k: line[k] for k in ("step", "state", "done", "total", "time_utc", "data")}]
@@ -526,7 +526,8 @@ def test_infer_applies_the_command_and_announces_the_action_only(server, monkeyp
         assert body["threat_confidence"] == pytest.approx(0.97) and body["latency_ms"] >= 0
         assert body["frame_age_clamped"] in (False, True) and runtime.resets == 1
         assert next(data for name, data in events if name == "infer") == {
-            "action": "DODGE_LEFT", "threat_confidence": pytest.approx(0.97), "action_confidence": 0.9}
+            "action": "DODGE_LEFT", "threat_confidence": pytest.approx(0.97), "action_confidence": 0.9,
+            "thresholds": None}  # the stand-in runtime names no thresholds
         assert observe(events, until_s=before + 0.5)[-1]["command"] == STEER  # applied to the stage
     no_leak(json.dumps(body))
     no_leak(" ".join(r.getMessage() for r in caplog.records))

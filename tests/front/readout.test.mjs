@@ -65,3 +65,16 @@ test("unavailable and other errors keep the server's message", () => {
   assert.deepEqual(readout({ ok: false, status: 400, code: "bad_window", message: "Wrong size.", unavailable: false, data: {} }),
     { state: "error", code: "bad_window", message: "Wrong size." });
 });
+
+test("the server's frame age, window validity and cooldown conflict are shown, and development thresholds are flagged", () => {
+  const r = readout(answer({ frame_age_ms: 41.26, frame_age_clamped: true, valid: true, cooldown_conflict: false, thresholds: "development" }));
+  assert.equal(row(r, "Frame age at the server"), "41.3 ms (clamped)");
+  assert.equal(row(r, "Window valid"), "yes");
+  assert.equal(row(r, "Cooldown conflict"), "no");
+  assert.equal(r.development, true);
+  const f = readout(answer({ frame_age_ms: 10, valid: false, thresholds: "frozen" }));
+  assert.equal(row(f, "Frame age at the server"), "10.0 ms");
+  assert.equal(row(f, "Window valid"), "no");
+  assert.equal(row(f, "Cooldown conflict"), "not sent");
+  assert.equal(f.development, false);
+});

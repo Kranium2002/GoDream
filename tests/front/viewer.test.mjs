@@ -43,10 +43,10 @@ test("perspective maps the near and far planes to -1 and 1", () => {
 
 // ---- orbit camera (z up) --------------------------------------------------------------------------------------
 test("the orbit camera circles its target and clamps pitch and distance", () => {
-  const o = createOrbit({ target: [1, 1, 0], distance: 2, yaw: 0, pitch: 0, minDistance: 0.5, maxDistance: 5 });
-  vecNear(o.eye(), [3, 1, 0]);
+  const o = createOrbit({ target: [1, 1, 0], distance: 2, yaw: 0, pitch: 0.5, minDistance: 0.5, maxDistance: 5 });
+  vecNear(o.eye(), [1 + 2 * Math.cos(0.5), 1, 2 * Math.sin(0.5)]);
   o.rotate(Math.PI / 2, 0);
-  vecNear(o.eye(), [1, 3, 0]);
+  vecNear(o.eye(), [1, 1 + 2 * Math.cos(0.5), 2 * Math.sin(0.5)]);
   o.rotate(0, 10); // far past straight down or up
   assert.ok(o.pitch < Math.PI / 2 && o.pitch > 0);
   o.zoom(100);
@@ -199,4 +199,27 @@ test("the quality controller ignores the gap when drawing pauses (nothing change
   q.frame((t += 5000)); // a pause, not a slow frame
   for (let k = 0; k < 3; k++) q.frame((t += 16));
   assert.equal(q.scale, 1);
+});
+
+test("headingOf reads the yaw of a quaternion about z", async () => {
+  const { headingOf } = await import("../../app/static/js/viewer/orbit.js");
+  assert.ok(near(headingOf([1, 0, 0, 0]), 0));
+  assert.ok(near(headingOf([Math.cos(Math.PI / 4), 0, 0, Math.sin(Math.PI / 4)]), Math.PI / 2));
+  assert.ok(near(Math.abs(headingOf([0, 0, 0, 1])), Math.PI));
+});
+
+test("smoothing moves part of the way per frame, the short way round for angles, and settles", async () => {
+  const { smooth, smoothAngle } = await import("../../app/static/js/viewer/orbit.js");
+  const half = smooth(0, 10, 0.4 * Math.LN2 * 1000, 400); // after one half-life: halfway
+  assert.ok(near(half, 5, 1e-6));
+  assert.equal(smooth(3, 10, 0, 400), 3);
+  assert.ok(near(smooth(0, 10, 1e6, 400), 10));
+  const a = smoothAngle(3.0, -3.0, 0.4 * Math.LN2 * 1000, 400); // across the +-pi seam, not through zero
+  assert.ok(Math.abs(a) > 3.0, `went the long way: ${a}`);
+});
+
+test("the orbit never puts the camera below the target's height", () => {
+  const o = createOrbit({ target: [0, 0, 0.22], distance: 2, yaw: 0, pitch: -1 });
+  assert.ok(o.pitch > 0);
+  assert.ok(o.eye()[2] > 0.22);
 });

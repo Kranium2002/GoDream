@@ -18,7 +18,10 @@ export function readWindowSettings(raw) {
   if (raw.mirrored !== false) problems.push("mirrored must be false: the contract's frames are not mirrored.");
   if (problems.length) return { ok: false, problems };
   const { frames, height, width, hz, luma } = raw;
-  return { ok: true, settings: { frames, height, width, hz, luma: [...luma], divisor: raw.normalization } };
+  // What the student computes from the window (named only; the server encodes): present when the server says.
+  const encoding = typeof raw.window_encoding === "string" && raw.window_encoding
+    ? { windowEncoding: raw.window_encoding, encodingFrom: raw.window_encoding_from === "student" ? "student" : "config" } : {};
+  return { ok: true, settings: { frames, height, width, hz, luma: [...luma], divisor: raw.normalization, ...encoding } };
 }
 
 export function preprocess(rgba, W, H, { height, width, luma, divisor }) {

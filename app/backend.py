@@ -59,7 +59,8 @@ def runner(config: dict):
     when invalid; the chain and what is only recorded), quote_run(declaration, config) (no network, nothing billed),
     start_run(declaration, config, confirm_billing=...) (starts ONE detached worker process and returns at once, so a
     run never holds up the simulation thread or the HTTP server), run_status(run_id, config) and stop_run(run_id,
-    config). The runner returned here has them as plan, quote, start, status and stop, plus DeclarationError.
+    config). The runner returned here has them as plan, quote, start, status and stop, plus DeclarationError and modes
+    (run_skill.MODES: the run modes, "full" and "fast"; plan, quote and start take mode=).
     """
     try:
         module = importlib.import_module(RUN_SKILL)
@@ -74,14 +75,40 @@ def runner(config: dict):
         return None, [f"{RUN_SKILL}.{name} (Dev B)" for name in absent or ["DeclarationError"]]
     return types.SimpleNamespace(plan=module.plan_run, quote=module.quote_run, start=module.start_run,
                                  status=module.run_status, stop=module.stop_run,
-                                 DeclarationError=module.DeclarationError), []
+                                 DeclarationError=module.DeclarationError,
+                                 modes=tuple(getattr(module, "MODES", ("full",)))), []
+
+
+def run_modes(config: dict) -> dict:
+    """{catalogue skill: {mode: "" when Dev B's plan_run accepts that mode for the skill, else plan_run's own refusal}}
+    for each available catalogue skill, asked of plan_run with the skill's defaults ({"skill": name}; plan_run has no
+    side effect). {} while run_skill does not import. The page offers a mode only where plan_run accepts it, so which
+    skill has a fast run is Dev B's answer, never a list kept here."""
+    run, missing = runner(config)
+    if missing:
+        return {}
+    answer = {}
+    for entry in skill_catalog(config):
+        if not entry.get("available"):
+            continue
+        modes = {}
+        for mode in run.modes:
+            try:
+                run.plan({"skill": entry["skill"]}, config, mode=mode)
+                modes[mode] = ""
+            except run.DeclarationError as e:
+                modes[mode] = "; ".join(str(p.get("message", p)) for p in e.problems)
+            except ValueError as e:
+                modes[mode] = str(e)
+        answer[entry["skill"]] = modes
+    return answer
 
 
 def image_window(config: dict):
     """The image-window contract for the browser, from config.yaml vision (Dev B), in the encoding agreed with the
     front lane; None without a vision block. window_encoding and diff_floor say what the student reads from the raw
     frames the browser sends: the loaded student's (student.json input) once one is loaded for this config, else
-    vision.encoding and vision.diff_floor."""
+    vision.encoding and vision.diff_floor; window_encoding_from says which ("student" or "config")."""
     v = config.get("vision")
     if not v:
         return None
@@ -91,7 +118,8 @@ def image_window(config: dict):
             "order": "oldest_first", "normalization": v["pixel_scale"], "crop": "centre_square",
             "luma": v["luma_weights"], "mirrored": False,
             "window_encoding": student["window_encoding"] if student else v.get("encoding", "raw"),
-            "diff_floor": student["diff_floor"] if student else v.get("diff_floor")}
+            "diff_floor": student["diff_floor"] if student else v.get("diff_floor"),
+            "window_encoding_from": "student" if student else "config"}
 
 
 def actions(config: dict):
@@ -145,8 +173,8 @@ def inference(config: dict):
             missing.append(f"{RUNTIME}.DodgeRuntime (Dev B)")
     directory = config["app"]["infer"]["student_dir"]
     if not directory:
-        missing.append("config.yaml app.infer.student_dir naming a frozen student directory, which Dev B's observed "
-                       "run exports (none exists yet)")
+        missing.append("a calibrated student, and none is configured: config.yaml app.infer.student_dir is empty (it "
+                       "names the frozen student directory Dev B's observed run exports and dodge_eval calibrates)")
     elif not (ROOT / directory / "student.json").is_file():
         missing.append("student.json in the directory config.yaml app.infer.student_dir names")
     if missing:
