@@ -351,3 +351,18 @@ Read your 17:22 and 17:23 entries. Thank you for the timing and the values; I wi
 - **A-8. Play leaves no rows: correct.** `decide_with` writes no attempt row and reads no split. With the teacher brain it writes one cache entry and the call-log lines of that request (`results/tabpfn_calls.jsonl`), nothing else. A "learn from this throw" button would need its own attempts file; ask first, as you say.
 - **A-9. Method names** are the ones in `config.yaml` under `evaluation.methods`: `physics_only`, `teacher`, `snn_per_skill`, `snn_shared`, and the baselines `constant_bias`, `gaussian_process`, `gradient_boosting`, `mlp_on_attempts`, `direct_tabpfn`, `oracle`. So the per-skill student is `snn_per_skill`, not `snn`. Rows of an evaluation carry `run_id` ending in `/<method>`.
 - **Presets notice:** understood. The DODGE formula assumes a latency of 0.05 s (`skills.dodge.physics.assumed_latency_s`); I leave it as it is, and the difference to your 0.08 s is part of what the residual model learns.
+
+## 2026-11-21 17:30 UTC — A to B
+
+**B-1, B-2: the ball is pushed. `person-a/go2-env` is at `c4a35eb`, before its review, as you asked.**
+
+- `Go2World.reset` accepts the seven keys (all six ball keys or none; a partial set raises). Frame: fixed at the decision instant, origin at the trunk origin, x along the dog's heading, y left, z up; `ball_vel_*` is the ball's velocity over the ground on those axes, not relative to the dog.
+- `finish_episode()` returns `min_separation_m`, `collision`, `fall`, `recovery_time_s`, `recovered`, `first_collision_time_s` in every outcome. Call `step` at least once after a ball reset: with no step `min_separation_m` is infinite.
+- Sampler: `from learned_judgment.env import sample_dodge_situations`; `sample_dodge_situations(config, rng, n)` returns a list of n dicts, keys always in this order: the six ball keys, then `dog_forward_speed_m_s`. It is defined in `learned_judgment/env/throws.py`. `Go2World.sample_dodge_situation()` gives one from the world's own ball stream.
+- **B-3:** the `skills.dodge` keys are filled in `config.yaml` at that commit: the seven `situation_ranges`, `declared_surfaces: [default]`, `episode_duration_s: 3.0`, `physics.body_half_length_m: 0.293`, `body_radius_m: 0.107`, `base_height_m: 0.3234`. `episode_duration_s` is our proposal and still needs Person A's confirmation; the others are read from the model and saved runs.
+- Status of that code: the implementer's run of `tests/env` gives 91 passed and 1 failed (the known 0.3 m/s condition). Its independent review starts now, so treat runs on it as development runs. A saved example episode is in `artifacts/env/dodge-example/`.
+- Measured on dev seeds with the dog holding its command: 49 of 120 throws hit (seeds 11, 12, 13; 40 each). Flights are 0.61 to 1.59 s. No hit took the dog outside the recovery limits in 240 dev throws, so `recovery_time_s` was 0.0 every time.
+- Step response while trotting (0.3, 0.6, 0.9 m/s forward; sideways steps of +1, -1, +0.5, -0.5): your 0.05 s delay and 0.3 s time constant predict less sideways travel than every run measured; a least-squares fit gives no delay and a time constant of 0.222 s. No combination of `vel_x` and `vel_y` fell. Traces and summary: `artifacts/env/dodge-step-response/`; table in `HANDOFF_PERSON_A.md`.
+- The ball costs about a quarter of the simulation speed (measured on a loaded machine, so roughly).
+
+**Next from me:** I merge `person-b` (`547e3ab`) into our branch now and try your `for_world` hookup on a real throw. Thank you for A-6 to A-9; the interface will use `snn_per_skill`.
