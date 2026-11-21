@@ -43,9 +43,10 @@ def periods_per(rate_hz: float, period_s: float, key: str) -> int:
     return every
 
 
-def describe(obs: dict) -> dict:
-    """What the browser is told about a Go2World observation. policy_obs is left out: on a sloped world it reveals a
-    hidden value."""
+def describe(obs: dict, command: dict) -> dict:
+    """What the browser is told about a Go2World observation and the command last issued. policy_obs is left out: on a
+    sloped world it reveals a hidden value; so is command_active, which once meant the command the policy receives a
+    hidden latency after it was issued."""
     w, x, y, z = obs["base_quat_wxyz"]
     heading = math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))  # yaw, as acceptance.py computes it
     vx, vy = obs["base_lin_vel_m_s"][:2]
@@ -58,7 +59,7 @@ def describe(obs: dict) -> dict:
         "yaw_rate_rad_s": float(obs["base_ang_vel_rad_s"][2]),
         "foot_contact": dict(zip(FEET, obs["foot_contact"].tolist())),
         "fallen": obs["fallen"],
-        "command": obs["command_active"],
+        "command": command,
     }
 
 
@@ -239,6 +240,7 @@ class Simulation(threading.Thread):
     def _end_episode(self, status: str) -> None:
         outcome = self.world.finish_episode()
         del outcome["commands_received"]  # stays on the server: the page sees each command in the observations
+        del outcome["trace_path"]  # a server-side file path, and roaming writes no trace anyway
         self.command = self.zero
         self._publish(("episode", {"phase": "end", "preset": self.world.preset, "outcome": outcome}), status=status)
 
@@ -247,7 +249,7 @@ class Simulation(threading.Thread):
 
     def _publish(self, *events, obs=None, frame=None, status=None) -> None:
         """Publish events, an observation, a frame and a status together, so no reader sees one without the others."""
-        observation = None if obs is None else describe(obs)
+        observation = None if obs is None else describe(obs, self.command)
         with self.changed:
             self.event_log.extend(events)
             if observation is not None:

@@ -135,20 +135,42 @@ def wait_until(predicate, timeout_s=30.0):
         time.sleep(0.05)
 
 
+CAPABILITY_NAMES = ["drive", "head_camera", "scenarios", "chat", "runs", "results", "infer"]  # HTTP API v0
+
+
 def test_state_describes_the_controls_from_config(server, config):
     status, state = request(server, "GET", "/api/state")
     assert status == 200
     fields = config["robot"]["walking_policy"]["command_schema"]["fields"]
-    assert state["command_fields"] == {name: {"unit": f["unit"], "min": f["min"], "max": f["max"]}
-                                       for name, f in fields.items()}
-    assert list(state["command_fields"]) == list(fields)
+    assert state["commands"] == {name: {"unit": f["unit"], "min": f["min"], "max": f["max"]}
+                                 for name, f in fields.items()}
+    assert list(state["commands"]) == list(fields)
     assert state["presets"] == list(config["world"]["presets"])
     assert state["preset"] in state["available_presets"]
     assert state["status"] in ("roaming", "resetting", "fallen")
     assert state["frame"] == {"width": config["world"]["render"]["width"],
                               "height": config["world"]["render"]["height"],
                               "stream_fps": config["app"]["stream_fps"]}
-    assert state["capabilities"] == {"drive": True, "throw": False, "brains": False, "teach": False, "metrics": False}
+    assert {"skills", "image_window", "actions"} <= set(state)
+
+
+def test_state_names_every_capability_and_why_it_is_unavailable(server):
+    capabilities = request(server, "GET", "/api/state")[1]["capabilities"]
+    assert sorted(capabilities) == sorted(CAPABILITY_NAMES)
+    for name, capability in capabilities.items():
+        assert set(capability) == {"available", "reason"} and isinstance(capability["available"], bool), name
+        assert isinstance(capability["reason"], str), name
+        if not capability["available"]:
+            assert_plain_sentence(capability["reason"])
+    assert capabilities["drive"]["available"]
+    for name in ["head_camera", "scenarios", "runs", "results", "infer"]:  # not built in this server yet
+        assert not capabilities[name]["available"], name
+
+
+def test_unknown_api_paths_are_refused_with_a_code(server):
+    for method in ["GET", "POST"]:
+        status, body = request(server, method, "/api/no_such_thing")
+        assert status == 404 and body["code"] == "not_found"
 
 
 def test_drive_moves_the_dog_and_stop_slows_it(server):
@@ -209,6 +231,7 @@ def test_reset_refuses_an_unknown_preset_and_starts_a_default_episode(server, co
         assert request(server, "POST", "/api/reset", {"preset": "default"}) == (200, {"preset": "default"})
         end = next_episode_event(events, "end")
         assert "fall" in end["outcome"] and "commands_received" not in end["outcome"]
+        assert "trace_path" not in end["outcome"]  # a server-side file path is none of the browser's business
         assert next_episode_event(events, "start")["preset"] == "default"
 
 
@@ -236,10 +259,13 @@ def test_server_refuses_to_start_with_an_unusable_app_setting(config, key, value
 
 @pytest.fixture(scope="module")
 def own_server(config):
-    """A server of its own, whose config adds a preset that cannot be built (no declared payload)."""
+    """A server of its own, whose config adds a preset that cannot be built (a floor type with no friction) and one
+    whose command latency (1 s, presets are not range-checked) is far longer than an observation period."""
     own = copy.deepcopy(config)
     presets = own["world"]["presets"]
-    presets["no_declared_payload"] = {k: v for k, v in presets["default"].items() if k != "declared_payload_kg"}
+    assert own["world"]["hidden_effects"]["enabled"]["latency"]
+    presets["unknown_floor"] = presets["default"] | {"floor_type": "no_such_floor"}
+    presets["slow_commands"] = presets["default"] | {"command_latency_s": 1.0}
     server = start(own, 0)
     yield server
     stop(server)  # again after the shutdown test: stop is idempotent
@@ -247,11 +273,23 @@ def own_server(config):
 
 def test_a_preset_that_cannot_be_built_is_offered_as_unavailable(own_server):
     state = request(own_server, "GET", "/api/state")[1]
-    assert "no_declared_payload" in state["presets"] and "no_declared_payload" not in state["available_presets"]
-    status, body = request(own_server, "POST", "/api/reset", {"preset": "no_declared_payload"})
+    assert "unknown_floor" in state["presets"] and "unknown_floor" not in state["available_presets"]
+    status, body = request(own_server, "POST", "/api/reset", {"preset": "unknown_floor"})
     assert status == 400 and body["code"] == "preset_unavailable"
     assert_plain_sentence(body["message"])
     assert request(own_server, "GET", "/api/state")[1]["status"] == "roaming"  # the current world goes on
+
+
+def test_observations_show_the_issued_command_at_once_not_the_delayed_one(own_server):
+    """The streamed command is the caller's own; the one the policy receives a hidden latency later would let the
+    browser measure that latency."""
+    with event_stream(own_server) as events:
+        assert request(own_server, "POST", "/api/reset", {"preset": "slow_commands"})[0] == 200
+        next_episode_event(events, "start")
+        before = observe(events, until_s=0.5)[-1]["t_s"]
+        assert request(own_server, "POST", "/api/drive", FORWARD)[0] == 200
+        seen = observe(events, until_s=before + 0.5)
+        assert seen[-1]["command"] == FORWARD  # 1 s of latency would still show the zero command here
 
 
 def test_shutdown_ends_open_streams_and_frees_the_port(own_server):

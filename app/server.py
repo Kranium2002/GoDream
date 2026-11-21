@@ -6,7 +6,7 @@ Serves on config.yaml app.host and app.port (--port 0 picks a free port) until C
 (app/simulation.py) owns the world; request threads only hand it requests and read what it publishes.
 
     GET  /api/state    what the page needs to draw its controls: command fields and ranges, presets, status,
-                       frame size and rate, which features this stage offers
+                       frame size and rate, the skill catalogue and which capabilities work, each with its reason
     GET  /api/stream   multipart/x-mixed-replace stream of PNG frames rendered by MuJoCo, at app.stream_fps
     GET  /api/events   Server-Sent Events: observation (app.observation_hz), episode (start, end with the outcome),
                        notice ({code, message})
@@ -15,6 +15,8 @@ Serves on config.yaml app.host and app.port (--port 0 picks a free port) until C
     POST /api/reset    optional {preset}: a fresh episode, on a new world if the preset differs
     GET  /             and other static files, from app/static only
 Every refusal or error is {code, message}: a stable code and one plain sentence; the detail goes to the log on stderr.
+Routes live in app/routes.py's table: the ones above are registered here, each later feature in a module of its own,
+imported below so that it registers.
 """
 import argparse
 import json
@@ -27,20 +29,22 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+from app.routes import CAPABILITIES, ROUTES, Refusal, capability, route
 from app.simulation import Simulation
 from learned_judgment.env import CommandError, load_config, validate_command
 
 STATIC = Path(__file__).resolve().parent / "static"
-CAPABILITIES = {"drive": True, "throw": False, "brains": False, "teach": False, "metrics": False}  # of this stage
+# HTTP API v0's capabilities with what each still lacks; a feature module's own @capability replaces its entry.
+NOT_BUILT = {
+    "drive": "The simulation is not running; restart the server.",
+    "head_camera": "The head camera stream needs the world lane's head camera, and this server does not serve it yet.",
+    "scenarios": "Threat scenarios need the world lane's scenario sampler, and this server does not serve them yet.",
+    "chat": "The chat is not built into this server yet.",
+    "runs": "Learning runs need Dev B's pipeline entry point and run event files, which are not published yet.",
+    "results": "Run results need Dev B's per-run results files, which are not published yet.",
+    "infer": "Live inference needs Dev B's inference adapter and image window contract, which are not published yet.",
+}
 log = logging.getLogger(__name__)
-
-
-class Refusal(Exception):
-    """A request turned down: its HTTP status, a stable code and one plain sentence for the browser."""
-
-    def __init__(self, status: int, code: str, message: str):
-        super().__init__(message)
-        self.status, self.code, self.message = status, code, message
 
 
 class Server(ThreadingHTTPServer):
@@ -52,35 +56,34 @@ class Server(ThreadingHTTPServer):
 
 
 class Handler(BaseHTTPRequestHandler):
+    """Dispatches to app/routes.py's table; a route handler gets this handler and uses the public helpers below."""
     server: Server
     server_version, sys_version = "viewer", ""  # the Server header names no software or version
 
     def do_GET(self) -> None:
-        path = urlsplit(self.path).path
-        routes = {"/api/state": self._state, "/api/stream": self._stream, "/api/events": self._events}
-        self._answer(routes.get(path, lambda: self._static(path)))
+        self._answer(ROUTES.get(("GET", urlsplit(self.path).path), static))
 
     def do_POST(self) -> None:
-        routes = {"/api/drive": self._drive, "/api/stop": self._stop, "/api/reset": self._reset}
-        self._answer(routes.get(urlsplit(self.path).path, self._nothing_here))
+        self._answer(ROUTES.get(("POST", urlsplit(self.path).path), nothing_here))
 
     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
         """http.server's own errors (a malformed request, an unsupported method) as {code, message} too."""
         self.log_error("code %d, message %s", code, message)
-        self._json(code, {"code": f"http_{code}", "message": "The server cannot handle that request."})
+        self.send_json(code, {"code": f"http_{code}", "message": "The server cannot handle that request."})
 
     def _answer(self, handle) -> None:
         try:
-            handle()
+            handle(self)
         except Refusal as r:
-            self._json(r.status, {"code": r.code, "message": r.message})
+            self.send_json(r.status, {"code": r.code, "message": r.message})
         except ConnectionError:
             pass  # the client went away
         except Exception:
             log.exception("%s %s failed", self.command, self.path)
-            self._json(500, {"code": "internal_error", "message": "Something went wrong in the server; its log has the details."})
+            self.send_json(500, {"code": "internal_error",
+                                 "message": "Something went wrong in the server; its log has the details."})
 
-    def _json(self, status: int, body: dict) -> None:
+    def send_json(self, status: int, body: dict) -> None:
         data = json.dumps(body).encode()
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
@@ -88,7 +91,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def _body(self) -> dict:
+    def read_body(self) -> dict:
         """The request's JSON object; no body is {}."""
         try:
             length = int(self.headers.get("Content-Length") or 0)
@@ -99,90 +102,119 @@ class Handler(BaseHTTPRequestHandler):
             raise Refusal(400, "invalid_body", "The request body must be a JSON object.")
         return body
 
-    def _submit(self, kind: str, value) -> None:
+    def submit(self, kind: str, value) -> None:
         """Hand the simulation thread a request and wait until it has been carried out."""
         try:
             self.server.sim.submit(kind, value).result()
         except Exception:  # the simulation thread has stopped; its log has the reason
             raise Refusal(503, "simulation_stopped", "The simulation is not running; restart the server.") from None
 
-    def _nothing_here(self) -> None:
-        raise Refusal(404, "not_found", "There is nothing at that address.")
-
-    def _drive(self) -> None:
-        self._command(self._body())
-
-    def _stop(self) -> None:
-        self._command(self.server.sim.zero)
-
-    def _command(self, command: dict) -> None:
-        schema = self.server.sim.schema
-        try:
-            validate_command(command, schema)
-        except CommandError as e:
-            log.warning("Drive command refused: %s", e)
-            raise Refusal(400, "invalid_command", "A drive command needs every value, each a number within its range.")
-        command = {name: float(command[name]) for name in schema["fields"]}
-        self._submit("drive", command)
-        self._json(200, {"command": command})
-
-    def _reset(self) -> None:
-        body = self._body()
-        preset = body.get("preset")
-        if set(body) - {"preset"}:
-            raise Refusal(400, "invalid_body", "A reset takes nothing but an optional preset name.")
-        if preset is not None:
-            if not isinstance(preset, str) or preset not in self.server.config["world"]["presets"]:
-                raise Refusal(400, "unknown_preset", "There is no world preset with that name.")
-            if preset not in self.server.sim.state()["available_presets"]:
-                raise Refusal(400, "preset_unavailable", "That world preset cannot be built yet, so the dog stays "
-                                                         "where it is.")
-        self._submit("reset", preset)
-        self._json(200, {"preset": self.server.sim.state()["preset"]})
-
-    def _stream(self) -> None:
-        self._start_stream("multipart/x-mixed-replace; boundary=frame")
-        for png in self.server.sim.frames():
-            self.wfile.write(b"--frame\r\nContent-Type: image/png\r\nContent-Length: %d\r\n\r\n%b\r\n" % (len(png), png))
-
-    def _events(self) -> None:
-        self._start_stream("text/event-stream")
-        for name, data in self.server.sim.events():
-            self.wfile.write(f"event: {name}\ndata: {json.dumps(data)}\n\n".encode())
-
-    def _start_stream(self, content_type: str) -> None:
+    def start_stream(self, content_type: str) -> None:
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
 
-    def _state(self) -> None:
-        config, sim = self.server.config, self.server.sim
-        render = config["world"]["render"]
-        self._json(200, {
-            "command_fields": {name: {"unit": f["unit"], "min": f["min"], "max": f["max"]}
-                               for name, f in sim.schema["fields"].items()},
-            "presets": list(config["world"]["presets"]),
-            **sim.state(),
-            "frame": {"width": render["width"], "height": render["height"], "stream_fps": config["app"]["stream_fps"]},
-            "capabilities": CAPABILITIES,
-        })
 
-    def _static(self, path: str) -> None:
-        """A file of app/static ("/" is index.html); nothing outside that directory is ever read."""
-        try:
-            file = (STATIC / (unquote(path).lstrip("/") or "index.html")).resolve()
-            found = file.is_relative_to(STATIC) and file.is_file()
-        except (OSError, ValueError):  # a name the file system cannot hold
-            found = False
-        if not found:
-            self._nothing_here()
-        data = file.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", mimetypes.guess_type(file.name)[0] or "application/octet-stream")
-        self.send_header("Content-Length", str(len(data)))
-        self.end_headers()
-        self.wfile.write(data)
+def nothing_here(h: Handler) -> None:
+    raise Refusal(404, "not_found", "There is nothing at that address.")
+
+
+def static(h: Handler) -> None:
+    """A file of app/static ("/" is index.html); nothing outside that directory is ever read."""
+    try:
+        file = (STATIC / (unquote(urlsplit(h.path).path).lstrip("/") or "index.html")).resolve()
+        found = file.is_relative_to(STATIC) and file.is_file()
+    except (OSError, ValueError):  # a name the file system cannot hold
+        found = False
+    if not found:
+        nothing_here(h)
+    data = file.read_bytes()
+    h.send_response(200)
+    h.send_header("Content-Type", mimetypes.guess_type(file.name)[0] or "application/octet-stream")
+    h.send_header("Content-Length", str(len(data)))
+    h.end_headers()
+    h.wfile.write(data)
+
+
+def capabilities(server: Server) -> dict:
+    return {name: CAPABILITIES[name](server) if name in CAPABILITIES else {"available": False, "reason": reason}
+            for name, reason in NOT_BUILT.items()}
+
+
+@capability("drive")
+def drive_capability(server: Server) -> dict:
+    running = server.sim.is_alive() and not server.sim.stopped
+    return {"available": running, "reason": "" if running else NOT_BUILT["drive"]}
+
+
+@route("GET", "/api/state")
+def state(h: Handler) -> None:
+    config, sim = h.server.config, h.server.sim
+    render = config["world"]["render"]
+    h.send_json(200, {
+        "commands": {name: {"unit": f["unit"], "min": f["min"], "max": f["max"]}
+                     for name, f in sim.schema["fields"].items()},
+        "presets": list(config["world"]["presets"]),
+        **sim.state(),
+        "frame": {"width": render["width"], "height": render["height"], "stream_fps": config["app"]["stream_fps"]},
+        "capabilities": capabilities(h.server),
+        "skills": [],
+        "image_window": None,  # Dev B has not published the image window contract (capability infer says so)
+        "actions": None,  # nor the four actions' command values
+    })
+
+
+@route("GET", "/api/stream")
+def stream(h: Handler) -> None:
+    h.start_stream("multipart/x-mixed-replace; boundary=frame")
+    for png in h.server.sim.frames():
+        h.wfile.write(b"--frame\r\nContent-Type: image/png\r\nContent-Length: %d\r\n\r\n%b\r\n" % (len(png), png))
+
+
+@route("GET", "/api/events")
+def events(h: Handler) -> None:
+    h.start_stream("text/event-stream")
+    for name, data in h.server.sim.events():
+        h.wfile.write(f"event: {name}\ndata: {json.dumps(data)}\n\n".encode())
+
+
+@route("POST", "/api/drive")
+def drive(h: Handler) -> None:
+    command(h, h.read_body())
+
+
+@route("POST", "/api/stop")
+def stop_dog(h: Handler) -> None:
+    command(h, h.server.sim.zero)
+
+
+def command(h: Handler, command: dict) -> None:
+    schema = h.server.sim.schema
+    try:
+        validate_command(command, schema)
+    except CommandError as e:
+        log.warning("Drive command refused: %s", e)
+        raise Refusal(400, "invalid_command", "A drive command needs every value, each a number within its range.")
+    command = {name: float(command[name]) for name in schema["fields"]}
+    h.submit("drive", command)
+    h.send_json(200, {"command": command})
+
+
+@route("POST", "/api/reset")
+def reset(h: Handler) -> None:
+    body = h.read_body()
+    preset = body.get("preset")
+    if set(body) - {"preset"}:
+        raise Refusal(400, "invalid_body", "A reset takes nothing but an optional preset name.")
+    if preset is not None:
+        if not isinstance(preset, str) or preset not in h.server.config["world"]["presets"]:
+            raise Refusal(400, "unknown_preset", "There is no world preset with that name.")
+        if preset not in h.server.sim.state()["available_presets"]:
+            raise Refusal(400, "preset_unavailable", "That world preset cannot be built yet, so the dog stays "
+                                                     "where it is.")
+    h.submit("reset", preset)
+    h.send_json(200, {"preset": h.server.sim.state()["preset"]})
 
 
 def start(config: dict, port: int) -> Server:
