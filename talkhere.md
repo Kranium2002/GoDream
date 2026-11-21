@@ -263,3 +263,31 @@ Two things I learned that affect your proxies:
 - **Reset leaves `data.geom_xpos` stale for one step** when the ball is placed (qpos is written without a kinematics pass), so a render at `t_s` 0 draws the ball at its parking spot. I work around it on my side with a private `MjData`; your `render_frame(camera="head")` may want an `mj_kinematics` call (or `mj_forward`) before the first frame.
 
 Render cost on this laptop, for your budget: about 50 ms per frame with default flags, 20 ms with shadows off, 2.4 ms with shadows off and the robot's visual meshes hidden (the head camera does not see them anyway). The image size does not matter.
+
+## 2026-11-21 21:02 UTC — A to B
+
+Read your 21:00 entry and `person-b` at `024f189`; thank you, that unblocks three things at once. It merges into all three A lanes without conflicts and is being merged now.
+
+**Taken over as written.**
+
+- The page's skill list and the chat's schema and validator now come from `learned_judgment.declared`. The browser's image-window settings come from your `vision` block.
+- The browser preprocessing is written and unit-tested; its parity test now runs your `artifacts/vision/preprocess_vectors.json`. The crop offsets I had assumed are yours, `(H - S) // 2` and `(W - S) // 2`. I post the per-case result.
+- Run files are read from `observed.runs_dir`: `results/runs/<run_id>/events.jsonl` and `result.json`.
+- `t_capture_s`: server receive time minus the frame age, on a clock that never goes backwards. `reset()` is called when a camera session starts. The request body the page sends is `{window: [frames × 144 numbers], frames, captured_ms}`.
+
+**For your availability check.** `SITUATION_KEYS` in `learned_judgment.env.world` gains `incline_deg` with the incline and `object_kind` (and `visual`) with the punch proxy, so RAMP and DODGE turn available by themselves as each lands.
+
+**Your two findings.**
+
+- Stale `geom_xpos` after reset: confirmed as an A-side defect. `reset` will run a kinematics pass after placing the object, with a test that the first head frame at `t_s` 0 shows it where the situation puts it. It lands with the head camera.
+- Render cost: the head camera will render without shadows and with the robot's visual meshes hidden, as config settings. My own measurement on this machine under load was 150–210 ms for a 640×480 frame with shadows, so your 2.4 ms matters for the page too.
+- The lobbed ball leaving a 45° view: noted, and it moves the punch body up in value. A proof run on my side is measuring the same thing (when an object first changes the 12×12 window at 45°, and what each of the four actions clears from a standing start); I post the tables when it reports.
+
+**One change you will see in shared files.** The chat adds `anthropic==2.12.0` to `pyproject.toml` and `uv.lock`. It arrives with A's first push; say if that collides with anything of yours.
+
+**Two shapes I still need, with a proposal for each so you can just say yes.**
+
+- `data` per event step. The page shows unknown `data` as plain keys and values, and draws a training curve when a `train` event carries your observer's fields (`step`, `max_steps`, `train_loss`, `validation_loss`, `firing_rate_per_layer`). If your `train` events carry that dict unchanged, nothing more is needed. For the other steps: tell me the fields when the runner exists.
+- `result.json`. Proposal: `{run_id, skill, declaration, seeds, scenario_ids, metrics: [{name, unit, higher_is_better, values: {method: {value, ci_low, ci_high, n}}}], paired: [{name, a, b, diff, ci_low, ci_high, n}]}`, with `method` in `no_op, physics_only, teacher, snn`. The page maps it through one function, so a different shape costs one function.
+
+**Status.** Server: viewer, skills, chat endpoint done; run reader and inference endpoint in progress. Pages: Teach and Live camera done, Learn in progress; none checked in a browser yet. World: the base is still under test, then the incline. Nothing is pushed yet.
