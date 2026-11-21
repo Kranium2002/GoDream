@@ -196,7 +196,7 @@ def test_stands_thirty_seconds(config):
 
 **Interfaces:**
 - Consumes: `run_locomotion`, `WalkingPolicy`.
-- Produces: `config["robot"]["walking_policy"]["command_schema"] = {control_period_s, source, fields: {<name>: {native_index, unit, min, max, proven_by}}}`, field names and ranges copied from the selected policy's source config.
+- Produces: `config["robot"]["walking_policy"]["command_schema"] = {update_period_s, source, fields: {<name>: {unit, min, max, description, native_index, proven_by}}}`, the layout Person B's loader reads (HANDOFF_PERSON_B.md item 3), with field names and ranges copied from the selected policy's source config. `robot.walking_policy.status` becomes `verified` in this task, once every field is proven.
 - Produces: `class CommandError(ValueError)`; `validate_command(command: dict, schema: dict) -> np.ndarray` (native order). Raises `CommandError` naming the field for an unknown field, a missing field, a non-finite value, or a value outside `[min, max]`. It never clips.
 - Produces: `prove_commands(config, out_dir) -> Path` running each field at `min` and at `max` for 10 s and saving the signed measured response to `commands.json`.
 
@@ -246,15 +246,15 @@ def test_every_field_moves_the_dog_the_signed_way(config, tmp_path):
 
 **Files:**
 - Create: `learned_judgment/env/scene.py`, `learned_judgment/env/world.py`, `tests/env/test_world_api.py`, `tests/env/test_determinism.py`
-- Modify: `learned_judgment/env/__init__.py`, `config.yaml` (`world.active_preset`, `world.settle_s`, `robot.fall`)
+- Modify: `learned_judgment/env/__init__.py`, `config.yaml` (`world.settle_s`, `robot.fall`)
 
 **Interfaces:**
 - Consumes: `WalkingPolicy`, `validate_command`, `CommandError`.
 - Produces: `load_config(path="config.yaml") -> dict`; `make_streams(seed: int) -> dict[str, np.random.Generator]` with keys `situation`, `world`, `ball`, `noise`; `build_model(config: dict, hidden: dict) -> mujoco.MjModel`.
-- Produces: `Go2World(config: dict, seed: int)` with `reset(situation: dict | None = None) -> dict`, `step(command: dict, duration_s: float) -> dict`, `finish_episode() -> dict`, `render_frame() -> np.ndarray` (H×W×3 uint8), `command_schema: dict`.
-- Situation keys (all optional): `initial_command` (command dict held during `settle_s`), `settle_s`, `ball_throw` (Task 5), `noise_key: int` (per-episode noise is drawn from `(seed, noise_key)`; absent means the episode counter).
-- Observation keys (world frame, z up, SI units, quaternion w-x-y-z, one observation per control period): `t_s` (0 at the end of settling), `base_pos_m`, `base_quat_wxyz`, `base_lin_vel_m_s`, `base_ang_vel_rad_s`, `joint_pos_rad`, `joint_vel_rad_s`, `policy_obs`, `foot_contact` (4 bools, model foot order), `fallen`, `ball` (`None` until Task 5), `command_active` (what the policy is receiving now), `declared_world`.
-- Outcome keys: `elapsed_s`, `fallen`, `fall_time_s`, `sim_unstable`, `commands_received` (list of `(t_s, command)`), `final_base_pos_m`, `declared_world`, `trace_path` (`.npz` with every observation array per control period). Hidden values are written only to `<trace>.hidden.json`.
+- Produces: `Go2World(config: dict, seed: int, preset: str = "default")` with `reset(situation: dict | None = None) -> dict`, `step(command: dict, duration_s: float) -> dict`, `finish_episode() -> dict`, `render_frame() -> np.ndarray` (H×W×3 uint8), `command_schema: dict`.
+- Situation keys (all optional; names agreed with Person B, HANDOFF_PERSON_B.md item 4): `dog_forward_speed_m_s` (forward command held during `settle_s`, default 0.0), `settle_s`, the six ball keys (Task 5), `noise_key: int` (per-episode noise is drawn from `(seed, noise_key)`; absent means the episode counter).
+- Observation keys (world frame, z up, SI units, quaternion w-x-y-z, one observation per control period): `t_s` (0 at the end of settling), `base_pos_m`, `base_quat_wxyz`, `base_lin_vel_m_s`, `base_ang_vel_rad_s`, `joint_pos_rad`, `joint_vel_rad_s`, `policy_obs`, `foot_contact` (4 bools, model foot order), `fallen`, `ball` (`None` until Task 5), `command_active` (what the policy is receiving now), `declared_payload_kg`, `declared_surface`.
+- Outcome keys: `elapsed_s`, `fall` (0 or 1), `fall_time_s`, `sim_unstable`, `commands_received` (list of `(t_s, command)`), `final_base_pos_m`, `declared_payload_kg`, `declared_surface`, `trace_path` (`.npz` with every observation array per control period). Hidden values are written only to `<trace>.hidden.json`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -262,7 +262,7 @@ def test_every_field_moves_the_dog_the_signed_way(config, tmp_path):
 # tests/env/test_world_api.py
 pytestmark = pytest.mark.system
 OBS_KEYS = {"t_s", "base_pos_m", "base_quat_wxyz", "base_lin_vel_m_s", "base_ang_vel_rad_s", "joint_pos_rad",
-            "joint_vel_rad_s", "policy_obs", "foot_contact", "fallen", "ball", "command_active", "declared_world"}
+            "joint_vel_rad_s", "policy_obs", "foot_contact", "fallen", "ball", "command_active", "declared_payload_kg", "declared_surface"}
 
 def test_reset_returns_documented_observation(world):
     obs = world.reset()
@@ -302,7 +302,7 @@ def test_fixed_seed_reproduces_the_episode(config, forward):
     assert first.keys() == second.keys() and all(np.array_equal(first[k], second[k]) for k in first)
 ```
 
-Fixtures in `conftest.py`: `world` (`Go2World(config, config["runtime"]["seed"])`), `zero` (all fields 0.0), `forward` (zero with the forward-speed field at 0.6), `period` (`command_schema["control_period_s"]`).
+Fixtures in `conftest.py`: `world` (`Go2World(config, config["runtime"]["seed"])`), `zero` (all fields 0.0), `forward` (zero with the forward-speed field at 0.6), `period` (`command_schema["update_period_s"]`).
 
 - [ ] **Step 2: Run them.** `uv run pytest tests/env/test_world_api.py tests/env/test_determinism.py -v` — Expected: FAIL with ImportError
 
@@ -322,9 +322,9 @@ Fixtures in `conftest.py`: `world` (`Go2World(config, config["runtime"]["seed"])
 
 **Interfaces:**
 - Consumes: `Go2World`, `make_streams`.
-- Produces: situation key `ball_throw = {"pos_m": [x, y, z], "vel_m_s": [vx, vy, vz], "release_time_s": float}` in the world frame; the ball is a free MuJoCo body with `ball.mass_kg` and `ball.radius_m` and is never touched after release.
-- Produces: `Go2World.sample_ball_throw() -> dict` drawing from the `ball` stream within `ball.throw_origin_range_m`, `ball.throw_speed_range_m_s`, `ball.throw_direction_range_deg`, aimed relative to the dog's pose at reset.
-- Produces: observation `ball = {"pos_m", "vel_m_s", "radius_m", "released"}`; outcome keys `ball_collision` (ball-to-robot contact only), `first_collision_time_s`, `min_separation_m` (surface to surface, minimum over every physics step after release, ≤ 0 on contact), `recovery_time_s` (from first ball contact until angular speed and tilt stay under `robot.recovery` limits for `hold_s`; `None` without contact), `recovered`; trace arrays `ball_pos_m`, `ball_vel_m_s`.
+- Produces: situation keys `ball_rel_x_m`, `ball_rel_y_m`, `ball_rel_z_m`, `ball_vel_x_m_s`, `ball_vel_y_m_s`, `ball_vel_z_m_s` (HANDOFF_PERSON_B.md item 4): the ball's position and velocity in the dog's heading frame (x forward, y left, z up, origin at the base) at the decision instant, which is the moment `reset` returns (`t_s` 0). All six or none. The ball is a free MuJoCo body with `ball.mass_kg` and `ball.radius_m`, placed once at that instant and never touched again.
+- Produces: `Go2World.sample_dodge_situation() -> dict` returning those six keys plus `dog_forward_speed_m_s`, drawn from the `ball` stream by a physical throw model within `ball.throw_origin_range_m`, `ball.throw_speed_range_m_s`, `ball.throw_direction_range_deg`; `config.yaml` also lists the resulting minimum and maximum of each key for Person B's SkillSpec.
+- Produces: observation `ball = {"pos_m", "vel_m_s", "radius_m"}` in the world frame; outcome keys named as Person B proposed (item 6): `collision` (0 or 1; ball-to-robot contact only, detected by robot body ids because the trunk geoms are unnamed), `first_collision_time_s`, `min_separation_m` (surface to surface, minimum over every physics step, never below 0, 0 on contact), `recovery_time_s` (always a number: 0.0 if tilt and angular speed never leave the `robot.recovery` limits, otherwise the time from first leaving them until they hold for `hold_s`, or until the episode ends), `recovered` (0 or 1); trace arrays `ball_pos_m`, `ball_vel_m_s`.
 - Produces: `calibrate_throws(config, seed, n, out_dir) -> Path` saving `throws.json` with each throw and its measured outcome against a dog holding its initial command.
 
 - [ ] **Step 1: Research workflow W3 (E6).** One researcher and one verifier: a standardised ball's mass and radius from a primary source; whether the pinned `mujoco` exposes `mj_geomDistance`; the model's collision geom groups. Log as E6.
@@ -336,29 +336,29 @@ Fixtures in `conftest.py`: `world` (`Go2World(config, config["runtime"]["seed"])
 pytestmark = pytest.mark.system
 
 def throw_at(world, lateral_offset_m):
-    """Straight throw from 3 m to the dog's left, aimed lateral_offset_m ahead of the trunk centre."""
+    """Situation dict (the six ball keys) for a straight throw from 3 m to the dog's left, aimed lateral_offset_m ahead of the trunk centre."""
 
 def test_centre_throw_hits_standing_dog(world, zero):
-    world.reset({"ball_throw": throw_at(world, 0.0)}); world.step(zero, 3.0)
+    world.reset(throw_at(world, 0.0)); world.step(zero, 3.0)
     out = world.finish_episode()
-    assert out["ball_collision"] and out["min_separation_m"] <= 0 and out["first_collision_time_s"] > 0
+    assert out["collision"] == 1 and out["min_separation_m"] == 0 and out["first_collision_time_s"] > 0
 
 def test_wide_throw_misses_even_after_bouncing(world, zero):
-    world.reset({"ball_throw": throw_at(world, 1.5)}); world.step(zero, 3.0)
+    world.reset(throw_at(world, 1.5)); world.step(zero, 3.0)
     out = world.finish_episode()
-    assert not out["ball_collision"] and out["min_separation_m"] > 0 and out["recovery_time_s"] is None
+    assert out["collision"] == 0 and out["min_separation_m"] > 0 and out["recovery_time_s"] == 0.0
 
 def test_ball_ignores_the_chosen_command(config, zero, forward):
     def flight(cmd):
-        w = Go2World(config, seed=11); throw = w.sample_ball_throw()
-        w.reset({"ball_throw": throw, "noise_key": 0}); w.step(cmd, throw["release_time_s"] + 0.1)
+        w = Go2World(config, seed=11); throw = w.sample_dodge_situation()
+        w.reset(throw | {"noise_key": 0}); w.step(cmd, 0.1)  # every sampled throw is still more than 0.1 s from the dog
         return throw, np.load(w.finish_episode()["trace_path"])["ball_pos_m"]
     (t1, p1), (t2, p2) = flight(zero), flight(forward)
     assert t1 == t2 and np.array_equal(p1, p2)
 
 def test_throw_distribution_has_hits_and_misses(config, tmp_path):
     throws = json.loads(calibrate_throws(config, seed=11, n=40, out_dir=tmp_path).read_text())
-    assert 0.3 <= sum(t["ball_collision"] for t in throws) / 40 <= 0.7
+    assert 0.3 <= sum(t["collision"] for t in throws) / 40 <= 0.7
 
 def test_some_supported_command_avoids_a_hit(config, tmp_path):
     # first 10 dev throws that hit a dog holding its initial command; a small grid of schema-legal commands
@@ -385,7 +385,7 @@ def test_some_supported_command_avoids_a_hit(config, tmp_path):
 
 **Interfaces:**
 - Consumes: `Go2World`, `build_model`, `run_locomotion`.
-- Produces: preset fields `payload_mass_kg`, `payload_offset_m`, `floor_type`, `slope_deg` (positive is uphill along the dog's heading), `motor_strength_fraction`, `command_latency_s`; `world.hidden_effects.enabled.<effect>: bool` per effect (`payload`, `friction`, `slope`, `motor_strength`, `latency`); `declared_world = {"payload_mass_kg": true mass × (1 + error drawn from the `world` stream within ±0.2), "floor_type": ...}`.
+- Produces: preset fields `payload_mass_kg`, `payload_offset_m`, `floor_type`, `slope_deg` (positive is uphill along the dog's heading), `motor_strength_fraction`, `command_latency_s`; `world.hidden_effects.enabled.<effect>: bool` per effect (`payload`, `friction`, `slope`, `motor_strength`, `latency`); `declared_payload_kg` = true mass × (1 + error drawn from the `world` stream within ±0.2) and `declared_surface` = the preset's `floor_type`, both in every observation and in the outcome (HANDOFF_PERSON_B.md item 5).
 - Produces: `measure_effects(config, seed, out_dir) -> Path` saving `effects.json` with baseline and one-effect-on measurements: steady speed at 0.6 m/s commanded (payload 3 kg, slope +5°, motor 0.8), stopping distance from 0.9 m/s (floor `slippery`), time from command to half the commanded speed (latency 0.3 s).
 
 - [ ] **Step 1: Write the failing tests**
@@ -407,27 +407,25 @@ def test_one_effect_changes_only_its_measurement(config, tmp_path, effect):
 
 @pytest.mark.parametrize("preset", ["default", "heavy_payload", "slippery_floor", "tired_motors", "downhill"])
 def test_preset_loads_and_stands(config, zero, preset):
-    cfg = copy.deepcopy(config); cfg["world"]["active_preset"] = preset
-    w = Go2World(cfg, seed=5); w.reset(); w.step(zero, 1.0)
-    assert not w.finish_episode()["fallen"]
+    w = Go2World(config, seed=5, preset=preset); w.reset(); w.step(zero, 1.0)
+    assert w.finish_episode()["fall"] == 0
 
 def test_hidden_values_never_reach_person_b(config, zero):
-    cfg = copy.deepcopy(config); cfg["world"]["active_preset"] = "heavy_payload"
-    w = Go2World(cfg, seed=5); obs = w.reset(); out = w.finish_episode()
+    w = Go2World(config, seed=5, preset="heavy_payload"); obs = w.reset(); out = w.finish_episode()
     leaked = {"payload_offset_m", "motor_strength_fraction", "command_latency_s", "friction", "slope_deg"}
-    assert not leaked & (set(obs) | set(out) | set(obs["declared_world"]))
+    assert not leaked & (set(obs) | set(out))
 
 def test_dead_motors_fall_is_measured_not_raised(config, zero):
     # 0.0 is outside the 0.8-1.0 experiment range on purpose: presets are not range-checked, so a real fall can be produced
     cfg = copy.deepcopy(config); cfg["world"]["presets"]["default"]["motor_strength_fraction"] = 0.0
     w = Go2World(cfg, seed=5); w.reset({"settle_s": 0.0}); w.step(zero, 3.0)
     out = w.finish_episode()
-    assert out["fallen"] and out["fall_time_s"] is not None
+    assert out["fall"] == 1 and out["fall_time_s"] is not None
 ```
 
 - [ ] **Step 2: Run them.** `uv run pytest tests/env/test_effects.py -v` — Expected: FAIL (`measure_effects` missing)
 
-- [ ] **Step 3: Implement.** Payload is a box body on the trunk; friction scales the floor geom; latency is a command queue with per-episode jitter from the noise stream, in whole control periods; motor strength scales torque and torque limit. Slope tilts gravity rather than the floor (`# shortcut: exact only for an infinite flat floor, replace with ramp geometry when RAMP needs a visible incline`).
+- [ ] **Step 3: Implement.** Payload is a box body on the trunk; friction changes the foot geoms, whose contact priority 1 overrides the floor (experiment M); latency is a command queue with per-episode jitter from the noise stream, in whole control periods; motor strength scales torque and torque limit. Slope tilts gravity rather than the floor (`# shortcut: exact only for an infinite flat floor, replace with ramp geometry when RAMP needs a visible incline`).
 
 - [ ] **Step 4: Run again.** Same command — Expected: PASS
 
@@ -498,7 +496,7 @@ def test_records_real_frames(config, forward):
     r = record_episode(config, seed=5, situation=None, commands=[(forward, 2.0)])
     assert r["frames"].shape[0] == 50 and r["frames"].shape[-1] == 3
     assert not np.array_equal(r["frames"][0], r["frames"][-1])
-    assert not r["outcome"]["fallen"]
+    assert r["outcome"]["fall"] == 0
 ```
 
 - [ ] **Step 2: Run it.** `uv run pytest tests/env/test_hooks.py -v` — Expected: FAIL with ImportError
