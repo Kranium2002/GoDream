@@ -48,6 +48,15 @@ test("startRun() POSTs the declared spec and the cost confirmation flag", async 
   assert.deepEqual(r, { ok: true, status: 202, data: { run_id: "r1" } });
 });
 
+test("infer() POSTs the window as a plain list with its frame count and capture time", async () => {
+  const { calls, fetchFn } = recorder(() => json(200, { action: "NO_OP" }));
+  const r = await createApi(fetchFn).infer(Float32Array.of(0.5, 0.25), 2, 1234.5);
+  assert.equal(calls[0].url, "/api/infer");
+  assert.equal(calls[0].init.method, "POST");
+  assert.deepEqual(JSON.parse(calls[0].init.body), { window: [0.5, 0.25], frames: 2, captured_ms: 1234.5 });
+  assert.equal(r.data.action, "NO_OP");
+});
+
 test("an error answer carries the server's code, message and body", async () => {
   const body = { code: "cost_confirmation_required", message: "Confirm the cost.", usage: { requests: 3 } };
   const { fetchFn } = recorder(() => json(409, body));

@@ -89,10 +89,68 @@
     </section>
 
     <section class="area" id="live" aria-labelledby="live-h" hidden>
-      <h1 id="live-h" tabindex="-1">Live</h1>
-      <div class="panel">
-        <p class="unbuilt"><strong>Not built yet.</strong> This view will open the laptop camera only after you press start, and the frozen model will drive the simulated dog from it. No frame leaves this computer.</p>
+      <h1 id="live-h" tabindex="-1">Live camera test</h1>
+      <p class="lead">A separate test of the frozen model: it never learns from the camera. Frames stay in this page's memory; only the grey cells of the window go to the server on this computer.</p>
+      <p class="cap-note" id="window-note" hidden></p>
+      <p id="window-text" hidden></p>
+      <div class="btn-row">
+        <button class="btn btn--primary" type="button" id="cam-start">Start camera</button>
+        <button class="btn btn--secondary" type="button" id="cam-stop" disabled>Stop camera</button>
       </div>
+      <p id="cam-status" role="status" aria-live="polite">The camera is off. Nothing is requested until you press Start camera.</p>
+
+      <div class="live">
+        <section class="panel" aria-labelledby="cam-h">
+          <h2 id="cam-h">Camera</h2>
+          <div class="cam">
+            <div class="cam__view">
+              <h3 id="cam-label">Not mirrored: what the dog's camera would see</h3>
+              <video id="cam-video" muted playsinline aria-labelledby="cam-label"></video>
+            </div>
+            <div class="cam__model">
+              <h3 id="grey-label">What the network sees</h3>
+              <canvas id="cam-grey" width="1" height="1" role="img" aria-labelledby="grey-label grey-text"></canvas>
+              <p class="hint" id="grey-text">Nothing yet.</p>
+            </div>
+          </div>
+          <dl class="stats">
+            <dt>Camera frames per second</dt><dd id="st-fps">not measured</dd>
+            <dt>Window filled</dt><dd id="st-fill">not started</dd>
+            <dt>Windows dropped while waiting</dt><dd id="st-dropped">0</dd>
+            <dt>Decisions this session</dt><dd id="st-decisions">0</dd>
+            <dt>Active commands issued</dt><dd id="st-issued">0</dd>
+          </dl>
+        </section>
+
+        <section class="panel" aria-labelledby="stage-h">
+          <h2 id="stage-h">Simulated dog</h2>
+          <div class="stage">
+            <div>
+              <h3 id="trk-label">Tracking view</h3>
+              <img id="stage-tracking" alt="Live simulator frames from the tracking camera" hidden>
+              <p class="cap-note" id="trk-note" hidden></p>
+            </div>
+            <div>
+              <h3 id="head-label">Head camera</h3>
+              <img id="stage-head" alt="Live simulator frames from the dog's head camera" hidden>
+              <p class="cap-note" id="head-note" hidden></p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="dec-h">
+        <h2 id="dec-h">Decision</h2>
+        <p class="action" id="dec-action" role="status" aria-live="polite">No decision yet.</p>
+        <p id="dec-issued"></p>
+        <div class="decision">
+          <dl class="stats" id="dec-rows"></dl>
+          <div>
+            <h3>Persistence gate</h3>
+            <ul class="gate" id="dec-gate"><li class="empty">No gate state yet.</li></ul>
+          </div>
+        </div>
+      </section>
     </section>
 
     <section class="panel caps" aria-labelledby="caps-h">

@@ -3,6 +3,7 @@ import { createApi } from "./api.js";
 import { normaliseCapabilities } from "./capabilities.js";
 import { attachProblems, catalogueRows, findSkill, isValid, specRows } from "./spec.js";
 import { canStart, INITIAL_RUN, runStep } from "./run.js";
+import { initLiveView } from "./live-view.js";
 
 const api = createApi((url, init) => fetch(url, init));
 const $ = (id) => document.getElementById(id);
@@ -20,6 +21,8 @@ function el(tag, props = {}, ...children) {
 const CAP_LABELS = { drive: "Drive the dog", head_camera: "Head camera", scenarios: "Scenarios", chat: "Chat",
   runs: "Learning runs", results: "Results", infer: "Live inference" };
 
+const live = initLiveView({ api, el });
+
 // ---- areas -------------------------------------------------------------------------------------------------------
 const AREAS = ["teach", "learn", "live"];
 function showArea(moveFocus) {
@@ -29,6 +32,7 @@ function showArea(moveFocus) {
     const link = document.querySelector(`[data-area="${a}"]`);
     if (a === name) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
   }
+  live.setVisible(name === "live");
   if (moveFocus) $(`${name}-h`).focus();
 }
 addEventListener("hashchange", () => showArea(true));
@@ -57,6 +61,7 @@ async function loadState() {
   $("sim-text").textContent = parts.join(" · ");
   capabilities = normaliseCapabilities(s.capabilities);
   renderCapabilities();
+  live.setState(s, capabilities);
 }
 
 function renderCapabilities() {
