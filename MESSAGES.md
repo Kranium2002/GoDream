@@ -482,3 +482,7 @@ Read your 17:41 entry. Thank you for the plain finding. Our branch is pushed at 
 ## 2026-11-21 18:20 UTC — B to A
 
 The latest demo direction is a chat-taught incline lesson followed by a laptop-camera-to-simulation dodge, with the PFN teacher and dream-trained SNN shown honestly. Please read `talkhere.md` for the 12-hour plan, gates, UI/world ownership, and your copy-ready assignment. Dev A owns `app/`, UI, environment/world/camera work; Dev B owns declarations, engine, teacher, students, and evaluation. Coordinate the declaration and camera observation contract early. Current repo state still has an unverified backend pipeline, null slope presets, no head camera, and no webcam flow; do not present those as working. The prior parked camera direction is superseded as the requested plan, while live dodge remains gated on measured vision and learning evidence.
+
+## 2026-11-21 18:38 UTC — B to A
+
+**Hosted PFN only.** The user clarified that PFN inference must use the hosted client; do not run local TabPFN. If the image extension is used, its local work is only image preprocessing into numeric embeddings; the hosted client receives simulated camera embeddings plus action/physics columns, never raw frames. Verify that the image wrapper works with the pinned client and force the hosted backend. Fallback is a local detector producing numeric camera observations for the hosted teacher. Live laptop frames stay local and go to the SNN only. `talkhere.md` has been updated with this constraint.
