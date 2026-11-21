@@ -1,14 +1,13 @@
-// Parity with Dev B's Python preprocessing (learned_judgment.vision.preprocess_frame): one test per case of the vector
-// file that config.yaml names under vision.test_vectors. If the file is missing the test is skipped and says NOT RUN.
+// Parity with Dev B's Python preprocessing (learned_judgment.vision.preprocess_frame): one test per case of Dev B's
+// vector file, artifacts/vision/preprocess_vectors.json from the repo root (config.yaml vision.test_vectors).
+// PREPROCESS_VECTORS=<path> reads another copy instead. If the file is missing the test is skipped and says NOT RUN.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { preprocess } from "../../app/static/js/vision.js";
 
-const ROOT = join(import.meta.dirname, "..", "..");
-const named = readFileSync(join(ROOT, "config.yaml"), "utf8").match(/^\s+test_vectors:\s*(\S+)/m)?.[1];
-const FILE = named ? join(ROOT, named) : null;
+const FILE = process.env.PREPROCESS_VECTORS || join(import.meta.dirname, "..", "..", "artifacts", "vision", "preprocess_vectors.json");
 
 // The contract's formula image, as `contract.formula` writes it out (and vision.formula_image computes it).
 function formulaRgb(w, h) {
@@ -25,8 +24,8 @@ function rgba(rgb) {
   return out;
 }
 
-if (!FILE || !existsSync(FILE)) {
-  test("parity with Dev B's preprocessing vectors", { skip: `NOT RUN: no vector file (config.yaml vision.test_vectors = ${named ?? "absent"})` }, () => {});
+if (!existsSync(FILE)) {
+  test("parity with Dev B's preprocessing vectors", { skip: `NOT RUN: no vector file at ${FILE}` }, () => {});
 } else {
   const { contract, tolerance, cases } = JSON.parse(readFileSync(FILE, "utf8"));
   const settings = { height: contract.frame_size, width: contract.frame_size, luma: contract.luma_weights, divisor: contract.pixel_scale };
