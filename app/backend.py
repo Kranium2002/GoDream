@@ -7,10 +7,12 @@ Agreed with Dev B (message log, 2026-11-21 20:55 UTC): one module learned_judgme
     resolve_declaration(d, config), parse_request(text, config): not used by the server yet.
 If it fails to import, the catalogue lists config.yaml's skills, each unavailable, naming what is missing; no
 parameter, action or outcome is made up here. Also here: the run files and runner (runs_dir, runner), the image-window
-contract (image_window) and live inference through learned_judgment.runtime (inference).
+contract (image_window), the DODGE actions (actions) and live inference through
+learned_judgment.runtime (inference).
 """
 import importlib
 import logging
+import math
 import threading
 from pathlib import Path
 
@@ -53,8 +55,11 @@ def runner(config: dict):
     a process of its own, writing <runs_dir>/<run_id>/events.jsonl and result.json, so it never holds up the
     simulation thread or the HTTP server.
     """
-    # WIRE: Dev B's runner entry point goes here once published; none is named yet, so none is guessed.
-    return None, ["Dev B's learning-run entry point with its TabPFN cost quote (not published yet)"]
+    # WIRE: Dev B's runner entry point goes here once published. learned_judgment.observed (2026-11-21) is not one yet:
+    # its quote, teach and train commands need rows and dream files collected beforehand by
+    # learned_judgment.skills.dodge_vision, take no declaration, and nothing freezes the gate thresholds afterwards.
+    return None, ["Dev B's learning-run entry point that starts a run from a declaration and quotes its TabPFN cost "
+                  "first (learned_judgment.observed needs pre-collected rows and dream files and takes no declaration)"]
 
 
 def image_window(config: dict):
@@ -68,22 +73,31 @@ def image_window(config: dict):
             "luma": v["luma_weights"], "mirrored": False}
 
 
+def actions(config: dict):
+    """(the actions with their commands, hold_s) from config.yaml skills.dodge_vision (Dev B), unchanged; (None, None)
+    without them."""
+    dodge = (config.get("skills") or {}).get("dodge_vision") or {}
+    return dodge.get("actions"), dodge.get("hold_s")
+
+
 RUNTIME = "learned_judgment.runtime"
 _runtime_lock = threading.Lock()  # Dev B's runtime keeps gate and cooldown state: one call at a time
-_loaded = {}  # "path": the model path learned_judgment.runtime has loaded
+_loaded = {}  # the loaded student: "dir", "model" (a DodgeRuntime), "window" and "last_t" (its newest capture time)
 
 
 def inference(config: dict):
-    """(infer(window, t_capture_s) -> dict, reset(), image_window, []) once Dev B's runtime imports,
-    config.yaml app.infer.model_path names a frozen model that loads and config.yaml has vision; else
-    (None, None, image_window, [what is missing]).
+    """(infer(window, t_capture_s) -> dict, reset(), window size {frames, height, width}, []) once Dev B's runtime has
+    loaded the frozen student that config.yaml app.infer.student_dir names; else (None, None, None, [missing]).
 
-    Agreed with Dev B: learned_judgment.runtime.load(path) once, then infer(window, t_capture_s) per window (float32
-    (frames, height, width), oldest first, in [0, 1]) and reset() when a camera session starts. If Dev B's shape
-    differs, this function is the one place to change.
+    learned_judgment.runtime.DodgeRuntime.load(directory, config) reads student.json, network.npz and network.json,
+    which `python -m learned_judgment.observed train` writes to <observed.runs_dir>/<run>/student/, and needs gate
+    thresholds frozen in student.json. The window size is the student's (student.json input), and must match
+    config.yaml vision, which the browser follows. Its infer(window, t_capture_s) refuses a time earlier than the
+    previous call's, so the times passed on never go backwards; reset() starts a new camera session. One student is
+    loaded per server and every call holds one lock: the gate keeps state.
     """
-    window = image_window(config)
-    missing = [] if window else ["config.yaml vision (Dev B)"]
+    published = image_window(config)
+    missing = [] if published else ["config.yaml vision (Dev B)"]
     try:
         runtime = importlib.import_module(RUNTIME)
     except ImportError as e:
@@ -91,31 +105,42 @@ def inference(config: dict):
         missing.append(f"{RUNTIME} (Dev B, not pushed yet)" if e.name == RUNTIME
                        else f"{RUNTIME} (Dev B) does not import: it needs {e.name}")
     else:
-        missing += [f"{RUNTIME}.{name} (Dev B)" for name in ("load", "infer", "reset")
-                    if not callable(getattr(runtime, name, None))]
-    path = config["app"]["infer"]["model_path"]
-    if not path:
-        missing.append("config.yaml app.infer.model_path naming the frozen SNN export from Dev B")
-    elif not (ROOT / path).is_file():
-        missing.append("the frozen model file that config.yaml app.infer.model_path names")
+        if not hasattr(runtime, "DodgeRuntime"):
+            missing.append(f"{RUNTIME}.DodgeRuntime (Dev B)")
+    directory = config["app"]["infer"]["student_dir"]
+    if not directory:
+        missing.append("config.yaml app.infer.student_dir naming a frozen student directory, which Dev B's observed "
+                       "run exports (none exists yet)")
+    elif not (ROOT / directory / "student.json").is_file():
+        missing.append("student.json in the directory config.yaml app.infer.student_dir names")
     if missing:
-        return None, None, window, missing
+        return None, None, None, missing
     with _runtime_lock:
-        if _loaded.get("path") != path:
+        if _loaded.get("dir") != directory:
             try:
-                runtime.load(str(ROOT / path))
-            except Exception:  # shortcut: retried on every call while broken; fine until the model is handed over
-                log.exception("The frozen model at app.infer.model_path does not load")
-                return None, None, window, ["a frozen model at app.infer.model_path that loads (see the server log)"]
-            _loaded["path"] = path
+                model = runtime.DodgeRuntime.load(ROOT / directory, config)
+            except RuntimeError:  # Dev B's "no frozen thresholds" (shortcut: retried on every call until fixed)
+                return None, None, None, ["gate thresholds frozen in the student's student.json (Dev B calibrates "
+                                          "them on simulation dev trajectories)"]
+            except Exception:
+                log.exception("The student at app.infer.student_dir does not load")
+                return None, None, None, ["a student at app.infer.student_dir that loads (the server log has why)"]
+            if (model.frames, model.frame_size) != (published["frames"], published["height"]):
+                return None, None, None, [f"a student whose window ({model.frames} frames of {model.frame_size} x "
+                                          f"{model.frame_size}) matches config.yaml vision"]
+            _loaded.update(dir=directory, model=model, last_t=-math.inf,
+                           window={"frames": model.frames, "height": model.frame_size, "width": model.frame_size})
+        model, window = _loaded["model"], _loaded["window"]
 
     def run(frames, t_capture_s):
         with _runtime_lock:
-            return runtime.infer(frames, t_capture_s)
+            t = _loaded["last_t"] = max(t_capture_s, _loaded["last_t"])  # a skewed frame age must not step back
+            return model.infer(frames, t)
 
     def reset():
         with _runtime_lock:
-            runtime.reset()
+            model.reset()
+            _loaded["last_t"] = -math.inf
 
     return run, reset, window, []
 

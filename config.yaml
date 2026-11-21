@@ -698,7 +698,9 @@ app:  # The local viewer server: uv run python -m app.server
   runs:
     poll_s: 0.5  # Seconds between looks for new lines in the run event files (observed.runs_dir) relayed as SSE.
   infer:
-    model_path: null  # The frozen SNN export Dev B hands over, relative to the repository root; null until then.
+    # The frozen student directory (student.json, network.npz, network.json with frozen thresholds), relative to the
+    # repository root; Dev B's observed run exports it to <observed.runs_dir>/<run>/student/. null until one exists.
+    student_dir: null
     # A frame age (receive time minus the browser's captured_ms, both wall clocks) outside 0 to this is clock skew:
     # it is taken as 0 and flagged in the answer, never an error.
     max_frame_age_ms: 2000

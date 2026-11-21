@@ -19,6 +19,7 @@ import pytest
 
 from app import backend
 from app.server import STATIC, start, stop
+from tests.app.conftest import write_student
 from learned_judgment.env import load_config
 
 FORWARD = {"vel_x": 0.6, "vel_y": 0.0, "yaw_rate": 0.0}  # the Gate 1 trot speed
@@ -155,6 +156,8 @@ def test_state_describes_the_controls_from_config(server, config):
                               "height": config["world"]["render"]["height"],
                               "stream_fps": config["app"]["stream_fps"]}
     assert {"skills", "image_window", "actions"} <= set(state)
+    dodge = config["skills"]["dodge_vision"]
+    assert state["actions"] == dodge["actions"] and state["action_hold_s"] == dodge["hold_s"]  # unchanged
 
 
 def test_state_names_every_capability_and_why_it_is_unavailable(server):
@@ -316,6 +319,8 @@ def own_server(config, tmp_path_factory):
     presets["unknown_floor"] = presets["default"] | {"floor_type": "no_such_floor"}
     presets["slow_commands"] = presets["default"] | {"command_latency_s": 1.0}
     own["observed"]["runs_dir"] = str(tmp_path_factory.mktemp("runs"))  # absolute: its own, empty runs directory
+    # Dev B's real DodgeRuntime loads this hand-built, untrained student (tests/app/conftest.py): plumbing, not a model
+    own["app"]["infer"]["student_dir"] = str(write_student(tmp_path_factory.mktemp("student"), own))
     server = start(own, 0)
     yield server
     stop(server)  # again after the shutdown test: stop is idempotent
@@ -355,6 +360,33 @@ def test_new_run_lines_are_relayed_as_events_and_the_run_can_be_read(own_server)
     status, run = request(own_server, "GET", "/api/runs/r_test")
     assert status == 200 and run["state"] == "running" and run["baseline"] == {"anything": [1, 2]}
     assert run["steps"] == [{k: line[k] for k in ("step", "state", "done", "total", "data")}]
+
+
+def test_infer_runs_end_to_end_through_dev_bs_real_runtime(own_server):
+    """POST /api/infer through Dev B's real DodgeRuntime and gate, with the hand-built student that always answers
+    NO_OP: the request checks, the call shape, the answer and the command reaching the stage. No evidence of dodging."""
+    window = backend.image_window(own_server.config)
+    n = window["frames"] * window["height"] * window["width"]
+    zero = own_server.config["skills"]["dodge_vision"]["actions"]["NO_OP"]
+    with event_stream(own_server) as events:
+        assert request(own_server, "POST", "/api/reset", {"preset": "default"})[0] == 200
+        next_episode_event(events, "start")
+        assert request(own_server, "POST", "/api/drive", FORWARD)[0] == 200
+        before = observe(events, until_s=0.5)[-1]["t_s"]
+        body = {"window": [0.5] * n, "frames": window["frames"], "captured_ms": time.time() * 1000.0,
+                "session_start": True}
+        status, answer = request(own_server, "POST", "/api/infer", body)
+        assert status == 200, answer
+        assert {"action", "command", "threat_confidence", "best_action", "action_confidence", "margin", "gate",
+                "cooldown_remaining_s", "hold_remaining_s", "issued", "cooldown_conflict", "valid", "inference_ms",
+                "latency_ms", "frame_age_ms", "frame_age_clamped"} <= set(answer)
+        assert answer["action"] == "NO_OP" and answer["valid"] is True and answer["command"] == zero
+        assert next(data for name, data in events if name == "infer")["action"] == "NO_OP"
+        assert observe(events, until_s=before + 0.5)[-1]["command"] == zero  # replaced the trot on the stage
+    later = body | {"captured_ms": body["captured_ms"] - 5000.0, "session_start": False}  # skewed: clamped, no error
+    status, answer = request(own_server, "POST", "/api/infer", later)
+    assert status == 200 and answer["frame_age_clamped"] is True
+    assert request(own_server, "GET", "/api/state")[1]["capabilities"]["infer"] == {"available": True, "reason": ""}
 
 
 def test_shutdown_ends_open_streams_and_frees_the_port(own_server):

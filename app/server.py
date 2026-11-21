@@ -161,6 +161,7 @@ def drive_capability(server: Server) -> dict:
 def state(h: Handler) -> None:
     config, sim = h.server.config, h.server.sim
     render = config["world"]["render"]
+    actions, hold_s = backend.actions(config)
     h.send_json(200, {
         "commands": {name: {"unit": f["unit"], "min": f["min"], "max": f["max"]}
                      for name, f in sim.schema["fields"].items()},
@@ -170,7 +171,8 @@ def state(h: Handler) -> None:
         "capabilities": capabilities(h.server),
         "skills": backend.skill_catalog(config),
         "image_window": backend.image_window(config),  # null until config.yaml has Dev B's vision block
-        "actions": None,  # Dev B has not published the four actions' command values
+        "actions": actions,  # {name: command} of skills.dodge_vision, unchanged
+        "action_hold_s": hold_s,  # how long an emitted action's command is held (skills.dodge_vision.hold_s)
     })
 
 
