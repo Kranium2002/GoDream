@@ -249,3 +249,40 @@ Rebound tests stated by the rules, with the implied coefficient of restitution `
 **Cost.** TabPFN calls: 0.
 
 **Decision and next step.** The command schema is published with `status: verified` (Person B's loader requirement). Task 4 builds `Go2World` on it.
+
+## M2 — MuJoCo facts for Go2World on the pinned stack — 2026-11-21 — Person A
+
+**Question.** Entry M measured the free-joint velocity frames on mujoco 4.0.1 and 3.17.0 with the menagerie model, and did not test bad states. On the pinned stack (mujoco 3.11.0, Unitree `go2.xml` on the flat scene), in which frames are the free joint's linear and angular velocities, and what does MuJoCo do with a NaN or huge value in qpos, qvel or qacc?
+
+**Method.** `artifacts/env/research/m2_world_facts.py`. (1) Gravity off, trunk rolled +90° about world x and lifted 2 m so nothing touches, free-joint qvel set to linear [1, 0, 0] and angular [0, 0, 1], one step; compare the change of position and of orientation. (2) Four fresh resets with one value corrupted (qpos[0] NaN, qvel[0] NaN, qvel[0] 1e11, qfrc_applied[6] inf so qacc is bad), two steps each, reading `MjData.warning` counts, time and finiteness; then `mj_resetData`.
+
+**Command.**
+
+    uv run python -m learned_judgment.env.evidence m2-world-facts -- uv run python -X utf8 artifacts/env/research/m2_world_facts.py
+
+**Result.** Exit code 0, `artifacts/env/20261121T155604-m2-world-facts/stdout.txt`:
+- Linear velocity is in the world frame: position change / dt = [1.0009, 0.001, 0] for qvel [1, 0, 0] with the trunk rolled.
+- Angular velocity is in the body frame: with the body z axis along world −y, qvel [0, 0, 1] turned the trunk at [−0.0002, −1.0, 0.1149] rad/s in the world frame ([−0.0002, 0.1149, 1.0] in the body frame).
+- Each bad state raised its warning (`mjWARN_BADQPOS`, `mjWARN_BADQVEL` twice, `mjWARN_BADQACC`), MuJoCo printed it and reset the state itself (finite again, base z 0.4451 m, near the model's initial 0.445 m; `data.time` 0.002 s after that step, so it restarted from 0). The warning count stayed 1 after the reset and after a further step; only `mj_resetData` cleared it.
+
+**Consequences.** `Go2World` reports angular velocity rotated into the world frame, counts its own physics steps instead of reading `data.time`, and sets `sim_unstable` from the three warning counts (cleared by its own spawn) plus a finiteness check of the final state. MuJoCo also appends each warning to `MUJOCO_LOG.TXT` in the working directory.
+
+**Limitations.** One step per frame check. The 0.1149 rad/s component is the rolled trunk's own dynamics over that step, not a frame effect. Warning behaviour was checked with auto-reset enabled (the default) only.
+
+**Cost.** TabPFN calls: 0.
+
+## Single-threaded policy inference — Gate 1 re-run — 2026-11-21 — Person A
+
+**Question.** Task 4 runs the walking policy's ONNX Runtime session on one intra-op and one inter-op thread (`WalkingPolicy`, which replaces Efferent's session by the same model with those options). Does that change any Gate 1 result?
+
+**Command.** Re-runs the gate into a temporary directory and compares it with the committed run:
+
+    uv run python -m learned_judgment.env.evidence single-thread-gate1 -- uv run python -X utf8 -c "<runs acceptance.main(['--out', tmp]) and compares tmp with artifacts/env/locomotion>"
+
+(the full one-line program is in `run.json` `command`).
+
+**Result: no change.** `artifacts/env/20261121T161152-single-thread-gate1`, exit code 0 (the comparison's; the gate itself printed `LOCOMOTION GATE: FAIL ['trot_0.3']` as before). For all seven conditions every measured value except `rtf` and `cpu_fraction` is equal and the `t`, `qpos`, `qvel` and `command` traces are bit-identical to `artifacts/env/locomotion/`. `cpu_fraction` fell from 1.3922–1.8028 to 0.9403–0.9865; per-condition `rtf` 5.67–8.58 (was 6.78–9.55).
+
+**Limitations.** This machine only (2 cores). Equal results here do not show that multi-threaded inference would be bit-identical on a machine with another core count; single-threading removes that dependence.
+
+**Cost.** TabPFN calls: 0.

@@ -1,0 +1,27 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- ~\projects\hackaton\GoDream\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: ~\projects\hackaton\GoDream
+configfile: pyproject.toml
+plugins: anyio-4.16.0, platformdirs-4.14.8
+collecting ... collected 17 items
+
+tests/env/test_world_api.py::test_reset_returns_documented_observation PASSED [  5%]
+tests/env/test_world_api.py::test_step_rounds_to_control_periods PASSED  [ 11%]
+tests/env/test_world_api.py::test_calls_out_of_order_raise PASSED        [ 17%]
+tests/env/test_world_api.py::test_unknown_names_raise PASSED             [ 23%]
+tests/env/test_world_api.py::test_unknown_preset_raises PASSED           [ 29%]
+tests/env/test_world_api.py::test_bad_values_raise PASSED                [ 35%]
+tests/env/test_world_api.py::test_reset_trots_at_the_situation_speed_until_the_decision_instant PASSED [ 41%]
+tests/env/test_world_api.py::test_velocities_are_in_the_world_frame PASSED [ 47%]
+tests/env/test_world_api.py::test_finish_episode_reports_outcome_and_saves_trace PASSED [ 52%]
+tests/env/test_world_api.py::test_trace_files_are_unique_and_optional PASSED [ 58%]
+tests/env/test_world_api.py::test_fall_is_latched_with_its_first_time PASSED [ 64%]
+tests/env/test_world_api.py::test_bad_simulator_state_is_reported PASSED [ 70%]
+tests/env/test_world_api.py::test_render_frame_shows_the_dog PASSED      [ 76%]
+tests/env/test_determinism.py::test_streams_are_independent_and_repeatable PASSED [ 82%]
+tests/env/test_determinism.py::test_attempt_streams_differ_from_the_world_streams PASSED [ 88%]
+tests/env/test_determinism.py::test_fixed_seed_reproduces_the_episode PASSED [ 94%]
+tests/env/test_determinism.py::test_attempt_seed_fixes_the_noise_whatever_ran_before PASSED [100%]
+
+============================= 17 passed in 23.80s =============================

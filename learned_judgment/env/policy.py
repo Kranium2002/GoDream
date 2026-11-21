@@ -10,15 +10,9 @@ from collections.abc import Callable
 
 import mujoco
 import numpy as np
+import onnxruntime as ort
 from efferent import Binding, Command, PolicySession, Runner, load_descriptor, load_policy
 from efferent.backends.mujoco_backend import MujocoBackend
-
-# Spawn of Efferent's Go2 example (examples/go2_walk validate.py at f51e1af, quoted in research W1 claim and used
-# by the E1 proof): base at [0, 0, 0.35], joints at the default pose, auto_base_height, 1 s settle.
-# shortcut: upstream constants kept here because Task 2 may edit only robot.acceptance in config.yaml; move them
-# into config.yaml when the spawn becomes something anyone changes.
-SPAWN_BASE_POS = [0.0, 0.0, 0.35]
-SPAWN_SETTLE_S = 1.0
 
 
 class _Backend(MujocoBackend):
@@ -52,27 +46,40 @@ class WalkingPolicy:
         wp = config["robot"]["walking_policy"]
         manifest, onnx_path, workdir = load_policy(wp["checkpoint"])
         self.session = PolicySession(manifest, onnx_path)
+        # PolicySession takes no session options, so its ONNX Runtime session is replaced by the same model on one
+        # intra-op and one inter-op thread: inference then does not depend on the machine's thread count.
+        options = ort.SessionOptions()
+        options.intra_op_num_threads = options.inter_op_num_threads = 1
+        self.session.session = ort.InferenceSession(str(onnx_path), options, providers=["CPUExecutionProvider"])
         shutil.rmtree(workdir, ignore_errors=True)  # load_policy unzips to a fresh temp dir; the session holds the model
         self.binding = Binding(manifest, load_descriptor(wp["matching_config"][0]))  # go2.robot.yaml
         self.control_dt = 1.0 / manifest.control.rate_hz
         self.model = model
+        spawn = wp["spawn"]
         self.backend = _Backend(model, self.control_dt, start_pose={j.name: j.default for j in manifest.joints},
-                                base_pos=SPAWN_BASE_POS, auto_base_height=True, settle_s=SPAWN_SETTLE_S)
+                                base_pos=spawn["base_pos"], auto_base_height=spawn["auto_base_height"],
+                                settle_s=spawn["settle_s"])
         self.data = self.backend.data
         self._runner = Runner(self.binding, self.session, self.backend)  # for its components, never run()
         self.last_obs = np.zeros(0, dtype=np.float32)
 
-    def reset(self) -> None:
-        """Spawn, settle and soft start, as Runner.run() does before its first policy step."""
+    def reset(self, on_substep: Callable[[], None] | None = None) -> None:
+        """Spawn, settle and soft start, as Runner.run() does before its first policy step. on_substep runs after
+        every physics step of the settle and the soft start."""
         r = self._runner
-        self.backend.connect(self.binding.descriptor)
-        self.session.reset()
-        r.obs_builder.reset()
-        r.rate_limiter.reset()
-        r._soft_start()
+        self.backend.on_substep = on_substep
+        try:
+            self.backend.connect(self.binding.descriptor)
+            self.session.reset()
+            r.obs_builder.reset()
+            r.rate_limiter.reset()
+            r._soft_start()
+        finally:
+            self.backend.on_substep = None
         assert self.binding.manifest.envelope is None  # so Runner.run() would not check a start envelope here
         self._last_action = np.zeros(self.binding.manifest.num_joints(), dtype=np.float32)
         self._steps = 0
+        self.last_obs = np.full(self.session.expected_obs_dim, np.nan, dtype=np.float32)  # no policy step yet
 
     def step(self, command: np.ndarray, on_substep: Callable[[], None] | None = None) -> None:
         """One control step: command is [vel_x, vel_y, yaw_rate] in m/s, m/s, rad/s. on_substep runs after

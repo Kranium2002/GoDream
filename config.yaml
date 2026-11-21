@@ -34,6 +34,12 @@ robot:
     repository_revision: f51e1af953afe1016dae9ceeff2b5328fa51781d
     checkpoint: learned_judgment/env/assets/efferent@f51e1af/go2_walk.app
     checkpoint_sha256: 89a5bb7e1ff1cc4cd60f4855bf1dd77bd1b313aeee7c19e984fe7c6e37d74147
+    # Spawn of Efferent's Go2 example (examples/go2_walk validate.py at f51e1af, research W1, used by the E1 proof):
+    # base at [0, 0, 0.35] m, joints at the default pose, base lowered onto the floor, held 1 s before the soft start.
+    spawn:
+      base_pos: [0.0, 0.0, 0.35]
+      settle_s: 1.0
+      auto_base_height: true
     # The second entry is a member of the go2_walk.app zip. go2.robot.yaml names "backend: id: mock"; the E1 proof
     # does not use it: it passes efferent's MujocoBackend to the Runner itself.
     matching_config:
@@ -132,12 +138,29 @@ robot:
     stop_speed_m_s: 0.05
     # Measurement definitions, fixed with the tolerances: means exclude the first 5 s of the commanded run, final
     # speed is the mean planar speed over its last 2 s, and the dog has fallen if a trunk geom touches the floor
-    # or the trunk tilts more than 60 degrees at any physics step of the commanded run.
+    # or the trunk tilts more than robot.fall.max_tilt_deg at any physics step of the commanded run.
     exclude_first_s: 5
     final_window_s: 2
-    fall_tilt_deg: 60
+  fall:
+    # A fall is a trunk geom touching the floor or a trunk tilt above this. 60 degrees is the value fixed in the plan
+    # (Task 2) for the locomotion gate before any run; Go2World uses the same definition.
+    max_tilt_deg: 60
 
 world:
+  # Seconds the dog trots at the situation's dog_forward_speed_m_s after the soft start, before the decision instant
+  # (t_s 0). From the Gate 1 traces (artifacts/env/locomotion/trot_*.npz): the 0.5 s moving mean of forward speed
+  # along the heading first enters the band it keeps after t = 5 s at 0.50 s (0.3 m/s), 0.80 s (0.6) and 1.66 s
+  # (0.9, slowest); 2.0 s adds about 0.3 s of margin. 1.0 m/s was not measured.
+  settle_s: 2.0
+  # One compressed .npz per finished episode plus its .hidden.json; the directory's .gitignore keeps them out of git.
+  trace_dir: artifacts/env/traces
+  # false: no file is written and trace_path is None (for runs of thousands of episodes, such as the oracle).
+  save_traces: true
+  # Go2World.render_frame size in pixels: MuJoCo's default offscreen buffer (vis.global offwidth x offheight), which
+  # go2.xml does not change; a larger frame needs a larger buffer in the model.
+  render:
+    width: 640
+    height: 480
   hidden_effects:
     payload_mass_kg: [0.0, 3.0]
     payload_off_center_range_m: null  # Requires an explicit experimental range.
@@ -150,6 +173,10 @@ world:
     command_latency_jitter_s: null  # Measure/verify before setting.
   presets:
     default:
+      # What the judge declares for this world (HANDOFF_PERSON_B.md item 5), reported in every observation and
+      # outcome: no payload on the default floor.
+      declared_payload_kg: 0.0
+      declared_surface: default
       payload_mass_kg: null
       floor_type: null
       slope_deg: null
