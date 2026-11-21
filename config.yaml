@@ -789,6 +789,9 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
     dream_situations: 4000  # no simulator: sampled over feature_ranges
     snn_hidden_sizes: [32]  # 4 inputs, 4 outputs
     snn_max_steps: 3000
+    fast_attempts: 40  # Fast run (run_skill --mode fast): context scenarios, ONE episode each; 40 = the top of MISSION.md's 10-40 attempts.
+    fast_dream_situations: 1000  # Fast run: dream situations (no simulator) scored by the teacher; 1000 x 4 candidates.
+    fast_snn_max_steps: 1200  # Fast run: max optimizer steps of the spiking student (the full run's snn_max_steps is 3000).
   dodge_vision:
     context_scenarios: 120  # Scenarios whose four actions are all run for the teacher's context: 480 measured rows.
     dream_episodes: 1500  # Rendered zero-command episodes; x windows_per_dream_episode dream situations.
@@ -803,3 +806,6 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
     dream_situations: 4000  # No simulator: sampled requests x 32 candidates of physics guess.
     snn_hidden_sizes: [32]  # 5 inputs, 32 outputs.
     snn_max_steps: 3000  # As observed.ramp.
+    fast_attempts: 40  # Fast run (run_skill --mode fast): context scenarios, ONE episode each; 40 = the top of MISSION.md's 10-40 attempts.
+    fast_dream_situations: 1000  # Fast run: dream situations (no simulator); 1000 x 32 candidates = 32000 query rows, one request chunk per outcome.
+    fast_snn_max_steps: 600  # Fast run: max optimizer steps of the spiking student. Was 1200: move-fast1 spent 35.2 s of its 51.1 s train step on 1200 steps (dream validation loss 0.0100 at 600, 0.0058 at 1200); wall time only. move-fast2 (600 steps, loop 23.7 s) shared the CPU with another 6-worker run, so its gain is not cleanly measured.
