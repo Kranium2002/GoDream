@@ -1,0 +1,573 @@
+{
+ "run_id": "v1",
+ "skill": "dodge_vision",
+ "quote": {
+  "state": "done",
+  "started_utc": "2026-11-21T21:48:59.760955+00:00",
+  "argv": [
+   "quote",
+   "--run",
+   "v1",
+   "--skill",
+   "dodge_vision",
+   "--context",
+   "results/runs/v1/context",
+   "--dream",
+   "results/runs/v1/dream"
+  ],
+  "config_digest": "5d5b53aee7278564210f8b82f2ec008265a99f33e9a99a82fcd3c5d5990c4e3a",
+  "context": "results/runs/v1/context",
+  "dream": "results/runs/v1/dream",
+  "feature_set": [
+   "window",
+   "action",
+   "physics"
+  ],
+  "quote": {
+   "dream": {
+    "mode": "stacked",
+    "n_query_rows": 24000,
+    "n_train_rows": 480,
+    "n_features": 1160,
+    "active_outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "constant_outcomes": [
+     "fall",
+     "command_travel_m"
+    ],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 0,
+      "n_chunks": 3,
+      "n_train": 1440,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40876,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 1,
+      "n_chunks": 3,
+      "n_train": 1440,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40876,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 2,
+      "n_chunks": 3,
+      "n_train": 1440,
+      "n_query": 8000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 14988,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 96740,
+    "usage": {
+     "current_usage": 290912,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 290912,
+     "daily_token_limit": 35000000,
+     "daily_usage": 290912,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-22 00:00:00 UTC",
+     "monthly_tokens_used": 290912,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 290912,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 34709088,
+    "tokens_quoted_for_billed_calls": 240912,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   }
+  }
+ },
+ "updated_utc": "2026-11-21T22:01:57.145967+00:00",
+ "teach": {
+  "state": "done",
+  "started_utc": "2026-11-21T21:49:19.900991+00:00",
+  "argv": [
+   "teach",
+   "--run",
+   "v1",
+   "--skill",
+   "dodge_vision",
+   "--context",
+   "results/runs/v1/context",
+   "--dream",
+   "results/runs/v1/dream",
+   "--confirm-billing"
+  ],
+  "config_digest": "5d5b53aee7278564210f8b82f2ec008265a99f33e9a99a82fcd3c5d5990c4e3a",
+  "context": "results/runs/v1/context",
+  "dream": "results/runs/v1/dream",
+  "dev": null,
+  "feature_set": [
+   "window",
+   "action",
+   "physics"
+  ],
+  "teacher": {
+   "n_context_rows": 480,
+   "n_features": 1160,
+   "call_log": "D:/BerlinPrior/results/tabpfn_calls.jsonl"
+  },
+  "quote": {
+   "dream": {
+    "mode": "stacked",
+    "n_query_rows": 24000,
+    "n_train_rows": 480,
+    "n_features": 1160,
+    "active_outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "constant_outcomes": [
+     "fall",
+     "command_travel_m"
+    ],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 0,
+      "n_chunks": 3,
+      "n_train": 1440,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40876,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 1,
+      "n_chunks": 3,
+      "n_train": 1440,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40876,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 2,
+      "n_chunks": 3,
+      "n_train": 1440,
+      "n_query": 8000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 14988,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 96740,
+    "usage": {
+     "current_usage": 290912,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 290912,
+     "daily_token_limit": 35000000,
+     "daily_usage": 290912,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-22 00:00:00 UTC",
+     "monthly_tokens_used": 290912,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 290912,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 34709088,
+    "tokens_quoted_for_billed_calls": 240912,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   }
+  },
+  "scores": {
+   "path": "D:/BerlinPrior/results/runs/v1/scores.npz",
+   "sha256": "6ca0ff9799ab930c4c30c31552efdffa9ff10f4ea645a25c4f63ef1851ded604",
+   "shape": [
+    6000,
+    4
+   ],
+   "request_keys": [
+    "fb1c103f6f501399e6e0ff356ea6abb3bb5db43906065b7313adefa1f3719047",
+    "e0228f18c2b034349a3bb76845fff1e5b7d60a00032109316b0da5bab1a6b916",
+    "8c59cebc011bcbf7a60a6429a5880c79108832a80ed641b8ba3d210a9697ad88"
+   ]
+  }
+ },
+ "train": {
+  "state": "done",
+  "started_utc": "2026-11-21T22:01:24.062254+00:00",
+  "argv": [
+   "train",
+   "--run",
+   "v1",
+   "--skill",
+   "dodge_vision",
+   "--dream",
+   "results/runs/v1/dream",
+   "--scores",
+   "results/runs/v1/scores.npz"
+  ],
+  "config_digest": "7c01c91d2138c99882dc6914600ec7c23b39ce2bf4902bb7ad4868a4384c712e",
+  "dream": "results/runs/v1/dream",
+  "scores": "results/runs/v1/scores.npz",
+  "frames": 8,
+  "window_encoding": "signed_diff",
+  "diff_floor": 0.03,
+  "hidden_sizes": [
+   128
+  ],
+  "max_steps": 6000,
+  "student": "D:/BerlinPrior/results/runs/v1/student",
+  "network_sha256": "466885bfbfe8fd8d28a9930ebfa4d2abfd6374651151f6d2f875c0bd40a2a469",
+  "split": {
+   "by": "group",
+   "validation_fraction": 0.1,
+   "n_train_rows": 5400,
+   "n_validation_rows": 600,
+   "n_groups": 1500
+  },
+  "parity": {
+   "threat": {
+    "n_inputs_checked": 6000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 1.7763568394002505e-15,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     7680000
+    ],
+    "total_spikes_per_layer_torch": [
+     734881
+    ],
+    "total_spikes_per_layer_numpy": [
+     734881
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "action": {
+    "n_inputs_checked": 6000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 1.7763568394002505e-15,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     7680000
+    ],
+    "total_spikes_per_layer_torch": [
+     734881
+    ],
+    "total_spikes_per_layer_numpy": [
+     734881
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "combined": {
+    "n_inputs_checked": 6000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": {
+     "threat": 1.3322676295501878e-15,
+     "action": 8.881784197001252e-16
+    },
+    "action_decisions_differing": 0
+   }
+  },
+  "training": {
+   "loss": "per head KL(target || softmax(logits)) averaged over that head's rows, weighted by the head's share of the batch, plus spike_rate_penalty x mean hidden firing rate; early stopping on the sampling-weighted validation KL",
+   "acceptance": "the restored weights must have a total validation KL below initialisation, a validation KL per head below that of the head's mean training target (the best constant prediction), and spikes in every hidden layer on the validation rows; otherwise fit raises TrainingError",
+   "heads": [
+    "threat",
+    "action"
+   ],
+   "sampling": {
+    "threat": 0.5,
+    "action": 0.5
+   },
+   "n_train_rows": {
+    "threat": 5400,
+    "action": 5400
+   },
+   "n_validation_rows": {
+    "threat": 600,
+    "action": 600
+   },
+   "steps_run": 900,
+   "best_step": 400,
+   "stopped_early": true,
+   "initial_validation_loss": 0.6020240769763261,
+   "best_validation_loss": 0.3578189370543228,
+   "best_validation_loss_per_head": {
+    "threat": 0.4162424747052138,
+    "action": 0.29939539940343185
+   },
+   "constant_predictor_validation_loss": {
+    "threat": 0.6541281875062398,
+    "action": 0.43722963228295403
+   },
+   "constant_predictor_validation_loss_null_means": "infinite",
+   "train_loss_curve": [
+    [
+     100,
+     0.4546045971186804
+    ],
+    [
+     200,
+     0.3272003638171691
+    ],
+    [
+     300,
+     0.2398341284653427
+    ],
+    [
+     400,
+     0.18828942010037408
+    ],
+    [
+     500,
+     0.15850939374901635
+    ],
+    [
+     600,
+     0.1167549355498994
+    ],
+    [
+     700,
+     0.11577061857495842
+    ],
+    [
+     800,
+     0.10073659639699974
+    ],
+    [
+     900,
+     0.09599939544295932
+    ]
+   ],
+   "validation_loss_curve": [
+    [
+     0,
+     {
+      "threat": 0.6654495909059045,
+      "action": 0.5385985630467477
+     }
+    ],
+    [
+     100,
+     {
+      "threat": 0.4420602934667616,
+      "action": 0.33160073960830355
+     }
+    ],
+    [
+     200,
+     {
+      "threat": 0.4080120941055221,
+      "action": 0.3231539148192424
+     }
+    ],
+    [
+     300,
+     {
+      "threat": 0.4406109631521115,
+      "action": 0.3072488045946844
+     }
+    ],
+    [
+     400,
+     {
+      "threat": 0.4162424747052138,
+      "action": 0.29939539940343185
+     }
+    ],
+    [
+     500,
+     {
+      "threat": 0.47359196429772815,
+      "action": 0.31414613610244546
+     }
+    ],
+    [
+     600,
+     {
+      "threat": 0.4575390077454001,
+      "action": 0.31065029576306746
+     }
+    ],
+    [
+     700,
+     {
+      "threat": 0.5304789335665533,
+      "action": 0.316812618142842
+     }
+    ],
+    [
+     800,
+     {
+      "threat": 0.5292911388477388,
+      "action": 0.31679828238028396
+     }
+    ],
+    [
+     900,
+     {
+      "threat": 0.5382407798141399,
+      "action": 0.31790802383588984
+     }
+    ]
+   ],
+   "validation_total_curve": [
+    [
+     0,
+     0.6020240769763261
+    ],
+    [
+     100,
+     0.3868305165375326
+    ],
+    [
+     200,
+     0.36558300446238223
+    ],
+    [
+     300,
+     0.373929883873398
+    ],
+    [
+     400,
+     0.3578189370543228
+    ],
+    [
+     500,
+     0.3938690502000868
+    ],
+    [
+     600,
+     0.38409465175423374
+    ],
+    [
+     700,
+     0.42364577585469765
+    ],
+    [
+     800,
+     0.4230447106140114
+    ],
+    [
+     900,
+     0.4280744018250149
+    ]
+   ],
+   "initial_firing_rate_per_layer": [
+    0.017436197916666667
+   ],
+   "firing_rate_per_layer": [
+    0.08888802083333333
+   ],
+   "dead_fraction_per_layer": [
+    0.0
+   ],
+   "saturated_fraction_per_layer": [
+    0.0
+   ],
+   "silent_layers": [],
+   "wall_seconds": 25.72070979999262,
+   "seed": 549658744,
+   "torch_threads": 1,
+   "versions": {
+    "torch": "2.15.0+cpu",
+    "snntorch": "1.0.0",
+    "numpy": "2.5.5",
+    "python": "3.13.16"
+   },
+   "optimizer": {
+    "name": "Adam",
+    "lr": 0.002,
+    "betas": [
+     0.9,
+     0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0
+   }
+  },
+  "wall_s": 32.61861750000389
+ }
+}

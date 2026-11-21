@@ -138,3 +138,43 @@ They are taken in the heading frame fixed at the decision instant (yaw only, + l
 ## 2026-11-21 — How the Person A work for the chat-taught demo is run
 
 Three lanes (world, server, front end) work on their own branches with fixed file ownership and are merged into `person-a/go2-env` when a milestone's tests pass. Each lane proves the API it relies on with a small command before a slice and reports the output; this replaces a separate research agent per slice, as `CLAUDE.md` allows when the substitution is recorded. Read-only proof runs (incline, head camera, objects) were done by separate agents first. Contracts with Person B are agreed in `talkhere.md` on the `messages` branch and Person B's code is reached through one adapter module in `app/`.
+
+## 2026-11-21 — The incline: two boxes on mocap bodies, placed per episode
+
+The slope and its plateau are boxes on mocap bodies, moved into place at the decision instant relative to the dog's pose then (foot of the slope `world.incline.start_x_m` ahead along the heading). Reason, from a proof run: a box compiled on the world body and moved at run time loses its collisions (the ball fell through; the collision tree of the world body is built at compile time), and rebuilding the model per episode costs seconds. A box on a mocap body gave a trajectory bit-identical to one compiled in place. Placing it relative to the pose, not the world origin, keeps a dog that trotted during the settle from already standing on it.
+
+Ground is any geom welded to the world: one rule for foot contact, the fall check, `foot_slip_m` and the ball's list of robot geoms. A future static obstacle will count as ground too.
+
+The published range `world.incline.range_deg` is [5, 15]°, from the sweep at `vel_x` 0.6 (10 s, 3 attempts): the plateau is reached at every angle up to 12.5° and at none from 15°. `reset` accepts up to `world.incline.max_deg` 20°. `robot.recovery.max_tilt_deg` is unchanged. Person B's own RAMP run saw climbs at 15° and stalls from about 17°; the two set-ups are being compared and the range is not changed until the difference is found.
+
+The sweep's yaw trim is the best of a few small candidates measured on flat ground (`world.incline.sweep.trim_candidates_rad_s`), not the negated drift rate: the policy's yaw response near zero is about eight times steeper than at larger commands, and the negated rate overshot by about 180°.
+
+## 2026-11-21 — `final_yaw_change_rad` counts whole turns
+
+It is summed per control period and no longer wrapped to [−π, π): 10 s runs turned past 180° and the wrapped value changed sign. This replaces the wrapping stated in "Outcome measurements `final_*`" above.
+
+## 2026-11-21 — The punch is a gravity-compensated sphere that reuses the ball's names
+
+`object_kind: "punch"` is a sphere of radius 0.05 m and 0.6 kg with `gravcomp` 1, so it flies straight at constant speed and still collides physically. Its body and geom are named `ball`, so `collision`, `first_collision_time_s`, `min_separation_m`, the observation's `ball` entry and the trace arrays work unchanged. It is bright yellow because at 12 × 12 pixels a grey object is visible too late. It is a stand-in for a fist, not a model of an arm.
+
+## 2026-11-21 — The demo server: one adapter to Person B's code, Claude only for the chat
+
+`app/backend.py` is the only module that imports Person B's code (declarations, runtime, run files, run entry point), so a contract change touches one file. A capability that cannot work yet answers 503 with a code ending in `_unavailable` and a message naming the missing piece, and `/api/state` lists each capability with its reason.
+
+The chat asks Claude for a declaration as structured data only; the answer is validated by Person B's `check_declaration` and never executed. Person A chose Claude only: without `ANTHROPIC_API_KEY` in `.env` the chat is unavailable, and Person B's keyword parser is not used as a fallback. Because structured outputs reject some schema keywords, the request sends a converted copy of Person B's schema (`oneOf` to `anyOf`, bounds into descriptions); the validator still applies the original.
+
+Development thresholds for the live camera test exist as a config switch that is null in every commit; when set, every answer and the page say "development thresholds, not calibrated".
+
+## 2026-11-21 — The 3D view shows simulator truth to people, never to the policy
+
+`GET /api/robot` and the `pose` events send the compiled model's geometry and every body pose to the browser, including the thrown object and a payload box. This is a display for people, like the image stream. The hidden-truth rule is about the policy input, and the only policy input that leaves the browser is the image window sent to `/api/infer`. If a later skill fed browser data back as a policy input, this would have to be revisited.
+
+## 2026-11-21 — The pages are built around the robot; progress is replayed, never staged
+
+After Person A's review ("the focus should be the robot"), the page is one stage with a 3D view of the simulated Go2, the chat fading in over it, the learning shown as a track on the stage, a card per recorded run, and validation by driving the dog or by the camera view. The 3D view is a hand-written WebGL2 viewer with no library, to avoid adding a dependency without asking; it draws only when something changed and lowers its internal resolution when frames are slow.
+
+A stage of the track moves only while a real event says it is running. A recorded run is replayed from its `events.jsonl` with the recorded time gaps divided by the chosen speed and is always titled a replay. Every number on a page comes from an API answer.
+
+## 2026-11-21 — The world lane's work-in-progress branch is public
+
+Person A approved pushing `person-a/lane-world` before its tests are complete so Person B can build against it; each commit message says what is tested. Tested commits reach Person B only through `person-a/go2-env`, and neither branch is rewritten.

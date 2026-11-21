@@ -1,0 +1,117 @@
+{
+ "format": "learned-judgment/observed-student/v1",
+ "skill": "move",
+ "action_names": [
+  "L0.40_H0.40",
+  "L0.40_H0.80",
+  "L0.40_H1.20",
+  "L0.40_H1.60",
+  "L0.40_H2.00",
+  "L0.40_H2.50",
+  "L0.40_H3.00",
+  "L0.40_H3.50",
+  "L0.60_H0.40",
+  "L0.60_H0.80",
+  "L0.60_H1.20",
+  "L0.60_H1.60",
+  "L0.60_H2.00",
+  "L0.60_H2.50",
+  "L0.60_H3.00",
+  "L0.60_H3.50",
+  "L0.80_H0.40",
+  "L0.80_H0.80",
+  "L0.80_H1.20",
+  "L0.80_H1.60",
+  "L0.80_H2.00",
+  "L0.80_H2.50",
+  "L0.80_H3.00",
+  "L0.80_H3.50",
+  "L1.00_H0.40",
+  "L1.00_H0.80",
+  "L1.00_H1.20",
+  "L1.00_H1.60",
+  "L1.00_H2.00",
+  "L1.00_H2.50",
+  "L1.00_H3.00",
+  "L1.00_H3.50"
+ ],
+ "heads": {
+  "action": [
+   0,
+   32
+  ]
+ },
+ "no_op_index": null,
+ "input": {
+  "features": 5,
+  "encoding": "(x - 0.5) * sqrt(12)"
+ },
+ "vision": null,
+ "thresholds": null,
+ "provenance": {
+  "dream": "results/runs/move1/dream",
+  "scores": "results/runs/move1/scores.npz",
+  "frames": null,
+  "window_encoding": null,
+  "diff_floor": null,
+  "hidden_sizes": [
+   32
+  ],
+  "max_steps": 3000,
+  "run_id": "move1",
+  "dream_config_digest": "47480462a97726343ac334d7de5e51972156a5544102f35140d06a9c34db29f3",
+  "scores_sha256": "2936ad48dd11ae4f13f024461697698e0e9c2f6be7507af7eb5cd397176823d3",
+  "teacher_request_keys": [
+   "5d9bdf2e678d09cd613df680a9f9cdf8823dc7f1ada74cf66018afa93b4b2436",
+   "d334f911e39f1a712141e6b711c42b5f5572e988c19787da48db19a724ea582a",
+   "f656220c5fc79351c9f51cb1b24a1483eb87593b7c0aebf2c698eb115f991742"
+  ],
+  "config_digest": "47480462a97726343ac334d7de5e51972156a5544102f35140d06a9c34db29f3",
+  "seeds": {
+   "seed": 20261121,
+   "streams": {
+    "validation_split": "move/observed/validation_split",
+    "init": "move/observed/init",
+    "train": "move/observed/train"
+   },
+   "init": 608537836,
+   "train": 1430741265
+  },
+  "training_settings": {
+   "hidden_sizes": [
+    32
+   ],
+   "time_steps": 10,
+   "beta": 0.9,
+   "threshold": 1.0,
+   "readout_beta": 0.9,
+   "learn_beta": false,
+   "learn_threshold": false,
+   "surrogate": "atan",
+   "surrogate_alpha": 2.0,
+   "target_temperature": 0.5,
+   "target_spread": "global_median",
+   "spike_rate_penalty": 0.0,
+   "learning_rate": 0.002,
+   "adam_beta1": 0.9,
+   "adam_beta2": 0.999,
+   "adam_eps": 1e-08,
+   "weight_decay": 0.0,
+   "batch_size": 64,
+   "max_steps": 3000,
+   "validation_fraction": 0.1,
+   "evaluate_every_steps": 100,
+   "patience_evaluations": 5,
+   "torch_threads": 1,
+   "parity_logit_tolerance": 1e-09,
+   "out_of_range": "error"
+  }
+ },
+ "network": {
+  "files": [
+   "network.npz",
+   "network.json"
+  ],
+  "sha256": "636b8fc482e90a377c69a2c792a10f5424add334833b5934f64abddaace44559"
+ }
+}

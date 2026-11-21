@@ -1,0 +1,1 @@
+{"action_names":["vx+0.40_yaw+0.00","vx+0.60_yaw+0.00","vx+0.80_yaw+0.00","vx+1.00_yaw+0.00"],"format":"learned-judgment/spiking-network/v1","heads":{"action":[0,4]},"input":{"encoding":"(x - 0.5) * sqrt(12)","features":4},"layer_sizes":[4,32,4],"network_sha256":"0ac19fc832e06c20863149a54220ecbbc9a990371ee9f4cfc54db07cadd3e862","skill":"ramp"}
