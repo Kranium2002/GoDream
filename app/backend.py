@@ -11,9 +11,11 @@ contract (image_window), the DODGE actions (actions) and live inference through
 learned_judgment.runtime (inference).
 """
 import importlib
+import json
 import logging
 import math
 import threading
+import types
 from pathlib import Path
 
 from learned_judgment.skills import available_skills
@@ -47,19 +49,28 @@ def runs_dir(config: dict):
     return (ROOT / name, []) if name else (None, ["config.yaml observed.runs_dir (Dev B)"])
 
 
-def runner(config: dict):
-    """(runner, []) once Dev B's learning-run entry point is wired here, else (None, [what is missing]).
+RUN_SKILL = "learned_judgment.run_skill"
 
-    A runner has quote(declaration, config) -> dict, the TabPFN usage and cost a run would spend, shown to the person
-    before anything is spent; and start(declaration, config) -> run_id, which returns at once: the run itself goes in
-    a process of its own, writing <runs_dir>/<run_id>/events.jsonl and result.json, so it never holds up the
-    simulation thread or the HTTP server.
+
+def runner(config: dict):
+    """(runner, []) once Dev B's learned_judgment.run_skill imports, else (None, [what is missing]).
+
+    Agreed with Dev B (21:48 UTC): quote_run(declaration, config) -> dict, the TabPFN usage and cost a run would spend,
+    shown to the person before anything is spent; start_run(declaration, config) -> run_id, which returns at once and
+    reports progress in <observed.runs_dir>/<run_id>/events.jsonl, so a run never holds up the simulation thread or the
+    HTTP server. The runner returned here has them as quote and start.
     """
-    # WIRE: Dev B's runner entry point goes here once published. learned_judgment.observed (2026-11-21) is not one yet:
-    # its quote, teach and train commands need rows and dream files collected beforehand by
-    # learned_judgment.skills.dodge_vision, take no declaration, and nothing freezes the gate thresholds afterwards.
-    return None, ["Dev B's learning-run entry point that starts a run from a declaration and quotes its TabPFN cost "
-                  "first (learned_judgment.observed needs pre-collected rows and dream files and takes no declaration)"]
+    try:
+        module = importlib.import_module(RUN_SKILL)
+    except ImportError as e:
+        if e.name == RUN_SKILL:
+            return None, [f"{RUN_SKILL} (Dev B's learning-run entry point, not pushed yet)"]
+        log.warning("%s does not import: %s", RUN_SKILL, e)
+        return None, [f"{RUN_SKILL} (Dev B's learning-run entry point) does not import: it needs {e.name}"]
+    absent = [name for name in ("quote_run", "start_run") if not callable(getattr(module, name, None))]
+    if absent:
+        return None, [f"{RUN_SKILL}.{name} (Dev B)" for name in absent]
+    return types.SimpleNamespace(quote=module.quote_run, start=module.start_run), []
 
 
 def image_window(config: dict):
@@ -82,7 +93,19 @@ def actions(config: dict):
 
 RUNTIME = "learned_judgment.runtime"
 _runtime_lock = threading.Lock()  # Dev B's runtime keeps gate and cooldown state: one call at a time
-_loaded = {}  # the loaded student: "dir", "model" (a DodgeRuntime), "window" and "last_t" (its newest capture time)
+_loaded = {}  # the loaded student: "key", "model" (a DodgeRuntime), "thresholds", "window", "last_t" (newest time)
+DEV_THRESHOLDS = ("Live inference uses development thresholds from config.yaml app.infer.dev_thresholds, not calibrated "
+                  "ones.")
+
+
+def thresholds_mode():
+    """"frozen" or "development" for the loaded student, None before one is loaded."""
+    return _loaded.get("thresholds")
+
+
+def calibration_gate_passed():
+    """The loaded student's student.json calibration.gate_passed (Dev B's precision gate), None if not calibrated."""
+    return _loaded.get("gate_passed")
 
 
 def inference(config: dict):
@@ -94,7 +117,10 @@ def inference(config: dict):
     thresholds frozen in student.json. The window size is the student's (student.json input), and must match
     config.yaml vision, which the browser follows. Its infer(window, t_capture_s) refuses a time earlier than the
     previous call's, so the times passed on never go backwards; reset() starts a new camera session. One student is
-    loaded per server and every call holds one lock: the gate keeps state.
+    loaded per server and every call holds one lock: the gate keeps state. Only when the student has no frozen
+    thresholds and app.infer.dev_thresholds is set are those passed instead; every answer then carries
+    "thresholds": "development" (else "frozen"), and the log says so. A student calibrated by Dev B's dodge_eval has
+    a calibration block in student.json; its gate_passed goes into every answer.
     """
     published = image_window(config)
     missing = [] if published else ["config.yaml vision (Dev B)"]
@@ -115,11 +141,18 @@ def inference(config: dict):
         missing.append("student.json in the directory config.yaml app.infer.student_dir names")
     if missing:
         return None, None, None, missing
+    dev = config["app"]["infer"].get("dev_thresholds")
     with _runtime_lock:
-        if _loaded.get("dir") != directory:
+        if _loaded.get("key") != (directory, repr(dev)):
             try:
-                model = runtime.DodgeRuntime.load(ROOT / directory, config)
-            except RuntimeError:  # Dev B's "no frozen thresholds" (shortcut: retried on every call until fixed)
+                try:
+                    model, mode = runtime.DodgeRuntime.load(ROOT / directory, config), "frozen"
+                except RuntimeError:  # Dev B's "no frozen thresholds"
+                    if not dev:
+                        raise
+                    model, mode = runtime.DodgeRuntime.load(ROOT / directory, config, dev), "development"
+                    log.warning(DEV_THRESHOLDS)
+            except RuntimeError:  # shortcut: retried on every call until fixed
                 return None, None, None, ["gate thresholds frozen in the student's student.json (Dev B calibrates "
                                           "them on simulation dev trajectories)"]
             except Exception:
@@ -128,14 +161,18 @@ def inference(config: dict):
             if (model.frames, model.frame_size) != (published["frames"], published["height"]):
                 return None, None, None, [f"a student whose window ({model.frames} frames of {model.frame_size} x "
                                           f"{model.frame_size}) matches config.yaml vision"]
-            _loaded.update(dir=directory, model=model, last_t=-math.inf,
+            calibration = json.loads((ROOT / directory / "student.json").read_text(encoding="utf-8")).get("calibration")
+            gate_passed = calibration.get("gate_passed") if isinstance(calibration, dict) else None
+            _loaded.update(key=(directory, repr(dev)), model=model, thresholds=mode, last_t=-math.inf,
+                           gate_passed=gate_passed if isinstance(gate_passed, bool) else None,
                            window={"frames": model.frames, "height": model.frame_size, "width": model.frame_size})
-        model, window = _loaded["model"], _loaded["window"]
+        model, window, mode = _loaded["model"], _loaded["window"], _loaded["thresholds"]
+        extra = {"thresholds": mode} | ({} if _loaded["gate_passed"] is None else {"gate_passed": _loaded["gate_passed"]})
 
     def run(frames, t_capture_s):
         with _runtime_lock:
             t = _loaded["last_t"] = max(t_capture_s, _loaded["last_t"])  # a skewed frame age must not step back
-            return model.infer(frames, t)
+            return {**model.infer(frames, t), **extra}  # "development" must be impossible to miss
 
     def reset():
         with _runtime_lock:

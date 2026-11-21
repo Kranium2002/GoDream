@@ -2,6 +2,7 @@
 the camera-derived window never reaches a log line, an error message or a response. The runtime here is a stand-in
 written by the test to exercise this server's own code; it is no evidence that live inference works."""
 import copy
+import types
 import logging
 
 import numpy as np
@@ -189,3 +190,55 @@ def test_the_infer_event_carries_the_action_and_confidences_only():
     result = StandIn().infer(np.zeros((2, 3, 3), np.float32), 0.0)
     assert infer.event(result) == {"action": "DODGE_LEFT", "threat_confidence": result["threat_confidence"],
                                    "action_confidence": 0.9}
+
+
+# ---- development thresholds ----------------------------------------------------------------------------------------
+
+DEV = {"threat": 0.9, "action": 0.6, "margin": 0.3}
+
+
+def test_frozen_thresholds_are_labelled_frozen(config, tmp_path):
+    run, _, window, missing = backend.inference(with_student(config, write_student(tmp_path / "s", config)))
+    out = run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)
+    assert missing == [] and out["thresholds"] == "frozen" and backend.thresholds_mode() == "frozen"
+
+
+def test_development_thresholds_are_used_only_when_configured_and_say_so(config, tmp_path, caplog):
+    own = with_student(config, write_student(tmp_path / "s", config, thresholds=None))
+    own["app"]["infer"]["dev_thresholds"] = DEV
+    with caplog.at_level(logging.WARNING):
+        run, _, window, missing = backend.inference(own)
+    out = run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)
+    assert missing == [] and out["thresholds"] == "development" and backend.thresholds_mode() == "development"
+    assert any("development" in r.getMessage() and "not calibrated" in r.getMessage() for r in caplog.records)
+
+
+def test_development_thresholds_never_override_frozen_ones(config, tmp_path):
+    own = with_student(config, write_student(tmp_path / "s", config))
+    own["app"]["infer"]["dev_thresholds"] = {"threat": 0.1, "action": 0.1, "margin": 0.0}
+    run, _, window, _ = backend.inference(own)
+    assert run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)["thresholds"] == \
+        "frozen"
+
+
+def test_the_committed_config_has_no_development_thresholds(config):
+    assert config["app"]["infer"]["dev_thresholds"] is None
+
+
+def test_a_calibrated_students_gate_result_is_passed_through(config, tmp_path):
+    import json
+    directory = write_student(tmp_path / "s", config)
+    student = json.loads((directory / "student.json").read_text())
+    student["calibration"] = {"gate_passed": False, "precision": 0.97}  # as Dev B's dodge_eval calibrate writes it
+    (directory / "student.json").write_text(json.dumps(student))
+    run, _, window, missing = backend.inference(with_student(config, directory))
+    out = run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)
+    assert missing == [] and out["gate_passed"] is False and backend.calibration_gate_passed() is False
+    assert "did not pass" in infer.infer_capability(types.SimpleNamespace(config=with_student(config, directory)))[
+        "reason"]
+
+
+def test_an_uncalibrated_student_has_no_gate_result(config, tmp_path):
+    run, _, window, _ = backend.inference(with_student(config, write_student(tmp_path / "s", config)))
+    out = run(np.zeros((window["frames"], window["height"], window["width"]), np.float32), 1.0)
+    assert "gate_passed" not in out and backend.calibration_gate_passed() is None

@@ -734,6 +734,7 @@ app:  # The local viewer server: uv run python -m app.server
   port: 8765  # --port overrides it; --port 0 picks a free port and prints it.
   stream_fps: 10  # PNG frames per second on /api/stream; must divide the 50 Hz control rate into whole control periods.
   observation_hz: 10  # Observation events per second on /api/events; the same rule as stream_fps.
+  pose_hz: 25  # Body pose events per second on /api/events for the 3D view; the same rule as stream_fps.
   fall_restart_pause_s: 2.0  # After a fall, seconds the fallen dog stays on screen before a fresh episode starts.
   png_compression_level: 1  # zlib level 0-9; measured on 640x480 frames: level 1 13 ms and 64 kB, level 6 51 ms and 61 kB.
   # POST /api/chat: Claude turns a request into a declaration (data only, validated, never executed). The key is
@@ -753,6 +754,9 @@ app:  # The local viewer server: uv run python -m app.server
     # The frozen student directory (student.json, network.npz, network.json with frozen thresholds), relative to the
     # repository root; Dev B's observed run exports it to <observed.runs_dir>/<run>/student/. null until one exists.
     student_dir: null
+    # Development only: {threat, action, margin} passed to the runtime when the student has no frozen thresholds; every
+    # answer, the infer capability and the log then say so. Never committed set; null uses frozen thresholds only.
+    dev_thresholds: null
     # A frame age (receive time minus the browser's captured_ms, both wall clocks) outside 0 to this is clock skew:
     # it is taken as 0 and flagged in the answer, never an error.
     max_frame_age_ms: 2000

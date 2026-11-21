@@ -301,7 +301,8 @@ def test_static_files_come_only_from_the_static_directory(server):
             assert conn.getresponse().status == expected, path
 
 
-@pytest.mark.parametrize("key, value", [("stream_fps", 15), ("observation_hz", 7), ("host", "0.0.0.0")])
+@pytest.mark.parametrize("key, value", [("stream_fps", 15), ("observation_hz", 7), ("pose_hz", 30),
+                                        ("host", "0.0.0.0")])
 def test_server_refuses_to_start_with_an_unusable_app_setting(config, key, value):
     bad = copy.deepcopy(config)
     bad["app"][key] = value
@@ -357,6 +358,9 @@ def test_new_run_lines_are_relayed_as_events_and_the_run_can_be_read(own_server)
         (root / "r_test" / "events.jsonl").write_text(json.dumps(line) + "\n")
         assert next(data for name, data in events if name == "run") == line
     assert request(own_server, "GET", "/api/runs") == (200, ["r_test"])
+    assert request(own_server, "GET", "/api/runs?summary=1") == (200, [{
+        "run_id": "r_test", "skill": "RAMP", "state": "running", "updated_utc": "2026-11-21T22:00:00Z",
+        "steps_done": 1, "has_result": False, "has_student": False}])
     status, run = request(own_server, "GET", "/api/runs/r_test")
     assert status == 200 and run["state"] == "running" and run["baseline"] == {"anything": [1, 2]}
     assert run["steps"] == [{k: line[k] for k in ("step", "state", "done", "total", "data")}]
@@ -381,6 +385,7 @@ def test_infer_runs_end_to_end_through_dev_bs_real_runtime(own_server):
                 "cooldown_remaining_s", "hold_remaining_s", "issued", "cooldown_conflict", "valid", "inference_ms",
                 "latency_ms", "frame_age_ms", "frame_age_clamped"} <= set(answer)
         assert answer["action"] == "NO_OP" and answer["valid"] is True and answer["command"] == zero
+        assert answer["thresholds"] == "frozen"  # the hand-built student has frozen thresholds
         assert next(data for name, data in events if name == "infer")["action"] == "NO_OP"
         assert observe(events, until_s=before + 0.5)[-1]["command"] == zero  # replaced the trot on the stage
     later = body | {"captured_ms": body["captured_ms"] - 5000.0, "session_start": False}  # skewed: clamped, no error
@@ -508,3 +513,43 @@ def test_a_failing_inference_leaks_the_window_nowhere(server, monkeypatch, caplo
     no_leak(json.dumps(body) + json.dumps(bad))
     no_leak(" ".join(r.getMessage() for r in caplog.records))
     assert all(r.exc_info is None for r in caplog.records if r.name.startswith("app"))
+
+
+# ---- the 3D view: robot description and body poses ----------------------------------------------------------------
+
+def test_robot_describes_the_stage_model_and_is_built_once_per_world(server):
+    status, described = request(server, "GET", "/api/robot")
+    assert status == 200 and described["up"] == "z" and described["units"] == "m"
+    model = server.sim.described
+    assert len(described["bodies"]) == model.nbody and described["meshes"]
+    assert all(g["group"] == 2 for g in described["geoms"] if g["type"] == "mesh")
+    assert {g["type"] for g in described["geoms"]} >= {"mesh", "plane"}
+    assert request(server, "GET", "/api/robot")[1] == described  # the same text, not rebuilt per request
+
+
+def test_pose_events_move_every_body_at_the_configured_rate(server, config):
+    nbody = len(request(server, "GET", "/api/robot")[1]["bodies"])
+    with event_stream(server) as events:
+        fresh_episode(server, events)
+        poses = []
+        for name, data in events:
+            if name == "pose":
+                poses.append(data)
+                if data["t_s"] >= 1.0:
+                    break
+    assert all(len(p["pos"]) == len(p["quat"]) == nbody for p in poses)
+    steps = np.diff([p["t_s"] for p in poses])
+    assert np.isclose(steps.min(), 1 / config["app"]["pose_hz"])  # newest-only may skip some, never closer
+    assert poses[-1]["pos"] != poses[0]["pos"]  # the bodies move (the dog settles and breathes)
+
+
+def test_a_rebuilt_world_tells_the_page_to_fetch_the_robot_again(server):
+    version = request(server, "GET", "/api/robot")[1]["version"]
+    with event_stream(server) as events:
+        assert request(server, "POST", "/api/reset", {"preset": "heavy_payload"}) == (200, {"preset": "heavy_payload"})
+        signal = next(data for name, data in events if name == "robot")
+        assert signal == {"reason": "world_rebuilt", "version": version + 1}
+        pose = next(data for name, data in events if name == "pose")
+        assert pose["version"] == version + 1
+    assert request(server, "GET", "/api/robot")[1]["version"] == version + 1
+    request(server, "POST", "/api/reset", {"preset": "default"})
