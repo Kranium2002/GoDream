@@ -1,0 +1,39 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+temperature 0.5 (config); config target_spread 'global_median'; modes ('global_median', 'per_row')
+  [ok] SNNSettings.target_spread comes from config.yaml
+
+== a mixed-scale score matrix (hand-made fixture) ==
+  global spread (median row std) 4.3715; small-scale row std ~ 0.0149
+  small-scale rows: mean max target probability global_median 0.0289, per_row 0.1798 (uniform 0.0286)
+  [ok] global_median (the old behaviour): small-scale rows get practically uniform targets
+  [ok] per_row: small-scale rows get targets concentrated on their best candidates
+  [ok] per_row: every row's targets rank the candidates exactly as its scores do
+  [ok] global_median: rows are distributions (max |sum - 1| = 3.3e-16)
+  [ok] global_median: argmax of every row = argmax of its scores
+  [ok] per_row: rows are distributions (max |sum - 1| = 4.4e-16)
+  [ok] per_row: argmax of every row = argmax of its scores
+  [ok] per_row: a row's targets do not depend on the other rows
+  [ok] per_row: invariant to a positive affine change of the scores (rounding level)
+
+== flat rows and argument errors ==
+  [ok] per_row: a row whose candidates all score the same gets the uniform target
+  [ok] per_row: a flat row whose computed std is 1.4e-17 (rounding of the mean) is still flat -> uniform
+  [ok] per_row with a spread -> ValueError: target_spread 'per_row' takes each row's own spread; spread must be None, got 1.0
+  [ok] global_median without a spread -> ValueError: target_spread 'global_median' needs spread (the score_spread of the training rows)
+  [ok] an unknown mode -> ValueError: target_spread must be one of ('global_median', 'per_row'); got 'median'
+  [ok] per_row on a non-flat row whose std underflows to 0 -> ValueError: row 1: temperature x row spread = 0.0 is not a finite number > 0 (row spread 0.0, temperature 1.0)
+  [ok] per_row with temperature x spread underflowing to 0 -> ValueError: row 1: temperature x row spread = 0.0 is not a finite number > 0 (row spread 1.1180277652984981e-160, temperature 1e-200)
+  [ok] SNNSettings with target_spread 'median' -> ValueError: students.snn.target_spread must be one of ('global_median', 'per_row'); got 'median'
+
+== training uses the configured mode ==
+  [ok] per_row on the fixture dream: argmax of every row = the dream's choice
+  global_median: digest a0657b786a075e04..., meta dream.target_spread 'global_median', score_spread 0.17154139203196878, training_row_spread {'definition': "population std of each training row's dreamed scores across its candidates", 'min': 0.04795012692891592, 'median': 0.17154139203196878, 'max': 0.3047885979105836, 'n_flat_rows': 0}
+  [ok] global_median: the mode is recorded in meta
+  per_row: digest 3ee14a7928252634..., meta dream.target_spread 'per_row', score_spread None, training_row_spread {'definition': "population std of each training row's dreamed scores across its candidates", 'min': 0.04795012692891592, 'median': 0.17154139203196878, 'max': 0.3047885979105836, 'n_flat_rows': 0}
+  [ok] per_row: the mode is recorded in meta
+  [ok] per_row: no global score_spread is recorded
+  [ok] the two modes train different networks from the same seed (the setting reaches training)
+  [ok] per_row training on a dream whose rows are all flat -> ValueError: all 450 training rows score every candidate identically; the dream gives nothing to learn
+
+CHECK RESULT: 24 assertions held, 0 failed 

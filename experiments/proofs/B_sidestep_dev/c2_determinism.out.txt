@@ -1,0 +1,22 @@
+DEV RUN on the real Go2 simulator (Person A's Go2World, preset default, no ball) - development check of the sidestep_reach dev skill; not an evaluation result, not in any report or table
+config digest ce120918902c | world seed 1015552365 (stream 'sidestep_reach/dev/world') | preset default
+situation {'dog_forward_speed_m_s': 0.45752522460859135, 'target_sideways_m': 0.13207557643196677, 'declared_payload_kg': 0.0, 'declared_surface': 'default'}
+action    {'side_velocity_m_s': 0.25, 'hold_duration_s': 0.5} (physics-only choice)
+attempt seeds: 2896971162 (dev noise, situation 0, repeat 0); others [1960230664, 2940924941, 1833819288] (repeats 1..3)
+
+outcome: {'sideways_error_m': 0.052747349676190824, 'fall': 0.0, 'lateral_command_m': 0.125}
+PASS  same world, same inputs, twice in one process: identical outcome bit for bit  [{'sideways_error_m': '0x1.b01b35b9ead48p-5', 'fall': '0x0.0p+0', 'lateral_command_m': '0x1.0000000000000p-3'}]
+PASS  a fresh world with the same world seed: identical outcome bit for bit
+PASS  process 1 (fresh interpreter, 3.0 s): same inputs and identical outcome bit for bit  [exit 0]
+PASS  process 2 (fresh interpreter, 3.4 s): same inputs and identical outcome bit for bit  [exit 0]
+
+== other attempt seeds (allowed to differ; this is the noise between attempts) ==
+  attempt seed 1960230664: {'sideways_error_m': 0.052747349676190824, 'fall': 0.0, 'lateral_command_m': 0.125}
+  attempt seed 2940924941: {'sideways_error_m': 0.052747349676190824, 'fall': 0.0, 'lateral_command_m': 0.125}
+  attempt seed 1833819288: {'sideways_error_m': 0.052747349676190824, 'fall': 0.0, 'lateral_command_m': 0.125}
+outcome differs from attempt seed 2896971162: no; largest |difference| per outcome: sideways_error_m 0.000e+00, fall 0.000e+00, lateral_command_m 0.000e+00
+(Go2World draws no noise yet: its docstring says the simulator and the policy are deterministic.)
+
+wall time per episode in this process: mean 0.78 s over 6 episodes
+
+4 passed, 0 failed

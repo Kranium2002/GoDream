@@ -364,7 +364,9 @@ class Decision:
         chosen_index:  argmax of ``scores``.
         physics_index: index of the action physics alone would choose.
         predicted:     OutcomeDistribution with C rows, aligned with ``candidates``.
-        request_hash:  cache key of the single batched provider request, when one was made.
+        request_hash:  cache key of the last provider request behind the decision, when one was made.
+        request_hashes: cache keys of every provider request behind the decision (several when the
+                       model sends one request per outcome or splits a large batch).
     """
 
     skill: str
@@ -376,6 +378,7 @@ class Decision:
     physics_index: int
     predicted: OutcomeDistribution
     request_hash: str | None = None
+    request_hashes: tuple[str, ...] = ()
 
     @property
     def action(self) -> np.ndarray:

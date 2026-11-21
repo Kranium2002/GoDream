@@ -134,45 +134,87 @@ class InputEncoder:
 class SharedInputEncoder:
     """Encoder of the shared multi-skill network.
 
-    Layout of one encoded row (width = ``feature_width`` + number of skills):
+    Layout of one encoded row (width = ``feature_width`` + ``n_slots``):
 
-        [ the skill's own encoding, zero-padded to feature_width | one-hot skill ID ]
+        [ the skill's own encoding, zero-padded to feature_width | one-hot skill slot ]
 
-    ``skills`` lists every skill the shared network is planned to hold, in a fixed order, and
-    ``feature_width`` is fixed up front (config.yaml), because the input width of a trained
-    network cannot change when a skill is added later.
+    ``n_slots`` and ``feature_width`` are fixed when the network is created (config.yaml),
+    because the input width of a trained network cannot change. A skill takes the next free
+    slot when it is added, and keeps it: ``skills`` lists the skills assigned so far, and a
+    skill's slot is its position in that tuple. Unassigned slots are inputs that stay zero.
     """
 
-    skills: tuple[str, ...]
+    n_slots: int
     feature_width: int
+    skills: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         skills = tuple(self.skills)
-        if not skills or len(set(skills)) != len(skills):
-            raise ValueError(f"skills must be a non-empty list of unique names; got {skills}")
+        if int(self.n_slots) < 1:
+            raise ValueError(f"n_slots must be >= 1; got {self.n_slots}")
         if int(self.feature_width) < 1:
             raise ValueError(f"feature_width must be >= 1; got {self.feature_width}")
-        object.__setattr__(self, "skills", skills)
+        if len(set(skills)) != len(skills) or not all(isinstance(skill, str) and skill for skill in skills):
+            raise ValueError(f"skills must be unique non-empty names; got {skills}")
+        if len(skills) > int(self.n_slots):
+            raise ValueError(f"{len(skills)} skills do not fit into {self.n_slots} slots")
+        object.__setattr__(self, "n_slots", int(self.n_slots))
         object.__setattr__(self, "feature_width", int(self.feature_width))
+        object.__setattr__(self, "skills", skills)
 
     @property
     def width(self) -> int:
-        return self.feature_width + len(self.skills)
+        return self.feature_width + self.n_slots
 
-    def encode(self, skill: str, encoder: InputEncoder, situations: np.ndarray) -> np.ndarray:
-        """Encode one skill's situations (n, S) into the shared layout (n, width)."""
-        if skill not in self.skills:
-            raise ValueError(f"skill {skill!r} is not one of the shared network's skills {self.skills}")
+    @property
+    def free_slots(self) -> int:
+        return self.n_slots - len(self.skills)
+
+    def slot_of(self, skill: str) -> int:
+        try:
+            return self.skills.index(skill)
+        except ValueError:
+            raise ValueError(f"skill {skill!r} has no slot; assigned skills: {self.skills}") from None
+
+    def with_skill(self, skill: str) -> "SharedInputEncoder":
+        """The encoder after ``skill`` took the next free slot. Existing slots never move."""
+        if skill in self.skills:
+            raise ValueError(f"skill {skill!r} already has slot {self.skills.index(skill)}")
+        if self.free_slots == 0:
+            raise ValueError(f"all {self.n_slots} skill slots are taken by {self.skills}")
+        return SharedInputEncoder(n_slots=self.n_slots, feature_width=self.feature_width, skills=(*self.skills, skill))
+
+    def _check_width(self, skill: str, encoder: InputEncoder) -> None:
         if encoder.width > self.feature_width:
             raise ValueError(
                 f"skill {skill!r} needs {encoder.width} encoded columns but the shared feature width is "
                 f"{self.feature_width}"
             )
+
+    def encode(self, skill: str, encoder: InputEncoder, situations: np.ndarray) -> np.ndarray:
+        """Encode one skill's situations (n, S) into the shared layout (n, width)."""
+        slot = self.slot_of(skill)
+        self._check_width(skill, encoder)
         own = encoder.encode(situations)
-        row = np.zeros((own.shape[0], self.width))
-        row[:, : own.shape[1]] = own
-        row[:, self.feature_width + self.skills.index(skill)] = 1.0
+        rows = np.zeros((own.shape[0], self.width))
+        rows[:, : own.shape[1]] = own
+        rows[:, self.feature_width + slot] = 1.0
+        return rows
+
+    def encode_one(self, skill: str, encoder: InputEncoder, situation: np.ndarray) -> np.ndarray:
+        """Encode one situation (S,) into the shared layout (width,): the per-decision path."""
+        slot = self.slot_of(skill)
+        self._check_width(skill, encoder)
+        own = encoder.encode_one(situation)
+        row = np.zeros(self.width)
+        row[: own.shape[0]] = own
+        row[self.feature_width + slot] = 1.0
         return row
 
     def describe(self) -> dict[str, Any]:
-        return {"kind": "shared_padded_skill_one_hot", "skills": list(self.skills), "feature_width": self.feature_width}
+        return {
+            "kind": "shared_padded_slot_one_hot",
+            "n_slots": self.n_slots,
+            "feature_width": self.feature_width,
+            "skills": list(self.skills),
+        }

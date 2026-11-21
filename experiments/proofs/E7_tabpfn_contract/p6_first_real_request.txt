@@ -1,0 +1,48 @@
+CONTRACT PROOF - one real billed TabPFN request on FIXTURE data; not evidence about the robot, the simulator or any model's quality
+
+== settings (config.yaml, unchanged) ==
+  config digest dc09cf80bcc6 | client 0.10.1 | model_path v3.5_default | n_estimators 8 | mode stacked
+  max_tokens_per_request 10000 | project_token_budget 35000000
+  cache_dir D:\BerlinPrior\.cache\tabpfn | call_log D:\BerlinPrior\results\tabpfn_calls.jsonl
+
+== before ==
+  connected; installed tabpfn_client 0.10.1
+  usage before: {'current_usage': 40000, 'usage_limit': 35000000, 'daily_tokens_used': 40000, 'daily_token_limit': 35000000, 'monthly_tokens_used': 40000, 'monthly_token_limit': 35000000}
+
+== the request ==
+  answered in 2.98 s | prediction calls started: 1 | request hashes: ['416a06c40ddd']
+
+== response layout as parsed by the teacher ==
+  quantile levels [np.float64(0.1), np.float64(0.25), np.float64(0.5), np.float64(0.75), np.float64(0.9)] | spread levels [0.1, 0.9]
+  [ok] mean has shape (108, 5)
+  [ok] median has shape (108, 5)
+  [ok] quantiles have shape (108, 5, 5)
+  [ok] spread has shape (108, 5)
+  [ok] every value is finite
+  [ok] quantiles do not decrease with the level
+  [ok] spread is not negative
+  largest |quantile(0.5) - median| = 0.000e+00
+    min_separation_m: mean abs error of the predicted mean against the fixture's noise-free residual 0.0168 | correlation 0.989 | mean spread 0.0584
+           collision: mean abs error of the predicted mean against the fixture's noise-free residual 0.0219 | correlation 0.949 | mean spread 0.0617
+                fall: mean abs error of the predicted mean against the fixture's noise-free residual 0.0177 | correlation 0.923 | mean spread 0.0504
+     recovery_time_s: mean abs error of the predicted mean against the fixture's noise-free residual 0.0375 | correlation 0.981 | mean spread 0.1066
+   lateral_command_m: mean abs error of the predicted mean against the fixture's noise-free residual 0.0143 | correlation 0.960 | mean spread 0.0465
+
+== charge against the quote ==
+  call-log record: {'billable_dispatch': True, 'cache_hit': False, 'chunk': {'count': 1, 'first_row': 0, 'index': 0, 'stop_row': 540, 'total_rows': 540}, 'event': 'dispatch', 'key': '416a06c40ddda5d45b182f4f7e26245554f7fecfb239b6dc66d80c4a3e07268f', 'mode': 'stacked', 'n_features': 18, 'n_query': 540, 'n_train': 200, 'outcomes': ['min_separation_m', 'collision', 'fall', 'recovery_time_s', 'lateral_command_m'], 'padded_rows': 0, 'quote_tokens': 10000, 'rate_limit_configured': False, 'skill': 'fixture_first_request', 'timestamp_utc': '2026-11-21T17:03:47.760978+00:00', 'tokens_quoted_before': 0}
+  call-log record: {'adopted': False, 'billable_dispatch': False, 'cache_hit': False, 'chunk': {'count': 1, 'first_row': 0, 'index': 0, 'stop_row': 540, 'total_rows': 540}, 'event': 'completed', 'key': '416a06c40ddda5d45b182f4f7e26245554f7fecfb239b6dc66d80c4a3e07268f', 'median_vs_q50_max_abs_diff': 0.0, 'mode': 'stacked', 'n_features': 18, 'n_query': 540, 'n_train': 200, 'outcomes': ['min_separation_m', 'collision', 'fall', 'recovery_time_s', 'lateral_command_m'], 'padded_rows': 0, 'quote_tokens': 10000, 'sidecar_error': None, 'skill': 'fixture_first_request', 'timestamp_utc': '2026-11-21T17:03:50.608215+00:00', 'timings': {'fit': {'elapsed_s': 0.723, 'fit_s': 0.0, 'queue_wait_s': 0.202, 'train_set_transform_s': 0.521}, 'predict': {'predict_queue_wait_s': 0.0, 'predict_s': 0.509, 'test_set_transform_queue_wait_s': 0.076, 'test_set_transform_s': 0.045}}, 'unvalidated_cleanup_error': None, 'unvalidated_write_error': None, 'usage_delta': {'current_usage': 10000, 'daily_tokens_used': 10000, 'monthly_tokens_used': 10000}, 'wall_s': {'fit': 2.0340935999993235, 'predict': 0.7539950000063982}}
+  [ok] the call log holds at least one billed dispatch for this request
+  usage after:  {'current_usage': 50000, 'usage_limit': 35000000, 'daily_tokens_used': 50000, 'daily_token_limit': 35000000, 'monthly_tokens_used': 50000, 'monthly_token_limit': 35000000}
+  quoted for the billed dispatch(es): 10000 tokens | account counters that moved: {'current_usage': (40000, 50000), 'daily_tokens_used': (40000, 50000), 'monthly_tokens_used': (40000, 50000)}
+  charged according to the account: {'current_usage': 10000, 'daily_tokens_used': 10000, 'monthly_tokens_used': 10000} (the quote was 10000)
+
+== the same call again ==
+  answered in 0.010 s | prediction calls started: 1
+  [ok] no second request was sent
+  [ok] the cached answer is bit-for-bit the first answer
+  [ok] the request hashes are the same
+  [ok] the account counters did not move for the cached call
+  tokens quoted for billed calls in the project ledger so far: 10000
+
+RESULT: 0 failed check(s)
+exit code: 0

@@ -1,0 +1,30 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+== loss and success (preregistered DODGE definitions) ==
+  loss [0.0, 1.0, 1.0, 1.0, 0.0]
+  success [True, False, False, False, True]
+PASS  loss = 1 exactly where collision or fall is 1
+PASS  loss is float64 of shape (n,)
+PASS  success = no collision and no fall
+PASS  success is bool of shape (n,)
+PASS  success is the complement of loss
+PASS  empty input gives empty output
+PASS  four columns instead of five  [ValueError: measured must have shape (n, 5); got (5, 4)]
+PASS  non-finite measured value  [ValueError: measured contain non-finite values]
+
+== engine.dream with model=None ==
+  DreamSet: 60 rows x 108 candidates, method physics_only
+PASS  a DreamSet
+PASS  108 candidates per row
+PASS  one row per dreamed situation
+PASS  names follow the spec
+PASS  primary outcome min_separation_m
+PASS  dreamed situations carry the declared values
+PASS  chosen actions inside the bounds
+PASS  physics only: chosen equals the physics choice
+PASS  no provider request behind the dreams
+PASS  physics only: zero predictive spread
+PASS  chosen physics equals physics_guess at the chosen actions
+  chosen side velocities: (array([-1.  , -0.75,  0.75,  1.  ]), array([22,  5,  4, 29]))
+
+19 passed, 0 failed

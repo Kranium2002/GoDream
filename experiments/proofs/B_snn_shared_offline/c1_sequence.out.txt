@@ -1,128 +1,90 @@
-﻿FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
 
-check config: config.yaml with students.snn.shared_feature_width=6 (fixture; config.yaml value None) and students.snn.shared_skills=['fx_alpha', 'fx_beta', 'fx_gamma', 'fx_delta', 'fx_wide'] (fixture names; config.yaml value ['dodge', 'brake', 'turn', 'ramp'])
-settings: students.snn with max_steps=300 passed explicitly (config value 1500)
-  {'hidden_sizes': [64], 'time_steps': 10, 'beta': 0.9, 'threshold': 1.0, 'readout_beta': 0.9, 'learn_beta': False, 'learn_threshold': False, 'surrogate': 'atan', 'surrogate_alpha': 2.0, 'target_temperature': 0.5, 'spike_rate_penalty': 0.0, 'learning_rate': 0.002, 'batch_size': 64, 'max_steps': 300, 'validation_fraction': 0.1, 'evaluate_every_steps': 100, 'patience_evaluations': 5, 'torch_threads': 1}
-  rehearsal_fraction=0.5 (config)
-
-== create(config) ==
-  [ok] create reads shared_skills and shared_feature_width; input width W = 11
-  [ok] create reads every students.snn setting (SNNSettings.from_config)
-  [ok] create reads students.snn.rehearsal_fraction
-  [ok] a created student is empty
+check config: config.yaml with students.snn.shared_feature_width=6 (fixture) and students.snn.max_steps=300 (config.yaml 1500); shared_skill_slots=8, shared_retention_fraction=0.1, validation_fraction=0.1, rehearsal_fraction=0.5 (config.yaml)
   fixture fx_alpha: S=3 encoded D=4 C=35 grid=(7, 5) dream rows=1000 method=physics_only
   fixture fx_beta: S=5 encoded D=5 C=15 grid=(15,) dream rows=800 method=physics_only
   fixture fx_gamma: S=2 encoded D=3 C=18 grid=(3, 6) dream rows=600 method=physics_only
-  fixture fx_delta: S=4 encoded D=4 C=11 grid=(11,) dream rows=600 method=physics_only
 
-== check 1: fx_alpha -> fx_beta -> fx_gamma with rehearsal=True ==
-  + fx_alpha: steps_run=300 best_step=300 validation total 1.3237 -> 0.0274; add_skill wall 27.5 s (fit 16.1 s); rehearsal_applied=False sampling={'fx_alpha': 1.0}
-      parity fx_alpha: rows 100 spike-count mismatches [0] decisions differing 0 max|logit diff| 3.6e-15
-  + fx_beta: steps_run=300 best_step=300 validation total 0.6387 -> 0.0344; add_skill wall 18.4 s (fit 18.3 s); rehearsal_applied=True sampling={'fx_beta': 0.5, 'fx_alpha': 0.5}
-      parity fx_alpha: rows 100 spike-count mismatches [0] decisions differing 0 max|logit diff| 1.3e-15
-      parity fx_beta: rows 80 spike-count mismatches [0] decisions differing 0 max|logit diff| 0.0e+00
-  + fx_gamma: steps_run=300 best_step=300 validation total 0.8313 -> 0.0143; add_skill wall 26.7 s (fit 26.5 s); rehearsal_applied=True sampling={'fx_gamma': 0.5, 'fx_alpha': 0.25, 'fx_beta': 0.25}
-      parity fx_alpha: rows 100 spike-count mismatches [0] decisions differing 0 max|logit diff| 2.7e-15
-      parity fx_beta: rows 80 spike-count mismatches [0] decisions differing 0 max|logit diff| 0.0e+00
-      parity fx_gamma: rows 60 spike-count mismatches [0] decisions differing 0 max|logit diff| 8.9e-16
-  sequence wall time incl. torch import: 72.7 s; versions {'torch': '2.15.0+cpu', 'snntorch': '1.0.0', 'numpy': '2.5.5', 'python': '3.13.16'}
-  [ok] after adding fx_alpha: every view ['fx_alpha'] reproduces the torch model on its held-out rows (zero spike-count mismatches, identical decisions)
-  [ok] after adding fx_beta: every view ['fx_alpha', 'fx_beta'] reproduces the torch model on its held-out rows (zero spike-count mismatches, identical decisions)
-  [ok] after adding fx_gamma: every view ['fx_alpha', 'fx_beta', 'fx_gamma'] reproduces the torch model on its held-out rows (zero spike-count mismatches, identical decisions)
-  [ok] batch shares: new skill 1 - rehearsal_fraction, earlier skills rehearsal_fraction split evenly: [{'fx_alpha': 1.0}, {'fx_beta': 0.5, 'fx_alpha': 0.5}, {'fx_gamma': 0.5, 'fx_alpha': 0.25, 'fx_beta': 0.25}]
-  [ok] rehearsal applied from the second skill on (nothing to rehearse for the first)
-  [ok] the trunk is initialised once (first add) and continued afterwards
-  [ok] all per-skill views share one trunk (identical hidden weights, biases, betas, thresholds)
-  [ok] view layer sizes (W, H, C_skill): [(11, 64, 35), (11, 64, 15), (11, 64, 18)]
-  [ok] with rehearsal the earlier head fx_alpha is trained again (its readout changed)
-  [ok] fx_alpha: decide -> (300, 2) in-bounds actions = candidate_actions(situation, (7, 5))[decide_index]
-  [ok] fx_alpha: operation_counts layer sizes (11, 64, 35), mean spikes per layer [187.5]
-  [ok] fx_alpha: held-out rows (100) are the per-skill student's validation rows for this seed
-  [ok] fx_alpha: decide_index on the held-out rows reproduces the last record's agreement and regret
-  [ok] fx_beta: decide -> (300, 1) in-bounds actions = candidate_actions(situation, (15,))[decide_index]
-  [ok] fx_beta: operation_counts layer sizes (11, 64, 15), mean spikes per layer [160.7]
-  [ok] fx_beta: held-out rows (80) are the per-skill student's validation rows for this seed
-  [ok] fx_beta: decide_index on the held-out rows reproduces the last record's agreement and regret
-  [ok] fx_gamma: decide -> (300, 2) in-bounds actions = candidate_actions(situation, (3, 6))[decide_index]
-  [ok] fx_gamma: operation_counts layer sizes (11, 64, 18), mean spikes per layer [156.1]
-  [ok] fx_gamma: held-out rows (60) are the per-skill student's validation rows for this seed
-  [ok] fx_gamma: decide_index on the held-out rows reproduces the last record's agreement and regret
-  [ok] retention matrices are 3 x 3, numbers for j <= i and None above the diagonal
-  [ok] diagonal R[i][i] = the new skill's own held-out numbers in its add record
-  [ok] backward_transfer = mean over j < last of (R[last][j] - R[j][j]) for every matrix
+== 1. fx_alpha -> fx_beta -> fx_gamma with rehearsal=True ==
+  + fx_alpha (slot 0): steps_run=300 best_step=300 validation total 1.2510 -> 0.0267; add wall 5.5 s; heads trained ['fx_alpha'] sampling={'fx_alpha': 1.0}
+  + fx_beta (slot 1): steps_run=300 best_step=300 validation total 0.5468 -> 0.0387; add wall 4.3 s; heads trained ['fx_beta', 'fx_alpha'] sampling={'fx_beta': 0.5, 'fx_alpha': 0.5}
+  + fx_gamma (slot 2): steps_run=300 best_step=300 validation total 0.6750 -> 0.0184; add wall 6.4 s; heads trained ['fx_gamma', 'fx_alpha', 'fx_beta'] sampling={'fx_gamma': 0.5, 'fx_alpha': 0.25, 'fx_beta': 0.25}
+  wall 16.2 s incl. torch import; versions {'torch': '2.15.0+cpu', 'snntorch': '1.0.0', 'numpy': '2.5.5', 'python': '3.13.16'}
 
-== check 2: the same sequence and seeds with rehearsal=False (no-rehearsal control) ==
-  + fx_alpha: steps_run=300 best_step=300 validation total 1.3237 -> 0.0274; add_skill wall 9.5 s (fit 9.3 s); rehearsal_applied=False sampling={'fx_alpha': 1.0}
-      parity fx_alpha: rows 100 spike-count mismatches [0] decisions differing 0 max|logit diff| 3.6e-15
-  + fx_beta: steps_run=300 best_step=300 validation total 1.2500 -> 0.0488; add_skill wall 9.1 s (fit 8.9 s); rehearsal_applied=False sampling={'fx_beta': 1.0}
-      parity fx_alpha: rows 100 spike-count mismatches [0] decisions differing 0 max|logit diff| 1.8e-15
-      parity fx_beta: rows 80 spike-count mismatches [0] decisions differing 0 max|logit diff| 0.0e+00
-  + fx_gamma: steps_run=300 best_step=300 validation total 1.6080 -> 0.0042; add_skill wall 9.3 s (fit 9.1 s); rehearsal_applied=False sampling={'fx_gamma': 1.0}
-      parity fx_alpha: rows 100 spike-count mismatches [0] decisions differing 0 max|logit diff| 5.3e-15
-      parity fx_beta: rows 80 spike-count mismatches [0] decisions differing 0 max|logit diff| 0.0e+00
-      parity fx_gamma: rows 60 spike-count mismatches [0] decisions differing 0 max|logit diff| 8.9e-16
-  [ok] the no-rehearsal run completes
-  [ok] no rehearsal: every batch holds the new skill's rows only
-  [ok] no rehearsal, after adding fx_alpha: every view reproduces the torch model
-  [ok] no rehearsal, after adding fx_beta: every view reproduces the torch model
-  [ok] no rehearsal, after adding fx_gamma: every view reproduces the torch model
-  [ok] first add identical in both runs (same seeds, nothing to rehearse)
-  [ok] after the second and third add every network differs between the runs
-  [ok] no rehearsal: earlier heads' readouts are untouched by later training (no gradient reaches them)
-  [ok] no rehearsal: the shared trunk moved under the earlier heads
+== 1. the same sequence, seeds and settings with rehearsal=False ==
+  + fx_alpha (slot 0): steps_run=300 best_step=300 validation total 1.2510 -> 0.0267; add wall 2.3 s; heads trained ['fx_alpha'] sampling={'fx_alpha': 1.0}
+  + fx_beta (slot 1): steps_run=300 best_step=300 validation total 1.0670 -> 0.0521; add wall 2.6 s; heads trained ['fx_beta'] sampling={'fx_beta': 1.0}
+  + fx_gamma (slot 2): steps_run=300 best_step=300 validation total 1.2913 -> 0.0051; add wall 3.5 s; heads trained ['fx_gamma'] sampling={'fx_gamma': 1.0}
+  [ok] both runs complete
+  [ok] slots in add order: {'fx_alpha': 0, 'fx_beta': 1, 'fx_gamma': 2}; 5 free
+  [ok] same seeds, splits and settings in both runs
+  [ok] first add identical in both runs (nothing to rehearse)
+  [ok] batch shares: with rehearsal new skill 1 - rehearsal_fraction and earlier skills split the rest; without, the new skill only
+  [ok] rehearsal=True: after every add every view passes parity on every row of its dream
+  [ok] rehearsal=False: after every add every view passes parity on every row of its dream
 
-  MECHANICS numbers on FIXTURE dreams, measured inside the dream on held-out dream rows
+== 2(i). retention rows vs the recorded situation digests ==
+  [ok] rehearsal=True fx_alpha: 100 retention situations, none among the 810 optimiser and 90 early-stopping situations recorded; the 3 add(s) that trained fx_alpha passed the same recorded sets
+  [ok] rehearsal=True fx_beta: 80 retention situations, none among the 648 optimiser and 72 early-stopping situations recorded; the 2 add(s) that trained fx_beta passed the same recorded sets
+  [ok] rehearsal=True fx_gamma: 60 retention situations, none among the 486 optimiser and 54 early-stopping situations recorded; the 1 add(s) that trained fx_gamma passed the same recorded sets
+  [ok] rehearsal=False fx_alpha: 100 retention situations, none among the 810 optimiser and 90 early-stopping situations recorded; the 1 add(s) that trained fx_alpha passed the same recorded sets
+  [ok] rehearsal=False fx_beta: 80 retention situations, none among the 648 optimiser and 72 early-stopping situations recorded; the 1 add(s) that trained fx_beta passed the same recorded sets
+  [ok] rehearsal=False fx_gamma: 60 retention situations, none among the 486 optimiser and 54 early-stopping situations recorded; the 1 add(s) that trained fx_gamma passed the same recorded sets
+
+== 2(ii). retention rows vs the arrays snn_train.fit actually received ==
+    rehearsal=True stage 0 fx_alpha: batches from 810 rows, early stopping on 90, retention overlap 0
+    rehearsal=True stage 1 fx_beta: batches from 648 rows, early stopping on 72, retention overlap 0
+    rehearsal=True stage 1 fx_alpha: batches from 810 rows, early stopping on 90, retention overlap 0
+    rehearsal=True stage 2 fx_gamma: batches from 486 rows, early stopping on 54, retention overlap 0
+    rehearsal=True stage 2 fx_alpha: batches from 810 rows, early stopping on 90, retention overlap 0
+    rehearsal=True stage 2 fx_beta: batches from 648 rows, early stopping on 72, retention overlap 0
+  [ok] rehearsal=True: at every add, fit's training inputs are exactly the training rows and its validation inputs exactly the early-stopping rows of each trained skill; no retention row was passed to fit
+    rehearsal=False stage 0 fx_alpha: batches from 810 rows, early stopping on 90, retention overlap 0
+    rehearsal=False stage 1 fx_beta: batches from 648 rows, early stopping on 72, retention overlap 0
+    rehearsal=False stage 2 fx_gamma: batches from 486 rows, early stopping on 54, retention overlap 0
+  [ok] rehearsal=False: at every add, fit's training inputs are exactly the training rows and its validation inputs exactly the early-stopping rows of each trained skill; no retention row was passed to fit
+  [ok] rehearsal draws earlier skills' training rows only in the rehearsal run
+
+== 3. retention matrices from the retention rows only ==
+  [ok] rehearsal=True: every R[i][j] is reproduced by deployed(skill_j, stage=i) on skill j's retention rows, none of which it saw in training
+  [ok] rehearsal=True: matrices 3 x 3 with null above the diagonal; backward_transfer = mean over j < last of (R[last][j] - R[j][j])
+  [ok] rehearsal=False: every R[i][j] is reproduced by deployed(skill_j, stage=i) on skill j's retention rows, none of which it saw in training
+  [ok] rehearsal=False: matrices 3 x 3 with null above the diagonal; backward_transfer = mean over j < last of (R[last][j] - R[j][j])
+  [ok] no rehearsal: fx_alpha's readout is untouched by later adds while the shared trunk moved (stage 0 vs stage 2 views)
+  [ok] rehearsal: fx_alpha's readout is trained again at later adds
+
+  MECHANICS numbers on FIXTURE dreams, inside the dream, on RETENTION rows only
   (max_steps=300; no claim about which run is better is made or asserted)
   agreement_with_dream_choice:
-    rehearsal=True
-      after adding      fx_alpha     fx_beta    fx_gamma
-      fx_alpha            0.8000           -           -
-      fx_beta             0.8300      0.6375           -
-      fx_gamma            0.8800      0.6750      0.9833
-    rehearsal=False
-      after adding      fx_alpha     fx_beta    fx_gamma
-      fx_alpha            0.8000           -           -
-      fx_beta             0.3000      0.7125           -
-      fx_gamma            0.3300      0.4250      0.9833
+    stage                     rehearsal=True                  rehearsal=False
+                fx_alpha   fx_beta  fx_gamma     fx_alpha   fx_beta  fx_gamma
+    0 fx_alpha    0.8300         -         -       0.8300         -         -
+    1 fx_beta     0.8100    0.6000         -       0.3500    0.6750         -
+    2 fx_gamma    0.8300    0.7500    0.9167       0.3300    0.5250    0.9333
   mean_dream_regret_over_spread:
-    rehearsal=True
-      after adding      fx_alpha     fx_beta    fx_gamma
-      fx_alpha            0.0171           -           -
-      fx_beta             0.0116      0.0616           -
-      fx_gamma            0.0053      0.0362      0.0010
-    rehearsal=False
-      after adding      fx_alpha     fx_beta    fx_gamma
-      fx_alpha            0.0171           -           -
-      fx_beta             0.2628      0.0520           -
-      fx_gamma            0.2751      0.1261      0.0006
-  backward_transfer agreement_with_dream_choice: rehearsal=True +0.0588   rehearsal=False -0.3788
-  backward_transfer fraction_with_zero_dream_regret: rehearsal=True +0.0588   rehearsal=False -0.3788
-  backward_transfer mean_dream_regret: rehearsal=True -0.0107   rehearsal=False +0.0945
-  backward_transfer mean_dream_regret_over_spread: rehearsal=True -0.0186   rehearsal=False +0.1660
-  [ok] the two retention matrices differ
+    stage                     rehearsal=True                  rehearsal=False
+                fx_alpha   fx_beta  fx_gamma     fx_alpha   fx_beta  fx_gamma
+    0 fx_alpha    0.0109         -         -       0.0109         -         -
+    1 fx_beta     0.0115    0.0853         -       0.2714    0.0572         -
+    2 fx_gamma    0.0133    0.0461    0.0043       0.3664    0.1500    0.0039
+  fraction_with_zero_dream_regret:
+    stage                     rehearsal=True                  rehearsal=False
+                fx_alpha   fx_beta  fx_gamma     fx_alpha   fx_beta  fx_gamma
+    0 fx_alpha    0.8300         -         -       0.8300         -         -
+    1 fx_beta     0.8100    0.6000         -       0.3500    0.6750         -
+    2 fx_gamma    0.8300    0.7500    0.9167       0.3300    0.5250    0.9333
+  backward_transfer agreement_with_dream_choice: rehearsal=True +0.0750   rehearsal=False -0.3250
+  backward_transfer fraction_with_zero_dream_regret: rehearsal=True +0.0750   rehearsal=False -0.3250
+  backward_transfer mean_dream_regret: rehearsal=True -0.0108   rehearsal=False +0.1295
+  backward_transfer mean_dream_regret_over_spread: rehearsal=True -0.0184   rehearsal=False +0.2242
+  early-stopping rows (NOT held out: they chose the restored weights), agreement at the skill's own add, for contrast:
+    rehearsal=True: fx_alpha 0.8444, fx_beta 0.5833, fx_gamma 0.9444
+    rehearsal=False: fx_alpha 0.8444, fx_beta 0.6111, fx_gamma 0.9444
+  [ok] the records label early-stopping numbers NOT held out and retention numbers held out
 
-== check 4: save, load, decide without torch in a fresh process, add a fourth skill ==
-  saved files: ['dreams/fx_alpha.json', 'dreams/fx_alpha.npz', 'dreams/fx_beta.json', 'dreams/fx_beta.npz', 'dreams/fx_gamma.json', 'dreams/fx_gamma.npz', 'manifest.json', 'model_state.npz', 'networks/fx_alpha.json', 'networks/fx_alpha.npz', 'networks/fx_beta.json', 'networks/fx_beta.npz', 'networks/fx_gamma.json', 'networks/fx_gamma.npz']
-  [ok] layout: manifest, model state, one network view and one stored dream set per skill
-  [ok] no pickle or torch.save file
-  [ok] in-process load: same skills and network digests
-  [ok] in-process load: same records and retention matrix
-  [ok] in-process load: same settings
-  [ok] in-process load: same decisions and held-out rows for every skill
-  fresh-process worker (exit 0, 51.2 s):
-    FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student
-    worker: loaded skills_held=['fx_alpha', 'fx_beta', 'fx_gamma'] digests_match=True
-    worker: decisions_identical=True
-    worker: before adding a skill: torch_in_sys_modules=False snntorch_in_sys_modules=False
-    worker: after add_skill(fx_delta): torch_in_sys_modules=True
-    RESULT_JSON skills_held=['fx_alpha', 'fx_beta', 'fx_gamma', 'fx_delta'] steps_run=300 parity_clean=True
-  [ok] fresh process: worker exit code 0
-  [ok] fresh process: loaded digests and decisions identical for every skill
-  [ok] fresh process: load, decide, decide_index and operation_counts did not import torch
-  in-memory add of fx_delta: steps_run=300 sampling={'fx_delta': 0.5, 'fx_alpha': 0.1667, 'fx_beta': 0.1667, 'fx_gamma': 0.1667}
-  [ok] fresh process: fx_delta added to the loaded student, parity clean on all four views
-  [ok] adding fx_delta to the loaded student (fresh process) and to the in-memory student gives identical digests for all four views
-  [ok] retention matrix grows to 4 x 4
-  [ok] temporary directory removed
+== 4. a dream with every situation twice (fx_beta, max_steps=100) ==
+  1600 rows, 800 distinct situations; rows per part {'training': 1296, 'early_stopping': 144, 'retention': 160}
+  [ok] both copies of each of the 80 retention situations are retention rows; no situation is in two parts
+  for comparison, the committed code's row split (stream fx_beta/snn/validation_split, validation_fraction 0.1 of ROWS) on this dream: 144 of 160 held-out rows have a training copy
 
-CHECK RESULT: 51 assertions held, 0 failed 
+CHECK RESULT: 24 assertions held, 0 failed 

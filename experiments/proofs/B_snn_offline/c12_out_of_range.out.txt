@@ -1,0 +1,41 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+config students.snn.out_of_range = 'error'; policies ('error', 'clip')
+  [ok] SNNSettings.out_of_range comes from config.yaml
+  [ok] SNNSettings with out_of_range 'ignore' -> ValueError: students.snn.out_of_range must be one of ('error', 'clip'); got 'ignore'
+  [ok] the policy does not change training: same network from the same seed
+  [ok] the policy is stored in the student record (it travels with a saved student)
+
+== policy 'error' ==
+  [ok] decide_index with fx_speed = 9.0 -> OutOfRangeError: situation feature 'fx_speed' = 9.0 at row 3 lies outside its declared range [2.0, 6.0] (3 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to decide
+  [ok] decide with fx_speed = 9.0 -> OutOfRangeError: situation feature 'fx_speed' = 9.0 at row 3 lies outside its declared range [2.0, 6.0] (3 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to decide
+  [ok] decide_index_one with fx_speed = 9.0 -> OutOfRangeError: situation feature 'fx_speed' = 9.0 at row 0 lies outside its declared range [2.0, 6.0] (1 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to decide
+  [ok] decide_one with fx_speed = 9.0 -> OutOfRangeError: situation feature 'fx_speed' = 9.0 at row 0 lies outside its declared range [2.0, 6.0] (1 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to decide
+  [ok] operation_counts with fx_speed = 9.0 -> OutOfRangeError: situation feature 'fx_speed' = 9.0 at row 3 lies outside its declared range [2.0, 6.0] (3 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to decide
+  [ok] the message gives the range and the count -> OutOfRangeError: situation feature 'fx_speed' = 9.0 at row 3 lies outside its declared range [2.0, 6.0] (3 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to decide
+  [ok] OutOfRangeError is a ValueError
+  [ok] values exactly at the declared bounds are accepted
+  [ok] nothing is ever clipped under 'error'
+
+== policy 'clip' ==
+  [ok] check_situations clips into [low, high]
+  [ok] check_situations returns the (n, S) mask of clipped values (3 values in 2 situations)
+  [ok] decide_index on out-of-range situations = decide_index on the clipped situations
+  out_of_range log: {'policy': 'clip', 'decisions': 40, 'decisions_with_clipping': 2, 'values_clipped': 3, 'per_feature': {'fx_lateral': 1, 'fx_speed': 2, 'fx_surface': 0}}
+  [ok] the log counts 40 decisions (two calls of 20), 2 with clipping, 3 clipped values
+  [ok] the log counts clipped values per feature
+  [ok] decide_index_one clips the same way as the batched path
+  [ok] decide_one on a clipped situation = decide on the clipped situation
+  [ok] single decisions are counted too (1 + 2 more clipped values)
+
+== refused under both policies ==
+  [ok] error: an invalid categorical level index -> ValueError: situation feature 'fx_surface' = 2.0 at row 5 is not a level index of ('grip', 'slip')
+  [ok] error: NaN -> ValueError: situations contain non-finite values (first at row 6, feature 'fx_lateral'); the student refuses to decide on them
+  [ok] clip: an invalid categorical level index -> ValueError: situation feature 'fx_surface' = 2.0 at row 5 is not a level index of ('grip', 'slip')
+  [ok] clip: NaN -> ValueError: situations contain non-finite values (first at row 6, feature 'fx_lateral'); the student refuses to decide on them
+
+== training refuses dream situations outside the declared ranges ==
+  dream row 10 fx_speed set to 7.508
+  [ok] a dream with fx_speed outside [2, 6] -> ValueError: dream row 10: situation feature 'fx_speed' = 7.5081052411975495 lies outside its declared range [2.0, 6.0]; the student is trained on the declared situation space only
+
+CHECK RESULT: 26 assertions held, 0 failed 

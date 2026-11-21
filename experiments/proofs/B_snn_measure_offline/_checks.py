@@ -1,7 +1,7 @@
 """Assertion counter shared by the B_snn_measure_offline check scripts (no fixture data here).
 
-FIXTURE CHECK helpers - mechanics only. Nothing computed by these scripts is evidence about the
-robot, the simulator, TabPFN or any trained student, and none of it may enter a report or results/.
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model.
+Nothing computed by these scripts may enter a report or results/.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any, Callable
 
-BANNER = "FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student"
+BANNER = "FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model"
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PROOF_DIR = Path(__file__).resolve().parent
 if str(REPO_ROOT) not in sys.path:
@@ -36,7 +36,7 @@ class Checks:
             function()
         except error as caught:
             message = str(caught).replace("\n", " ")
-            self.expect(needle in message, f"{label} -> {type(caught).__name__}: {message[:170]}")
+            self.expect(needle in message, f"{label} -> {type(caught).__name__}: {message[:220]}")
             return
         except Exception as other:  # noqa: BLE001
             self.expect(False, f"{label} raised {type(other).__name__} instead of {error.__name__}: {other}")

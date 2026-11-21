@@ -90,6 +90,7 @@ def decide_batch(
         raise ValueError(f"objective must return finite physics-only scores of shape ({total},)")
 
     request_hash = None
+    request_hashes: tuple[str, ...] = ()
     if model is None:
         residual = ResidualDistribution.zeros(total, spec.n_outcome, levels, spread_levels)
     else:
@@ -113,6 +114,9 @@ def decide_batch(
                 f"not the requested {tuple(spread_levels)}"
             )
         request_hash = getattr(model, "last_request_hash", None)
+        request_hashes = tuple(getattr(model, "last_request_hashes", None) or ())
+        if not request_hashes and request_hash is not None:
+            request_hashes = (request_hash,)
 
     predicted = OutcomeDistribution.from_physics_and_residual(
         spec.outcome_names, physics, residual, spec.outcome_low, spec.outcome_high
@@ -145,6 +149,7 @@ def decide_batch(
                     spread=predicted.spread[rows],
                 ),
                 request_hash=request_hash,
+                request_hashes=request_hashes,
             )
         )
         start = stop

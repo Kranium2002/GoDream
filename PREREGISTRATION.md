@@ -30,6 +30,14 @@ Recorded before any Go2 episode, TabPFN prediction, dream, or tuning existed. A 
 - H4's energy criterion is **supported** only if both estimates are below the reference, **not supported** if both are above it, and **inconclusive** if they disagree.
 - Every energy figure is an estimate from operation counts and cited 45 nm per-operation energies. None is a measurement.
 
+## Amendment 2026-11-21 — what "recovers" means in H5
+
+Recorded before any Go2 episode. A review showed that a single lucky measurement could count as recovery.
+
+- Recovery is measured at 0, 5, 10, 15 and 20 new attempts after a world change. The threshold is the pre-shift error plus 20% (03_METRICS.md).
+- H5 is judged on **sustained** recovery: the smallest number of new attempts from which the error stays at or below the threshold at every larger measured count. The first count that touches the threshold is reported next to it.
+- If the pre-shift error is 0, the threshold is 0 and this is stated with the result.
+
 ## Operational definitions for DODGE, 2026-11-21
 
 Recorded before any Go2 episode. They make "the primary skill metric" and "error" in H1 to H7 concrete for DODGE.

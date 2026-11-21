@@ -85,3 +85,29 @@
 - `config.yaml`: `ball` contact, inertia and throw ranges; `robot.recovery`; `skills.dodge.situation_ranges`, `episode_duration_s` 3.0 (proposed, to be confirmed by the project owner), `physics.body_half_length_m` 0.293, `body_radius_m` 0.107, `base_height_m` 0.3234, `declared_surfaces` [default].
 - Evidence: E6 simulator half (`artifacts/env/20261121T170836-e6-sim-facts`), calibration (final hit rate 0.408 over dev seeds 11–13, 120 throws), ball tests 13 passed (`artifacts/env/20261121T171926-dodge`), step response while trotting (no falls; faster than Person B's 0.05 s / 0.3 s model), saved example `artifacts/env/dodge-example/`. Details: `experiments/EXPERIMENTS_LOG.md`, the three entries of this date after "Single-threaded policy inference".
 - Task 4 review items folded in: observations returned as copies, stream key `(4, k)` literal, bad `attempt_seed` and non-number `settle_s` rejected before the open episode is abandoned, a test of a fall before the decision instant, test traces under `tmp_path`.
+
+## 2026-11-21 — Person B: review fixes, DODGE SkillSpec, first run on the real Go2World
+
+- Independent reviews: teacher, engine and evaluation (three reviewers) and the SNN code (two reviewers); every finding reproduced by execution. Fixed with regression checks: teacher (never pay twice after a failure, cache lock, ledger, chunked requests), evaluation (calibration for binary and clipped outcomes, honest baseline intervals, reports only from saved run files, sealed test split), engine (command check before any simulator step, stale physics, request provenance, unique attempts), per-skill SNN (refuses a changed command grid, a silent network, parity on spike trains).
+- Contracts changed with Person A's agreement: `reset(situation, attempt_seed)` and `SkillSpec.episode(world, situation, action, attempt_seed)`; the hidden world is fixed by the world's constructor seed.
+- DODGE SkillSpec written (`learned_judgment/skills/dodge.py`) against Person A's verified command schema. It refuses to build until Person A fills the `skills.dodge` keys that are still null.
+- Person A's `Go2World`, live viewer and recorder hook are merged into `person-b`. `tests/env` in the merged tree: 67 passed, 1 failed (the known 0.3 m/s condition).
+- First run of Person B's command sequence on the real simulator (dev run, no ball, 13 episodes, no falls): experiment B-contact in experiments/EXPERIMENTS_LOG.md.
+- Communication with Person A's session runs through the `messages` branch (one Markdown file).
+- In progress: shared SNN on reserved skill slots and the measurement code, being adapted to the new contracts.
+- NOT RUN: any DODGE episode with the ball, any SNN training on real dreams.
+
+## 2026-11-21 — Person B: first real TabPFN request
+
+- One real billed prediction through the project's teacher on fixture data shaped like one DODGE decision (experiment E7-settle). The real response has the layout the teacher parses; the charge was 10,000 tokens, equal to the free quote; the repeated call came from the cache with no second request. Account usage 50,000 of 35,000,000 tokens. Ledger: `results/tabpfn_calls.jsonl`.
+- NOT RUN: a TabPFN prediction on real simulator attempts; multi-chunk requests; verified rate limits.
+
+## 2026-11-21 — Person B: the whole chain runs on the real Go2 simulator (development skill, no ball)
+
+- Round three finished and re-run by the lead: the shared SNN on 8 reserved skill slots with a separate retention split, and the measurement code for any deployed student (both energy estimates, intervals, the H4 verdict rule, full-path latency). A check both lanes had left NOT RUN (measuring a real shared-SNN view) was added and passes.
+- `SkillSpec` gained `reset_situation` and `commands` for replay; SNN training reports each evaluation to an observer; `engine.dream.select_rows` added.
+- A no-ball development skill, `sidestep_reach`, was built and validated on the real `Go2World` (experiments/proofs/B_sidestep_dev).
+- One command now runs the chain on the real simulator with real TabPFN requests and opens the live MuJoCo window: `prototype_chain.py` (experiment B-chain). On 60 dev situations the mean sideways error was 0.080 m for the formula alone, 0.021 m for the teacher after 40 attempts and 0.026 m for the SNN trained in the teacher's dream. DEV RUN, one world, one seed; not an evaluation result.
+- TabPFN usage: 100,000 of 35,000,000 tokens.
+- In progress: `learned_judgment/pipeline.py` (built, under independent review and a real-simulator run); Person A's ball, throw model and `skills.dodge` settings.
+- NOT RUN: any DODGE episode with the ball; the shared SNN on real dreams; the oracle; any evaluation on a test or shift split.

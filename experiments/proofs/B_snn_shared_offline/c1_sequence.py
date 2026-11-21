@@ -1,95 +1,78 @@
-"""Checks 1, 2 and 4 of the shared spiking student: sequence with and without rehearsal, save/load.
+"""Check (b): three skills with and without rehearsal; retention numbers come only from retention rows.
 
 FIXTURE CHECK - mechanics only. Three fixture skills (fixture_shared_specs.py: different situation
 widths, different candidate counts) whose DreamSets are built by the real engine (physics only).
-The check config is config.yaml loaded in memory with students.snn.shared_feature_width filled in
-and students.snn.shared_skills replaced by fixture names (see fixture_shared_specs.py); settings are
-that config's students.snn values except max_steps, reduced explicitly (printed below). Every
-agreement / regret number printed here is a MECHANICS number on a fixture dream, measured inside
-the dream; it says nothing about the robot, the simulator, TabPFN or a project student.
+Settings: config.yaml students.snn with max_steps reduced (printed); slots, fractions and every
+other value from config.yaml, shared_feature_width fixture.
 
-Check 1: fx_alpha -> fx_beta -> fx_gamma with rehearsal=True. Every per-skill view reproduces the
-    torch model after every add (zero spike-count mismatches, identical decisions); decide() returns
-    in-bounds grid actions for every skill; the held-out numbers are reproduced through the public
-    decide path; the retention matrix has the documented shape and BWT.
-Check 2: the same sequence and seeds with rehearsal=False; both retention matrices printed side by
-    side. Asserted only: both runs complete; the first add is identical (nothing to rehearse yet);
-    later networks differ; without rehearsal an earlier head's readout is untouched while the trunk moves.
-Check 4: save; load in-process; load in a FRESH process (c4_load_worker.py) and decide for every skill
-    with torch absent from sys.modules; then add fx_delta to the loaded student there and to the
-    in-memory student here: identical network digests. Files go to a temporary directory only.
+1. fx_alpha -> fx_beta -> fx_gamma with rehearsal=True and the same sequence, seeds and settings with
+   rehearsal=False. Both complete; their seeds, splits and settings are identical; every view passes
+   parity on every row of its dream after every add.
+2. Proof that the retention rows were never in a training batch and never in an early-stopping set:
+   (i) from the recorded digests: each skill's retention digests (recomputed from the stored dream)
+   are disjoint from the optimiser and early-stopping digests in its student record, and every add
+   record's digest-set sha256 of what it passed to fit equals the record's sets; (ii) from what fit
+   actually received: the check wraps snn_train.fit (check-script instrumentation, not production
+   code) and compares, row by row, every input array passed to it (training batches are drawn only
+   from these) with the encoded retention, training and early-stopping rows.
+3. Every R[i][j] of both retention matrices is reproduced through deployed(skill_j, stage=i) on skill
+   j's retention rows; the two matrices are printed side by side as MECHANICS numbers. No claim
+   about which run is better is made or asserted.
+4. A dream whose every situation appears twice: all copies of a retention situation are retention
+   rows (split by distinct situation). The old row split of the committed code on the same dream is
+   computed here for comparison.
+
+Old behaviour (committed shared_snn.py): the held-out rows of the retention matrix WERE the
+early-stopping rows passed to fit, and rows were split by row (c7_old_behaviour.py shows both).
 
 Run from the repository root:
     .venv\\Scripts\\python.exe experiments\\proofs\\B_snn_shared_offline\\c1_sequence.py
 """
 
-print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
-import dataclasses  # noqa: E402
-import json  # noqa: E402
 import math  # noqa: E402
-import shutil  # noqa: E402
-import subprocess  # noqa: E402
-import sys  # noqa: E402
-import tempfile  # noqa: E402
 import time  # noqa: E402
-from pathlib import Path  # noqa: E402
 
 import numpy as np  # noqa: E402
 
 from fixture_shared_specs import (  # noqa: E402
     FIXTURE_FEATURE_WIDTH,
-    FIXTURE_SHARED_SKILLS,
     POINTS,
-    REPO_ROOT,
     SEQUENCE,
     Checks,
     fixture_config,
     fixture_dreams,
     fixture_spec,
+    repeated_dreams,
 )
 from learned_judgment.config import load_config, require  # noqa: E402
 from learned_judgment.engine.streams import stream_rng  # noqa: E402
+from learned_judgment.students import snn_train  # noqa: E402
 from learned_judgment.students.encoding import InputEncoder  # noqa: E402
 from learned_judgment.students.shared_snn import SharedSNNStudent  # noqa: E402
-from learned_judgment.students.snn_train import SNNSettings  # noqa: E402
+from learned_judgment.students.snn import situation_row_digests  # noqa: E402
 from learned_judgment.students.targets import dream_regret  # noqa: E402
 
 MAX_STEPS = 300  # reduced from config students.snn.max_steps for a short mechanics check
+REPEATED_MAX_STEPS = 100  # the repeated-situation dream only exercises the split
 BASE_SEED = 7  # fixture run seed
-CHECK_SITUATIONS = 300
 KEYS = ("agreement_with_dream_choice", "fraction_with_zero_dream_regret", "mean_dream_regret", "mean_dream_regret_over_spread")
 
 checks = Checks()
 config = load_config()
 check_config = fixture_config(config)
-config_settings = SNNSettings.from_config(check_config)
-settings = dataclasses.replace(config_settings, max_steps=MAX_STEPS)
-skills = require(check_config, "students.snn.shared_skills")
-width = require(check_config, "students.snn.shared_feature_width")
+check_config["students"]["snn"]["max_steps"] = MAX_STEPS
 fraction = require(check_config, "students.snn.rehearsal_fraction")
 print(
-    f"\ncheck config: config.yaml with students.snn.shared_feature_width={width} (fixture; config.yaml value "
-    f"{config['students']['snn']['shared_feature_width']!r}) and students.snn.shared_skills={skills} (fixture names; "
-    f"config.yaml value {config['students']['snn']['shared_skills']})"
+    f"\ncheck config: config.yaml with students.snn.shared_feature_width={FIXTURE_FEATURE_WIDTH} (fixture) and "
+    f"students.snn.max_steps={MAX_STEPS} (config.yaml {config['students']['snn']['max_steps']}); shared_skill_slots="
+    f"{require(config, 'students.snn.shared_skill_slots')}, shared_retention_fraction="
+    f"{require(config, 'students.snn.shared_retention_fraction')}, validation_fraction="
+    f"{require(config, 'students.snn.validation_fraction')}, rehearsal_fraction={fraction} (config.yaml)"
 )
-print(f"settings: students.snn with max_steps={MAX_STEPS} passed explicitly (config value {config_settings.max_steps})")
-print(f"  {settings.describe()}")
-print(f"  rehearsal_fraction={fraction} (config)")
 
-print("\n== create(config) ==")
-created = SharedSNNStudent.create(check_config)
-checks.expect(
-    created.skills == tuple(FIXTURE_SHARED_SKILLS) and created.feature_width == FIXTURE_FEATURE_WIDTH
-    and created.input_width == FIXTURE_FEATURE_WIDTH + len(FIXTURE_SHARED_SKILLS),
-    f"create reads shared_skills and shared_feature_width; input width W = {created.input_width}",
-)
-checks.expect(created.settings == config_settings, "create reads every students.snn setting (SNNSettings.from_config)")
-checks.expect(created.rehearsal_fraction == float(fraction), "create reads students.snn.rehearsal_fraction")
-matrix = created.retention_matrix()
-checks.expect(created.skills_held == () and matrix["skills"] == [] and matrix["backward_transfer"]["mean_dream_regret"] is None, "a created student is empty")
-
-specs = {name: fixture_spec(name) for name in (*SEQUENCE, "fx_delta")}
+specs = {name: fixture_spec(name) for name in SEQUENCE}
 dreams = {name: fixture_dreams(spec, config) for name, spec in specs.items()}
 for name, spec in specs.items():
     print(
@@ -97,58 +80,79 @@ for name, spec in specs.items():
         f"C={dreams[name].n_candidates} grid={POINTS[name]} dream rows={dreams[name].n_rows} method={dreams[name].method}"
     )
 
+# Check-script instrumentation: remember every (tasks, validation) pair fit receives.
+fit_calls: list[dict] = []
+real_fit = snn_train.fit
 
-def new_student() -> SharedSNNStudent:
-    return SharedSNNStudent(skills=skills, feature_width=width, settings=settings, rehearsal_fraction=fraction)
+
+def recording_fit(model, tasks, *, validation, sampling, settings, seed):  # noqa: ANN001, ANN201
+    fit_calls.append(
+        {
+            "tasks": {head: np.array(pair[0], copy=True) for head, pair in tasks.items()},
+            "validation": {head: np.array(pair[0], copy=True) for head, pair in validation.items()},
+        }
+    )
+    return real_fit(model, tasks, validation=validation, sampling=sampling, settings=settings, seed=seed)
+
+
+def row_set(array: np.ndarray) -> set[bytes]:
+    return {row.tobytes() for row in np.ascontiguousarray(array, dtype=np.float64)}
 
 
 def run_sequence(rehearsal: bool) -> tuple[SharedSNNStudent, list[dict], list[dict]]:
-    student = new_student()
-    records, snapshots = [], []
+    student = SharedSNNStudent.create(check_config)
+    records, calls = [], []
     for name in SEQUENCE:
+        before = len(fit_calls)
         record = student.add_skill(specs[name], dreams[name], points_per_dim=POINTS[name], base_seed=BASE_SEED, rehearsal=rehearsal)
+        calls.append(fit_calls[before])
         training = record["training"]
         print(
-            f"  + {name}: steps_run={record['steps_run']} best_step={training['best_step']} "
+            f"  + {name} (slot {record['slot']}): steps_run={record['steps_run']} best_step={training['best_step']} "
             f"validation total {training['initial_validation_loss']:.4f} -> {training['best_validation_loss']:.4f}; "
-            f"add_skill wall {record['wall_seconds']:.1f} s (fit {training['wall_seconds']:.1f} s); "
-            f"rehearsal_applied={record['rehearsal_applied']} sampling={ {k: round(v, 4) for k, v in record['sampling'].items()} }"
+            f"add wall {record['wall_seconds']:.1f} s; heads trained {record['heads_trained']} "
+            f"sampling={ {k: round(v, 4) for k, v in record['sampling'].items()} }"
         )
-        for skill, report in record["parity"].items():
-            print(
-                f"      parity {skill}: rows {report['n_inputs_checked']} spike-count mismatches "
-                f"{report['spike_count_mismatches_per_layer']} decisions differing {report['decisions_differing']} "
-                f"max|logit diff| {report['max_abs_logit_difference']:.1e}"
-            )
         records.append(record)
-        snapshots.append({skill: student.network_view(skill) for skill in student.skills_held})
-    return student, records, snapshots
+    return student, records, calls
 
 
-def parity_clean(record: dict, student: SharedSNNStudent) -> bool:
-    return all(
-        all(m == 0 for m in report["spike_count_mismatches_per_layer"])
+def parity_clean(record: dict) -> bool:
+    return list(record["parity"]) == record["skills_held"] and all(
+        all(m == 0 for m in report["spike_train_mismatches_per_layer"])
         and report["decisions_differing"] == 0
-        and report["n_inputs_checked"] == student.held_out_rows(skill).size
+        and report["decide_one_vs_batch_differing"] == 0
+        and report["decide_one_vs_torch_differing"] == 0
+        and report["max_abs_logit_difference"] <= report["logit_tolerance"]
+        and report["n_inputs_checked"] == dreams[skill].n_rows
         for skill, report in record["parity"].items()
-    ) and list(record["parity"]) == record["skills_held"]
+    )
 
 
-def print_matrix(label: str, matrix: dict, key: str) -> None:
-    print(f"    {label}")
-    header = "".join(f"{skill:>12s}" for skill in matrix["skills"])
-    print(f"      {'after adding':14s}{header}")
-    for i, row in enumerate(matrix[key]):
-        cells = "".join(f"{'-':>12s}" if value is None else f"{value:12.4f}" for value in row)
-        print(f"      {matrix['skills'][i]:14s}{cells}")
+snn_train.fit = recording_fit
+try:
+    print("\n== 1. fx_alpha -> fx_beta -> fx_gamma with rehearsal=True ==")
+    started = time.perf_counter()
+    student_r, records_r, calls_r = run_sequence(True)
+    print(f"  wall {time.perf_counter() - started:.1f} s incl. torch import; versions {records_r[-1]['versions']}")
+    print("\n== 1. the same sequence, seeds and settings with rehearsal=False ==")
+    student_n, records_n, calls_n = run_sequence(False)
+finally:
+    snn_train.fit = real_fit
 
-
-print("\n== check 1: fx_alpha -> fx_beta -> fx_gamma with rehearsal=True ==")
-started = time.perf_counter()
-student_r, records_r, snapshots_r = run_sequence(True)
-print(f"  sequence wall time incl. torch import: {time.perf_counter() - started:.1f} s; versions {records_r[-1]['versions']}")
-for record in records_r:
-    checks.expect(parity_clean(record, student_r), f"after adding {record['skill']}: every view {record['skills_held']} reproduces the torch model on its held-out rows (zero spike-count mismatches, identical decisions)")
+runs = {"rehearsal=True": (student_r, records_r, calls_r), "rehearsal=False": (student_n, records_n, calls_n)}
+checks.expect(student_r.skills_held == SEQUENCE and student_n.skills_held == SEQUENCE, "both runs complete")
+checks.expect(
+    student_r.slots == student_n.slots == {"fx_alpha": 0, "fx_beta": 1, "fx_gamma": 2}
+    and student_r.free_slots == student_r.n_slots - 3,
+    f"slots in add order: {student_r.slots}; {student_r.free_slots} free",
+)
+checks.expect(
+    all(a["seeds"] == b["seeds"] and a["split"] == b["split"] and a["settings"] == b["settings"] for a, b in zip(records_r, records_n))
+    and all(np.array_equal(student_r.retention_rows(s), student_n.retention_rows(s)) and np.array_equal(student_r.training_rows(s), student_n.training_rows(s)) for s in SEQUENCE),
+    "same seeds, splits and settings in both runs",
+)
+checks.expect(records_r[0]["network_digests"] == records_n[0]["network_digests"], "first add identical in both runs (nothing to rehearse)")
 expected_sampling = [
     {"fx_alpha": 1.0},
     {"fx_beta": 1.0 - fraction, "fx_alpha": fraction},
@@ -158,183 +162,168 @@ checks.expect(
     all(
         set(record["sampling"]) == set(expected) and all(math.isclose(record["sampling"][k], v, abs_tol=1e-12) for k, v in expected.items())
         for record, expected in zip(records_r, expected_sampling)
-    ),
-    f"batch shares: new skill 1 - rehearsal_fraction, earlier skills rehearsal_fraction split evenly: {[r['sampling'] for r in records_r]}",
+    )
+    and all(record["sampling"] == {record["skill"]: 1.0} for record in records_n),
+    "batch shares: with rehearsal new skill 1 - rehearsal_fraction and earlier skills split the rest; without, the new skill only",
 )
-checks.expect([r["rehearsal_applied"] for r in records_r] == [False, True, True], "rehearsal applied from the second skill on (nothing to rehearse for the first)")
+for label, (student, records, _) in runs.items():
+    checks.expect(all(parity_clean(record) for record in records), f"{label}: after every add every view passes parity on every row of its dream")
+
+print("\n== 2(i). retention rows vs the recorded situation digests ==")
+for label, (student, records, _) in runs.items():
+    for skill in SEQUENCE:
+        stored = student.stored_dreams(skill)
+        digests = situation_row_digests(stored.situations)
+        retention = {digests[row] for row in student.retention_rows(skill)}
+        seen = student.deployed(skill).meta["student"]["situations_seen"]
+        optimiser, early = set(seen["optimiser_rows"]), set(seen["early_stopping_rows"])
+        used = [record["situations_used"][skill] for record in records if skill in record["situations_used"]]
+        checks.expect(
+            retention == set(student.retention_situation_digests(skill)) and not retention & (optimiser | early)
+            and len(retention) == records[SEQUENCE.index(skill)]["split"]["n_rows_retention"]
+            and all(item["retention_situations_passed_to_fit"] == 0 for item in used)
+            and len({(item["optimiser_situations_sha256"], item["early_stopping_situations_sha256"]) for item in used}) == 1,
+            f"{label} {skill}: {len(retention)} retention situations, none among the {len(optimiser)} optimiser and "
+            f"{len(early)} early-stopping situations recorded; the {len(used)} add(s) that trained {skill} passed the same recorded sets",
+        )
+
+print("\n== 2(ii). retention rows vs the arrays snn_train.fit actually received ==")
+for label, (student, records, calls) in runs.items():
+    clean = True
+    details = []
+    for stage, call in enumerate(calls):
+        checks_ok = set(call["tasks"]) == set(records[stage]["heads_trained"]) == set(call["validation"])
+        for skill in call["tasks"]:
+            deployed = student.deployed(skill)
+            stored = student.stored_dreams(skill)
+            encoded = {
+                part: row_set(deployed.encode(stored.situations[rows]))
+                for part, rows in (
+                    ("training", student.training_rows(skill)),
+                    ("early_stopping", student.early_stopping_rows(skill)),
+                    ("retention", student.retention_rows(skill)),
+                )
+            }
+            task_rows, validation_rows = row_set(call["tasks"][skill]), row_set(call["validation"][skill])
+            ok = (
+                task_rows == encoded["training"] and validation_rows == encoded["early_stopping"]
+                and not (task_rows | validation_rows) & encoded["retention"]
+            )
+            checks_ok = checks_ok and ok
+            details.append(f"stage {stage} {skill}: batches from {len(task_rows)} rows, early stopping on {len(validation_rows)}, retention overlap {len((task_rows | validation_rows) & encoded['retention'])}")
+        clean = clean and checks_ok
+    for line in details:
+        print(f"    {label} {line}")
+    checks.expect(
+        clean,
+        f"{label}: at every add, fit's training inputs are exactly the training rows and its validation inputs exactly the "
+        "early-stopping rows of each trained skill; no retention row was passed to fit",
+    )
 checks.expect(
-    len({r["seeds"]["trunk_init_seed"] for r in records_r}) == 1 and [r["seeds"]["trunk_initialised_here"] for r in records_r] == [True, False, False],
-    "the trunk is initialised once (first add) and continued afterwards",
-)
-views = {skill: student_r.network_view(skill) for skill in SEQUENCE}
-first = views[SEQUENCE[0]]
-checks.expect(
-    all(
-        all(np.array_equal(a, b) for a, b in zip(view.hidden_weights, first.hidden_weights))
-        and all(np.array_equal(a, b) for a, b in zip(view.hidden_biases, first.hidden_biases))
-        and view.betas == first.betas and view.thresholds == first.thresholds
-        for view in views.values()
-    ),
-    "all per-skill views share one trunk (identical hidden weights, biases, betas, thresholds)",
-)
-checks.expect(
-    all(views[s].layer_sizes == (student_r.input_width, *settings.hidden_sizes, dreams[s].n_candidates) for s in SEQUENCE),
-    f"view layer sizes (W, H, C_skill): {[views[s].layer_sizes for s in SEQUENCE]}",
-)
-checks.expect(
-    not np.array_equal(snapshots_r[0]["fx_alpha"].readout_weight, snapshots_r[2]["fx_alpha"].readout_weight),
-    "with rehearsal the earlier head fx_alpha is trained again (its readout changed)",
+    [sorted(call["tasks"]) for call in calls_r] == [["fx_alpha"], ["fx_alpha", "fx_beta"], ["fx_alpha", "fx_beta", "fx_gamma"]]
+    and [sorted(call["tasks"]) for call in calls_n] == [["fx_alpha"], ["fx_beta"], ["fx_gamma"]],
+    "rehearsal draws earlier skills' training rows only in the rehearsal run",
 )
 
-situations = {}
-indices = {}
-for name in SEQUENCE:
-    spec = specs[name]
-    situations[name] = spec.sample_situations(stream_rng(BASE_SEED, f"{name}/check/situations"), CHECK_SITUATIONS)
-    indices[name] = student_r.decide_index(name, situations[name])
-    actions = student_r.decide(spec, situations[name])
-    grid = np.stack([spec.candidate_actions(s, POINTS[name])[i] for s, i in zip(situations[name], indices[name])])
-    checks.expect(
-        indices[name].dtype == np.int64 and indices[name].shape == (CHECK_SITUATIONS,)
-        and bool(np.all((indices[name] >= 0) & (indices[name] < dreams[name].n_candidates)))
-        and actions.shape == (CHECK_SITUATIONS, spec.n_action) and bool(np.all(spec.action_in_bounds(actions)))
-        and bool(np.array_equal(actions, grid)),
-        f"{name}: decide -> {actions.shape} in-bounds actions = candidate_actions(situation, {POINTS[name]})[decide_index]",
-    )
-    counts = student_r.operation_counts(name, situations[name])
-    checks.expect(
-        counts.n_decisions == CHECK_SITUATIONS and counts.layer_sizes == views[name].layer_sizes,
-        f"{name}: operation_counts layer sizes {counts.layer_sizes}, mean spikes per layer {[round(float(v), 1) for v in counts.mean_spikes_per_layer]}",
-    )
-    rows = student_r.held_out_rows(name)
-    n = dreams[name].n_rows
-    recipe = np.sort(stream_rng(BASE_SEED, f"{name}/snn/validation_split").permutation(n)[: max(1, int(round(settings.validation_fraction * n)))])
-    checks.expect(bool(np.array_equal(rows, recipe)), f"{name}: held-out rows ({rows.size}) are the per-skill student's validation rows for this seed")
-    held = student_r.decide_index(name, dreams[name].situations[rows])
-    regret = dream_regret(dreams[name].scores[rows], held)
-    stored = records_r[-1]["held_out_in_dream"][name]
-    checks.expect(
-        float(np.mean(held == dreams[name].chosen[rows])) == stored["agreement_with_dream_choice"]
-        and float(np.mean(regret)) == stored["mean_dream_regret"],
-        f"{name}: decide_index on the held-out rows reproduces the last record's agreement and regret",
-    )
-
-retention_r = student_r.retention_matrix()
-shape_ok = all(
-    len(retention_r[key]) == 3
-    and all(len(row) == 3 for row in retention_r[key])
-    and all((value is None) == (j > i) for i, row in enumerate(retention_r[key]) for j, value in enumerate(row))
-    for key in KEYS
-)
-checks.expect(shape_ok and retention_r["skills"] == list(SEQUENCE), "retention matrices are 3 x 3, numbers for j <= i and None above the diagonal")
-checks.expect(
-    all(retention_r[key][i][i] == records_r[i]["held_out_in_dream"][SEQUENCE[i]][key] for key in KEYS for i in range(3)),
-    "diagonal R[i][i] = the new skill's own held-out numbers in its add record",
-)
-checks.expect(
-    all(
-        math.isclose(retention_r["backward_transfer"][key], float(np.mean([retention_r[key][2][j] - retention_r[key][j][j] for j in range(2)])), rel_tol=0.0, abs_tol=0.0)
+print("\n== 3. retention matrices from the retention rows only ==")
+matrices = {}
+for label, (student, records, _) in runs.items():
+    matrix = student.retention_matrix()
+    matrices[label] = matrix
+    reproduced = True
+    for i in range(3):
+        for j, skill in enumerate(SEQUENCE[: i + 1]):
+            rows = student.retention_rows(skill)
+            stored = student.stored_dreams(skill)
+            index = student.deployed(skill, stage=i).decide_index(stored.situations[rows])
+            regret = dream_regret(stored.scores[rows], index)
+            reproduced = reproduced and (
+                float(np.mean(index == stored.chosen[rows])) == matrix["agreement_with_dream_choice"][i][j]
+                and float(np.mean(regret)) == matrix["mean_dream_regret"][i][j]
+                and float(np.mean(regret == 0.0)) == matrix["fraction_with_zero_dream_regret"][i][j]
+                and not bool(np.any(student.deployed(skill, stage=i).seen_in_training(stored.situations[rows])))
+            )
+    checks.expect(reproduced, f"{label}: every R[i][j] is reproduced by deployed(skill_j, stage=i) on skill j's retention rows, none of which it saw in training")
+    shape_ok = all(
+        len(matrix[key]) == 3 and all((value is None) == (j > i) for i, row in enumerate(matrix[key]) for j, value in enumerate(row))
         for key in KEYS
-    ),
-    "backward_transfer = mean over j < last of (R[last][j] - R[j][j]) for every matrix",
-)
-
-print("\n== check 2: the same sequence and seeds with rehearsal=False (no-rehearsal control) ==")
-student_n, records_n, snapshots_n = run_sequence(False)
-checks.expect(len(records_n) == 3 and student_n.skills_held == SEQUENCE, "the no-rehearsal run completes")
-checks.expect(
-    all(not r["rehearsal_applied"] and r["sampling"] == {r["skill"]: 1.0} for r in records_n),
-    "no rehearsal: every batch holds the new skill's rows only",
-)
-for record in records_n:
-    checks.expect(parity_clean(record, student_n), f"no rehearsal, after adding {record['skill']}: every view reproduces the torch model")
-checks.expect(records_r[0]["network_digests"] == records_n[0]["network_digests"], "first add identical in both runs (same seeds, nothing to rehearse)")
-checks.expect(
-    all(records_r[i]["network_digests"][s] != records_n[i]["network_digests"][s] for i in (1, 2) for s in records_r[i]["network_digests"]),
-    "after the second and third add every network differs between the runs",
-)
-alpha_before, alpha_after = snapshots_n[0]["fx_alpha"], snapshots_n[2]["fx_alpha"]
+    )
+    checks.expect(
+        shape_ok
+        and all(
+            math.isclose(matrix["backward_transfer"][key], float(np.mean([matrix[key][2][j] - matrix[key][j][j] for j in range(2)])), rel_tol=0.0, abs_tol=0.0)
+            for key in KEYS
+        ),
+        f"{label}: matrices 3 x 3 with null above the diagonal; backward_transfer = mean over j < last of (R[last][j] - R[j][j])",
+    )
+alpha_before, alpha_after = student_n.network_view("fx_alpha", 0), student_n.network_view("fx_alpha", 2)
 checks.expect(
     np.array_equal(alpha_before.readout_weight, alpha_after.readout_weight) and np.array_equal(alpha_before.readout_bias, alpha_after.readout_bias)
-    and np.array_equal(snapshots_n[1]["fx_beta"].readout_weight, snapshots_n[2]["fx_beta"].readout_weight),
-    "no rehearsal: earlier heads' readouts are untouched by later training (no gradient reaches them)",
+    and not np.array_equal(alpha_before.hidden_weights[0], alpha_after.hidden_weights[0]),
+    "no rehearsal: fx_alpha's readout is untouched by later adds while the shared trunk moved (stage 0 vs stage 2 views)",
 )
-checks.expect(not np.array_equal(alpha_before.hidden_weights[0], alpha_after.hidden_weights[0]), "no rehearsal: the shared trunk moved under the earlier heads")
-retention_n = student_n.retention_matrix()
-print("\n  MECHANICS numbers on FIXTURE dreams, measured inside the dream on held-out dream rows")
+checks.expect(
+    not np.array_equal(student_r.network_view("fx_alpha", 0).readout_weight, student_r.network_view("fx_alpha", 2).readout_weight),
+    "rehearsal: fx_alpha's readout is trained again at later adds",
+)
+print("\n  MECHANICS numbers on FIXTURE dreams, inside the dream, on RETENTION rows only")
 print(f"  (max_steps={MAX_STEPS}; no claim about which run is better is made or asserted)")
-for key in ("agreement_with_dream_choice", "mean_dream_regret_over_spread"):
+for key in ("agreement_with_dream_choice", "mean_dream_regret_over_spread", "fraction_with_zero_dream_regret"):
     print(f"  {key}:")
-    print_matrix("rehearsal=True", retention_r, key)
-    print_matrix("rehearsal=False", retention_n, key)
+    header = "".join(f"{skill:>10s}" for skill in SEQUENCE)
+    print(f"    {'stage':10s}{'rehearsal=True':>30s}   {'rehearsal=False':>30s}")
+    print(f"    {'':10s}{header}   {header}")
+    for i, skill in enumerate(SEQUENCE):
+        cells = []
+        for label in ("rehearsal=True", "rehearsal=False"):
+            cells.append("".join(f"{'-':>10s}" if v is None else f"{v:10.4f}" for v in matrices[label][key][i]))
+        print(f"    {i} {skill:8s}{cells[0]}   {cells[1]}")
 for key in KEYS:
-    print(f"  backward_transfer {key}: rehearsal=True {retention_r['backward_transfer'][key]:+.4f}   rehearsal=False {retention_n['backward_transfer'][key]:+.4f}")
-checks.expect(retention_r != retention_n, "the two retention matrices differ")
+    print(
+        f"  backward_transfer {key}: rehearsal=True {matrices['rehearsal=True']['backward_transfer'][key]:+.4f}   "
+        f"rehearsal=False {matrices['rehearsal=False']['backward_transfer'][key]:+.4f}"
+    )
+print("  early-stopping rows (NOT held out: they chose the restored weights), agreement at the skill's own add, for contrast:")
+for label, (_, records, _) in runs.items():
+    print(f"    {label}: " + ", ".join(f"{r['skill']} {r['early_stopping_rows_in_dream'][r['skill']]['agreement_with_dream_choice']:.4f}" for r in records))
+checks.expect(
+    all(
+        records[i]["early_stopping_rows_in_dream_label"].endswith("NOT held out")
+        and records[i]["retention_in_dream_label"].endswith("(held out)")
+        for _, records, _ in runs.values()
+        for i in range(3)
+    ),
+    "the records label early-stopping numbers NOT held out and retention numbers held out",
+)
 
-print("\n== check 4: save, load, decide without torch in a fresh process, add a fourth skill ==")
-scratch = Path(tempfile.mkdtemp(prefix="b_snn_shared_c1_"))
-checks.redactions[str(scratch)] = "<tmp>"
-try:
-    directory = scratch / "shared_student"
-    student_r.save(directory)
-    files = sorted(path.relative_to(directory).as_posix() for path in directory.rglob("*") if path.is_file())
-    print(f"  saved files: {files}")
-    expected_files = sorted(
-        ["manifest.json", "model_state.npz"]
-        + [f"networks/{s}.{ext}" for s in SEQUENCE for ext in ("json", "npz")]
-        + [f"dreams/{s}.{ext}" for s in SEQUENCE for ext in ("json", "npz")]
-    )
-    checks.expect(files == expected_files, "layout: manifest, model state, one network view and one stored dream set per skill")
-    checks.expect(not any(path.endswith((".pt", ".pkl", ".pickle")) for path in files), "no pickle or torch.save file")
-    loaded = SharedSNNStudent.load(directory)
-    checks.expect(loaded.skills_held == student_r.skills_held and loaded.network_digests() == student_r.network_digests(), "in-process load: same skills and network digests")
-    checks.expect(loaded.retention_matrix() == retention_r and loaded.records == student_r.records, "in-process load: same records and retention matrix")
-    checks.expect(loaded.settings == settings and loaded.rehearsal_fraction == student_r.rehearsal_fraction, "in-process load: same settings")
-    checks.expect(
-        all(np.array_equal(loaded.decide_index(s, situations[s]), indices[s]) for s in SEQUENCE)
-        and all(np.array_equal(loaded.held_out_rows(s), student_r.held_out_rows(s)) for s in SEQUENCE),
-        "in-process load: same decisions and held-out rows for every skill",
-    )
-    for name in SEQUENCE:
-        np.save(scratch / f"{name}_situations.npy", situations[name])
-        np.save(scratch / f"{name}_expected.npy", indices[name])
-    (scratch / "expected_digests.json").write_text(json.dumps(student_r.network_digests()), encoding="utf-8")
-    worker = Path(__file__).resolve().parent / "c4_load_worker.py"
-    started = time.perf_counter()
-    result = subprocess.run(
-        [sys.executable, str(worker), str(directory), str(scratch), str(BASE_SEED)],
-        cwd=REPO_ROOT, capture_output=True, text=True, timeout=1800,
-    )
-    print(f"  fresh-process worker (exit {result.returncode}, {time.perf_counter() - started:.1f} s):")
-    worker_result = None
-    for line in (result.stdout + result.stderr).strip().splitlines():
-        if line.startswith("RESULT_JSON "):
-            worker_result = json.loads(line[len("RESULT_JSON "):])
-            print(f"    RESULT_JSON skills_held={worker_result['skills_held']} steps_run={worker_result['steps_run']} parity_clean={worker_result['parity_clean']}")
-        else:
-            print(f"    {checks.clean(line)}")
-    checks.expect(result.returncode == 0 and worker_result is not None, f"fresh process: worker exit code {result.returncode}")
-    checks.expect("digests_match=True" in result.stdout and "decisions_identical=True" in result.stdout, "fresh process: loaded digests and decisions identical for every skill")
-    checks.expect(
-        "before adding a skill: torch_in_sys_modules=False snntorch_in_sys_modules=False" in result.stdout,
-        "fresh process: load, decide, decide_index and operation_counts did not import torch",
-    )
-    record_delta = student_r.add_skill(specs["fx_delta"], dreams["fx_delta"], points_per_dim=POINTS["fx_delta"], base_seed=BASE_SEED, rehearsal=True)
-    print(f"  in-memory add of fx_delta: steps_run={record_delta['steps_run']} sampling={ {k: round(v, 4) for k, v in record_delta['sampling'].items()} }")
-    checks.expect(
-        worker_result is not None and worker_result["skills_held"] == [*SEQUENCE, "fx_delta"] and worker_result["parity_clean"],
-        "fresh process: fx_delta added to the loaded student, parity clean on all four views",
-    )
-    checks.expect(
-        worker_result is not None and worker_result["digests"] == record_delta["network_digests"],
-        "adding fx_delta to the loaded student (fresh process) and to the in-memory student gives identical digests for all four views",
-    )
-    retention_4 = student_r.retention_matrix()
-    checks.expect(
-        len(retention_4["agreement_with_dream_choice"]) == 4 and retention_4["rehearsal_applied"] == [False, True, True, True],
-        "retention matrix grows to 4 x 4",
-    )
-finally:
-    shutil.rmtree(scratch, ignore_errors=True)
-checks.expect(not scratch.exists(), "temporary directory removed")
+print(f"\n== 4. a dream with every situation twice (fx_beta, max_steps={REPEATED_MAX_STEPS}) ==")
+doubled = repeated_dreams(dreams["fx_beta"], 2)
+short_config = fixture_config(config)
+short_config["students"]["snn"]["max_steps"] = REPEATED_MAX_STEPS
+repeated = SharedSNNStudent.create(short_config)
+record_doubled = repeated.add_skill(specs["fx_beta"], doubled, points_per_dim=POINTS["fx_beta"], base_seed=BASE_SEED, rehearsal=True)
+digests = situation_row_digests(doubled.situations)
+parts = {
+    "training": repeated.training_rows("fx_beta"),
+    "early_stopping": repeated.early_stopping_rows("fx_beta"),
+    "retention": repeated.retention_rows("fx_beta"),
+}
+sets = {part: {digests[row] for row in rows} for part, rows in parts.items()}
+n = dreams["fx_beta"].n_rows
+retention_pairs = all((row + n) % (2 * n) in set(parts["retention"].tolist()) for row in parts["retention"])
+print(f"  {doubled.n_rows} rows, {record_doubled['split']['n_distinct_situations']} distinct situations; rows per part { {k: int(v.size) for k, v in parts.items()} }")
+checks.expect(
+    retention_pairs and not sets["retention"] & (sets["training"] | sets["early_stopping"]) and not sets["training"] & sets["early_stopping"],
+    f"both copies of each of the {len(sets['retention'])} retention situations are retention rows; no situation is in two parts",
+)
+validation_fraction = require(config, "students.snn.validation_fraction")
+old_rows = np.sort(
+    stream_rng(BASE_SEED, "fx_beta/snn/validation_split").permutation(doubled.n_rows)[: max(1, int(round(validation_fraction * doubled.n_rows)))]
+)
+old_train = set(np.setdiff1d(np.arange(doubled.n_rows), old_rows).tolist())
+duplicated = sum(1 for row in old_rows if (row + n) % (2 * n) in old_train)
+print(
+    f"  for comparison, the committed code's row split (stream fx_beta/snn/validation_split, validation_fraction "
+    f"{validation_fraction} of ROWS) on this dream: {duplicated} of {old_rows.size} held-out rows have a training copy"
+)
 checks.finish()

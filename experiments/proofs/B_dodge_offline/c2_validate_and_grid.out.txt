@@ -1,0 +1,81 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+== fixture config: only null skills.dodge keys were filled ==
+  FIXTURE skills.dodge.situation_ranges.ball_rel_x_m = [0.0, 6.0]
+  FIXTURE skills.dodge.situation_ranges.ball_rel_y_m = [-2.0, 2.0]
+  FIXTURE skills.dodge.situation_ranges.ball_rel_z_m = [-0.25, 1.0]
+  FIXTURE skills.dodge.situation_ranges.ball_vel_x_m_s = [-10.0, 1.0]
+  FIXTURE skills.dodge.situation_ranges.ball_vel_y_m_s = [-3.0, 3.0]
+  FIXTURE skills.dodge.situation_ranges.ball_vel_z_m_s = [-1.0, 8.0]
+  FIXTURE skills.dodge.situation_ranges.dog_forward_speed_m_s = [0.0, 0.8]
+  FIXTURE skills.dodge.declared_surfaces = ['fixture_surface_a', 'fixture_surface_b']
+  FIXTURE skills.dodge.episode_duration_s = 1.6
+  FIXTURE skills.dodge.physics.body_half_length_m = 0.19
+  FIXTURE skills.dodge.physics.body_radius_m = 0.1
+  FIXTURE skills.dodge.physics.base_height_m = 0.3
+PASS  changed keys are exactly the fixture keys  [12 keys]
+
+== load_skill runs validate_spec ==
+PASS  load_skill('dodge', fixture config) returns a DodgeSpec  [dodge]
+PASS  validate_spec passes with config-read settings  [hidden=('payload_mass_kg', 'payload_off_center_range_m', 'declared_mass_error_fraction', 'surface_friction_by_type', 'friction_per_run_variation', 'slope_deg', 'motor_strength_fraction', 'command_latency_s', 'command_latency_jitter_s')]
+
+== declared order of the agreed interface ==
+PASS  situation order  [('ball_rel_x_m', 'ball_rel_y_m', 'ball_rel_z_m', 'ball_vel_x_m_s', 'ball_vel_y_m_s', 'ball_vel_z_m_s', 'dog_forward_speed_m_s', 'declared_payload_kg', 'declared_surface')]
+PASS  action order
+PASS  outcome order
+PASS  primary outcome
+PASS  outcome kinds
+PASS  regression outcomes bounded below by 0
+PASS  declared_surface levels from config
+PASS  hidden effects documented  [12 entries]
+
+== action ranges ==
+  side_velocity_m_s: field=vel_y unit=m/s [-1.0, 1.0]; verified [-1.0, 1.0]
+PASS  side velocity is bound to vel_y
+PASS  side velocity range equals the verified vel_y range
+PASS  side velocity unit equals the verified unit
+PASS  start_delay_s is timing with the config range  [(0.0, 0.6)]
+PASS  hold_duration_s is timing with the config range  [(0.2, 1.0)]
+
+== candidate grid ==
+  points per dim (config): (9, 4, 3); grid shape (108, 3)
+PASS  grid has 9 x 4 x 3 = 108 candidates
+PASS  grid inside the declared bounds
+  side values [-1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0]
+  delays [0.0, 0.19999999999999998, 0.39999999999999997, 0.6]
+  holds [0.2, 0.6000000000000001, 1.0]
+PASS  9 side velocities in steps of 0.25, including no dodge (0.0)
+PASS  4 start delays from 0.0 to 0.6
+PASS  3 holds from 0.2 to 1.0
+
+== build-time refusals ==
+PASS  delay max + hold max longer than the episode  [ConfigError: the longest start delay (0.6 s, 'skills.dodge.action.start_delay_s') plus the longest hold (1.0 s, 'skills.dodge.action.hold_duration_s') exceeds 'skills.dodge.episode_duration_s' (1.5 s)]
+PASS  side field not in the verified schema  [ConfigError: config.yaml key 'skills.dodge.action.side_velocity_field' names 'vel_z', which is not a verified command field; verified fields: ['vel_x', 'vel_y', 'yaw_rate']]
+PASS  forward field not in the verified schema  [ConfigError: config.yaml key 'skills.dodge.action.forward_velocity_field' names 'forward', which is not a verified command field; verified fields: ['vel_x', 'vel_y', 'yaw_rate']]
+PASS  two action fields naming the same command field  [ConfigError: 'skills.dodge.action.*_field' must name three different command fields; got ('vel_y', 'vel_y', 'yaw_rate')]
+PASS  forward speed range beyond the verified vel_x range  [ConfigError: 'skills.dodge.situation_ranges.dog_forward_speed_m_s' [0.0, 1.5] is sent as 'vel_x' but exceeds its verified range [-1.0, 1.0]]
+PASS  candidate_points_per_dim with two entries  [ConfigError: config.yaml key 'skills.dodge.candidate_points_per_dim' must list 3 integers >= 2 (side velocity, start delay, hold duration); got [9, 4]]
+PASS  malformed situation range  [ConfigError: config.yaml key 'skills.dodge.situation_ranges.ball_rel_y_m' must be [low, high] with finite numbers low < high; got [2.0, -2.0]]
+PASS  non-positive response time  [ConfigError: config.yaml key 'skills.dodge.physics.response_time_s' must be > 0; got 0.0]
+PASS  unknown skill name  [KeyError: "unknown skill 'dodgeball'; available skills: ['dodge']"]
+PASS  load_skill without a throw sampler (validation probe needs one)  [RuntimeError: DodgeSpec.sample_situations needs a throw_sampler (Person A's throw model, (rng, n) -> (n, 7)) and the world's declared values: an independent box over the ball values would mostly miss the dog, so DODGE has no default sampler]
+PASS  throw sampler without declared values  [ValueError: a throw_sampler needs the current world's declared_payload_kg and declared_surface: sampled situations carry the declared values of the world they are run in]
+PASS  declared values without a throw sampler  [ValueError: declared_payload_kg / declared_surface are used only to complete sampled throws; pass them together with a throw_sampler]
+PASS  declared surface that is not a level  [ValueError: declared_surface='ice' is not one of ('fixture_surface_a', 'fixture_surface_b')]
+PASS  declared payload outside its range  [ValueError: declared_payload_kg=9.0 is outside [0.0, 3.6]]
+
+== sample_situations ==
+PASS  no throw sampler  [RuntimeError: DodgeSpec.sample_situations needs a throw_sampler (Person A's throw model, (rng, n) -> (n, 7)) and the world's declared values: an independent box over the ball values would mostly miss the dog, so DODGE has no default sampler]
+PASS  shape (50, 9), finite
+PASS  declared payload appended to every row
+PASS  declared surface index appended to every row
+PASS  the first 7 columns are the throw sampler's rows
+PASS  situation i does not depend on how many are drawn
+PASS  zero rows
+PASS  throw outside the declared range  [ValueError: throw_sampler returned 4 of 4 rows with ball_rel_x_m outside its declared range [0.0, 6.0] (first: 9.0)]
+PASS  throw sampler with 6 columns  [ValueError: throw_sampler must return shape (4, 7) in ('ball_rel_x_m', 'ball_rel_y_m', 'ball_rel_z_m', 'ball_vel_x_m_s', 'ball_vel_y_m_s', 'ball_vel_z_m_s', 'dog_forward_speed_m_s') order; got (4, 6)]
+PASS  throw sampler with NaN  [ValueError: throw_sampler returned non-finite values]
+PASS  negative n  [ValueError: n must be an int >= 0; got -1]
+PASS  registry lists exactly the built skills  [('dodge',)]
+
+47 passed, 0 failed

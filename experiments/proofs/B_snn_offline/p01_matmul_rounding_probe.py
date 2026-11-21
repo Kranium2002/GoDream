@@ -8,7 +8,7 @@ Run from the repository root:
     .venv\\Scripts\\python.exe experiments\\proofs\\B_snn_offline\\p01_matmul_rounding_probe.py
 """
 
-print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any trained student")
+print("FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model")
 
 import numpy as np  # noqa: E402
 import torch  # noqa: E402

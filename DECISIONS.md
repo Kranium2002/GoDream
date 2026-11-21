@@ -96,3 +96,15 @@ Made by the Task 5 implementer; the integrator can reverse any of them.
 ## 2026-11-21 — Throw aim error widened from ±0.5 m to ±0.7 m
 
 `ball.throw_aim_error_range_m`, the only throw range changed, from `calibrate_throws` output on dev seeds 11, 12 and 13 (40 throws each, dog holding its initial command for 3.0 s). Before: hit rate 0.725 / 0.550 / 0.550, 73 of 120 (0.608), seed 11 above the 30–70% target. After: 0.425 / 0.375 / 0.425, 49 of 120 (0.408). Records: `artifacts/env/20261121T165323-dodge-calibration-1`, `artifacts/env/20261121T170357-dodge-calibration-2`.
+
+## 2026-11-21 — A no-ball development skill rehearses the chain on the real simulator (Person B)
+
+DODGE cannot run until Person A's simulated ball exists. Half of the DODGE physics guess is the formula for the dog's sideways travel after a sideways command. A development skill, `sidestep_reach` ("reach a given sideways displacement"), isolates that half so the whole chain (attempts, residual model, dreams, SNN trained in the dream, evaluation) runs on the real `Go2World` before the ball lands. It lives under `experiments/proofs/B_sidestep_dev/`, is not registered in `learned_judgment/skills/`, and its settings sit under `dev_checks.sidestep_reach` in `config.yaml`. Its numbers are development measurements: they enter no report, table or claim. It is part of the DODGE work, not one of the later skills, so the rule that no later skill starts before the DODGE gate is resolved is unchanged.
+
+## 2026-11-21 — One pipeline module is the interface to Person B's code (Person B)
+
+`learned_judgment/pipeline.py` composes the engine's steps into one run per skill and world, with a manifest per run. Person A's local web interface and the command line both call it; neither assembles engine calls itself. A step that would send a billed TabPFN request runs only when the caller passes a confirmation for the quoted cost; the default refuses. The held-out test split is reachable only through an explicit final-evaluation argument.
+
+## 2026-11-21 — The first real TabPFN request was a contract proof on fixture data (Person B)
+
+The offline checks could not show that the real response has the layout the teacher parses. One billed request (10,000 tokens, the minimum charge) on fixture data shaped like one DODGE decision settled that before any simulator attempts existed (experiment E7-settle). It is a proof about the service's contract and the project's request path. It is not a result about the robot or about any model's quality.

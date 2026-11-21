@@ -4,10 +4,12 @@ Lane contract
 -------------
 :func:`dream` samples situations with ``spec.sample_situations`` and decides all of them
 with ONE :func:`~learned_judgment.engine.decide.decide_batch` call, i.e. one residual-model
-request for every situation x candidate. The result is a :class:`DreamSet`: the complete,
-self-describing training set of the spiking student (written by another lane). Dreams are
-teacher decisions, never measurements; whether they hold in the true simulator is measured
-separately (dream fidelity).
+predict call for every situation x candidate. The model may serve that call with several
+cached provider requests (one per outcome, or a large query set split into parts); every
+request key behind every decision is recorded (``request_groups`` / ``request_group``). The
+result is a :class:`DreamSet`: the complete, self-describing training set of the spiking
+student (written by another lane). Dreams are teacher decisions, never measurements;
+whether they hold in the true simulator is measured separately (dream fidelity).
 
 :func:`keep_confident` keeps decisions whose predictive spread of ``spec.primary_outcome``
 at the chosen candidate is at most a threshold that the caller selected on dev data.
@@ -20,7 +22,8 @@ Arrays (float64 unless noted)::
 On disk a DreamSet is two files written atomically (tmp file in the same directory, fsync,
 ``os.replace``): ``<name>.npz`` with the arrays (loaded with ``allow_pickle=False``) and
 ``<name>.json`` with the names, provenance, the caller's metadata and the sha256 of the
-``.npz`` bytes, so a mismatched pair is detected on load.
+``.npz`` bytes, so a mismatched pair is detected on load. Format ``v2`` records every request
+key per decision; a ``v1`` file (which kept only the last key of each decision) is refused.
 """
 
 from __future__ import annotations
@@ -30,7 +33,6 @@ import hashlib
 import io
 import json
 import math
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
@@ -40,7 +42,7 @@ import numpy as np
 from learned_judgment.fileio import atomic_write_bytes
 from learned_judgment.engine.decide import decide_batch
 from learned_judgment.engine.features import FeatureLayout
-from learned_judgment.engine.rows import AttemptRow, _dream_row
+from learned_judgment.engine.rows import AttemptRow, _dream_row, decision_request_group
 from learned_judgment.engine.types import Decision, ResidualModel
 from learned_judgment.skills.base import SkillSpec
 
@@ -53,9 +55,17 @@ __all__ = [
     "keep_confident",
     "load_dreams",
     "save_dreams",
+    "select_rows",
 ]
 
-DREAM_FORMAT = "learned-judgment-dreamset-v1"
+DREAM_FORMAT = "learned-judgment-dreamset-v2"
+# Earlier formats load_dreams refuses, with the reason.
+_RETIRED_FORMATS = {
+    "learned-judgment-dreamset-v1": (
+        "it records only the last provider request of each decision (request_index), so the other "
+        "requests behind a decision are lost; regenerate the dreams with engine.dream.dream"
+    ),
+}
 
 _FLOAT_ARRAYS = (
     "situations",
@@ -67,7 +77,7 @@ _FLOAT_ARRAYS = (
     "chosen_median",
     "chosen_outcome_spread",
 )
-_INT_ARRAYS = ("chosen", "physics_choice", "request_index")
+_INT_ARRAYS = ("chosen", "physics_choice", "request_group")
 _HEADER_KEYS = frozenset(
     (
         "format",
@@ -79,6 +89,7 @@ _HEADER_KEYS = frozenset(
         "primary_outcome",
         "spread_levels",
         "request_hashes",
+        "request_groups",
         "n_rows",
         "n_candidates",
         "arrays_file",
@@ -102,8 +113,12 @@ class DreamSet:
         chosen_spread:          (n,) predictive spread of ``primary_outcome`` at the chosen
                                 candidate (the confidence used by :func:`keep_confident`).
         request_hashes:         distinct cache keys of the residual-model requests behind
-                                this set, in first-use order (empty when none was made).
-        request_index:          (n,) int64 index into ``request_hashes``; -1 = no request.
+                                this set, in first-use order (empty when none was made): the
+                                hashes of ``request_groups`` in order, each once.
+        request_groups:         distinct groups of request keys; a group lists every request
+                                behind one decision, in request order (several when the model
+                                sends one request per outcome or splits a large query set).
+        request_group:          (n,) int64 index into ``request_groups``; -1 = no request.
         situation_names, action_names, outcome_names: column names in spec order.
         primary_outcome:        member of ``outcome_names``.
         spread_levels:          (low, high) quantile levels the spreads were computed from.
@@ -123,7 +138,8 @@ class DreamSet:
     physics_choice: np.ndarray
     chosen_spread: np.ndarray
     request_hashes: tuple[str, ...]
-    request_index: np.ndarray
+    request_groups: tuple[tuple[str, ...], ...]
+    request_group: np.ndarray
     situation_names: tuple[str, ...]
     action_names: tuple[str, ...]
     outcome_names: tuple[str, ...]
@@ -147,6 +163,27 @@ class DreamSet:
             set_(self, name, value)
         if self.primary_outcome not in self.outcome_names:
             raise ValueError(f"primary_outcome {self.primary_outcome!r} is not in {self.outcome_names}")
+        if isinstance(self.request_groups, (str, bytes)):
+            raise ValueError("DreamSet.request_groups must be a sequence of groups of request hashes")
+        groups = []
+        for position, group in enumerate(self.request_groups):
+            if isinstance(group, (str, bytes)):
+                raise ValueError(f"DreamSet.request_groups[{position}] must be a sequence of hashes, not one string")
+            group = tuple(group)
+            if not group or not all(isinstance(item, str) and item for item in group) or len(set(group)) != len(group):
+                raise ValueError(
+                    f"DreamSet.request_groups[{position}] must hold one or more unique non-empty strings; got {group}"
+                )
+            groups.append(group)
+        if len(set(groups)) != len(groups):
+            raise ValueError("DreamSet.request_groups must not repeat a group")
+        set_(self, "request_groups", tuple(groups))
+        flat = tuple(dict.fromkeys(item for group in groups for item in group))
+        if self.request_hashes != flat:
+            raise ValueError(
+                f"DreamSet.request_hashes {self.request_hashes} must be the distinct hashes of request_groups "
+                f"in first-use order {flat}"
+            )
         low, high = (float(level) for level in self.spread_levels)
         if not 0.0 < low < high < 1.0:
             raise ValueError(f"spread_levels must satisfy 0 < low < high < 1; got {self.spread_levels}")
@@ -173,7 +210,7 @@ class DreamSet:
             "chosen": (n,),
             "physics_choice": (n,),
             "chosen_spread": (n,),
-            "request_index": (n,),
+            "request_group": (n,),
             "chosen_physics": (n, k),
             "chosen_mean": (n, k),
             "chosen_median": (n, k),
@@ -186,8 +223,8 @@ class DreamSet:
             index = getattr(self, name)
             if np.any(index < 0) or np.any(index >= c):
                 raise ValueError(f"DreamSet.{name} holds an index outside [0, {c})")
-        if np.any(self.request_index < -1) or np.any(self.request_index >= len(self.request_hashes)):
-            raise ValueError(f"DreamSet.request_index must lie in [-1, {len(self.request_hashes)})")
+        if np.any(self.request_group < -1) or np.any(self.request_group >= len(self.request_groups)):
+            raise ValueError(f"DreamSet.request_group must lie in [-1, {len(self.request_groups)})")
         if np.any(self.chosen_outcome_spread < 0.0):
             raise ValueError("DreamSet.chosen_outcome_spread must be non-negative")
         primary = self.outcome_names.index(self.primary_outcome)
@@ -212,6 +249,11 @@ class DreamSet:
         """(n, A) the actions physics alone would choose."""
         return self.candidates[np.arange(self.n_rows), self.physics_choice]
 
+    def request_hashes_of(self, row: int) -> tuple[str, ...]:
+        """Every request key behind the decision of ``row``, in request order (``()`` for none)."""
+        group = int(self.request_group[row])
+        return () if group < 0 else self.request_groups[group]
+
 
 def _check_spec(spec: SkillSpec, dreams: DreamSet) -> None:
     for label, have, want in (
@@ -232,7 +274,8 @@ def dreams_from_decisions(
 
     All decisions must belong to ``spec``, share one method label and have the same number
     of candidates C (ValueError otherwise). ``spread_levels`` must be the levels the
-    decisions were made with (they are recorded, not recomputed).
+    decisions were made with (they are recorded, not recomputed). Every request key of every
+    decision (:func:`~learned_judgment.engine.rows.decision_request_group`) is recorded.
     """
     if not decisions:
         raise ValueError("decisions is empty; a DreamSet needs at least one decision")
@@ -243,19 +286,22 @@ def dreams_from_decisions(
     if len(counts) != 1:
         raise ValueError(f"candidate counts differ between situations: {counts}")
     primary = spec.outcome_index(spec.primary_outcome)
-    hashes: list[str] = []
-    request_index = []
+    groups: dict[tuple[str, ...], int] = {}
+    request_group = []
     for position, decision in enumerate(decisions):
         if decision.skill != spec.name:
             raise ValueError(f"decisions[{position}] belongs to skill {decision.skill!r}, not {spec.name!r}")
         if decision.predicted.names != spec.outcome_names:
             raise ValueError(f"decisions[{position}] outcomes {decision.predicted.names} differ from the spec")
-        if decision.request_hash is None:
-            request_index.append(-1)
+        try:
+            group = decision_request_group(decision)
+        except ValueError as error:
+            raise ValueError(f"decisions[{position}]: {error}") from error
+        if not group:
+            request_group.append(-1)
             continue
-        if decision.request_hash not in hashes:
-            hashes.append(decision.request_hash)
-        request_index.append(hashes.index(decision.request_hash))
+        request_group.append(groups.setdefault(group, len(groups)))
+    ordered_groups = tuple(groups)
 
     def chosen_rows(attribute: str) -> np.ndarray:
         return np.stack([getattr(d.predicted, attribute)[d.chosen_index] for d in decisions])
@@ -270,8 +316,9 @@ def dreams_from_decisions(
         chosen=np.array([decision.chosen_index for decision in decisions], dtype=np.int64),
         physics_choice=np.array([decision.physics_index for decision in decisions], dtype=np.int64),
         chosen_spread=outcome_spread[:, primary],
-        request_hashes=tuple(hashes),
-        request_index=np.array(request_index, dtype=np.int64),
+        request_hashes=tuple(dict.fromkeys(item for group in ordered_groups for item in group)),
+        request_groups=ordered_groups,
+        request_group=np.array(request_group, dtype=np.int64),
         situation_names=spec.situation_names,
         action_names=spec.action_names,
         outcome_names=spec.outcome_names,
@@ -298,7 +345,9 @@ def dream(
     extra: np.ndarray | None = None,
 ) -> DreamSet:
     """Sample ``n_dreams`` situations (n, S) with ``spec.sample_situations(rng, n_dreams)`` and
-    decide all of them in one :func:`decide_batch` call.
+    decide all of them in one :func:`decide_batch` call (one predict call of ``model``; every
+    provider request it made is recorded in the DreamSet). Situation i does not depend on
+    ``n_dreams`` when the spec samples row by row, as the default ``sample_situations`` does.
 
     Args:
         model:   the fitted residual model (the teacher), or ``None`` with ``method ==
@@ -329,6 +378,32 @@ def dream(
     return dreams_from_decisions(spec, decisions, spread_levels=spread_levels)
 
 
+def select_rows(dreams: DreamSet, rows: Sequence[int] | np.ndarray) -> DreamSet:
+    """The DreamSet holding the given rows of ``dreams``, in the given order.
+
+    ``rows`` is a 1-D array of row indices in [0, n_rows) without repeats, or a boolean mask of
+    length n_rows. Every per-row array is indexed alike; the header (skill, method, names,
+    request hashes and groups) is kept, so each selected row still names the requests behind it.
+    The result may have zero rows.
+    """
+    index = np.asarray(rows)
+    if index.ndim != 1:
+        raise ValueError(f"rows must be 1-D; got shape {index.shape}")
+    if index.dtype == np.bool_:
+        if index.shape[0] != dreams.n_rows:
+            raise ValueError(f"a row mask must have length {dreams.n_rows}; got {index.shape[0]}")
+    else:
+        if index.size and not np.issubdtype(index.dtype, np.integer):
+            raise ValueError(f"rows must be integer indices or a boolean mask; got dtype {index.dtype}")
+        index = index.astype(np.int64)
+        if index.size and (index.min() < 0 or index.max() >= dreams.n_rows):
+            raise ValueError(f"row indices must lie in [0, {dreams.n_rows}); got {int(index.min())}..{int(index.max())}")
+        if np.unique(index).size != index.size:
+            raise ValueError("row indices must not repeat")
+    per_row = {name: getattr(dreams, name)[index] for name in (*_FLOAT_ARRAYS, *_INT_ARRAYS)}
+    return dataclasses.replace(dreams, **per_row)
+
+
 def keep_confident(dreams: DreamSet, max_chosen_spread: float) -> DreamSet:
     """Rows whose ``chosen_spread <= max_chosen_spread`` (exact comparison).
 
@@ -340,9 +415,7 @@ def keep_confident(dreams: DreamSet, max_chosen_spread: float) -> DreamSet:
     threshold = float(max_chosen_spread)
     if math.isnan(threshold) or threshold < 0.0:
         raise ValueError(f"max_chosen_spread must be >= 0 (a spread is non-negative); got {threshold}")
-    keep = dreams.chosen_spread <= threshold
-    per_row = {name: getattr(dreams, name)[keep] for name in (*_FLOAT_ARRAYS, *_INT_ARRAYS)}
-    return dataclasses.replace(dreams, **per_row)
+    return select_rows(dreams, dreams.chosen_spread <= threshold)
 
 
 def dream_rows(
@@ -354,11 +427,11 @@ def dream_rows(
     world_preset: str,
     timestamp_utc: str,
 ) -> list[AttemptRow]:
-    """One shared-schema row with ``source == "dream"`` per dream (see engine.rows)."""
+    """One shared-schema row with ``source == "dream"`` per dream (see engine.rows); each row's
+    teacher summary lists every request key behind its decision."""
     _check_spec(spec, dreams)
     rows = []
     for i in range(dreams.n_rows):
-        request = int(dreams.request_index[i])
         rows.append(
             _dream_row(
                 spec,
@@ -367,7 +440,7 @@ def dream_rows(
                 world_preset=world_preset,
                 timestamp_utc=timestamp_utc,
                 method=dreams.method,
-                request_hash=None if request < 0 else dreams.request_hashes[request],
+                request_hashes=dreams.request_hashes_of(i),
                 situation=dreams.situations[i],
                 candidates=dreams.candidates[i],
                 scores=dreams.scores[i],
@@ -422,6 +495,7 @@ def save_dreams(path: Path, dreams: DreamSet, meta: dict) -> None:
         "primary_outcome": dreams.primary_outcome,
         "spread_levels": list(dreams.spread_levels),
         "request_hashes": list(dreams.request_hashes),
+        "request_groups": [list(group) for group in dreams.request_groups],
         "n_rows": dreams.n_rows,
         "n_candidates": dreams.n_candidates,
         "arrays_file": arrays_path.name,
@@ -440,17 +514,24 @@ def load_dreams(path: Path) -> tuple[DreamSet, dict]:
     """Inverse of :func:`save_dreams`: returns ``(dreams, meta)``.
 
     Raises ValueError when the format tag, the arrays digest or the stored array names do
-    not match. Arrays are read with ``allow_pickle=False``.
+    not match, and names the reason when the file is of a retired format (``v1``). Arrays are
+    read with ``allow_pickle=False``.
     """
     arrays_path, meta_path = _paths(path)
     header = json.loads(meta_path.read_text(encoding="utf-8"))
-    if not isinstance(header, dict) or header.get("format") != DREAM_FORMAT:
-        raise ValueError(f"{meta_path} is not a {DREAM_FORMAT} file")
+    found = header.get("format") if isinstance(header, dict) else None
+    if isinstance(found, str) and found in _RETIRED_FORMATS:
+        raise ValueError(f"{meta_path} is an old {found} file, which is no longer read: {_RETIRED_FORMATS[found]}")
+    if found != DREAM_FORMAT:
+        raise ValueError(f"{meta_path} is not a {DREAM_FORMAT} file (format {found!r})")
     if set(header) != _HEADER_KEYS:
         raise ValueError(
             f"{meta_path} header keys do not match; missing={sorted(_HEADER_KEYS - set(header))} "
             f"extra={sorted(set(header) - _HEADER_KEYS)}"
         )
+    groups = header["request_groups"]
+    if not isinstance(groups, list) or not all(isinstance(group, list) for group in groups):
+        raise ValueError(f"{meta_path}: request_groups must be a list of lists of request hashes")
     data = arrays_path.read_bytes()
     if hashlib.sha256(data).hexdigest() != header["arrays_sha256"]:
         raise ValueError(f"{arrays_path} does not match the sha256 recorded in {meta_path}")
@@ -471,6 +552,7 @@ def load_dreams(path: Path) -> tuple[DreamSet, dict]:
         primary_outcome=header["primary_outcome"],
         spread_levels=tuple(header["spread_levels"]),
         request_hashes=tuple(header["request_hashes"]),
+        request_groups=tuple(tuple(group) for group in header["request_groups"]),
         **arrays,
     )
     if dreams.n_rows != header["n_rows"] or dreams.n_candidates != header["n_candidates"]:

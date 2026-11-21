@@ -1,0 +1,37 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+parity_logit_tolerance = 1e-09 (config students.snn.parity_logit_tolerance)
+
+== the model's own export passes, and the report covers every comparison ==
+  {'n_inputs_checked': 600, 'logit_tolerance': 1e-09, 'max_abs_logit_difference': 6.661338147750939e-16, 'spike_train_mismatches_per_layer': [0], 'spike_train_cells_per_layer': [384000], 'total_spikes_per_layer_torch': [55231], 'total_spikes_per_layer_numpy': [55231], 'decisions_differing': 0, 'decision_agreement': 1.0, 'decide_one_vs_batch_differing': 0, 'decide_one_vs_torch_differing': 0}
+  [ok] spike trains compared cell by cell (T x n x H) with zero mismatches
+  [ok] decide_one on every row = batched decisions = torch decisions
+
+== readout_beta mis-exported (0.5 instead of the model's value) ==
+  1 row(s): decisions equal = True (the old check compared decisions and counts only)
+  [ok] check_parity on 1 row(s) -> ParityError: the numpy network does not reproduce the torch model on head 'h' (1 rows): max |logit difference| 0.6527527186018814 exceeds the tolerance 1e-09
+  10 row(s): decisions equal = True (the old check compared decisions and counts only)
+  [ok] check_parity on 10 row(s) -> ParityError: the numpy network does not reproduce the torch model on head 'h' (10 rows): max |logit difference| 1.0956613580126322 exceeds the tolerance 1e-09
+
+== hidden neurons permuted: equal spike counts, different spike trains ==
+  [ok] (the permuted network emits the same spike count at every step: the old count comparison is blind to it)
+  [ok] check_parity with permuted hidden neurons -> ParityError: the numpy network does not reproduce the torch model on head 'h' (600 rows): spike-train mismatches per layer [90012]
+  report: {'n_inputs_checked': 600, 'logit_tolerance': 1e-09, 'max_abs_logit_difference': 1.7763568394002505e-15, 'spike_train_mismatches_per_layer': [90012], 'spike_train_cells_per_layer': [384000], 'total_spikes_per_layer_torch': [55231], 'total_spikes_per_layer_numpy': [55231], 'decisions_differing': 0, 'decision_agreement': 1.0, 'decide_one_vs_batch_differing': 0, 'decide_one_vs_torch_differing': 0}
+
+== a constructed network on which decide_one differs from the batched path ==
+  (row, neuron) pairs whose single-row current differs from the batched (and torch) current: 7610
+  [ok] a row whose single-row current differs in the last bit exists
+  row 0 neuron 5: batched current np.float64(0.24111693565211978), single-row np.float64(0.24111693565211975); threshold 0.24111693565211975; decide (batch of 500) = 1, decide_one = 0
+  [ok] decide_one and the batched decide disagree on that row
+  [ok] check_parity on the constructed network -> ParityError: the numpy network does not reproduce the torch model on head 'h' (500 rows): the per-decision path (decide_one) differs from the batched decisions on 1 rows and from torch on 1 rows
+  report: spike-train mismatches [0], batched decisions differing 0, decide_one vs batch 1
+  [ok] (torch and the batched numpy path agree; only the per-decision path differs, which the old check never ran)
+
+== train_in_dream: parity on every row; the student decides single situations via decide_one ==
+  [ok] parity checked on all 600 rows = training rows + early-stopping rows
+  [ok] SNNStudent.decide_index_one (encode_one + decide_one) = decide_index on 500 situations
+  [ok] decide_index_one is encoder.encode_one + network.decide_one
+  [ok] SNNStudent.decide_one (A,) = decide on every situation
+  [ok] decide_index_one with a (1, S) array -> ValueError: situation must have shape (3,); got (1, 3)
+
+CHECK RESULT: 15 assertions held, 0 failed 

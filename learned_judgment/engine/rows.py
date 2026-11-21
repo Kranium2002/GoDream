@@ -23,7 +23,10 @@ One row per line, UTF-8, ``\\n`` line ends. Each line is the canonical JSON of o
 with exactly these keys:
 
     run_id            str          run identifier
-    seed              int >= 0     seed of the world this attempt ran in (reproduces the episode)
+    seed              int >= 0     real rows: the attempt seed of the episode, i.e. the second argument
+                                   of ``world.reset(situation, attempt_seed)``. The world's own seed
+                                   (the hidden world of the whole run) is recorded by the run, not
+                                   per row. Dream rows: the seed of the dream run.
     skill             str          SkillSpec name
     world_preset      str          declared preset name (config.yaml world.presets)
     source            str          "real" | "dream"
@@ -35,21 +38,38 @@ with exactly these keys:
     timestamp_utc     str          ISO 8601 with a zero UTC offset, supplied by the caller
     teacher           object|null  dream rows: the keys of TEACHER_KEYS; null for real rows
 
+Attempt identity: for ``source == "real"`` the pair ``(run_id, seed)`` names one attempt and is
+unique. :func:`append_rows` refuses a batch that repeats a pair or collides with a pair already
+in the file, and :func:`rows_to_arrays` refuses rows that repeat a pair. Dream rows carry no
+such identity (one dream run writes many rows with the same run_id and seed).
+
 Values are keyed by name, so the sorted on-disk key order carries no meaning: the fixed
 outcome order of a skill is ``spec.outcomes`` and :func:`rows_to_arrays` restores it.
+
+The stored ``physics_guess`` is the physics of the spec that wrote the row. Rows carry no spec
+version, so :func:`rows_to_arrays` recomputes ``spec.physics_guess`` for every real row and,
+when the formula or one of its constants has changed since, either refuses the rows
+(:class:`StalePhysicsError`) or recomputes physics and residuals from the stored measured
+outcome, as the caller chooses. The file itself is never rewritten.
+
 Categorical values are stored as level strings. Floats use Python's shortest round-trip
 repr, so reading returns the identical float64 bits; non-finite values are rejected on
 write and on read (proof: experiments/proofs/B_students_eval_contract/p10_persist and
 p10b_jsonl_pandas -- read with ``json.loads`` per line, never ``pandas.read_json`` defaults).
 
 A file has a single writer (the process that runs the episodes); concurrent appends from
-several processes are not safe on Windows (p10_persist). Each append is flushed and
-fsynced, and appending to a file whose last line is incomplete is refused.
+several processes are not safe on Windows (p10_persist). Each append re-validates every row
+from the exact bytes it is about to write, then flushes and fsyncs; appending to a file whose
+last line is incomplete is refused.
 
 Teacher summary of a dream row (``teacher`` object)
 ---------------------------------------------------
     method            str         label of what produced the scores (e.g. "teacher")
-    request_hash      str|null    cache key of the batched residual-model request, if any
+    request_hash      str|null    cache key of the last residual-model request behind the
+                                  decision: the last entry of ``request_hashes``, null when empty
+    request_hashes    list[str]   cache keys of every residual-model request behind the decision,
+                                  in request order (several when the model sends one request per
+                                  outcome or splits a large query set); empty when none was made
     n_candidates      int         C, the number of candidates scored for this situation
     chosen_index      int         index of the chosen candidate, in [0, C)
     physics_index     int         index of the candidate physics alone would choose
@@ -77,22 +97,28 @@ from learned_judgment.engine.types import Decision
 from learned_judgment.skills.base import SkillSpec
 
 __all__ = [
+    "PHYSICS_MISMATCH_POLICIES",
     "SOURCES",
     "TEACHER_KEYS",
     "AttemptRow",
     "RowArrays",
+    "StalePhysicsError",
     "append_rows",
     "build_dream_row",
     "build_real_row",
+    "check_new_attempts",
+    "decision_request_group",
     "read_rows",
     "rows_to_arrays",
     "validate_row",
 ]
 
 SOURCES = ("real", "dream")
+PHYSICS_MISMATCH_POLICIES = ("error", "recompute")
 TEACHER_KEYS = (
     "method",
     "request_hash",
+    "request_hashes",
     "n_candidates",
     "chosen_index",
     "physics_index",
@@ -103,6 +129,12 @@ TEACHER_KEYS = (
     "predicted_median",
     "predicted_spread",
 )
+
+
+class StalePhysicsError(ValueError):
+    """A stored row's ``physics_guess`` differs from what the current SkillSpec computes for the
+    same situation and action: the physics formula or one of its constants changed after the
+    row was written, so its stored residual is relative to another physics."""
 
 
 # --------------------------------------------------------------------------------------
@@ -168,16 +200,32 @@ def _utc_timestamp(value: Any) -> str:
     return text
 
 
+def _request_hashes(field: str, values: Any) -> list[str]:
+    """Copy of a list / tuple of unique non-empty strings (possibly empty)."""
+    if not isinstance(values, (list, tuple)):
+        raise ValueError(f"{field} must be a list of request hashes; got {type(values).__name__}")
+    hashes = [_text(f"{field}[{position}]", value) for position, value in enumerate(values)]
+    if len(set(hashes)) != len(hashes):
+        raise ValueError(f"{field} repeats a request hash: {hashes}")
+    return hashes
+
+
 def _teacher_summary(teacher: Any, outcome_keys: Sequence[str], action_keys: Sequence[str]) -> dict[str, Any]:
     if not isinstance(teacher, Mapping):
         raise ValueError("teacher must be a mapping for a dream row")
     _same_keys("teacher", teacher, TEACHER_KEYS)
     n_candidates = _count("teacher.n_candidates", teacher["n_candidates"], minimum=1)
+    hashes = _request_hashes("teacher.request_hashes", teacher["request_hashes"])
+    last = hashes[-1] if hashes else None
+    if teacher["request_hash"] != last:
+        raise ValueError(
+            f"teacher.request_hash {teacher['request_hash']!r} must be the last of teacher.request_hashes "
+            f"({last!r}; null when no request was made)"
+        )
     summary: dict[str, Any] = {
         "method": _text("teacher.method", teacher["method"]),
-        "request_hash": None
-        if teacher["request_hash"] is None
-        else _text("teacher.request_hash", teacher["request_hash"]),
+        "request_hash": last,
+        "request_hashes": hashes,
         "n_candidates": n_candidates,
     }
     for key in ("chosen_index", "physics_index"):
@@ -308,7 +356,11 @@ def validate_row(spec: SkillSpec, row: AttemptRow) -> None:
     """Raise ValueError unless ``row`` matches ``spec`` exactly: skill name; situation, action
     and outcome names (no missing, no extra); categorical levels; situation and action
     bounds; physics guess inside the outcome bounds; a real row's measured outcome
-    (binary outcomes 0/1); a dream row's physics action."""
+    (binary outcomes 0/1); a dream row's physics action.
+
+    It does not compare the stored physics guess with the current ``spec.physics_guess``, so
+    a file written under an older physics stays readable; :func:`rows_to_arrays` does that
+    comparison before any row can become a residual target."""
     _encode(spec, row)
 
 
@@ -326,6 +378,33 @@ def _vector(field: str, values: np.ndarray, width: int) -> np.ndarray:
 
 def _outcome_map(spec: SkillSpec, values: np.ndarray) -> dict[str, float]:
     return {name: float(value) for name, value in zip(spec.outcome_names, values)}
+
+
+def _physics_at(spec: SkillSpec, situation: np.ndarray, action: np.ndarray) -> np.ndarray:
+    """(K,) ``spec.physics_guess`` of one encoded situation (S,) and action (A,), evaluated as a
+    one-row batch. Both :func:`build_real_row` and :func:`rows_to_arrays` use this exact call,
+    so an unchanged spec reproduces a stored physics guess bit for bit."""
+    physics = np.asarray(spec.physics_guess(situation[None, :], action[None, :]), dtype=np.float64)
+    if physics.shape != (1, spec.n_outcome):
+        raise ValueError(f"physics_guess must return (1, {spec.n_outcome}); got {physics.shape}")
+    return physics[0]
+
+
+def decision_request_group(decision: Decision) -> tuple[str, ...]:
+    """Every provider request key behind ``decision``, in request order.
+
+    ``decision.request_hashes`` when it is set; otherwise ``(decision.request_hash,)`` when a
+    single hash was recorded; ``()`` when no request was made. Raises ValueError when the
+    decision names a ``request_hash`` that is not among its ``request_hashes``.
+    """
+    group = tuple(decision.request_hashes)
+    if not group and decision.request_hash is not None:
+        group = (decision.request_hash,)
+    if decision.request_hash is not None and decision.request_hash not in group:
+        raise ValueError(
+            f"decision.request_hash {decision.request_hash!r} is not one of its request_hashes {list(group)}"
+        )
+    return group
 
 
 def build_real_row(
@@ -348,17 +427,16 @@ def build_real_row(
                           ``spec.encode_outcome``: a missing or extra key is rejected.
 
     ``physics_guess`` is ``spec.physics_guess`` of this (situation, action) -- a pure function
-    of the spec -- and ``residual = measured - physics`` in the spec's outcome order.
+    of the spec -- and ``residual = measured - physics`` in the spec's outcome order. ``seed``
+    is the attempt seed the episode was reset with.
     """
     situation = _vector("situation", situation, spec.n_situation)
     action = _vector("action", action, spec.n_action)
     if not bool(spec.action_in_bounds(action[None, :])[0]):
         raise ValueError(f"action {action.tolist()} is outside the declared bounds of skill {spec.name!r}")
-    physics = np.asarray(spec.physics_guess(situation[None, :], action[None, :]), dtype=np.float64)
-    if physics.shape != (1, spec.n_outcome):
-        raise ValueError(f"physics_guess must return (1, {spec.n_outcome}); got {physics.shape}")
+    physics = _physics_at(spec, situation, action)
     measured = spec.encode_outcome(measured_outcome)
-    residual = measured - physics[0]
+    residual = measured - physics
     row = AttemptRow(
         run_id=run_id,
         seed=seed,
@@ -367,7 +445,7 @@ def build_real_row(
         source="real",
         situation=spec.decode_situation(situation),
         action=spec.decode_action(action),
-        physics_guess=_outcome_map(spec, physics[0]),
+        physics_guess=_outcome_map(spec, physics),
         measured_outcome=_outcome_map(spec, measured),
         residual=_outcome_map(spec, residual),
         timestamp_utc=timestamp_utc,
@@ -384,7 +462,7 @@ def _dream_row(
     world_preset: str,
     timestamp_utc: str,
     method: str,
-    request_hash: str | None,
+    request_hashes: Sequence[str],
     situation: np.ndarray,
     candidates: np.ndarray,
     scores: np.ndarray,
@@ -397,14 +475,17 @@ def _dream_row(
 ) -> AttemptRow:
     """Dream row from arrays: situation (S,), candidates (C, A), scores (C,), and the
     physics guess / predicted mean / median / spread (K,) at the chosen candidate.
+    ``request_hashes`` are every request key behind the decision, in request order.
     Shared by :func:`build_dream_row` and ``dream.dream_rows`` so both write one format."""
     candidates = np.asarray(candidates, dtype=np.float64)
     scores = np.asarray(scores, dtype=np.float64)
     if candidates.ndim != 2 or candidates.shape[1] != spec.n_action or scores.shape != (candidates.shape[0],):
         raise ValueError(f"candidates (C, {spec.n_action}) and scores (C,) disagree: {candidates.shape}, {scores.shape}")
+    hashes = list(request_hashes)
     teacher = {
         "method": method,
-        "request_hash": request_hash,
+        "request_hash": hashes[-1] if hashes else None,
+        "request_hashes": hashes,
         "n_candidates": int(candidates.shape[0]),
         "chosen_index": int(chosen_index),
         "physics_index": int(physics_index),
@@ -443,7 +524,8 @@ def build_dream_row(
     timestamp_utc: str,
 ) -> AttemptRow:
     """Row of one teacher decision (``source == "dream"``): the chosen action, the physics
-    guess at that action, and the teacher summary. It carries no measured outcome."""
+    guess at that action, and the teacher summary, which lists every provider request behind
+    the decision (:func:`decision_request_group`). It carries no measured outcome."""
     if decision.skill != spec.name:
         raise ValueError(f"decision belongs to skill {decision.skill!r}, not {spec.name!r}")
     if decision.predicted.names != spec.outcome_names:
@@ -456,7 +538,7 @@ def build_dream_row(
         world_preset=world_preset,
         timestamp_utc=timestamp_utc,
         method=decision.method,
-        request_hash=decision.request_hash,
+        request_hashes=decision_request_group(decision),
         situation=decision.situation,
         candidates=decision.candidates,
         scores=decision.scores,
@@ -474,33 +556,6 @@ def build_dream_row(
 # --------------------------------------------------------------------------------------
 
 
-def append_rows(path: Path, rows: Sequence[AttemptRow]) -> None:
-    """Append ``rows`` to the JSON Lines file ``path`` (created with its parent directories).
-
-    Every row is serialized before anything is written, so an invalid row writes nothing.
-    The bytes are flushed and fsynced before returning. Refuses to append when the file's
-    last line is incomplete (a previous writer crashed mid-line). Single writer per file.
-    """
-    path = Path(path)
-    lines = []
-    for position, row in enumerate(rows):
-        if not isinstance(row, AttemptRow):
-            raise TypeError(f"rows[{position}] is {type(row).__name__}, not AttemptRow")
-        lines.append(row.to_json_line())
-    if not lines:
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists() and path.stat().st_size > 0:
-        with open(path, "rb") as handle:
-            handle.seek(-1, os.SEEK_END)
-            if handle.read(1) != b"\n":
-                raise ValueError(f"{path} ends with an incomplete line; repair it before appending")
-    with open(path, "ab") as handle:
-        handle.write(b"".join(lines))
-        handle.flush()
-        os.fsync(handle.fileno())
-
-
 def _reject_constant(name: str) -> Any:
     raise ValueError(f"non-finite JSON constant {name}")
 
@@ -514,6 +569,126 @@ def _reject_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return record
 
 
+def _parse_line(line: bytes) -> AttemptRow:
+    """One row from the bytes of one line (without its ``\\n``), validated as on read."""
+    record = json.loads(line.decode("utf-8"), parse_constant=_reject_constant, object_pairs_hook=_reject_duplicates)
+    if not isinstance(record, dict):
+        raise ValueError("a row must be a JSON object")
+    if set(record) != _ROW_KEYS:
+        missing = sorted(_ROW_KEYS - set(record))
+        extra = sorted(set(record) - _ROW_KEYS)
+        raise ValueError(f"row keys do not match; missing={missing} extra={extra}")
+    return AttemptRow(**record)
+
+
+def _check_complete_last_line(path: Path) -> None:
+    if path.exists() and path.stat().st_size > 0:
+        with open(path, "rb") as handle:
+            handle.seek(-1, os.SEEK_END)
+            if handle.read(1) != b"\n":
+                raise ValueError(f"{path} ends with an incomplete line; repair it before appending")
+
+
+def _recorded_attempts(path: Path) -> set[tuple[str, int]]:
+    """(run_id, seed) of every real row already in ``path``; empty when the file does not exist.
+    The whole file is read and validated, so a damaged file is never appended to."""
+    if not path.exists():
+        return set()
+    _check_complete_last_line(path)
+    return {(row.run_id, row.seed) for row in read_rows(path) if row.source == "real"}
+
+
+def _clash_message(path: Path, clash: Sequence[tuple[str, int]]) -> str:
+    shown = ", ".join(f"(run_id={run_id!r}, seed={seed})" for run_id, seed in clash[:5])
+    more = f" and {len(clash) - 5} more" if len(clash) > 5 else ""
+    return (
+        f"{path} already holds the real attempts {shown}{more}: a (run_id, seed) pair names one attempt, "
+        "so a rerun needs a new run_id (or new attempt seeds)"
+    )
+
+
+def check_new_attempts(
+    path: Path, *, run_id: Any, world_preset: Any, seeds: Sequence[Any], timestamp_utc: Any
+) -> None:
+    """Validate the identity of real attempts that are about to be run, BEFORE the first episode.
+
+    Applies the checks :class:`AttemptRow` would apply after each episode, so that an invalid
+    value stops a run before the world is stepped: ``run_id`` and ``world_preset`` non-empty
+    strings, every attempt seed an int >= 0, ``timestamp_utc`` (one sample of the run's clock)
+    ISO 8601 with a zero UTC offset. Also refuses repeated seeds, and -- when ``path`` exists --
+    a file whose last line is incomplete, a file that does not read back as valid rows, and any
+    ``(run_id, seed)`` already recorded in it. Raises ValueError naming the offending value.
+    """
+    _text("run_id", run_id)
+    _text("world_preset", world_preset)
+    _utc_timestamp(timestamp_utc)
+    first: dict[int, int] = {}
+    for position, seed in enumerate(seeds):
+        value = _count(f"attempt seed [{position}]", seed, minimum=0)
+        if value in first:
+            raise ValueError(
+                f"attempt seed [{position}] = {value} repeats attempt seed [{first[value]}]: "
+                "(run_id, seed) must name exactly one attempt"
+            )
+        first[value] = position
+    clash = sorted({(run_id, seed) for seed in first} & _recorded_attempts(Path(path)))
+    if clash:
+        raise ValueError(_clash_message(Path(path), clash))
+
+
+def append_rows(path: Path, rows: Sequence[AttemptRow], *, spec: SkillSpec | None) -> None:
+    """Append ``rows`` to the JSON Lines file ``path`` (created with its parent directories).
+
+    Args:
+        spec: the SkillSpec every row must match (:func:`validate_row`), or ``None`` for a
+              file that holds rows of several skills (structural checks only). Required, so a
+              caller decides explicitly.
+
+    Immediately before writing, every row is validated again from the exact bytes that would
+    be written: the line is parsed back and rebuilt as an :class:`AttemptRow` (so a row whose
+    dicts were changed after it was built is refused), it must re-serialize to the same bytes,
+    and it is checked against ``spec`` when one is given. A real row's ``(run_id, seed)`` must
+    be unique: a batch that repeats a pair, or that holds a pair already in the file, is
+    refused. Any refusal raises ValueError and writes nothing. Appending to a file whose last
+    line is incomplete is refused. The bytes are flushed and fsynced. Single writer per file.
+    """
+    path = Path(path)
+    if spec is not None and not isinstance(spec, SkillSpec):
+        raise TypeError(f"spec must be a SkillSpec or None; got {type(spec).__name__}")
+    lines: list[bytes] = []
+    batch: dict[tuple[str, int], int] = {}
+    for position, row in enumerate(rows):
+        if not isinstance(row, AttemptRow):
+            raise TypeError(f"rows[{position}] is {type(row).__name__}, not AttemptRow")
+        try:
+            line = row.to_json_line()
+            copy = _parse_line(line[:-1])
+            if copy.to_json_line() != line:
+                raise ValueError("the row does not re-serialize to the same bytes")
+            if spec is not None:
+                validate_row(spec, copy)
+        except (ValueError, TypeError, UnicodeDecodeError) as error:
+            raise ValueError(f"rows[{position}] fails validation immediately before writing: {error}") from error
+        if copy.source == "real":
+            key = (copy.run_id, copy.seed)
+            if key in batch:
+                raise ValueError(
+                    f"rows[{position}] repeats the attempt (run_id={key[0]!r}, seed={key[1]}) of rows[{batch[key]}]"
+                )
+            batch[key] = position
+        lines.append(line)
+    if not lines:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    clash = sorted(set(batch) & _recorded_attempts(path))
+    if clash:
+        raise ValueError(_clash_message(path, clash))
+    with open(path, "ab") as handle:
+        handle.write(b"".join(lines))
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
 def read_rows(path: Path, *, spec: SkillSpec | None = None) -> list[AttemptRow]:
     """Read every row of the JSON Lines file ``path`` with ``json.loads`` per line.
 
@@ -521,6 +696,8 @@ def read_rows(path: Path, *, spec: SkillSpec | None = None) -> list[AttemptRow]:
     Infinity, duplicate keys, empty lines and an incomplete last line are rejected with the
     line number. When ``spec`` is given every row is also checked with :func:`validate_row`
     (a file holding rows of several skills is read without it and validated per skill).
+    Repeated attempts are not refused here (a damaged file stays inspectable);
+    :func:`rows_to_arrays` refuses them before they can become residual targets.
     """
     path = Path(path)
     data = path.read_bytes()
@@ -534,16 +711,7 @@ def read_rows(path: Path, *, spec: SkillSpec | None = None) -> list[AttemptRow]:
         if not line.strip():
             raise ValueError(f"{where}: empty line")
         try:
-            record = json.loads(
-                line.decode("utf-8"), parse_constant=_reject_constant, object_pairs_hook=_reject_duplicates
-            )
-            if not isinstance(record, dict):
-                raise ValueError("a row must be a JSON object")
-            if set(record) != _ROW_KEYS:
-                missing = sorted(_ROW_KEYS - set(record))
-                extra = sorted(set(record) - _ROW_KEYS)
-                raise ValueError(f"row keys do not match; missing={missing} extra={extra}")
-            row = AttemptRow(**record)
+            row = _parse_line(line)
             if spec is not None:
                 validate_row(spec, row)
         except (ValueError, TypeError, UnicodeDecodeError) as error:
@@ -562,12 +730,16 @@ class RowArrays:
     """Arrays of ``n`` real rows in row order, in the spec's column orders (float64).
 
     Attributes:
-        situations:    (n, S)
-        actions:       (n, A)
-        physics:       (n, K) physics guess
-        measured:      (n, K) measured outcome
-        residuals:     (n, K) measured - physics, as stored in the rows
-        world_presets: n declared world preset names
+        situations:         (n, S)
+        actions:            (n, A)
+        physics:            (n, K) physics guess of the CURRENT spec (equal to the stored one,
+                            except at the rows listed in ``stale_physics_rows``)
+        measured:           (n, K) measured outcome, as stored
+        residuals:          (n, K) measured - physics
+        world_presets:      n declared world preset names
+        stale_physics_rows: positions (in the given rows) whose stored physics guess differed
+                            from the current spec and was recomputed (policy "recompute");
+                            always empty under policy "error"
     """
 
     situations: np.ndarray
@@ -576,30 +748,78 @@ class RowArrays:
     measured: np.ndarray
     residuals: np.ndarray
     world_presets: list[str]
+    stale_physics_rows: tuple[int, ...]
 
     @property
     def n_rows(self) -> int:
         return int(self.situations.shape[0])
 
+    @property
+    def n_stale_physics(self) -> int:
+        """How many rows had a stored physics guess that differs from the current spec."""
+        return len(self.stale_physics_rows)
 
-def rows_to_arrays(spec: SkillSpec, rows: Sequence[AttemptRow]) -> RowArrays:
+
+def rows_to_arrays(spec: SkillSpec, rows: Sequence[AttemptRow], *, on_physics_mismatch: str) -> RowArrays:
     """Validate ``rows`` against ``spec`` and stack them; real rows only.
 
+    For every row, ``spec.physics_guess`` is recomputed exactly as :func:`build_real_row`
+    computed it (a one-row batch of the stored situation and action) and compared with the
+    stored ``physics_guess``, bit for bit. ``on_physics_mismatch`` (required) says what a
+    difference means:
+
+        "error"      raise :class:`StalePhysicsError` naming the first row whose stored physics
+                     differs: its residual was computed against another physics.
+        "recompute"  use the current physics and ``residual = stored measured - current
+                     physics`` for that row, and list it in ``RowArrays.stale_physics_rows``.
+                     The file is never rewritten.
+
     Raises ValueError for a dream row (a dream is not a measurement and never becomes a
-    residual target) or for any row that fails :func:`validate_row`. Zero rows give arrays
-    with zero rows and the spec's widths.
+    residual target), for two rows with the same ``(run_id, seed)`` (one attempt counted
+    twice), for any row that fails :func:`validate_row`, and when a recomputed physics guess
+    is not finite or leaves the outcome bounds. Zero rows give arrays with zero rows and the
+    spec's widths.
     """
+    if not isinstance(on_physics_mismatch, str) or on_physics_mismatch not in PHYSICS_MISMATCH_POLICIES:
+        raise ValueError(
+            f"on_physics_mismatch must be one of {PHYSICS_MISMATCH_POLICIES}; got {on_physics_mismatch!r}"
+        )
     encoded: list[_Encoded] = []
     presets: list[str] = []
+    stale: list[int] = []
+    seen: dict[tuple[str, int], int] = {}
+    low, high = spec.outcome_low, spec.outcome_high
     for position, row in enumerate(rows):
         if not isinstance(row, AttemptRow):
             raise TypeError(f"rows[{position}] is {type(row).__name__}, not AttemptRow")
         if row.source != "real":
             raise ValueError(f"rows[{position}] has source {row.source!r}; only real rows become arrays")
+        key = (row.run_id, row.seed)
+        if key in seen:
+            raise ValueError(
+                f"rows[{position}] repeats the attempt (run_id={row.run_id!r}, seed={row.seed}) of rows[{seen[key]}]: "
+                "one attempt would be counted twice"
+            )
+        seen[key] = position
         try:
-            encoded.append(_encode(spec, row))
+            item = _encode(spec, row)
+            current = _physics_at(spec, item.situation, item.action)
         except ValueError as error:
             raise ValueError(f"rows[{position}]: {error}") from error
+        if not np.array_equal(current, item.physics):
+            where = f"rows[{position}] (run_id={row.run_id!r}, seed={row.seed})"
+            if on_physics_mismatch == "error":
+                raise StalePhysicsError(
+                    f"{where}: stored physics_guess {item.physics.tolist()} differs from the current "
+                    f"{spec.name}.physics_guess {current.tolist()}; its residual was computed against another "
+                    "physics. Re-collect, or pass on_physics_mismatch='recompute' to recompute physics and "
+                    "residuals from the stored measured outcome"
+                )
+            if not np.all(np.isfinite(current)) or np.any(current < low) or np.any(current > high):
+                raise ValueError(f"{where}: the current physics_guess {current.tolist()} is not finite or leaves the outcome bounds")
+            item = _Encoded(item.situation, item.action, current, item.measured, item.measured - current)
+            stale.append(position)
+        encoded.append(item)
         presets.append(row.world_preset)
 
     def stack(attribute: str, width: int) -> np.ndarray:
@@ -614,4 +834,5 @@ def rows_to_arrays(spec: SkillSpec, rows: Sequence[AttemptRow]) -> RowArrays:
         measured=stack("measured", spec.n_outcome),
         residuals=stack("residual", spec.n_outcome),
         world_presets=presets,
+        stale_physics_rows=tuple(stale),
     )

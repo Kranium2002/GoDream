@@ -1,0 +1,55 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+constants (config skills.dodge.physics + ball.radius_m; body/base values are FIXTURE): DodgePhysics(gravity_m_s2=9.81, assumed_latency_s=0.05, response_time_s=0.3, time_step_s=0.02, collision_softness_m=0.05, body_half_length_m=0.19, body_radius_m=0.1, base_height_m=0.3, ball_radius_m=0.0939)
+episode duration (FIXTURE) 1.6 s
+
+== hand-computed case F: a ball that stays far to the side ==
+  min_separation 0.853047945 (hand 0.853047945); collision 3.895e-08
+PASS  far ball: separation equals the hand value
+PASS  far ball: large separation, collision guess near 0
+PASS  fall and recovery guesses are 0
+
+== hand-computed case R: ball resting on the floor ahead, dog trotting toward it ==
+  min_separation 0.347004067 (hand 0.347004067)
+PASS  resting ball: separation equals the hand value at the last time step
+
+== hand-computed case A: a ball aimed at the trunk ==
+  no dodge: min_separation 0.0, collision 0.979727 (hand, centre through the axis: 0.979727)
+PASS  aimed ball, no dodge: separation 0
+PASS  aimed ball, no dodge: collision guess >= 0.5
+PASS  aimed ball, no dodge: collision equals the hand value
+  full early dodge left: 0.0930 m, right: 0.0930 m (hand shift at the crossing 0.2980 m)
+PASS  full early dodge to the left separates more than no dodge
+PASS  full early dodge to the right separates more than no dodge
+PASS  full early dodge lowers the collision guess below 0.5
+PASS  full dodge clearance is at most the hand shift minus the reach
+
+== start delay ==
+  separation for start delays [0.0, 0.2, 0.4, 0.6]: [0.4568, 0.2724, 0.1033, 0.0]
+PASS  a later start never separates more
+PASS  a late start (0.6 s) separates less than an early one (0 s)
+PASS  0.2 s separates less than 0 s, 0.4 s less than 0.2 s
+
+== mirror symmetry ==
+PASS  left and right full dodges of a centred throw are equal
+PASS  mirrored rows stay inside the fixture ranges
+PASS  300 sampled throws: mirrored situation + mirrored side give identical guesses
+
+== lateral_command_m ==
+PASS  lateral_command_m == |side velocity| x hold exactly
+
+== batch equals row by row, and the scalar reference ==
+PASS  300 rows: batch call equals row-by-row calls exactly
+  largest |vectorised - scalar reference| over 300 x 5 values: 4.441e-16
+PASS  vectorised guess matches the independent scalar reference within 1e-9
+  fixture throws with a zero separation guess: 155 of 300 (fixture sampler aims near the dog)
+PASS  the fixture throws include both hits and misses
+PASS  guess inside the outcome bounds
+
+== refusals ==
+PASS  action outside the bounds  [ValueError: actions outside the declared action bounds]
+PASS  wrong situation width  [ValueError: situations must have shape (n, 9); got (2, 8)]
+PASS  row count mismatch  [ValueError: situations (2, 9) and actions (1, 3) must have the same rows]
+PASS  non-finite situation  [ValueError: situations contain non-finite values]
+
+26 passed, 0 failed

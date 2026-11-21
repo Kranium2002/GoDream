@@ -1,6 +1,6 @@
-"""Check 3: importing learned_judgment.students.measure does not import torch or snntorch.
+"""Check 3: importing the measurement module (and snn.py with BoundStudent) does not import torch or snntorch.
 
-FIXTURE CHECK - mechanics only (no data at all). The module is imported in a fresh process so
+FIXTURE CHECK - mechanics only (no data at all). Each module is imported in a fresh process so
 nothing imported earlier can hide or cause a torch import. Writes no file.
 
 Run from the repository root:
@@ -14,7 +14,13 @@ print(BANNER)
 import subprocess  # noqa: E402
 import sys  # noqa: E402
 
-MODULES = ("learned_judgment.students.measure",)
+MODULES = {
+    "learned_judgment.students.measure": (
+        "HeldOutOverlapError", "agreement_with_dream", "h4_energy_criterion", "measure_decision_latency",
+        "measure_operations", "student_record", "write_record",
+    ),
+    "learned_judgment.students.snn": ("BoundStudent", "DeployedStudent"),
+}
 PROBE = (
     "import importlib, sys, time; started = time.perf_counter(); module = importlib.import_module(sys.argv[1]); "
     "print(f'{sys.argv[1]}: imported in {time.perf_counter() - started:.2f} s; public: {sorted(module.__all__)}'); "
@@ -22,7 +28,7 @@ PROBE = (
 )
 
 checks = Checks()
-for module in MODULES:
+for module, names in MODULES.items():
     result = subprocess.run([sys.executable, "-c", PROBE, module], cwd=REPO_ROOT, capture_output=True, text=True, timeout=300)
     for line in (result.stdout.strip() or result.stderr.strip()[-400:]).splitlines():
         print(f"  {line}")
@@ -31,4 +37,5 @@ for module in MODULES:
         "torch_in_sys_modules=False snntorch_in_sys_modules=False" in result.stdout,
         f"{module} leaves torch and snntorch unimported",
     )
+    checks.expect(all(f"'{name}'" in result.stdout for name in names), f"{module} exports {list(names)}")
 checks.finish()

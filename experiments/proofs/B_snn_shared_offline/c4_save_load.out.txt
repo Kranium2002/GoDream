@@ -1,0 +1,44 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+check config: config.yaml with students.snn.shared_feature_width=6 (fixture) and students.snn.max_steps=200 (config.yaml 1500); every other value from config.yaml
+
+== train in memory: fx_alpha -> fx_beta -> fx_gamma (rehearsal=True) ==
+  + fx_alpha (slot 0): steps_run=200 add wall 4.4 s
+  + fx_beta (slot 1): steps_run=200 add wall 2.7 s
+  + fx_gamma (slot 2): steps_run=200 add wall 4.0 s
+  decisions recorded for 6 (skill, stage) views: ['fx_alpha@0', 'fx_alpha@1', 'fx_alpha@2', 'fx_beta@1', 'fx_beta@2', 'fx_gamma@2']
+
+== 1. layout ==
+  saved files: ['dreams/fx_alpha.json', 'dreams/fx_alpha.npz', 'dreams/fx_beta.json', 'dreams/fx_beta.npz', 'dreams/fx_gamma.json', 'dreams/fx_gamma.npz', 'manifest.json', 'model_state.npz', 'networks/stage_0/fx_alpha.json', 'networks/stage_0/fx_alpha.npz', 'networks/stage_1/fx_alpha.json', 'networks/stage_1/fx_alpha.npz', 'networks/stage_1/fx_beta.json', 'networks/stage_1/fx_beta.npz', 'networks/stage_2/fx_alpha.json', 'networks/stage_2/fx_alpha.npz', 'networks/stage_2/fx_beta.json', 'networks/stage_2/fx_beta.npz', 'networks/stage_2/fx_gamma.json', 'networks/stage_2/fx_gamma.npz']
+  [ok] manifest, model state, one stored dream set per skill, one view per skill per stage (1 + 2 + 3 views)
+  [ok] no pickle or torch.save file
+  [ok] the manifest records the slot assignment {'fx_alpha': 0, 'fx_beta': 1, 'fx_gamma': 2} and every stage's views
+
+== 2. in-process load ==
+  [ok] same skills, slots and settings
+  [ok] same digests at every stage, same records and retention matrix
+  [ok] same training, early-stopping and retention rows for every skill
+  [ok] same decisions for every skill at every stage
+
+== 3. fresh process: load, decide everywhere without torch, then add fx_delta ==
+  fresh-process worker (exit 0, 11.6 s):
+    FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+    worker: loaded skills_held=['fx_alpha', 'fx_beta', 'fx_gamma'] slots={'fx_alpha': 0, 'fx_beta': 1, 'fx_gamma': 2} n_stages=3
+    worker: loaded: stage_digests_match=True
+    worker: 6 (skill, stage) views decided: decisions_identical_every_skill_and_stage=True
+    worker: before adding a skill: torch_in_sys_modules=False snntorch_in_sys_modules=False
+    worker: after add_skill(fx_delta): torch_in_sys_modules=True; slot 3
+    RESULT_JSON skills_held=['fx_alpha', 'fx_beta', 'fx_gamma', 'fx_delta'] slots={'fx_alpha': 0, 'fx_beta': 1, 'fx_gamma': 2, 'fx_delta': 3} n_stages=4
+  [ok] fresh process: worker exit code 0
+  [ok] fresh process: loaded digests and decisions identical for every skill at every stage
+  [ok] fresh process: load, deployed(), decide_index, decide_index_one, decide, decide_one and operation_counts did not import torch
+
+== 4. the same add of fx_delta in memory ==
+  in-memory add of fx_delta (slot 3): steps_run=200 sampling={'fx_delta': 0.5, 'fx_alpha': 0.1667, 'fx_beta': 0.1667, 'fx_gamma': 0.1667}
+  [ok] fresh process: fx_delta took slot 3 on the loaded student; parity clean on all four views
+  [ok] adding fx_delta to the loaded student (fresh process) and to the in-memory student gives identical views at stage 3; stages 0-2 unchanged in both
+  [ok] fresh process: the grown student saved again and reloaded has the same four stages
+  [ok] fresh process and in-memory student: identical 4 x 4 retention matrices
+  [ok] temporary directory removed
+
+CHECK RESULT: 15 assertions held, 0 failed 

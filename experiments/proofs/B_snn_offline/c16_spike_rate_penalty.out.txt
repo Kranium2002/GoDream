@@ -1,0 +1,15 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+config spike_rate_penalty 0.0; fixture penalties (0.5, 1.0); max_steps 300
+  penalty 0.0: firing rate on early-stopping rows 0.1784, on 400 new situations 0.1832; validation KL 0.0697; settings record 0.0
+  penalty 0.5: firing rate on early-stopping rows 0.0628, on 400 new situations 0.0652; validation KL 0.0858; settings record 0.5
+  penalty 1.0: firing rate on early-stopping rows 0.0350, on 400 new situations 0.0376; validation KL 0.1127; settings record 1.0
+  [ok] penalty 0.5: lower firing rate than penalty 0 on the early-stopping rows (torch report)
+  [ok] penalty 0.5: lower firing rate than penalty 0 on new situations (deployed numpy network)
+  [ok] penalty 0.5: no silent layer
+  [ok] penalty 1.0: lower firing rate than penalty 0 on the early-stopping rows (torch report)
+  [ok] penalty 1.0: lower firing rate than penalty 0 on new situations (deployed numpy network)
+  [ok] penalty 1.0: no silent layer
+  [ok] the larger penalty 1.0 fires less than 0.5
+
+CHECK RESULT: 7 assertions held, 0 failed 

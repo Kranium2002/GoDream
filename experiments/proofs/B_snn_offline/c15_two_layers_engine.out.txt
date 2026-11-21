@@ -1,0 +1,18 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+in-memory config: students.snn.hidden_sizes=[32, 24] max_steps=400; skills.fixture_snn.candidate_points_per_dim=[7, 5]
+  steps_run 400 best_step 400; firing rate per layer [0.268203125, 0.2771354166666667]; dead [0.0, 0.041666666666666664]; validation loss 0.6314 -> 0.0219
+  parity: {'n_inputs_checked': 800, 'logit_tolerance': 1e-09, 'max_abs_logit_difference': 1.7763568394002505e-15, 'spike_train_mismatches_per_layer': [0, 0], 'spike_train_cells_per_layer': [256000, 192000], 'total_spikes_per_layer_torch': [64405, 54017], 'total_spikes_per_layer_numpy': [64405, 54017], 'decisions_differing': 0, 'decision_agreement': 1.0, 'decide_one_vs_batch_differing': 0, 'decide_one_vs_torch_differing': 0, 'rows': 'every training and early-stopping row of the dream'}
+  [ok] deployed network layers (4, 32, 24, 35)
+  [ok] the settings record both hidden layers
+  [ok] both hidden layers fire on the early-stopping rows
+  [ok] parity: spike trains of both layers compared on every row, zero mismatches
+  [ok] parity: decisions, decide_one and logits within the tolerance
+  operation counts: layer sizes (4, 32, 24, 35), fan-out (24, 35), mean spikes per layer [80.8, 68.4], dense reference MACs 1736
+  [ok] operation counts follow the two-layer structure
+  [ok] decide_index_one = decide_index on 300 situations
+  [ok] save / load: same digest and decisions
+  [ok] save / load: same commands through the grid checks
+  [ok] temporary directory removed
+
+CHECK RESULT: 10 assertions held, 0 failed 

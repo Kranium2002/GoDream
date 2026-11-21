@@ -1,0 +1,48 @@
+DEV RUN on the real Go2 simulator (Person A's Go2World, preset default, no ball) - development check of the sidestep_reach dev skill; not an evaluation result, not in any report or table
+config digest ce120918902c | runtime.seed 20261121 | world seed 1015552365 (stream 'sidestep_reach/dev/world') | preset default
+output directory experiments/proofs/B_sidestep_dev/out/c3_20261121T172039Z
+context situations 40 (stream 'sidestep_reach/context/default/situations'), dev situations 60 (stream 'sidestep_reach/dev/default/situations'); attempt seeds from 'sidestep_reach/<split>/default/noise/0'
+
+== episodes on the simulator ==
+  ran context/physics_only          40 episodes in   35.6 s (0.89 s per episode)
+  ran dev/physics_only              60 episodes in   55.5 s (0.92 s per episode)
+  ran context/explore               40 episodes in   38.6 s (0.97 s per episode)
+  fitted constant_bias on 40 context attempts (seed 3358204426); 60 of 60 dev decisions differ from the physics action; 0 fit warnings
+  ran dev/constant_bias             60 episodes in   39.6 s (0.66 s per episode)
+  fitted gaussian_process on 40 context attempts (seed 3232209174); 60 of 60 dev decisions differ from the physics action; 18 fit warnings
+  ran dev/gaussian_process          60 episodes in   39.9 s (0.67 s per episode)
+  fitted gradient_boosting on 40 context attempts (seed 1234768605); 60 of 60 dev decisions differ from the physics action; 0 fit warnings
+  ran dev/gradient_boosting         60 episodes in   45.5 s (0.76 s per episode)
+PASS  every episode is in the attempt file, read back and validated against the spec  [320 rows in attempts.jsonl]
+PASS  each run's rows are in the file in input order with the run's attempt seeds
+PASS  stored physics guesses equal the current spec's, and residual = measured - physics (rows_to_arrays, policy 'error')
+PASS  context attempts that took the physics action reproduce the physics-only run's outcome bit for bit  [21 of 40 context attempts took the physics action]
+
+Sideways error = measured sideways travel at the end of the episode - target, metres (+ is left).
+DEV RUN, real Go2World, preset default; not an evaluation result.
+
+run                            n mean |error| mean error median |e|  max |e| falls success s/episode
+context/physics_only          40       0.0807     0.0748     0.0821   0.1967  0.00    0.20      0.89
+dev/physics_only              60       0.0799     0.0799     0.0786   0.1553  0.00    0.17      0.92
+context/explore               40       0.2108     0.1620     0.1023   1.0054  0.00    0.15      0.97
+dev/constant_bias             60       0.0259     0.0018     0.0201   0.1345  0.00    0.88      0.66
+dev/gaussian_process          60       0.0258    -0.0117     0.0199   0.1425  0.00    0.92      0.67
+dev/gradient_boosting         60       0.0288    -0.0126     0.0213   0.1051  0.00    0.83      0.76
+(success: |error| <= 0.05 m and no fall; falls and success are rates)
+
+Paired on the 60 dev situations (same situation, same attempt seed): mean of |error(method)| - |error(physics only)|,
+negative = the method is closer to the target; and how many situations it is closer / farther / equal.
+  constant_bias        -0.0540 m   closer 55, farther  5, equal  0
+  gaussian_process     -0.0541 m   closer 54, farther  6, equal  0
+  gradient_boosting    -0.0511 m   closer 54, farther  6, equal  0
+
+Context attempts (exploration, n=40): residual of sideways error (measured - formula) mean +0.0790 m, std 0.0356 m, min -0.0422, max +0.1879
+  left (side > 0)   n=23: residual mean +0.0716 m
+  right (side < 0)  n=14: residual mean +0.0897 m
+  zero command      n= 3: residual mean +0.0853 m
+
+Simulator episodes 320, wall time in collect 254.6 s, 0.80 s per episode (reset, steps and finish, one process).
+
+saved attempts.jsonl, table.txt and manifest.json in experiments/proofs/B_sidestep_dev/out/c3_20261121T172039Z
+
+4 passed, 0 failed
