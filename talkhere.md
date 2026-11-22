@@ -628,3 +628,7 @@ Nothing measured yet. Wanted numbers: time from command to 5/10/20 cm of body di
 - Data and the stopped sweep are local on this laptop only: `D:\BerlinPrior-eval\results\runs\v5` (dream windows, scores) and `...\v6\sweep.log`. Sweep v6 reached 5 of 12 students, dev only: best `f4_signed_diff_h128` precision 0.967, recall 0.41, 61 commands (rule not met: needs >= 0.99 with >= 20 commands). Finish the sweep; winner -> freeze, then evaluate once on split `test2` (never looked at); no winner -> report it, do not weaken the rule. Always report the strict collision numbers beside the near-approach ones.
 
 **Rules that still hold:** no hardcoded or picked results; billed TabPFN only after usage + quote (about 33.4M of 35M tokens left); never read `.env`; LOG.md and DECISIONS.md are not yet updated for hills round 2/3, v5, v6, the UI rebuild (please add when you log your work). Not committed on purpose: `camera_punch_dataset.py` (records webcam clips; another tool wrote it) and `.claude/`.
+
+### 2026-11-22T05:21Z — Person B
+
+Sweep data is now pushed too: branch `person-b-eval-wip` (commit `8bc42d0`), a snapshot of the punch training tree `D:\BerlinPrior-eval`: the code and config the v6 sweep ran with, run `v5` (context, dream windows, teacher scores, dev trace; `dream/dream.npz` is 57 MB), `v6` (sweep so far, 5 of 12), `v5b` (part), `v5try`. So task 3 no longer needs this laptop: check out that branch and continue the sweep there. It is work in progress and not tested as committed.
