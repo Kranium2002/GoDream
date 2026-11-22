@@ -41,6 +41,10 @@ augmentation child), so the episodes of a scenario see the same image variation 
                     choice rule and precision target as calibrate. Dev traces only. --no-freeze writes
                     calibration_dev_offline.* and leaves student.json alone; otherwise calibration_dev.* and the
                     freeze, as calibrate.
+    ceiling         per scenario the NO_OP episode; when it collided, one episode per active action issued at the
+                    first full window and held hold_s (first_issue_policy), same seeds. Avoidable: some active
+                    action neither collides nor falls. The student (closed_loop_<split>.json) is set against the
+                    avoidable hits only when its config digest and scenario ids equal the ceiling's.
 
 Files under <observed.runs_dir>/<RUN>/:
 
@@ -53,7 +57,9 @@ Files under <observed.runs_dir>/<RUN>/:
                            records (truth, NO_OP outcome)
     closed_loop_<split>.json  per-scenario records: scenario_id, kind, threat, t_hit, outcomes {no_op, snn},
                            issues {no_op, snn} as [t_s, action], cooldown_conflicts, inference_ms
-    result.json            sections "calibration_dev", "closed_loop_<split>", "runtime_evidence", and the UI keys
+    ceiling_<split>.json   ceiling counts, student_against_ceiling, per-scenario records: scenario_id, outcomes
+                           {action: collision, fall, min_separation_m, first_collision_time_s}
+    result.json            sections "calibration_dev", "closed_loop_<split>", "ceiling_<split>", "runtime_evidence", and the UI keys
                            run_id, skill, seeds, scenario_ids, metrics, paired (written by evaluate)
 
 Command line (repository root)::
@@ -63,6 +69,7 @@ Command line (repository root)::
     python -m learned_judgment.dodge_eval trace --run RUN [--split dev] [--n N]
     python -m learned_judgment.dodge_eval evaluate --run RUN --student DIR [--split test] [--n N]
     python -m learned_judgment.dodge_eval evidence --run RUN --student DIR
+    python -m learned_judgment.dodge_eval ceiling --run RUN [--split test] [--n N]
 
 Exit codes: 0 done, 1 failed (traceback), 3 refused (thresholds already frozen without --refreeze, or none frozen
 for evaluate), 4 calibrate finished but no triple reached the precision target (gate_passed false).
@@ -99,14 +106,18 @@ __all__ = [
     "EXIT_REFUSED",
     "METHODS",
     "calibrate",
+    "ceiling",
+    "ceiling_summary",
     "choose_triple",
     "closed_loop_metrics",
     "evaluate",
+    "first_issue_policy",
     "latency_and_parity",
     "main",
     "offline_calibration",
     "paired_bootstrap",
     "replay_first_issue",
+    "student_against_ceiling",
     "trace",
     "wilson_interval",
 ]
@@ -1048,6 +1059,186 @@ def evaluate(config: Mapping[str, Any], run_id: str, student_dir: str | Path, sp
     return metrics
 
 
+# ----- punch ceiling ---------------------------------------------------------------------------------------------
+
+
+def _avoids(outcome: Mapping[str, Any]) -> bool:
+    """An action avoids a hit when it neither collides nor falls."""
+    return float(outcome["collision"]) == 0.0 and float(outcome["fall"]) == 0.0
+
+
+# shortcut: the oracle acts at the first full window only; a later decision could avoid more, add a time grid if the ceiling looks too low.
+def first_issue_policy(action: str, command: Mapping[str, float], zero: Mapping[str, float], no_op: str,
+                       hold_s: float) -> Callable[[np.ndarray, float], dict[str, Any]]:
+    """A closed_loop policy that issues ``action`` at its first call, holds it while t_s < first + hold_s (the
+    gate's own hold rule), then sends ``zero`` as ``no_op``."""
+    command, zero = dict(command), dict(zero)
+    first: list[float] = []
+
+    def policy(window: np.ndarray, t_s: float) -> dict[str, Any]:
+        if not first:
+            first.append(float(t_s))
+            return {"command": dict(command), "action": action, "issued": True}
+        if t_s < first[0] + hold_s:
+            return {"command": dict(command), "action": action}
+        return {"command": dict(zero), "action": no_op}
+
+    return policy
+
+
+def ceiling_summary(records: Sequence[Mapping[str, Any]], action_names: Sequence[str], no_op: str) -> dict[str, Any]:
+    """Counts of the ceiling records: hits under NO_OP, how many some active action avoids (no collision, no fall),
+    and per active action how many it avoids. Raises ValueError, naming the scenario, for a record without NO_OP or
+    whose active actions are not present exactly when NO_OP collided."""
+    active = [name for name in action_names if name != no_op]
+    by_action = {name: 0 for name in active}
+    avoidable: list[int] = []
+    unavoidable: list[int] = []
+    for record in records:
+        sid, outcomes = record["scenario_id"], record["outcomes"]
+        if no_op not in outcomes:
+            raise ValueError(f"ceiling record of scenario {sid} has no {no_op} outcome")
+        hit = float(outcomes[no_op]["collision"]) == 1.0
+        present = sorted(name for name in outcomes if name != no_op)
+        if present != (sorted(active) if hit else []):
+            raise ValueError(f"ceiling record of scenario {sid}: {no_op} collision {hit}, active outcomes {present}; "
+                             f"expected {sorted(active) if hit else []}")
+        if not hit:
+            continue
+        clean = [name for name in active if _avoids(outcomes[name])]
+        for name in clean:
+            by_action[name] += 1
+        (avoidable if clean else unavoidable).append(sid)
+    return {
+        "n_scenarios": len(records),
+        "n_hit_no_op": len(avoidable) + len(unavoidable),
+        "n_avoidable": len(avoidable),
+        "n_unavoidable": len(unavoidable),
+        "avoidable_by_action": by_action,
+        "avoidable_ids": avoidable,
+        "unavoidable_ids": unavoidable,
+    }
+
+
+def student_against_ceiling(ceiling_records: Sequence[Mapping[str, Any]], student_records: Sequence[Mapping[str, Any]],
+                            no_op: str) -> dict[str, Any]:
+    """The student's closed-loop outcome (records of closed_loop_<split>.json, outcomes["snn"]) on the hits the
+    ceiling found avoidable and on the unavoidable ones. Raises ValueError when the scenario ids differ."""
+    student = {r["scenario_id"]: r for r in student_records}
+    ceiling_ids = {r["scenario_id"] for r in ceiling_records}
+    if ceiling_ids != set(student):
+        raise ValueError(f"scenarios on one side only: ceiling {sorted(ceiling_ids - set(student))}, "
+                         f"student {sorted(set(student) - ceiling_ids)}")
+    n_avoidable = avoided = n_unavoidable = hit_unavoidable = avoided_unavoidable = disagree = 0
+    for record in ceiling_records:
+        outcomes = record["outcomes"]
+        mine = student[record["scenario_id"]]["outcomes"]
+        hit = float(outcomes[no_op]["collision"]) == 1.0
+        disagree += hit != (float(mine["no_op"]["collision"]) == 1.0)  # same episode on both sides: should be 0
+        if not hit:
+            continue
+        snn = mine["snn"]
+        if any(_avoids(o) for name, o in outcomes.items() if name != no_op):
+            n_avoidable += 1
+            avoided += _avoids(snn)
+        else:
+            n_unavoidable += 1
+            hit_unavoidable += float(snn["collision"]) == 1.0
+            avoided_unavoidable += _avoids(snn)
+    return {
+        "n_avoidable": n_avoidable,
+        "student_avoided_of_avoidable": avoided,
+        "student_avoided_of_avoidable_rate": avoided / n_avoidable if n_avoidable else None,
+        "n_unavoidable": n_unavoidable,
+        "student_hit_unavoidable": hit_unavoidable,
+        "student_avoided_unavoidable": avoided_unavoidable,
+        "no_op_disagreements": disagree,
+    }
+
+
+def _ceiling_task(task: tuple) -> dict[str, Any]:
+    """The NO_OP episode of one scenario; when it collided, one episode per active action issued at the first
+    full window (first_issue_policy), same seeds."""
+    scenario, augment_seed = task
+    w = _WORKER
+    config = w["world"].config
+    hold_s = float(require(config, "skills.dodge_vision.hold_s"))
+
+    def zero_policy(window: np.ndarray, t_s: float) -> dict[str, Any]:
+        return {"command": w["zero"], "action": w["no_op"]}
+
+    def outcome(out: Mapping[str, Any], hit: float | None) -> dict[str, Any]:
+        m = out["measured"]
+        return {"collision": m["collision"], "fall": m["fall"], "min_separation_m": m["min_separation_m"],
+                "first_collision_time_s": hit}
+
+    base, base_hit = _episode(zero_policy, scenario, augment_seed)
+    outcomes = {w["no_op"]: outcome(base, base_hit)}
+    if base["measured"]["collision"] == 1.0:
+        for name, command in require(config, "skills.dodge_vision.actions").items():
+            if name == w["no_op"]:
+                continue
+            policy = first_issue_policy(name, {k: float(v) for k, v in command.items()}, w["zero"], w["no_op"], hold_s)
+            out, hit = _episode(policy, scenario, augment_seed)
+            if [a for _, a in out["issued"]] != [name]:
+                raise RuntimeError(f"scenario {scenario['scenario_id']}: {name} was issued {out['issued']}, not once")
+            outcomes[name] = outcome(out, hit)
+    return {"scenario_id": scenario["scenario_id"], "outcomes": outcomes}
+
+
+def ceiling(config: Mapping[str, Any], run_id: str, split: str = "test", n: int | None = None,
+            argv: Sequence[str] | None = None) -> dict[str, Any]:
+    """How many NO_OP hits of ``split`` some action avoids when issued at the first full window; writes
+    <run>/ceiling_<split>.json and section ceiling_<split> of result.json, and returns that section. The student
+    is set against it only when <run>/closed_loop_<split>.json exists with the same config digest and scenarios."""
+    from learned_judgment.observed import _run_dir
+
+    if split not in ("dev", "test"):
+        raise ValueError(f"split must be dev or test; got {split!r}")
+    n = _scenario_count(config, split, n)
+    names = list(require(config, "skills.dodge_vision.actions"))
+    no_op = GateSettings.from_config(config, _grid(config)[0]).no_op
+    run_dir = _run_dir(config, run_id)
+    section = f"ceiling_{split}"
+    digest = config_digest(config)
+    _merge_result(run_dir, run_id, {section: {"state": "running", "argv": list(argv or [])}})
+    print(f"ceiling: {split}, {n} NO_OP episodes, each hit again with {[a for a in names if a != no_op]} "
+          "issued at the first full window", flush=True)
+    try:
+        tasks = _plan(config, split, n)
+        started = time.perf_counter()
+        records = _run(config, None, None, _ceiling_task, tasks)
+        wall_s = time.perf_counter() - started
+        summary = ceiling_summary(records, names, no_op)
+        student_path = run_dir / f"closed_loop_{split}.json"
+        against: dict[str, Any] = {"paired": False, "reason": f"{student_path} does not exist"}
+        if student_path.exists():
+            student = json.loads(student_path.read_text(encoding="utf-8"))
+            ids_equal = sorted(r["scenario_id"] for r in student["records"]) == sorted(r["scenario_id"] for r in records)
+            if student.get("config_digest") != digest:
+                against = {"paired": False, "reason": "config digests differ", "student_config_digest": student.get("config_digest")}
+            elif not ids_equal:
+                against = {"paired": False, "reason": "scenario ids differ"}
+            else:
+                against = {"paired": True, **student_against_ceiling(records, student["records"], no_op)}
+            against["student_records"] = student_path
+        report = {"split": split, "seeds": _seeds(config, split), "config_digest": digest, "no_op": no_op,
+                  "rule": "avoidable: NO_OP collided and some active action, issued at the first full window and held "
+                          "hold_s, neither collides nor falls", **summary, "student_against_ceiling": against}
+        records_path = run_dir / f"{section}.json"
+        _write_json(records_path, {"skill": SKILL, "argv": list(argv or []), **report, "records": records})
+    except Exception as error:
+        _merge_result(run_dir, run_id, {section: {"state": "failed", "error": {"type": type(error).__name__,
+                                                                                 "message": str(error)}}})
+        raise
+    done = {"state": "done", "argv": list(argv or []), "records": records_path, "wall_s": wall_s,
+            "where": "simulation (MuJoCo Go2World)", **report}
+    _merge_result(run_dir, run_id, {section: done})
+    print(f"ceiling: {summary['n_hit_no_op']} hits of {n}, avoidable {summary['n_avoidable']}, unavoidable "
+          f"{summary['n_unavoidable']}, by action {summary['avoidable_by_action']}; student {against}", flush=True)
+    return done
+
+
 # ----- runtime evidence ------------------------------------------------------------------------------------------
 
 
@@ -1149,6 +1340,10 @@ def _parser() -> argparse.ArgumentParser:
     common(ev)
     ev.add_argument("--split", default="test", choices=("dev", "test"))
     ev.add_argument("--n", type=int, help="scenarios (default observed.dodge_vision.<split>_scenarios)")
+    ce = commands.add_parser("ceiling", help="how many NO_OP hits any action avoids when issued at the first decision")
+    ce.add_argument("--run", required=True, help="run id: the directory under observed.runs_dir")
+    ce.add_argument("--split", default="test", choices=("dev", "test"))
+    ce.add_argument("--n", type=int, help="scenarios (default observed.dodge_vision.<split>_scenarios)")
     evidence = commands.add_parser("evidence", help="runtime latency and preprocessing parity")
     common(evidence)
     return parser
@@ -1176,6 +1371,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if args.command == "evaluate":
             evaluate(config, args.run, args.student, split=args.split, n=args.n, argv=words)
+            return 0
+        if args.command == "ceiling":
+            ceiling(config, args.run, split=args.split, n=args.n, argv=words)
             return 0
         from learned_judgment.observed import _run_dir
 

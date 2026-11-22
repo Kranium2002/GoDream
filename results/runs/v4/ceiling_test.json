@@ -1,0 +1,4984 @@
+{
+ "skill": "dodge_vision",
+ "argv": [
+  "ceiling",
+  "--run",
+  "v4",
+  "--split",
+  "test"
+ ],
+ "split": "test",
+ "seeds": {
+  "runtime_seed": 20261121,
+  "split": "test",
+  "split_code": 3,
+  "scenarios": "dodge_vision._split_plan: np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), first n of sample_threat_scenarios",
+  "augmentation": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2)[1]), fresh for every episode of the scenario (paired)",
+  "attempt_seed": "scenario_id",
+  "world_seed": 0,
+  "world_preset": "default"
+ },
+ "config_digest": "a965578e0b311bf214b08d833df072f283e01b9a9977ebaaf6996d1d58361a4f",
+ "no_op": "NO_OP",
+ "rule": "avoidable: NO_OP collided and some active action, issued at the first full window and held hold_s, neither collides nor falls",
+ "n_scenarios": 240,
+ "n_hit_no_op": 121,
+ "n_avoidable": 114,
+ "n_unavoidable": 7,
+ "avoidable_by_action": {
+  "DODGE_LEFT": 98,
+  "DODGE_RIGHT": 108,
+  "RETREAT": 32
+ },
+ "avoidable_ids": [
+  5,
+  7,
+  10,
+  12,
+  13,
+  14,
+  16,
+  21,
+  27,
+  28,
+  30,
+  32,
+  34,
+  36,
+  37,
+  38,
+  40,
+  42,
+  44,
+  45,
+  46,
+  47,
+  50,
+  51,
+  52,
+  53,
+  55,
+  56,
+  57,
+  59,
+  63,
+  65,
+  67,
+  69,
+  71,
+  73,
+  74,
+  75,
+  78,
+  81,
+  82,
+  83,
+  84,
+  86,
+  87,
+  88,
+  90,
+  92,
+  93,
+  94,
+  96,
+  100,
+  101,
+  106,
+  110,
+  113,
+  116,
+  121,
+  123,
+  124,
+  126,
+  127,
+  128,
+  131,
+  132,
+  134,
+  136,
+  137,
+  138,
+  140,
+  142,
+  143,
+  145,
+  146,
+  147,
+  150,
+  151,
+  155,
+  160,
+  163,
+  164,
+  165,
+  166,
+  167,
+  168,
+  169,
+  171,
+  172,
+  174,
+  175,
+  176,
+  180,
+  186,
+  190,
+  191,
+  194,
+  196,
+  197,
+  199,
+  200,
+  203,
+  209,
+  212,
+  217,
+  218,
+  219,
+  220,
+  221,
+  222,
+  227,
+  228,
+  233,
+  237,
+  238
+ ],
+ "unavoidable_ids": [
+  105,
+  111,
+  158,
+  159,
+  183,
+  187,
+  202
+ ],
+ "student_against_ceiling": {
+  "paired": false,
+  "reason": "config digests differ",
+  "student_config_digest": "16f984011974f4d7a4fb7ca1e5ab5342d032c24dea8d5064ae6e7d34356913cc",
+  "student_records": "C:/Users/Strac/projects/hackaton/GoDream/.claude/worktrees/wip-t1/results/runs/v4/closed_loop_test.json"
+ },
+ "records": [
+  {
+   "scenario_id": 0,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.202085133221504,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 1,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3060345071292091,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 2,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.317984174685304,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 3,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.7056663401330376,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 4,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 5,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.78
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.13311317631049185,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.03912840536099113,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.3880000000000001
+    }
+   }
+  },
+  {
+   "scenario_id": 6,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.461953486967463,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 7,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.864
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.019485498290693654,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15693765118067876,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.87
+    }
+   }
+  },
+  {
+   "scenario_id": 8,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 9,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.14452780193489184,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 10,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.194
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2585600909937402,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.12295613615716898,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.988
+    }
+   }
+  },
+  {
+   "scenario_id": 11,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5395773196835377,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 12,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.892
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.18802801657519275,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.19999435694573164,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.372
+    }
+   }
+  },
+  {
+   "scenario_id": 13,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.308
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08450995824926923,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3654054696313609,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 3.3240000000000003
+    }
+   }
+  },
+  {
+   "scenario_id": 14,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.8220000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1687437113043077,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.014540285587699153,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.286
+    }
+   }
+  },
+  {
+   "scenario_id": 15,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.01031764631283473,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 16,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.652
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.05431197811626749,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.010082454036133719,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.082
+    }
+   }
+  },
+  {
+   "scenario_id": 17,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.01846433666823165,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 18,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.6102012576025484,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 19,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 20,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 21,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.036
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.28821784849398085,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.13230015157052183,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.622
+    }
+   }
+  },
+  {
+   "scenario_id": 22,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 23,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.9908846496146987,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 24,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.6517889327315023,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 25,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.18713477701792836,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 26,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5086797792026335,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 27,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.946
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.09617262721273702,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.32216858923496877,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 3.0220000000000002
+    }
+   }
+  },
+  {
+   "scenario_id": 28,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.338
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0809050128423683,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3332313957084452,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.922
+    }
+   }
+  },
+  {
+   "scenario_id": 29,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.41763732880676396,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 30,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.992
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.21973881971432246,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1512538051310599,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.05725462607379972,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 31,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.03914695275560032,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 32,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.622
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.23111183559558895,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2743604092801951,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.030792924279247888,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 33,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0015590505044556363,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 34,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.18
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2075296244072029,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.22254652714124096,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.706
+    }
+   }
+  },
+  {
+   "scenario_id": 35,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5497187729628776,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 36,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.776
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.18185109567569313,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.782
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.1280000000000001
+    }
+   }
+  },
+  {
+   "scenario_id": 37,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.242
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.19107860777005337,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.24084161110086494,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.076
+    }
+   }
+  },
+  {
+   "scenario_id": 38,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.804
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.704
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.14192166451218924,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04950149184078553,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 39,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 40,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.684
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.21011442057887286,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.19137193710583011,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.432
+    }
+   }
+  },
+  {
+   "scenario_id": 41,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.11503328706546305,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 42,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.572
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.27284275817287973,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.16420891798967974,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.354
+    }
+   }
+  },
+  {
+   "scenario_id": 43,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3630789879157854,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 44,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.182
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1986317797102441,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1502791870695777,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.12
+    }
+   }
+  },
+  {
+   "scenario_id": 45,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.074
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15239022534026458,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.29559998848703206,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.020407812579289614,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 46,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.5640000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.012224134826603637,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.05072231702450433,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.05153226061665293,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 47,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.728
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.10646592258184719,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.00781341706971938,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.232
+    }
+   }
+  },
+  {
+   "scenario_id": 48,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.702642769400797,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 49,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.47933871490627217,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 50,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.766
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08929646358006983,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.10612769024207068,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.02055515702833166,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 51,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.898
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.17073730201872422,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.11187753319582781,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.46
+    }
+   }
+  },
+  {
+   "scenario_id": 52,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.946
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.30124004694768075,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.16015923668381,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.956
+    }
+   }
+  },
+  {
+   "scenario_id": 53,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.172
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2582705714974037,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1640460967343293,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 3.136
+    }
+   }
+  },
+  {
+   "scenario_id": 54,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5682568170009561,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 55,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.85
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15562680524892353,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.12043960447106909,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.468
+    }
+   }
+  },
+  {
+   "scenario_id": 56,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.736
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.09326697567541296,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.10669834278776034,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.036089791887108244,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 57,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.808
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04216653148825748,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.594
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.018
+    }
+   }
+  },
+  {
+   "scenario_id": 58,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.44233058086112115,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 59,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.186
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15512865106630702,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.23428690974681554,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.682
+    }
+   }
+  },
+  {
+   "scenario_id": 60,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.9890132630120011,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 61,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 1.0016896860006792,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 62,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.30318370658574284,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 63,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.616
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.708
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.05611972650281016,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.02994180157657428,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 64,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04505352469764026,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 65,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.994
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.11004579026088386,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.30427926438218617,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.866
+    }
+   }
+  },
+  {
+   "scenario_id": 66,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.007575320343433702,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 67,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.528
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.42869055063866124,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0056066160858285335,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.05540575373988209,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 68,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3082225347296763,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 69,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.1460000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.19280295007742354,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.18959686329722958,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.76
+    }
+   }
+  },
+  {
+   "scenario_id": 70,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.42614280538215055,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 71,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.186
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.11350177307666419,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.32350184354474365,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.926
+    }
+   }
+  },
+  {
+   "scenario_id": 72,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.901515940542387,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 73,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.8300000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15720067330519366,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.09454161120543596,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.025944772125343893,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 74,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.89
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.17907647855074776,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.09141976188663552,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.352
+    }
+   }
+  },
+  {
+   "scenario_id": 75,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.026
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1516930180690812,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.23677463518418873,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.862
+    }
+   }
+  },
+  {
+   "scenario_id": 76,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1585619765429151,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 77,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.39464340847799867,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 78,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.08
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15117081444951924,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2711220613589495,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 3.082
+    }
+   }
+  },
+  {
+   "scenario_id": 79,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.852518576319201,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 80,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.6908563643546352,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 81,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.816
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3189976552146784,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1398545201662436,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.43
+    }
+   }
+  },
+  {
+   "scenario_id": 82,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.684
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0802808199608885,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.043374072072507736,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.042
+    }
+   }
+  },
+  {
+   "scenario_id": 83,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.892
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.07939894328494633,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.14352276493534138,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.562
+    }
+   }
+  },
+  {
+   "scenario_id": 84,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.3
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.03810345941259487,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.283857385175595,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.322
+    }
+   }
+  },
+  {
+   "scenario_id": 85,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.582118475371683,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 86,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.244
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.26015991777835856,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2176714650531829,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.584
+    }
+   }
+  },
+  {
+   "scenario_id": 87,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.7020000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0615314681694087,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.11495241803129737,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0476072591157958,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 88,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.628
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.644
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04326484134768868,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.072
+    }
+   }
+  },
+  {
+   "scenario_id": 89,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08964710159849827,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 90,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.898
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.832
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15694121676109896,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.8900000000000001
+    }
+   }
+  },
+  {
+   "scenario_id": 91,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 92,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.628
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.06256232526050577,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04466884221616112,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0767596891688931,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 93,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.632
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.714
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.06689144124672088,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.024
+    }
+   }
+  },
+  {
+   "scenario_id": 94,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.546
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.526
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.62
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.005126141434959805,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 95,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.7576714738752921,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 96,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.864
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.14643056662095844,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.26993052145367274,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.618
+    }
+   }
+  },
+  {
+   "scenario_id": 97,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.6203568821905913,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 98,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3394536467742048,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 99,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2199611672685317,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 100,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.874
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0770803869792293,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3226222552856046,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.79
+    }
+   }
+  },
+  {
+   "scenario_id": 101,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.358
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3367390383248569,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.19687656759954075,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.06623139315264714,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 102,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.675812633508024,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 103,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.8933152838212266,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 104,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.30588614847845996,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 105,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.48
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.49
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.502
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.554
+    }
+   }
+  },
+  {
+   "scenario_id": 106,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.8160000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.13270115343034744,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1403201223560907,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.574
+    }
+   }
+  },
+  {
+   "scenario_id": 107,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.01745389704825767,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 108,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.10069220417817194,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 109,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.18648554869843764,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 110,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.86
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1404630072738105,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.052625324251640127,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.018782154942739923,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 111,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.56
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.646
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.644
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.646
+    }
+   }
+  },
+  {
+   "scenario_id": 112,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.9157297106998965,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 113,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.74
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.12029346431855074,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3267023955080855,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.622
+    }
+   }
+  },
+  {
+   "scenario_id": 114,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.40724658617319376,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 115,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.010089741981334492,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 116,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.15
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2300703137210593,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2577493023727963,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 3.06
+    }
+   }
+  },
+  {
+   "scenario_id": 117,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.9434120301833878,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 118,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 119,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.30042993565032683,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 120,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.41383872263845445,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 121,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.59
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2604812182540407,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.23758796136185134,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04606101067677458,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 122,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3620022276574415,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 123,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.852
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0700685119967076,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.20830510902098992,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.482
+    }
+   }
+  },
+  {
+   "scenario_id": 124,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.052
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2567265446880269,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1778138576964824,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.552
+    }
+   }
+  },
+  {
+   "scenario_id": 125,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.4941408709764931,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 126,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.732
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08459895541733882,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.03320509437340585,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.4040000000000001
+    }
+   }
+  },
+  {
+   "scenario_id": 127,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.834
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.10566141661848534,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15515445437763337,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1484044640237941,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 128,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.8320000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08495362598346594,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1640717770705457,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1300394666021299,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 129,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.4266150909098284,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 130,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.005022066161226302,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 131,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.756
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1304357303249155,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08619172037587579,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.278
+    }
+   }
+  },
+  {
+   "scenario_id": 132,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.722
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08638118310332325,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.06424625425495223,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.102
+    }
+   }
+  },
+  {
+   "scenario_id": 133,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5188077813670238,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 134,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.744
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.23477669779116456,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.23339787259722017,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.682
+    }
+   }
+  },
+  {
+   "scenario_id": 135,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.9926676165819491,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 136,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.016
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.200476835179628,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.26699639191493585,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.44
+    }
+   }
+  },
+  {
+   "scenario_id": 137,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.6940000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08015928921749031,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.06909015995168692,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.020127311070465934,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 138,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.1420000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.004288811046341184,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2940108584529448,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.802
+    }
+   }
+  },
+  {
+   "scenario_id": 139,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.019464690364159917,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 140,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.984
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2616832097895812,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.09874046405137156,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.82
+    }
+   }
+  },
+  {
+   "scenario_id": 141,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.05410250177881479,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 142,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.198
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0015104588902162541,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2932972663432333,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.212
+    }
+   }
+  },
+  {
+   "scenario_id": 143,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.984
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.42
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5128700147170968,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15714702241579304,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 144,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1080265849062667,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 145,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.99
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.11279799090137628,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.20547009810876898,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0697253749230294,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 146,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.318
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.21808754678999792,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2721751187380279,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.106
+    }
+   }
+  },
+  {
+   "scenario_id": 147,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.922
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.12913869023493907,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.18092735788339936,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.854
+    }
+   }
+  },
+  {
+   "scenario_id": 148,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.002962387680749974,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 149,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 150,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.634
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.018861506324140187,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.047558637504687334,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.154
+    }
+   }
+  },
+  {
+   "scenario_id": 151,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.93
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.03568298952382014,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.22605552752180558,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.46
+    }
+   }
+  },
+  {
+   "scenario_id": 152,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.39994605696631297,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 153,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.9451818978360339,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 154,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.00864964039074815,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 155,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.8240000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.045006413566232625,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1590846913746482,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.464
+    }
+   }
+  },
+  {
+   "scenario_id": 156,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.6094866531144053,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 157,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.7473031741886226,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 158,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.462
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.47200000000000003
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.468
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.484
+    }
+   }
+  },
+  {
+   "scenario_id": 159,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.47600000000000003
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.516
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.488
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.524
+    }
+   }
+  },
+  {
+   "scenario_id": 160,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.194
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.07679073854888178,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3535691832407411,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 3.174
+    }
+   }
+  },
+  {
+   "scenario_id": 161,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.9698991840810403,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 162,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.42054623940850644,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 163,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.3780000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1674361995813119,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2531669796224474,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.0220000000000002
+    }
+   }
+  },
+  {
+   "scenario_id": 164,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.796
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.30450434177429364,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.171798356675809,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.7800000000000002
+    }
+   }
+  },
+  {
+   "scenario_id": 165,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.642
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.06069720957093411,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04089030199488271,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.057378240645514694,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 166,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.616
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.6920000000000001
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04032321614096632,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.8280000000000001
+    }
+   }
+  },
+  {
+   "scenario_id": 167,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.526
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.06467602857166473,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.502
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.748
+    }
+   }
+  },
+  {
+   "scenario_id": 168,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.288
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2536657974886705,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.26561987180977964,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.046911872252570125,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 169,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.286
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.248904095427593,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.09304563014834473,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 3.228
+    }
+   }
+  },
+  {
+   "scenario_id": 170,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3648615932952904,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 171,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.58
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.706
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.052531872146884095,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.008127371569197933,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 172,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.674
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.21069541737565328,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.24488040889476137,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.015082894926568946,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 173,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3749952904209169,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 174,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.922
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.17788591139540294,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1462280769719444,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.844
+    }
+   }
+  },
+  {
+   "scenario_id": 175,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.094
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2606195666366095,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3119124576140713,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.07594126033166738,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 176,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.714
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.59
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.137426223001483,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1076769096005452,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 177,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.45388039475057745,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 178,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1374182911886742,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 179,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 180,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.652
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04060880259570539,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.028280466863425793,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.034
+    }
+   }
+  },
+  {
+   "scenario_id": 181,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1288149335704002,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 182,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.34033389084337995,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 183,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.536
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.614
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.622
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.618
+    }
+   }
+  },
+  {
+   "scenario_id": 184,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.11008428299805438,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 185,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.012871792453839792,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 186,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.728
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04540392077059309,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.11582523753972242,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.458
+    }
+   }
+  },
+  {
+   "scenario_id": 187,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.436
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.5
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.418
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.486
+    }
+   }
+  },
+  {
+   "scenario_id": 188,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.10536501802805877,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 189,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.4372319673216235,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 190,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.186
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1760046177765624,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.32624577126935705,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.712
+    }
+   }
+  },
+  {
+   "scenario_id": 191,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.324
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.05112713866185699,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2667868114832872,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.014498693569988605,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 192,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.14881173990318136,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 193,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.4630012520601368,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 194,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.216
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1515130371575763,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.29505458644214766,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.996
+    }
+   }
+  },
+  {
+   "scenario_id": 195,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.21919806748707338,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 196,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.796
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08185792686074332,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2921657652649172,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.678
+    }
+   }
+  },
+  {
+   "scenario_id": 197,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.5660000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.67
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0038361113633060134,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.704
+    }
+   }
+  },
+  {
+   "scenario_id": 198,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5617963252628694,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 199,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.162
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.048
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.29287229901683265,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.156
+    }
+   }
+  },
+  {
+   "scenario_id": 200,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.658
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.02711984022284937,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.02898687823778287,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.02
+    }
+   }
+  },
+  {
+   "scenario_id": 201,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5275449569700907,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 202,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.47600000000000003
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.5760000000000001
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.468
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.524
+    }
+   }
+  },
+  {
+   "scenario_id": 203,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.704
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08202225026878178,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.006878442670829141,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.158
+    }
+   }
+  },
+  {
+   "scenario_id": 204,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.48890642850672766,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 205,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5065979792983576,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 206,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.702003052042974,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 207,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.40242000283296564,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 208,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.8763499307958762,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 209,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.716
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.62
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.10943271800119915,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04212535666198919,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 210,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 211,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 212,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.262
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.2521920752971118,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.868
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.6500000000000001
+    }
+   }
+  },
+  {
+   "scenario_id": 213,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 214,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3472227787595171,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 215,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.39395647142821877,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 216,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.8894741461673338,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 217,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.9540000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.018918277132009276,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.25409239121888666,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.57
+    }
+   }
+  },
+  {
+   "scenario_id": 218,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.722
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.10715511550000019,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.648
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.005881323817094566,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 219,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.6900000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.09733223168382484,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.02471872374216111,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.318
+    }
+   }
+  },
+  {
+   "scenario_id": 220,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.032
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.12334533770394422,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.15765503972870837,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.744
+    }
+   }
+  },
+  {
+   "scenario_id": 221,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.8200000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08090740743359347,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.12196917648988763,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.346
+    }
+   }
+  },
+  {
+   "scenario_id": 222,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.9440000000000001
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.03776424571881483,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.202305391198137,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.532
+    }
+   }
+  },
+  {
+   "scenario_id": 223,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.1519750432544355,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 224,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3487098634713251,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 225,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 226,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3293325342354647,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 227,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.562
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.52
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0685483941365756,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.04184609363877506,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 228,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.86
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.16517700597360202,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.08246116109497333,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.464
+    }
+   }
+  },
+  {
+   "scenario_id": 229,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 230,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.4820433952309024,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 231,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 2.0,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 232,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.4192008185074424,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 233,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.508
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.496
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0018915541231694227,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.552
+    }
+   }
+  },
+  {
+   "scenario_id": 234,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.5208576850678318,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 235,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.47306734860089755,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 236,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.4446575675203286,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 237,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 1.778
+    },
+    "DODGE_LEFT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.21613433457971243,
+     "first_collision_time_s": null
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.19071224000096026,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 2.694
+    }
+   }
+  },
+  {
+   "scenario_id": 238,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.642
+    },
+    "DODGE_LEFT": {
+     "collision": 1.0,
+     "fall": 0.0,
+     "min_separation_m": 0.0,
+     "first_collision_time_s": 0.542
+    },
+    "DODGE_RIGHT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.12049604405483759,
+     "first_collision_time_s": null
+    },
+    "RETREAT": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.07961161623463776,
+     "first_collision_time_s": null
+    }
+   }
+  },
+  {
+   "scenario_id": 239,
+   "outcomes": {
+    "NO_OP": {
+     "collision": 0.0,
+     "fall": 0.0,
+     "min_separation_m": 0.3231865672034489,
+     "first_collision_time_s": null
+    }
+   }
+  }
+ ]
+}
