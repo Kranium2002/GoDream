@@ -1019,7 +1019,9 @@ app:  # The local viewer server: uv run python -m app.server
   duel:  # POST /api/duel/start (app/duel.py): both lanes of a demo run the same situation, untrained | trained.
     dodge:  # The dodge demo's punch, the same in both lanes.
       split: test  # The punches come from this split of observed.dodge_vision (the held-out one), never picked by outcome.
-      kinds: [incoming_center, incoming_left, incoming_right]  # Only kinds aimed at the dog; round seed s takes the (s mod their count)-th of them.
+      kinds: [incoming_center, incoming_left, incoming_right]  # Only kinds aimed at the dog; consecutive round seeds walk through them in split order.
+      centre_kind: incoming_center  # The kind aimed at the middle of the dog: it stays in the head camera's view until it arrives.
+      centre_rounds: 2  # Of every 3 consecutive rounds this many take centre_kind and the rest the other kinds (0 to 3). Asked by Person A: at least two thirds straight at the dog.
   runs:
     poll_s: 0.5  # Seconds between looks for new lines in the run event files (observed.runs_dir) relayed as SSE.
   infer:

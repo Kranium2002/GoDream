@@ -424,13 +424,23 @@ class Duel:
 
 
 def dodge_duel_scenario(cfg, duel, seed):
-    """The dodge duel's punch for a round seed: of the scenarios of split duel["split"] whose kind is in duel["kinds"]
-    (config app.duel.dodge), in split order, the (seed mod their count)-th; a copy, never chosen by outcome."""
+    """The dodge duel's punch for a round seed, from the scenarios of split duel["split"] whose kind is in duel["kinds"]
+    (config app.duel.dodge), in split order. Of every three consecutive seeds, duel["centre_rounds"] take the next
+    scenario of duel["centre_kind"] (straight at the dog, so it stays in the camera's view) and the rest the next one of
+    the other kinds; a copy, picked by the seed alone, never by outcome."""
     from learned_judgment.skills import dodge_vision
     split = duel["split"]
     scenarios, _ = dodge_vision._split_plan(cfg, split, int(cfg["observed"]["dodge_vision"][f"{split}_scenarios"]))
     pool = [s for s in scenarios if s["kind"] in duel["kinds"]]
-    return copy.deepcopy(pool[int(seed) % len(pool)])
+    share = duel["centre_rounds"]
+    if isinstance(share, bool) or not isinstance(share, int) or not 0 <= share <= 3:
+        raise ValueError(f"config.yaml app.duel.dodge.centre_rounds must be an int from 0 to 3; got {share!r}")
+    centre = [s for s in pool if s["kind"] == duel["centre_kind"]]
+    other = [s for s in pool if s["kind"] != duel["centre_kind"]]
+    block, slot = divmod(int(seed), 3)
+    if (slot < share and centre) or not other:
+        return copy.deepcopy(centre[(block * share + slot) % len(centre)])
+    return copy.deepcopy(other[(block * (3 - share) + slot - share) % len(other)])
 
 
 def result_word(measured, issued):

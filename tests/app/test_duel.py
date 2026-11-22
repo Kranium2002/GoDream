@@ -30,13 +30,29 @@ def test_every_seed_draws_a_held_out_scenario_aimed_at_the_dog(config):
         s = dodge_duel_scenario(config, duel, seed)
         assert s["kind"] in AIMED_AT_DOG
         assert s["situation"]["ball_vel_x_m_s"] < 0  # flies toward the dog (x is ahead of it)
-        assert s == pool[seed % len(pool)]  # by the seed alone, nothing else
+        assert s in pool  # a held-out scenario, picked by the seed alone
         seen.add(s["scenario_id"])
     assert len(seen) == len(pool)  # consecutive seeds walk through all of them
     assert dodge_duel_scenario(config, duel, 7) == dodge_duel_scenario(config, duel, 7)
     s = dodge_duel_scenario(config, duel, 7)
     s["situation"]["ball_rel_x_m"] = 99.0  # a round's changes never leak into the next round
     assert dodge_duel_scenario(config, duel, 7)["situation"]["ball_rel_x_m"] != 99.0
+
+
+def test_two_of_every_three_rounds_come_straight_at_the_dog(config):
+    duel = config["app"]["duel"]["dodge"]
+    assert duel["centre_kind"] == "incoming_center" and duel["centre_rounds"] == 2
+    kinds = [dodge_duel_scenario(config, duel, seed)["kind"] for seed in range(20261121, 20261121 + 300)]
+    for start in range(0, 300, 3):  # every block of three consecutive rounds, wherever the count starts
+        assert kinds[start:start + 3].count("incoming_center") == 2
+    assert set(kinds) == AIMED_AT_DOG  # the side punches are still shown
+    centre = [dodge_duel_scenario(config, duel, seed)["scenario_id"] for seed in range(30) if seed % 3 < 2]
+    assert len(set(centre)) == len(centre)  # consecutive centre rounds are different punches
+    for share, expected in ((0, 0), (3, 3)):
+        only = {**duel, "centre_rounds": share}
+        assert [dodge_duel_scenario(config, only, s)["kind"] for s in range(3)].count("incoming_center") == expected
+    with pytest.raises(ValueError, match="centre_rounds"):
+        dodge_duel_scenario(config, {**duel, "centre_rounds": 4}, 0)
 
 
 def _crossing(situation, aim_x):
