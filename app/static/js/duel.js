@@ -29,3 +29,23 @@ export function applyDuel(prev, ev) {
 
 // Whether the comparison of `demo` is on stage now (running, or ended and still showing its outcome).
 export const duelShows = (duel, demoId) => duel.state !== "idle" && duel.demo === demoId;
+
+// The running tally of this page session, {demo: {before: {word: n}, after: {word: n}}}: when a round goes from
+// running (prev) to ended (next), each lane whose real outcome carries the server's result word adds one to it.
+// Anything else (the same end seen again, a page opened on an ended round, a stopped lane) changes nothing.
+export function countRound(tally, prev, next) {
+  if (prev?.state !== "start" || next?.state !== "end" || !next.demo || next.demo !== prev.demo) return tally;
+  const old = tally[next.demo] ?? { before: {}, after: {} };
+  const mine = { before: { ...old.before }, after: { ...old.after } };
+  for (const side of SIDES) {
+    const word = next.sides?.[side]?.outcome?.result;
+    if (typeof word === "string" && word) mine[side][word] = (mine[side][word] ?? 0) + 1;
+  }
+  return { ...tally, [next.demo]: mine };
+}
+
+const WORD_ORDER = ["Hit", "Dodged", "Not hit", "Fell"];
+// One lane's counts in words, "Hit 3 · Dodged 1"; "" before its first counted round.
+export const tallyText = (counts) => Object.entries(counts ?? {}).filter(([, n]) => n > 0)
+  .sort(([a], [b]) => (WORD_ORDER.indexOf(a) + 1 || 99) - (WORD_ORDER.indexOf(b) + 1 || 99))
+  .map(([word, n]) => `${word} ${n}`).join(" · ");

@@ -1,6 +1,7 @@
 """The real-run demos, paired live episodes and run-backed story data."""
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import math
@@ -10,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+import mujoco
 import numpy as np
 
 from app import backend, robot
@@ -124,8 +126,8 @@ def _dodge_handles(config):
     declaration = ((config.get("skills") or {}).get("dodge_vision") or {})
     ranges = declaration.get("scenarios") or {}
     result = []
-    for key, label, unit, source in (("distance_m", "Threat distance", "m", ranges.get("distance_m")),
-                                     ("speed_m_s", "Threat speed", "m/s",
+    for key, label, unit, source in (("distance_m", "Punch starts", "m", ranges.get("distance_m")),
+                                     ("speed_m_s", "Punch speed", "m/s",
                                       (declaration.get("punch") or {}).get("speed_m_s"))):
         value = source
         if isinstance(value, (list, tuple)) and len(value) == 2:
@@ -173,7 +175,9 @@ def _demo(config, demo):
                     {"name": "recovery_time_s", "kind": "seconds", "label": "Recovery time"}]
         run_config = _read_yaml(folder / "config.yaml") if folder else config
         handles = _dodge_handles(run_config or config)
-        title, tagline = "Visual dodge", "A saved vision student reacts to a sampled threat scenario."
+        title, tagline = "Visual dodge", "The same punch comes at both dogs. Only the right one learned to dodge by eye."
+        if student_folder is not None and student_folder.parent != folder:
+            headline = None  # those test numbers belong to another run's student than the one in the lane
     reasons = []
     if root is None:
         reasons.extend(missing)
@@ -244,6 +248,7 @@ class Duel:
         self.scene_helpers = {}
         self.camera_lock = threading.RLock()
         self.side_ticks = {"before": 0, "after": 0}
+        self.next_dodge_seed = None  # the seed of the next dodge round started without one
 
     def show(self, side, obs, world, reset=False, camera=None, visual=None):
         if reset:
@@ -253,6 +258,8 @@ class Duel:
             if self.side_ticks[side] % self.server.sim.pose_every:
                 return
         d = world.policy.data
+        if reset:  # reset placed the object by writing qpos only: derive its position, else it shows where it was parked
+            mujoco.mj_kinematics(world.model, d)
         pose = robot.pose(d, obs["t_s"]) | {"side": side, "version": self.server.sim.robot_version}
         self.server.sim.announce("pose", pose, latest_only=True)
         from app.player import StageWorld
@@ -360,10 +367,9 @@ class Duel:
         from learned_judgment.skills import dodge_vision
         from learned_judgment.vision import VisionSettings
         cfg = plan["config"]
-        rng = np.random.default_rng(np.random.SeedSequence([cfg["runtime"]["seed"], 3, int(seed)]))
-        scenario = dodge_vision.sample_threat_scenarios(cfg, rng, 1)[0]
+        scenario = dodge_duel_scenario(cfg, plan["duel"], seed)
         scenario["scenario_id"] = seed
-        self._apply_dodge_params(scenario, plan["params"])
+        self._apply_dodge_params(scenario, plan["params"], float(cfg["skills"]["dodge_vision"]["punch"]["aim_x_m"]))
         settings = VisionSettings.from_config(cfg, int(plan["student"]["input"]["frames"]))
         student = plan["runtime"]
         self.clock_origin = time.perf_counter()
@@ -383,7 +389,7 @@ class Duel:
                         return {"command": dict(plan["actions"][plan["no_op"]]), "action": "NO_OP"}
                 answer = dodge_vision.closed_loop(wrapped, relay, scenario, seed, policy, settings,
                     augment_rng=np.random.default_rng(np.random.SeedSequence([cfg["runtime"]["seed"], 3, int(seed), 1])))
-                self.outcomes[side] = answer["measured"]
+                self.outcomes[side] = answer["measured"] | {"result": result_word(answer["measured"], answer["issued"])}
             except Exception:
                 log.exception("Dodge duel %s side failed", side)
             finally:
@@ -395,19 +401,46 @@ class Duel:
         a.start(); b.start(); a.join(); b.join()
 
     @staticmethod
-    def _apply_dodge_params(scenario, params):
+    def _apply_dodge_params(scenario, params, aim_x):
         situation = scenario["situation"]
         if "distance_m" in params and "ball_rel_x_m" in situation:
             distance = math.hypot(situation["ball_rel_x_m"], situation["ball_rel_y_m"])
             scale = float(params["distance_m"]) / distance
+            pos, vel = ("ball_rel_x_m", "ball_rel_y_m", "ball_rel_z_m"), ("ball_vel_x_m_s", "ball_vel_y_m_s", "ball_vel_z_m_s")
+            start, v = np.array([situation[k] for k in pos]), np.array([situation[k] for k in vel])
             situation["ball_rel_x_m"] *= scale
             situation["ball_rel_y_m"] *= scale
+            if v[0] < 0:  # re-aim at the point where the drawn path crossed the head plane x = aim_x, at the same speed
+                aim = start + v * (aim_x - start[0]) / v[0]
+                path = aim - np.array([situation[k] for k in pos])
+                for key, value in zip(vel, np.linalg.norm(v) * path / np.linalg.norm(path)):
+                    situation[key] = float(value)
         if "speed_m_s" in params and "ball_vel_x_m_s" in situation:
             speed = math.sqrt(sum(float(situation[k]) ** 2 for k in
                                   ("ball_vel_x_m_s", "ball_vel_y_m_s", "ball_vel_z_m_s")))
             scale = float(params["speed_m_s"]) / speed
             for key in ("ball_vel_x_m_s", "ball_vel_y_m_s", "ball_vel_z_m_s"):
                 situation[key] *= scale
+
+
+def dodge_duel_scenario(cfg, duel, seed):
+    """The dodge duel's punch for a round seed: of the scenarios of split duel["split"] whose kind is in duel["kinds"]
+    (config app.duel.dodge), in split order, the (seed mod their count)-th; a copy, never chosen by outcome."""
+    from learned_judgment.skills import dodge_vision
+    split = duel["split"]
+    scenarios, _ = dodge_vision._split_plan(cfg, split, int(cfg["observed"]["dodge_vision"][f"{split}_scenarios"]))
+    pool = [s for s in scenarios if s["kind"] in duel["kinds"]]
+    return copy.deepcopy(pool[int(seed) % len(pool)])
+
+
+def result_word(measured, issued):
+    """A dodge lane's result in a plain word from its measured outcome: a fall first, then a hit; a lane that was not
+    hit "Dodged" only if it issued a dodge, else "Not hit" (the punch missed a dog that stood still)."""
+    if float(measured["fall"]) > 0.5:
+        return "Fell"
+    if float(measured["collision"]) > 0.5:
+        return "Hit"
+    return "Dodged" if issued else "Not hit"
 
 
 class _EyeView:
@@ -486,9 +519,13 @@ def start_duel(h):
                 from learned_judgment.skills.dodge_vision import _actions
                 actions = _actions(cfg)
                 plan = {"folder": folder, "student_folder": student_folder, "config": cfg, "params": params, "student": student_data,
-                        "runtime": runtime, "actions": actions.commands, "no_op": actions.no_op}
+                        "runtime": runtime, "actions": actions.commands, "no_op": actions.no_op,
+                        "duel": h.server.config["app"]["duel"]["dodge"]}
             except Exception as exc:
                 raise Refusal(409, "student_unavailable", f"The saved dodge student cannot run: {exc}") from None
+            if seed is None:  # each new dodge round takes the next seed, so rounds walk through the punches in order
+                seed = manager.next_dodge_seed if manager.next_dodge_seed is not None else h.server.config["runtime"]["seed"]
+            manager.next_dodge_seed = int(seed) + 1
         actual_seed = int(seed if seed is not None else h.server.config["runtime"]["seed"])
         manager.active, manager.stop_event, manager.seed = True, threading.Event(), actual_seed
         manager.outcomes = {"before": None, "after": None}

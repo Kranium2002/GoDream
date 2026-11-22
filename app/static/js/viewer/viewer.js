@@ -133,7 +133,7 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
   const sky = hex(background), floorRgb = hex(floor);
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
-  const START = { distance, yaw, pitch };
+  const START = { distance, yaw, pitch, fit: 1.45 };
   let zoomK = 1; // the person's zoom while the framing sets the distance
   const orbit = createOrbit({ target: [0, 0, 0.25], ...START, minDistance: 0.6, maxDistance: 8 });
   const poses = createPoseBuffer();
@@ -212,8 +212,12 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
           const xs = [p[0] - 0.4, p[0] + 0.4, ...near.flatMap(([x, , r]) => [x - r, x + r])], ys = [p[1] - 0.4, p[1] + 0.4, ...near.flatMap(([, y, r]) => [y - r, y + r])];
           const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
           goal.x = (x0 + x1) / 2; goal.y = (y0 + y1) / 2;
-          goal.d = Math.max(START.distance, 1.45 * Math.hypot(x1 - x0, y1 - y0));
+          goal.d = Math.max(START.distance, START.fit * Math.hypot(x1 - x0, y1 - y0));
         }
+        // An object above the dog (a punch glancing up off its head) stays in frame too: back off with its height.
+        const top = Math.max(-Infinity, ...(pose.scene?.objects ?? []).filter((o) => Array.isArray(o?.pos) && Number.isFinite(o.pos[2]) && Number.isFinite(o.size?.[0]))
+          .map((o) => o.pos[2] + Math.abs(o.size[0])));
+        if (top - goal.z > 0) goal.d = Math.max(goal.d, 3.7 * (top - goal.z));
       }
       // A jump (a new episode placed the dog elsewhere) moves the camera at once instead of sweeping through the scene.
       const jump = !follow || reduceMotion.matches || Math.hypot(p[0] - follow.dog[0], p[1] - follow.dog[1]) > 1;
@@ -371,6 +375,9 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     // Forget the poses drawn so far (a new run starts): the view shows the floor until the next pose.
     clear() { poses.clear(); follow = null; dirty = true; },
     resetView,
+    // A new starting angle around the dog (radians from its heading), taken at once; the person's drag still turns it.
+    // fit: how far the framing backs off per metre of the scene's footprint (frameScene).
+    setYaw(yaw, fit = 1.45) { if (START.yaw !== yaw || START.fit !== fit) { START.yaw = yaw; START.fit = fit; orbit.yaw = yaw; dirty = true; } },
     destroy() { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", run); sizer.disconnect(); },
   };
 }

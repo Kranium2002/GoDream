@@ -69,6 +69,7 @@ export function createRobotViews({ api, onProblem = () => {} }) {
       setShift: (x, y, k) => v.viewer?.setShift(x, y, k),
       clear() { v.viewer?.clear(); v.poses = 0; },
       resetView: () => v.viewer?.resetView(),
+      setYaw: (yaw, fit) => v.viewer?.setYaw(yaw, fit),
       status: () => (v.problem ? `The 3D view cannot draw here: ${v.problem}` : poseStatus(v.poses, performance.now() - v.lastPoseAt)),
       hasPose: () => v.poses > 0,
     };
