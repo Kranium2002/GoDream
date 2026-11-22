@@ -1,0 +1,12 @@
+ceiling: test, 240 NO_OP episodes, each hit again with ['DODGE_LEFT', 'DODGE_RIGHT', 'RETREAT'] issued at the first full window
+24/240
+48/240
+72/240
+96/240
+120/240
+144/240
+168/240
+192/240
+216/240
+240/240
+ceiling: 121 hits of 240, avoidable 114, unavoidable 7, by action {'DODGE_LEFT': 98, 'DODGE_RIGHT': 108, 'RETREAT': 32}; student {'paired': False, 'reason': 'config digests differ', 'student_config_digest': '16f984011974f4d7a4fb7ca1e5ab5342d032c24dea8d5064ae6e7d34356913cc', 'student_records': WindowsPath('~/projects/hackaton/GoDream/.claude/worktrees/wip-t1/results/runs/v4/closed_loop_test.json')}
