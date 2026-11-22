@@ -30,7 +30,10 @@ The run, with nothing skill-specific in this module (the spec object carries the
                      ONLY billable call here, and only with allow_billing=True
     dream_scores     spec.objective of every dream candidate, (m, C), one batched prediction
     dream_targets    soft action targets (students.targets.soft_targets) and threat targets
-                     [1 - p, p], p = logistic((best active score - NO_OP score) / scale)
+                     [1 - p, p]: p = logistic((best active score - NO_OP score) / scale), or by
+                     skills.<name>.threat_target (threat_target_settings): the dream's predicted
+                     NO_OP collision (collision_course) or its predicted NO_OP separation below a
+                     set distance (near_approach)
     train_student    a spiking trunk with two readout heads (threat 2 | action C) trained on
                      the dream targets; exported as ONE numpy SpikingNetwork whose outputs are
                      [threat (2) | action (C)], parity-checked against the torch model
@@ -131,6 +134,7 @@ __all__ = [
     "save_student",
     "student_readout",
     "teacher_matrix",
+    "threat_target_settings",
     "train_student",
     "window_encoding_from_config",
 ]
@@ -143,6 +147,7 @@ STUDENT_FORMAT = "learned-judgment/observed-student/v1"
 INPUT_ENCODING = "(x - 0.5) * sqrt(12)"
 WINDOW_ENCODINGS = ("raw", "abs_diff", "signed_diff", "signed_diff_first", "events")  # values of config.yaml vision.encoding and student.json input.window_encoding
 THREAT, ACTION = "threat", "action"
+THREAT_MODES = ("collision_course", "near_approach")  # values of skills.<name>.threat_target (threat_target_settings)
 EXIT_REFUSED = 3
 
 _SKILLS_PACKAGE = "learned_judgment.skills"
@@ -777,13 +782,52 @@ def dream_scores(
 # --------------------------------------------------------------------------------------
 
 
+def threat_target_settings(config: Mapping[str, Any], skill: str) -> dict[str, Any] | None:
+    """skills.<skill>.threat_target, checked: what the student's threat head is taught and what the scorer counts
+    as a true threat.
+
+      absent                                     None: the score-margin target (skills.<skill>.threat_target_scale)
+      collision_course, or {mode: collision_course}
+                                                 {"mode": "collision_course", "outcome": skills.<skill>.threat_outcome}:
+                                                 doing nothing ends in that binary outcome (a collision)
+      {mode: near_approach, separation_m: d, outcome: name}
+                                                 {"mode": "near_approach", "separation_m": d, "outcome": name}: under
+                                                 doing nothing, the outcome ``name`` (the closest object-to-body
+                                                 separation, m) is below d (d > 0)
+
+    Raises ConfigError for any other value.
+    """
+    key = f"skills.{skill}.threat_target"
+    value = optional(config, key)
+    if value is None:
+        return None
+    block = {"mode": value} if isinstance(value, str) else value
+    if not isinstance(block, Mapping) or block.get("mode") not in THREAT_MODES:
+        raise ConfigError(f"config.yaml key {key!r} must be one of {THREAT_MODES} or a mapping with such a 'mode'; got {value!r}")
+    if block["mode"] == "collision_course":
+        if set(block) - {"mode"}:
+            raise ConfigError(f"config.yaml key {key!r} (collision_course) takes no other keys; got {sorted(block)}")
+        return {"mode": "collision_course", "outcome": str(require(config, f"skills.{skill}.threat_outcome"))}
+    if set(block) != {"mode", "separation_m", "outcome"}:
+        raise ConfigError(f"config.yaml key {key!r} (near_approach) needs exactly mode, separation_m, outcome; got {sorted(block)}")
+    distance, outcome = block["separation_m"], block["outcome"]
+    if isinstance(distance, bool) or not isinstance(distance, (int, float)) or not (math.isfinite(distance) and distance > 0):
+        raise ConfigError(f"config.yaml key '{key}.separation_m' must be a finite number > 0; got {distance!r}")
+    if not isinstance(outcome, str) or not outcome:
+        raise ConfigError(f"config.yaml key '{key}.outcome' must be an outcome name; got {outcome!r}")
+    return {"mode": "near_approach", "separation_m": float(distance), "outcome": outcome}
+
+
 def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any], predicted_mean: np.ndarray | None = None) -> dict[str, np.ndarray]:
     """Training targets of the student from the dream scores (m, C).
 
     "action": students.targets.soft_targets with students.snn.target_temperature and
     students.snn.target_spread (spread = score_spread of these rows for "global_median").
-    "threat" (only when spec.no_op_index is not None): (m, 2) = [1 - p, p] with
-    p = 1 / (1 + exp(-(max over active candidates of score - score[no_op]) / skills.<name>.threat_target_scale)).
+    "threat" (only when spec.no_op_index is not None): (m, 2) = [1 - p, p] with, by threat_target_settings:
+    collision_course: p = the dream's predicted mean of the threat outcome under NO_OP, clipped to [0, 1];
+    near_approach: p = 1 when the dream's predicted mean of the separation outcome under NO_OP is below
+    separation_m, else 0; absent: p = 1 / (1 + exp(-(max over active candidates of score - score[no_op]) /
+    skills.<name>.threat_target_scale)). predicted_mean (m, C, K) is needed by the first two.
     """
     checked = _check_spec(spec)
     scores = _matrix("scores", scores, width=checked.n_actions)
@@ -806,14 +850,25 @@ def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any], pred
         hard = np.full(scores.shape, smoothing / (scores.shape[1] - 1), dtype=np.float64)
         hard[np.arange(scores.shape[0]), choice] = 1.0 - smoothing
         targets[ACTION] = hard
-    if checked.no_op_index is not None and optional(config, f"skills.{checked.name}.threat_target") == "collision_course":
-        # Threat = the dream world (physics guess corrected by the teacher) says doing nothing ends in the outcome
-        # named by skills.<name>.threat_outcome (a binary outcome: its predicted mean under NO_OP, clipped to [0, 1]).
-        # talkhere.md: "threat means an object approaching on a collision course"; only the simulation scorer labels it.
+    target = threat_target_settings(config, checked.name)
+    if checked.no_op_index is not None and target is not None:
+        # collision_course: the dream world (physics guess corrected by the teacher) says doing nothing ends in the
+        # outcome named by skills.<name>.threat_outcome (a binary outcome: its predicted mean under NO_OP, clipped to
+        # [0, 1]); talkhere.md: "threat means an object approaching on a collision course". near_approach: the dream
+        # world says doing nothing lets the object come closer than separation_m (a hit or a near miss at the head).
+        # Only the simulation scorer labels it.
         if predicted_mean is None:
-            raise ValueError("threat_target collision_course needs predicted_mean (scores.npz of a teach run that saved it)")
-        outcome = list(checked.outcome_names).index(require(config, f"skills.{checked.name}.threat_outcome"))
-        threat = np.clip(np.asarray(predicted_mean, dtype=np.float64)[:, checked.no_op_index, outcome], 0.0, 1.0)
+            raise ValueError(f"threat_target {target['mode']} needs predicted_mean (scores.npz of a teach run that saved it)")
+        if target["outcome"] not in checked.outcome_names:
+            raise ConfigError(f"threat_target outcome {target['outcome']!r} is not an outcome of {checked.outcome_names}")
+        mean = np.asarray(predicted_mean, dtype=np.float64)
+        if mean.shape != (scores.shape[0], checked.n_actions, checked.n_outcomes):
+            raise ValueError(f"predicted_mean must have shape {(scores.shape[0], checked.n_actions, checked.n_outcomes)}; got {mean.shape}")
+        predicted = mean[:, checked.no_op_index, list(checked.outcome_names).index(target["outcome"])]
+        if target["mode"] == "near_approach":
+            threat = (predicted < target["separation_m"]).astype(np.float64)
+        else:
+            threat = np.clip(predicted, 0.0, 1.0)
         targets[THREAT] = np.column_stack([1.0 - threat, threat])
     elif checked.no_op_index is not None:
         key = f"skills.{checked.name}.threat_target_scale"
@@ -1568,7 +1623,8 @@ def _train_command(args: argparse.Namespace, config: Mapping[str, Any], spec: An
         })
 
     settings = {"dream": dream["path"], "scores": scores_path, "frames": frames, "window_encoding": window_encoding,
-                "diff_floor": diff_floor, "hidden_sizes": hidden, "max_steps": steps}
+                "diff_floor": diff_floor, "hidden_sizes": hidden, "max_steps": steps,
+                "threat_target": threat_target_settings(config, checked.name)}
     result.merge(settings)
     events.emit("train", "running", done=0, total=steps, data={**settings, "rows": int(features.shape[0])})
     try:

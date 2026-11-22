@@ -1,0 +1,632 @@
+project:
+  name: Learned Judgment
+  status: scaffold
+  primary_skill: dodge
+  no_substitute_robot_or_project: true
+runtime:
+  python: '3.13'
+  simulator: mujoco
+  headless: true
+  seed: 20261121
+  timestep_s: 0.002
+robot:
+  model: unitree_go2
+  model_asset:
+    path: third_party/unitree_mujoco/unitree_robots/go2/go2.xml
+    source: https://github.com/unitreerobotics/unitree_mujoco/tree/1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d/unitree_robots/go2
+    revision: 1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d
+    sha256: 2014a3d76e30f17ab9447d8a67bd015291f74fa4d71ae30d005f1a32bd693d4b
+  walking_policy:
+    status: verified
+    source: https://github.com/Eximius-Labs/efferent/tree/f51e1af953afe1016dae9ceeff2b5328fa51781d/examples/go2_walk
+    repository_revision: f51e1af953afe1016dae9ceeff2b5328fa51781d
+    checkpoint: learned_judgment/env/assets/efferent@f51e1af/go2_walk.app
+    checkpoint_sha256: 89a5bb7e1ff1cc4cd60f4855bf1dd77bd1b313aeee7c19e984fe7c6e37d74147
+    spawn:
+      base_pos:
+      - 0.0
+      - 0.0
+      - 0.35
+      settle_s: 1.0
+      auto_base_height: true
+    matching_config:
+    - learned_judgment/env/assets/efferent@f51e1af/go2.robot.yaml
+    - learned_judgment/env/assets/efferent@f51e1af/go2_walk.app/manifest.yaml
+    license: Apache-2.0
+    observation_schema:
+    - name: base_ang_vel
+      dim: 3
+      scale: 0.25
+    - name: projected_gravity
+      dim: 3
+      scale: 1.0
+    - name: command
+      dim: 3
+      scale:
+      - 1.0
+      - 1.0
+      - 1.0
+    - name: joint_pos_rel
+      dim: 12
+      scale: 1.0
+    - name: joint_vel
+      dim: 12
+      scale: 0.05
+    - name: last_action
+      dim: 12
+      scale: 1.0
+    action_schema:
+      dim: 12
+      joint_order:
+      - FR_hip_joint
+      - FR_thigh_joint
+      - FR_calf_joint
+      - FL_hip_joint
+      - FL_thigh_joint
+      - FL_calf_joint
+      - RR_hip_joint
+      - RR_thigh_joint
+      - RR_calf_joint
+      - RL_hip_joint
+      - RL_thigh_joint
+      - RL_calf_joint
+      scale:
+      - 0.125
+      - 0.25
+      - 0.25
+      - 0.125
+      - 0.25
+      - 0.25
+      - 0.125
+      - 0.25
+      - 0.25
+      - 0.125
+      - 0.25
+      - 0.25
+      default_pose:
+      - 0.0
+      - 0.8
+      - -1.5
+      - 0.0
+      - 0.8
+      - -1.5
+      - 0.0
+      - 0.8
+      - -1.5
+      - 0.0
+      - 0.8
+      - -1.5
+      kp:
+      - 20.0
+      - 20.0
+      - 20.0
+      - 20.0
+      - 20.0
+      - 20.0
+      - 20.0
+      - 20.0
+      - 20.0
+      - 20.0
+      - 20.0
+      - 20.0
+      kd:
+      - 0.5
+      - 0.5
+      - 0.5
+      - 0.5
+      - 0.5
+      - 0.5
+      - 0.5
+      - 0.5
+      - 0.5
+      - 0.5
+      - 0.5
+      - 0.5
+      torque_limit:
+      - 23.5
+      - 23.5
+      - 23.5
+      - 23.5
+      - 23.5
+      - 23.5
+      - 23.5
+      - 23.5
+      - 23.5
+      - 23.5
+      - 23.5
+      - 23.5
+    control_rate_hz: 50.0
+    command_schema:
+      update_period_s: 0.02
+      source: "Names and native order: manifest.yaml inside go2_walk.app (efferent@f51e1af),\
+        \ observation term \"command\", names [vel_x, vel_y, yaw_rate], scale 1.0\
+        \ (lines 95-104); rate_hz 50.0 (line 11). Candidate range -1 to 1 for each\
+        \ field: robot_lab's current Go2 training range (experiments/EXPERIMENTS_LOG.md,\
+        \ \"E1 (research half)\"; the robot_lab commit this checkpoint was trained\
+        \ at is unknown). Each range end proven by a recorded run: experiments/EXPERIMENTS_LOG.md,\
+        \ \"E4 \u2014 command inventory\"."
+      fields:
+        vel_x:
+          unit: m/s
+          min: -1.0
+          max: 1.0
+          native_index: 0
+          proven_by: artifacts/env/commands/commands.json
+          measured_at_min: -0.888
+          measured_at_max: 0.9243
+          description: 'Forward velocity in the dog''s own heading frame (x forward):
+            positive walks forward, negative walks backward. Tracking on a flat floor
+            (Gate 1, experiments/EXPERIMENTS_LOG.md): commanded 0.3 / 0.6 / 0.9 m/s
+            gave 0.2256 / 0.5430 / 0.8596 m/s, so 0.3 m/s runs 0.0744 m/s slow, outside
+            the gate''s 20% tolerance (the one condition of Gate 1 that failed). In
+            robot_lab training (HEAD; this checkpoint''s training commit is unknown)
+            planar commands with norm up to 0.2 m/s were zeroed, so small commands
+            may not move the dog as asked.'
+        vel_y:
+          unit: m/s
+          min: -1.0
+          max: 1.0
+          native_index: 1
+          proven_by: artifacts/env/commands/commands.json
+          measured_at_min: -1.0349
+          measured_at_max: 0.8939
+          description: 'Sideways velocity in the dog''s own heading frame (y left):
+            positive steps left, negative steps right. Tracking is measured only by
+            the two proof runs (measured_at_min, measured_at_max). The same training
+            note as vel_x applies to planar commands with norm up to 0.2 m/s.'
+        yaw_rate:
+          unit: rad/s
+          min: -1.0
+          max: 1.0
+          native_index: 2
+          proven_by: artifacts/env/commands/commands.json
+          measured_at_min: -0.9555
+          measured_at_max: 0.9687
+          description: 'Turning rate about the vertical axis: positive turns anticlockwise
+            (to the left) seen from above. Gate 1 measured +0.4976 / -0.5066 rad/s
+            for +0.5 / -0.5 commanded at 0.3 m/s forward. With zero commanded the
+            dog still turns anticlockwise at 0.05-0.14 rad/s (Gate 1). In robot_lab
+            training yaw commands came from heading control.'
+  acceptance:
+    trot_duration_s: 30
+    commanded_speeds_m_s:
+    - 0.3
+    - 0.6
+    - 0.9
+    yaw_rates_supported_by_policy:
+    - -1.0
+    - 1.0
+    must_turn: true
+    must_stop: true
+    must_remain_standing: true
+    speed_tolerance_fraction: 0.2
+    yaw_tolerance_fraction: 0.3
+    stop_speed_m_s: 0.05
+    exclude_first_s: 5
+    final_window_s: 2
+  fall:
+    max_tilt_deg: 60
+  recovery:
+    max_tilt_deg: 11.07
+    max_tilt_rate_rad_s: 3.32
+    hold_s: 0.6
+world:
+  settle_s: 2.0
+  trace_dir: artifacts/env/traces
+  save_traces: false
+  render:
+    width: 640
+    height: 480
+  hidden_effects:
+    payload_mass_kg:
+    - 0.0
+    - 3.0
+    payload_off_center_range_m: null
+    declared_mass_error_fraction:
+    - -0.2
+    - 0.2
+    surface_friction_by_type: null
+    friction_per_run_variation: null
+    slope_deg:
+    - -5.0
+    - 5.0
+    motor_strength_fraction:
+    - 0.8
+    - 1.0
+    command_latency_s:
+    - 0.05
+    - 0.3
+    command_latency_jitter_s: null
+  presets:
+    default:
+      declared_payload_kg: 0.0
+      declared_surface: default
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+    heavy_payload:
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+    slippery_floor:
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+    tired_motors:
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+    downhill:
+      payload_mass_kg: null
+      floor_type: null
+      slope_deg: null
+      motor_strength_fraction: null
+      command_latency_s: null
+ball:
+  enabled: true
+  spec: ihf_size_3_handball
+  mass_kg: 0.45
+  radius_m: 0.0939
+  inertia: shell
+  friction:
+  - 1.0
+  - 0.005
+  - 0.0001
+  condim: 3
+  priority: 2
+  solref:
+  - 0.04
+  - 0.1
+  collision_masks:
+    contype: 1
+    conaffinity: 1
+  gravity_m_s2: 9.81
+  dog_forward_speed_range_m_s:
+  - 0.3
+  - 0.9
+  throw_origin_range_m:
+  - 3.5
+  - 5.0
+  throw_direction_range_deg:
+  - -60.0
+  - 60.0
+  throw_release_height_range_m:
+  - 0.6
+  - 1.2
+  throw_speed_range_m_s:
+  - 3.3
+  - 4.8
+  throw_aim_error_range_m:
+  - -0.7
+  - 0.7
+skills:
+  dodge:
+    status: primary
+    attempts_per_skill_target:
+    - 10
+    - 40
+    supported_action_schema: null
+    candidate_points_per_dim:
+    - 9
+    - 4
+    - 3
+    action:
+      side_velocity_field: vel_y
+      forward_velocity_field: vel_x
+      yaw_rate_field: yaw_rate
+      start_delay_s:
+      - 0.0
+      - 0.6
+      hold_duration_s:
+      - 0.2
+      - 1.0
+    episode_duration_s: 3.0
+    situation_ranges:
+      ball_rel_x_m:
+      - 1.69
+      - 5.07
+      ball_rel_y_m:
+      - -4.49
+      - 4.5
+      ball_rel_z_m:
+      - 0.58
+      - 1.22
+      ball_vel_x_m_s:
+      - -4.89
+      - -0.68
+      ball_vel_y_m_s:
+      - -4.75
+      - 4.73
+      ball_vel_z_m_s:
+      - 0.68
+      - 7.38
+      dog_forward_speed_m_s:
+      - 0.28
+      - 0.92
+      declared_payload_kg:
+      - 0.0
+      - 3.6
+    declared_surfaces:
+    - default
+    physics:
+      gravity_m_s2: 9.81
+      assumed_latency_s: 0.05
+      response_time_s: 0.3
+      time_step_s: 0.02
+      collision_softness_m: 0.05
+      body_half_length_m: 0.293
+      body_radius_m: 0.107
+      base_height_m: 0.3234
+    objective_weights:
+      collision: 10.0
+      fall: 10.0
+      separation: 1.0
+      separation_cap_m: 0.5
+      contact_margin_m: 0.02
+      motion: 0.5
+      recovery: 0.5
+    confidence_threshold: null
+  brake:
+    status: planned
+  turn:
+    status: planned
+  ramp:
+    status: planned
+  kick:
+    status: stretch
+  sidestep_reach:
+    candidate_points_per_dim:
+    - 9
+    - 7
+engine:
+  candidate_batch_size: null
+  quantile_levels:
+  - 0.1
+  - 0.25
+  - 0.5
+  - 0.75
+  - 0.9
+  spread_levels:
+  - 0.1
+  - 0.9
+  multi_outcome_mode: stacked
+  spec_validation:
+    probe_situations: 16
+    probe_points_per_dim: 3
+  attempt_exploration_fraction: 0.5
+  attempts_dir: D:/BerlinPrior/experiments/proofs/B_pipeline_real/out/20261121T174609Z/attempts
+  dreams_dir: D:/BerlinPrior/experiments/proofs/B_pipeline_real/out/20261121T174609Z/dreams
+  dreams_per_skill_initial: 2000
+  confidence_thresholds_by_skill: null
+  adaptation_context_policy: null
+  adaptation_recent_window: null
+pipeline:
+  manifests_dir: D:/BerlinPrior/experiments/proofs/B_pipeline_real/out/20261121T174609Z/manifests
+  students_dir: D:/BerlinPrior/experiments/proofs/B_pipeline_real/out/20261121T174609Z/students
+  evaluation_rows_dir: D:/BerlinPrior/experiments/proofs/B_pipeline_real/out/20261121T174609Z/evaluation_rows
+  run_results_dir: D:/BerlinPrior/experiments/proofs/B_pipeline_real/out/20261121T174609Z/run_results
+  default_attempts: 40
+  evaluation_repeats: 1
+  on_physics_mismatch: error
+evaluation:
+  dev_situations_per_skill: 100
+  test_situations_per_skill: 100
+  shift_situations_per_preset: 100
+  test_access_log: D:/BerlinPrior/experiments/proofs/B_pipeline_real/out/20261121T174609Z/test_access_log.jsonl
+  oracle_situations_per_skill: 100
+  minimum_seeds: 3
+  preferred_seeds: 5
+  context_attempt_counts:
+  - 0
+  - 5
+  - 10
+  - 20
+  - 40
+  adaptation_new_attempt_counts:
+  - 0
+  - 5
+  - 10
+  - 15
+  - 20
+  recovery_tolerance_fraction: 0.2
+  dream_counts:
+  - 100
+  - 1000
+  - 2000
+  - 10000
+  coverage_intervals:
+  - - 0.25
+    - 0.75
+  - - 0.1
+    - 0.9
+  bootstrap_resamples: 9999
+  bootstrap_confidence_level: 0.95
+  bootstrap_method: BCa
+  latency_decisions: 1000
+  reliability_bins: 10
+  methods:
+  - oracle
+  - physics_only
+  - constant_bias
+  - gaussian_process
+  - gradient_boosting
+  - mlp_on_attempts
+  - direct_tabpfn
+  - teacher
+  - snn_per_skill
+  - snn_shared
+tabpfn:
+  client_version: 0.10.1
+  check_usage_before_uncached_request: true
+  estimate_cost_before_uncached_request: true
+  cache_requests_and_responses: true
+  cache_key_fields:
+  - training_features
+  - training_targets
+  - query_features
+  - output_type
+  - model_settings
+  verified_request_limit_per_minute: null
+  verified_request_limit_per_hour: null
+  current_usage: null
+  model_path: v3.5_default
+  n_estimators: 8
+  random_state: 0
+  cache_dir: D:/BerlinPrior/experiments/proofs/B_pipeline_real/out/20261121T174609Z/tabpfn_cache
+  call_log: D:/BerlinPrior/experiments/proofs/B_pipeline_real/out/20261121T174609Z/tabpfn_calls.jsonl
+  max_tokens_per_request: 10000
+  max_query_rows_per_request: 32000
+  lock_timeout_s: 120
+  lock_poll_s: 0.05
+  project_token_budget: null
+dev_checks:
+  snn_inputs_in_dream:
+    heldout_fraction: 0.15
+    validation_fraction: 0.1
+    max_steps: 6000
+    inputs:
+    - situation
+    - situation_and_physics_action
+    - situation_and_physics_scores
+    hidden_sizes:
+    - - 64
+    - - 128
+      - 64
+  snn_settings_in_dream:
+    heldout_fraction: 0.15
+    variants:
+    - name: start
+      hidden_sizes:
+      - 64
+      max_steps: 1500
+    - name: longer
+      hidden_sizes:
+      - 64
+      max_steps: 6000
+    - name: wider
+      hidden_sizes:
+      - 128
+      max_steps: 6000
+    - name: two_layers
+      hidden_sizes:
+      - 128
+      - 64
+      max_steps: 6000
+  sidestep_reach:
+    episode_duration_s: 1.8
+    min_tail_s: 1.0
+    situation_ranges:
+      dog_forward_speed_m_s:
+      - 0.3
+      - 0.9
+      target_sideways_m:
+      - -0.4
+      - 0.4
+      declared_payload_kg:
+      - 0.0
+      - 3.6
+    declared_surfaces:
+    - default
+    hold_duration_s:
+    - 0.2
+    - 0.8
+    candidate_points_per_dim:
+    - 9
+    - 7
+    objective_weights:
+      fall: 10.0
+      abs_error: 1.0
+      spread: 0.5
+      motion: 0.05
+    success_tolerance_m: 0.05
+    save_traces: false
+    world_preset: default
+    formula_match_tolerance_m: 1.0e-12
+    view_tail_s: 3.0
+    determinism_other_attempt_seeds: 3
+    context_attempts: 40
+    dev_situations: 60
+    residual_baselines:
+    - constant_bias
+    - gaussian_process
+    - gradient_boosting
+persistence:
+  replace_attempts: 10
+  replace_pause_s: 0.05
+baselines:
+  gaussian_process:
+    n_restarts_optimizer: 5
+    constant_value_bounds:
+    - 0.001
+    - 1000.0
+    length_scale_bounds:
+    - 0.01
+    - 1000.0
+    noise_level_bounds:
+    - 1.0e-06
+    - 10.0
+    min_attempts: 2
+  gradient_boosting:
+    max_iter: 200
+    learning_rate: 0.05
+    max_leaf_nodes: 4
+    min_samples_leaf: 2
+    min_attempts: 5
+    interval_folds: 5
+  mlp_on_attempts:
+    hidden_layer_sizes:
+    - 64
+    - 64
+    alpha: 0.0001
+    max_iter: 2000
+    min_attempts: 5
+    interval_folds: 5
+students:
+  kind: snn
+  per_skill_snn: true
+  shared_snn: true
+  dream_rehearsal: true
+  snn:
+    hidden_sizes:
+    - 64
+    time_steps: 10
+    beta: 0.9
+    threshold: 1.0
+    readout_beta: 0.9
+    learn_beta: false
+    learn_threshold: false
+    surrogate: atan
+    surrogate_alpha: 2.0
+    target_temperature: 0.5
+    spike_rate_penalty: 0.0
+    learning_rate: 0.002
+    batch_size: 64
+    max_steps: 1500
+    validation_fraction: 0.1
+    evaluate_every_steps: 100
+    patience_evaluations: 5
+    torch_threads: 1
+    adam_beta1: 0.9
+    adam_beta2: 0.999
+    adam_eps: 1.0e-08
+    weight_decay: 0.0
+    target_spread: global_median
+    parity_logit_tolerance: 1.0e-09
+    out_of_range: error
+    shared_skill_slots: 8
+    shared_retention_fraction: 0.1
+    shared_feature_width: null
+    rehearsal_fraction: 0.5
+    energy:
+      precision: fp32
+      e_mac_pj: 4.6
+      e_ac_pj: 0.9
+      source: Horowitz, ISSCC 2014, Fig. 1.1.9 (45 nm, 0.9 V), doi:10.1109/ISSCC.2014.6757323

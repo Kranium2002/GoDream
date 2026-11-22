@@ -501,8 +501,20 @@ skills:
     pre_contact_margin_s: 0.15  # (0.05 until v3b) Decision frames are drawn only up to this long before the object's straight-line arrival at the dog.
     separation_clip_m: 2.0  # min_separation_m is reported at most this (measured and guessed); a scene without an object reads this value.
     action_target: {mode: decision, tie_tolerance: 0.1, smoothing: 0.05}  # Action target of the student: the dream's decision, ties (scores within tie_tolerance, in objective units) broken in readout order. Chosen on dev (sweep v3, soft targets): for a punch at the centre the soft target was half left, half right, so no student could give the gate one clear action.
-    threat_target: collision_course  # Threat target of the student: the dream world's predicted collision under NO_OP (scorer side). The decision-margin target (threat_target_scale) called late frames, where no dodge helps any more, 'no threat' although the image shows the object at its largest (development run v2).
-    threat_outcome: collision
+    # Threat target (scorer side; observed.threat_target_settings), also the true-threat definition of dodge_eval. The
+    # decision-margin target (threat_target_scale, no threat_target key) called late frames, where no dodge helps any
+    # more, 'no threat' although the image shows the object at its largest (development run v2).
+    #   collision_course (until v5): the dream world's predicted collision under NO_OP (threat_outcome); true threat =
+    #   the NO_OP episode collides.
+    #   near_approach (v6, the lead's decision 2026-11-22: a flinch at an object that comes very close to the head is
+    #   correct): the dream world's predicted NO_OP min_separation_m below separation_m; true threat = the NO_OP
+    #   episode's measured min_separation_m below separation_m. Collisions are still reported (strict_collision).
+    # separation_m 0.08 by a rule fixed before any table or student result (experiments/proofs/B_v6_near_approach/
+    # threat_distance.py, results/runs/v6/threat_distance.json): midpoint of the gap between the largest measured NO_OP
+    # separation of incoming_center/left/right (0.022 m) and the smallest of off_path/static/receding/background_motion
+    # (0.142 m), rounded to 0.01 m; v5 context NO_OP rows and v5 dev trace pooled (ambiguous lies across it).
+    threat_target: {mode: near_approach, separation_m: 0.08, outcome: min_separation_m}
+    threat_outcome: collision  # The binary outcome of threat_target collision_course.
     threat_target_scale: 0.05  # Threat target = logistic((best active score - NO_OP score) / this). Small against the motion cost of an active command (0.3), so a scene where NO_OP is best gives about 0.
     # Scenario kinds (Person A's nine names, messages log 2026-11-21 20:29 UTC) and their sampling weights. The kind shapes the
     # draw only; whether a scene is a threat is measured by the simulator (a NO_OP episode that ends in a collision).
@@ -595,7 +607,8 @@ skills:
       steep_from_deg: 24.0
     menu:  # What a lesson may choose from. A language model designs the lesson within it; check_lesson enforces it.
       # Sense groups, in the window's channel order. Each channel is scaled to [0, 1] with its fixed [low, high] and
-      # clipped. Body-frame quantities only: never position, velocity over the ground or anything about the mound.
+      # clipped. Body-frame quantities and the dog's own dead reckoning (path_memory) only: never the true position,
+      # velocity over the ground or anything about the mound.
       sense_groups:
         tilt:
           description: "How the trunk leans: nose-up pitch and left-side-up roll, degrees (from the trunk orientation an IMU gives)."
@@ -623,6 +636,9 @@ skills:
         last_command:
           description: "The steering command the dog itself sent last: forward speed (m/s), sideways speed (m/s), turn rate (rad/s)."
           channels: [[cmd_vel_x, -1.0, 1.0], [cmd_vel_y, -1.0, 1.0], [cmd_yaw_rate, -1.0, 1.0]]
+        path_memory:  # Dead reckoning (learned_judgment.skills.reflex run_episode): own commands along own IMU heading only.
+          description: "A rough path memory by dead reckoning, not a position sensor: from the start of the lesson, every 0.02 s control period the dog adds the forward speed it commanded itself times 0.02 s along its IMU heading (relative to the start), giving an estimated distance walked forward (m) and an estimated sideways offset from its start line (m, + left). It drifts: the walking policy does not follow commands exactly (it walks slower or faster than commanded and slips sideways, more on slopes), and the error grows with distance."
+          channels: [[path_forward_m, -1.0, 11.0], [path_sideways_m, -3.0, 3.0]]
       sample_every_s: [0.02, 0.5]  # Spacing of the window's samples; whole 0.02 s control periods.
       history_s: [0.02, 2.0]  # Span of the window (oldest to newest sample); a whole number of sample spacings.
       max_history_samples: 21  # Samples per window, history_s / sample_every_s + 1, at most this.
@@ -957,14 +973,15 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
     # instead of the student, so the teacher still sees other commands in the states the student's own choices reach.
     student_explore_fraction: 0.3
     dream_episodes: 20  # Further unbilled rule-of-thumb episodes on dream scenarios whose sensor windows join the dream.
-    dev_scenarios: 30
-    test_scenarios: 30
+    dev_scenarios: 30  # Each loop round's student is judged here (snn only); the run keeps the best round (reflex.py ROUND CHOICE).
+    test_scenarios: 30  # Split "test": looked at after every round of run reflex2, so no longer held out.
+    test2_scenarios: 30  # Split "test2" (own seed code 5): the held-out split of the loop's final run from run reflex3 on, looked at once per run.
     fast_attempts: 8  # Fast run: exploration episodes.
     fast_dream_episodes: 10  # Fast run: extra dream episodes.
     fast_snn_max_steps: 1500  # Fast run: max optimizer steps of the spiking student.
     snn_hidden_sizes: [64]
     snn_max_steps: 3000
-    tracks_per_method: 6  # run: the per-period pose track (qpos) of the first this many test scenarios of each method.
+    tracks_per_method: 6  # run: the per-period pose track (qpos) of the first this many scenarios of the split, per method.
 
 app:  # The local viewer server: uv run python -m app.server
   host: 127.0.0.1  # The only address the server accepts: it serves this machine alone.
@@ -1004,7 +1021,7 @@ app:  # The local viewer server: uv run python -m app.server
   infer:
     # The frozen student directory (student.json, network.npz, network.json with frozen thresholds), relative to the
     # repository root; Dev B's observed run exports it to <observed.runs_dir>/<run>/student/. null until one exists.
-    student_dir: results/runs/v4g/student  # Run v4 student, thresholds recalibrated on dev for the gate with interchangeable sidesteps (see its student.json).
+    student_dir: results/runs/v5try/student  # v5 scenes student for a live-camera try; gate target NOT met (see its student.json).
     # Development only: {threat, action, margin} passed to the runtime when the student has no frozen thresholds; every
     # answer, the infer capability and the log then say so. Never committed set; null uses frozen thresholds only.
     dev_thresholds: null

@@ -1,0 +1,46 @@
+DEV RUN on the real Go2 simulator (Person A's Go2World, preset default, no ball) - pipeline chain of the sidestep_reach dev skill; not an evaluation result, not in any report or table
+tripwires installed on 32 billable tabpfn_client entry points
+output directory experiments/proofs/B_pipeline_real/out/20261121T174609Z
+config copy (config.yaml with these keys changed):
+  engine.attempts_dir: experiments/proofs/B_pipeline_real/out/20261121T174609Z/attempts
+  engine.dreams_dir: experiments/proofs/B_pipeline_real/out/20261121T174609Z/dreams
+  pipeline.manifests_dir: experiments/proofs/B_pipeline_real/out/20261121T174609Z/manifests
+  pipeline.students_dir: experiments/proofs/B_pipeline_real/out/20261121T174609Z/students
+  pipeline.evaluation_rows_dir: experiments/proofs/B_pipeline_real/out/20261121T174609Z/evaluation_rows
+  pipeline.run_results_dir: experiments/proofs/B_pipeline_real/out/20261121T174609Z/run_results
+  tabpfn.cache_dir: experiments/proofs/B_pipeline_real/out/20261121T174609Z/tabpfn_cache
+  tabpfn.call_log: experiments/proofs/B_pipeline_real/out/20261121T174609Z/tabpfn_calls.jsonl
+  evaluation.test_access_log: experiments/proofs/B_pipeline_real/out/20261121T174609Z/test_access_log.jsonl
+  tabpfn.project_token_budget: None
+  world.save_traces: False
+  skills.sidestep_reach.candidate_points_per_dim: [9, 7] (mirrors dev_checks.sidestep_reach.candidate_points_per_dim)
+versions {'python': '3.13.16', 'numpy': '2.5.5', 'scikit-learn': '1.9.0', 'mujoco': '3.11.0', 'torch': '2.15.0+cpu', 'platform': 'Windows-11-10.0.26300-SP0'}
+git HEAD beab1d9064d1e410938d077cfecfee5c04e58685; learned_judgment/pipeline.py sha256 9526c8873da4bcf15fd59cc11178cb8b6c94e5b95119c0e7682ca612985686a1 (working tree)
+runtime.seed 20261121 | preset default | attempts 40 (pipeline.default_attempts) | dreams 2000 (engine.dreams_per_skill_initial) | dev situations 100 (evaluation.dev_situations_per_skill) x repeats 1 (pipeline.evaluation_repeats) | residual method gradient_boosting | config digest 27c899f348f0
+world seed 647831257 (stream 'pipeline/world/default'), world: learned_judgment.env.Go2World: MuJoCo Go2 with the borrowed, frozen walking policy (Person A)
+
+== collect ==
+  [collect  start    0/40] collect started
+  [collect  progress 25/40] attempt 25 of 40
+  [collect  finish   40/40] collect done
+
+== teacher (gradient_boosting, local) ==
+  [teacher  start    0/None] teacher started
+  [teacher  finish   None/None] teacher done
+
+== dream ==
+  [dream    start    0/2000] dream started
+  [dream    finish   2000/2000] dream done
+  dreamed 2000, kept 2000 x 63 candidates; threshold None (config.yaml engine.confidence_thresholds_by_skill is null: no threshold has been selected on dev data yet, so every dream is kept)
+
+== train (in the dream) ==
+  [train    start    0/None] train started
+  [train    finish   None/None] train done
+  network sha256 7ae6324012c547cc44494933bd4accc9c8e0fdf8e77a50abc8666f822884783f
+
+== evaluate on dev ==
+  [evaluate start    0/300] evaluate started
+  [evaluate progress 25/300] episode 25 of 300
+  [evaluate progress 50/300] episode 50 of 300
+  [evaluate progress 75/300] episode 75 of 300
+  [evaluate progress 100/300] episode 100 of 300

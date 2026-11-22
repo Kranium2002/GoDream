@@ -16,6 +16,17 @@ module; nothing here names a skill.
 
 The validation probe calls ``spec.sample_situations``, so a skill whose sampler needs
 arguments (for example a throw model) must receive them through ``skill_arguments``.
+
+:func:`load_skill_for_world` builds a skill for one world. A skill whose constructor needs
+values from the world (declared values, a situation sampler) defines, in its module, the
+optional function::
+
+    for_world(config, world) -> SkillSpec
+
+which builds the spec for that world, normally with ``load_skill(name, config,
+**skill_arguments)``. :func:`load_skill_for_world` calls it, checks that it returned a
+:class:`SkillSpec` of that name and runs :func:`validate_spec` on it with the settings above.
+A skill module without ``for_world`` is built with ``load_skill(name, config)``.
 """
 
 from __future__ import annotations
@@ -27,7 +38,9 @@ from typing import Any, Mapping
 from learned_judgment.config import ConfigError, require
 from learned_judgment.skills.base import CommandSchema, SkillSpec, validate_spec
 
-__all__ = ["available_skills", "load_skill"]
+__all__ = ["available_skills", "has_for_world", "load_skill", "load_skill_for_world"]
+
+_FOR_WORLD = "for_world"  # name of the optional module-level hook of a skill module
 
 _NOT_SKILL_MODULES = frozenset({"base"})
 
@@ -102,4 +115,40 @@ def load_skill(name: str, config: Mapping[str, Any], **skill_arguments: Any) -> 
     if spec.name != name:
         raise TypeError(f"{type(spec).__name__} built a spec named {spec.name!r}, not {name!r}")
     validate_spec(spec, command_schema, **settings)
+    return spec
+
+
+def _for_world_hook(name: str) -> Any | None:
+    classes = _skill_classes()
+    if name not in classes:
+        raise KeyError(f"unknown skill {name!r}; available skills: {sorted(classes)}")
+    hook = getattr(importlib.import_module(classes[name].__module__), _FOR_WORLD, None)
+    if hook is not None and not callable(hook):
+        raise TypeError(f"{classes[name].__module__}.{_FOR_WORLD} must be a function (config, world) -> SkillSpec")
+    return hook
+
+
+def has_for_world(name: str) -> bool:
+    """True when the module of skill ``name`` defines the optional ``for_world`` hook."""
+    return _for_world_hook(name) is not None
+
+
+def load_skill_for_world(name: str, config: Mapping[str, Any], world: Any) -> SkillSpec:
+    """Build the skill ``name`` for ``world`` and validate it.
+
+    When the skill's module defines ``for_world(config, world)``, the spec it returns is
+    checked (a :class:`SkillSpec` named ``name``) and validated with :func:`validate_spec`
+    against the verified command schema and the config settings of :func:`load_skill`;
+    otherwise this is ``load_skill(name, config)``. Raises what :func:`load_skill` and the hook
+    raise, KeyError for an unknown skill, and TypeError when the hook returns something else.
+    """
+    hook = _for_world_hook(name)
+    if hook is None:
+        return load_skill(name, config)
+    spec = hook(config, world)
+    if not isinstance(spec, SkillSpec):
+        raise TypeError(f"{_FOR_WORLD} of skill {name!r} must return a SkillSpec; got {type(spec).__name__}")
+    if spec.name != name:
+        raise TypeError(f"{_FOR_WORLD} of skill {name!r} built a spec named {spec.name!r}")
+    validate_spec(spec, CommandSchema.from_config(config), **_validation_settings(config))
     return spec

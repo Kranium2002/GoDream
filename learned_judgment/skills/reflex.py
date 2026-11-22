@@ -26,6 +26,13 @@ Lane contract (Person B, reflex)
                   joint_speeds  joint_vel_rad_s
                   feet          foot_contact as 0 / 1
                   last_command  command_active vel_x, vel_y, yaw_rate (what the dog itself sent last)
+                  path_memory   DEAD RECKONING from the dog's own signals only: 0, 0 at t_s 0 (the decision instant
+                                of Go2World.reset); every later control period adds command_active vel_x x period
+                                (the forward speed the dog itself commanded) along the IMU heading of that period
+                                (the "heading" yaw relative to t_s 0, midway between the period's first and last
+                                observation): path_forward_m along the heading at t_s 0, path_sideways_m to its left.
+                                An estimate that drifts (the walking policy does not follow commands exactly and
+                                slopes push the trunk sideways); each window sample carries the estimate at its time.
                 Never an input: base_pos_m, base_lin_vel_m_s, anything about the mound.
     DECISIONS   first at t = history_s (the window is full), then every decide_every_s; the picked candidate is held
                 until the next decision. CANDIDATES = steer.yaw_rate x steer.vel_x of the lesson, vel_y 0, each
@@ -36,7 +43,10 @@ Lane contract (Person B, reflex)
                 time_limit_s ("time") or at a fall ("fall"). reached = "goal" and |sideways offset| <= goal.tolerance_m
                 at that moment. For the teacher's rows (attempts) the episode then goes on for horizon_s more under the
                 same closed loop (scoring tail: the last decisions' horizons are measured, not cut; tail decisions are
-                no rows, the outcome stays the end moment's); the evaluation (run) has no tail.
+                no rows, the outcome stays the end moment's); the evaluation (run) has no tail. The outcome also keeps
+                the path_memory estimate at the end moment (path_memory_forward_m, path_memory_sideways_m; computed
+                in every episode, whatever the lesson's senses) beside the truth (final_forward_m, final_sideways_m):
+                scorer-side, to measure the estimate's drift.
     OUTCOMES    K = 4 short-horizon outcomes per decision at t, measured from the scorer's per-period track over
                 [t, t + horizon_s] (truncated at a fall), OUTCOME_NAMES order:
                   progress_m  regression  gain along the heading at t_s 0
@@ -56,6 +66,8 @@ Lane contract (Person B, reflex)
     RULE        "physics_only" / the rule of thumb: argmax over the candidates of the objective of the physics guess
                 (point mass), ties to the first in candidate order. It reads the true state: a reference, not a blind
                 policy.
+    SPLITS      context 1 (attempts), dev 2 (round choice), test 3 (held out until run reflex2, which looked at it after
+                every round), dream 4, test2 5 (the held-out split from run reflex3 on: looked at once per run).
     SCENARIOS   per split np.random.default_rng(np.random.SeedSequence([runtime.seed, SPLIT_CODES[split]])), per
                 scenario u = rng.random(6): u0 < practice_world.flat_share -> flat (no mound keys); else radius, height,
                 centre ahead, centre side uniform in the lesson's ranges (u1..u4); the height lowered to the
@@ -83,10 +95,10 @@ Files of the command line (the observed.py array contract; "frames": null, D win
         [--student DIR]] [--explore FRACTION]
     python -m learned_judgment.skills.reflex merge --inputs DIR DIR ... --out DIR
     python -m learned_judgment.skills.reflex dream --out DIR [--n N] [--context DIR [DIR ...]]
-    python -m learned_judgment.skills.reflex run (--student DIR | --no-student) --split {dev|test} --out DIR [--n N]
-        [--run RUN] [--methods M ...]
+    python -m learned_judgment.skills.reflex run (--student DIR | --no-student) --split {dev|test|test2} --out DIR
+        [--n N] [--run RUN] [--methods M ...]
     python -m learned_judgment.run_skill _exec --config RUN_DIR/config.yaml learned_judgment.skills.reflex loop
-        --run RUN --rounds N [--confirm-billing]
+        --run RUN --rounds N [--test-split {test2|test}] [--confirm-billing]
 
 attempts: N (default observed.reflex.attempt_episodes) episodes on the context scenarios S .. S + N - 1 (default S 0;
 scenario_id = the index in the context split, rows' scenario_index = scenario_id - S); at decision j of scenario i, u =
@@ -118,14 +130,19 @@ observed.reflex.attempt_episodes) -> RUN/round_0/context, dream over its windows
 (--confirm-billing) and observed train as subprocesses with the run's config (they write RUN/scores.npz and
 RUN/student; copied to round_0/scores.npz and round_0/student). Round k >= 1: attempts --policy student --student
 round_<k-1>/student on scenarios k N .. (k + 1) N - 1 -> round_k/context, merge of round_0 .. round_k contexts ->
-round_k/rows (the teacher's context: every real decision so far), dream over all those windows, teach, train. Every
-round's student is tested on the test split: rounds before the last with "snn" only -> round_k/test_run; the last
-round with no_op, physics_only and snn, tracks and the UI keys (--run RUN) -> RUN/test_run, copied to
-round_<last>/test_run. result.json "rounds": per round the real decisions used, the test's reached count and mean miss
-(by difficulty too); "loop": the steps with exit codes and wall times; every step's output also goes to RUN/loop.log.
---rounds N is the number of improvement rounds after round 0. Without --confirm-billing it stops after round 0's
-attempts and dream with the free quote (observed quote; nothing billed) and exit code 3. Teacher requests are cached by
-content, and every collection is deterministic, so a re-run sends nothing already sent.
+round_k/rows (the teacher's context: every real decision so far), dream over all those windows, teach, train (the
+train step's result.json "train" record is kept as round_k/train.json). Every round's student is then run on the DEV
+split with "snn" only -> round_k/dev_run; the held-out split is not looked at during the rounds.
+ROUND CHOICE (fixed before any run of it): the run's student is the round whose student reached the most dev courses;
+ties -> the smaller mean |sideways offset| at the goal line on dev (no crossing at all counts as the worst); ties ->
+the later round. That round's student is copied to RUN/student (result.json "train" = its train.json, with
+"chosen_round") and run ONCE on the held-out split (--test-split, default test2) with no_op, physics_only and snn,
+tracks and the UI keys (--run RUN) -> RUN/test_run. result.json "rounds": per round the real decisions used, the dev
+result (reached, n, mean miss, by difficulty too) and "chosen"; "round_choice": the rule, the chosen round, its dev
+result and the held-out snn result; "loop": the steps with exit codes and wall times; every step's output also goes to
+RUN/loop.log. --rounds N is the number of improvement rounds after round 0. Without --confirm-billing it stops after
+round 0's attempts and dream with the free quote (observed quote; nothing billed) and exit code 3. Teacher requests are
+cached by content, and every collection is deterministic, so a re-run sends nothing already sent.
 
 This module defines no SPEC_CLASS, so the SkillSpec registry (learned_judgment.skills) does not load it.
 """
@@ -184,7 +201,11 @@ OUTCOME_NAMES = ("progress_m", "offset_m", "tilt_deg", "fall")
 OUTCOME_KINDS = ("regression", "regression", "regression", "binary")
 ACTION_FEATURE_NAMES = ("vel_x", "yaw_rate")
 STATE_NAMES = ("forward_m", "sideways_m", "heading_error_rad", "tilt_deg")
-SPLIT_CODES = {"context": 1, "dev": 2, "test": 3, "dream": 4}
+SPLIT_CODES = {"context": 1, "dev": 2, "test": 3, "dream": 4, "test2": 5}
+RUN_SPLITS = ("context", "dev", "test", "test2")  # splits `run` evaluates (observed.reflex.<split>_scenarios)
+HELD_OUT_SPLITS = ("test2", "test")  # the loop's final run; test2 the default (test was looked at in every reflex2 round)
+ROUND_CHOICE_RULE = ("most dev courses reached; ties -> smaller mean |sideways offset| at the goal line on dev (no "
+                     "crossing counts as the worst); ties -> the later round")
 KINDS = ("flat", "mound")
 DIFFICULTIES = ("flat", "gentle", "steep")
 PASSAGES = ("over", "around", "not_past")
@@ -327,8 +348,10 @@ def _default_pose(config: Mapping[str, Any]) -> np.ndarray:
     return np.array([float(by_name[f"{leg}_{part}_joint"]) for leg in _LEGS for part in _PARTS])
 
 
-def sense_channels(obs: Mapping[str, Any], groups: Sequence[str], yaw0: float, default_pose: np.ndarray) -> np.ndarray:
-    """The raw channel values (unscaled) of one observation, groups in the given order (see the module docstring)."""
+def sense_channels(obs: Mapping[str, Any], groups: Sequence[str], yaw0: float, default_pose: np.ndarray,
+                   path: Sequence[float] | None = None) -> np.ndarray:
+    """The raw channel values (unscaled) of one observation, groups in the given order (see the module docstring).
+    ``path`` is the dead-reckoning estimate (forward, sideways) at this observation, needed by "path_memory"."""
     q = np.asarray(obs["base_quat_wxyz"], dtype=np.float64)
     w, x, y, z = q
     out: list[float] = []
@@ -351,6 +374,10 @@ def sense_channels(obs: Mapping[str, Any], groups: Sequence[str], yaw0: float, d
             out += [float(bool(c)) for c in obs["foot_contact"]]
         elif group == "last_command":
             out += [float(obs["command_active"][f]) for f in _FIELDS]
+        elif group == "path_memory":
+            if path is None:
+                raise ValueError("the path_memory sense needs the dead-reckoning estimate (run_episode keeps it)")
+            out += [float(path[0]), float(path[1])]
         else:
             raise ValueError(f"unknown sense group {group!r}")
     return np.array(out, dtype=np.float64)
@@ -504,7 +531,8 @@ def run_episode(world: Any, scenario: Mapping[str, Any], attempt_seed: int,
     index; ``window`` is the (D,) float32 window in [0, 1] (the ONLY thing a blind policy may read) and ``state`` the
     scorer's truth at the decision (used by the rule of thumb only). Returns {"scenario_id", "kind", "mound",
     "decisions": [{"t_s", "action", "window", "state", "measured", "horizon_s"}], "track": {"t_s", "forward_m",
-    "sideways_m", "tilt_deg", "fallen"} (+ "qpos" (N, 19) with keep_qpos), "outcome": {...}, "start", "wall_s"}."""
+    "sideways_m", "heading_rad", "tilt_deg", "fallen", "path_forward_m", "path_sideways_m"} (+ "qpos" (N, 19) with
+    keep_qpos), "outcome": {...}, "start", "wall_s"}."""
     config = world.config
     lesson = lesson_from_config(config)
     dt = lesson.period_s
@@ -519,11 +547,19 @@ def run_episode(world: Any, scenario: Mapping[str, Any], attempt_seed: int,
     ahead, left = np.array([math.cos(yaw0), math.sin(yaw0)]), np.array([-math.sin(yaw0), math.cos(yaw0)])
     keep = lesson.history_n + 1
     ring: list[np.ndarray] = []
-    track = {"t_s": [], "forward_m": [], "sideways_m": [], "heading_rad": [], "tilt_deg": [], "fallen": []}
+    track = {"t_s": [], "forward_m": [], "sideways_m": [], "heading_rad": [], "tilt_deg": [], "fallen": [],
+             "path_forward_m": [], "path_sideways_m": []}
     qpos: list[np.ndarray] = []
+    path = [0.0, 0.0]  # dead reckoning (path_memory): the dog's own commands along its own IMU heading, from t_s 0
 
     def observe(o: Mapping[str, Any]) -> None:
-        scaled = np.clip((sense_channels(o, lesson.groups, yaw0, default) - low) / span, 0.0, 1.0)
+        heading = _wrap(_yaw(o["base_quat_wxyz"]) - yaw0)
+        if track["heading_rad"]:  # one control period since the last observation, under the command it issued
+            mid = track["heading_rad"][-1] + 0.5 * _wrap(heading - track["heading_rad"][-1])
+            step_m = float(o["command_active"]["vel_x"]) * dt
+            path[0] += step_m * math.cos(mid)
+            path[1] += step_m * math.sin(mid)
+        scaled = np.clip((sense_channels(o, lesson.groups, yaw0, default, path) - low) / span, 0.0, 1.0)
         ring.append(scaled)
         if len(ring) > keep:
             del ring[0]
@@ -531,7 +567,9 @@ def run_episode(world: Any, scenario: Mapping[str, Any], attempt_seed: int,
         track["t_s"].append(float(o["t_s"]))
         track["forward_m"].append(float(d @ ahead))
         track["sideways_m"].append(float(d @ left))
-        track["heading_rad"].append(_wrap(_yaw(o["base_quat_wxyz"]) - yaw0))
+        track["heading_rad"].append(heading)
+        track["path_forward_m"].append(path[0])
+        track["path_sideways_m"].append(path[1])
         track["tilt_deg"].append(_tilt_deg(o["base_quat_wxyz"]))
         track["fallen"].append(bool(o["fallen"]))
         if keep_qpos:
@@ -581,6 +619,8 @@ def run_episode(world: Any, scenario: Mapping[str, Any], attempt_seed: int,
         "crossed_goal_line": int(reason == "goal"), "time_to_goal_s": end * dt if reason == "goal" else None,
         "end_s": end * dt, "final_forward_m": float(f[end]), "final_sideways_m": float(s[end]),
         "offset_at_goal_line_m": float(abs(s[end])) if reason == "goal" else None,
+        "path_memory_forward_m": float(track["path_forward_m"][end]),
+        "path_memory_sideways_m": float(track["path_sideways_m"][end]),
         "max_tilt_deg": float(tilt[:end + 1].max()), "fall": int(bool(fallen[:end + 1].any())),
         "foot_slip_m": float(outcome_world["foot_slip_m"]),
         "foot_slip_note": "over the whole stepped episode" + (", scoring tail included" if score_tail else ""),
@@ -1139,8 +1179,8 @@ def run_methods(config: Mapping[str, Any], student_dir: str | Path | None, split
     from learned_judgment.engine.streams import stream_rng
     from learned_judgment.observed import EventLog, _run_dir
 
-    if split not in ("context", "dev", "test"):
-        raise ValueError(f"split must be context, dev or test; got {split!r}")
+    if split not in RUN_SPLITS:
+        raise ValueError(f"split must be one of {RUN_SPLITS}; got {split!r}")
     n = _count("n", require(config, f"{_OBSERVED}.{split}_scenarios") if n is None else n)
     spec, lesson = build_observed_spec(config), lesson_from_config(config)
     student = None if student_dir is None else _StudentPolicy(student_dir, config)  # checked before any worker
@@ -1266,7 +1306,7 @@ def run_methods(config: Mapping[str, Any], student_dir: str | Path | None, split
 
 
 def _test_digest(run_json: Path, method: str) -> dict[str, Any]:
-    """One method's test numbers from a run.json: all courses and by difficulty."""
+    """One method's numbers from a run.json (any split): all courses and by difficulty."""
     run = json.loads(run_json.read_text(encoding="utf-8"))
     keep = ("n", "reached", "crossed_goal_line", "falls", "mean_offset_at_goal_line_m", "mean_final_abs_sideways_m",
             "mean_time_to_goal_s")
@@ -1276,14 +1316,27 @@ def _test_digest(run_json: Path, method: str) -> dict[str, Any]:
                               for d, s in run["by_difficulty"][method].items()}}
 
 
-def run_loop(config: Mapping[str, Any], run_id: str, rounds: int, confirm_billing: bool) -> int:
-    """The improvement loop (module docstring: loop). Returns 0 done, 3 stopped for billing (or the teacher refused),
-    1 a step failed."""
+def _round_rank(record: Mapping[str, Any]) -> tuple[int, float, int]:
+    """ROUND_CHOICE_RULE as a sort key, larger is better: dev reached, then - mean miss (None worst), then the round."""
+    miss = record["dev"]["mean_offset_at_goal_line_m"]
+    return int(record["dev"]["reached"]), -(math.inf if miss is None else float(miss)), int(record["round"])
+
+
+def run_loop(config: Mapping[str, Any], run_id: str, rounds: int, confirm_billing: bool,
+             test_split: str = "test2") -> int:
+    """The improvement loop (module docstring: loop). Each round's student is judged on the dev split; the run keeps
+    the round chosen by ROUND_CHOICE_RULE (most dev courses reached; ties -> smaller mean |sideways offset| at the goal
+    line on dev, no crossing the worst; ties -> the later round) and runs only that student, once, on test_split.
+    Returns 0 done, 3 stopped for billing (or the teacher refused), 1 a step failed."""
     from learned_judgment.config import CONFIG_PATH
     from learned_judgment.observed import EXIT_REFUSED, _run_dir, _utc_now
 
     if isinstance(rounds, bool) or not isinstance(rounds, int) or rounds < 0:
         raise ValueError(f"--rounds must be an int >= 0; got {rounds!r}")
+    if test_split not in HELD_OUT_SPLITS:
+        raise ValueError(f"--test-split must be one of {HELD_OUT_SPLITS}; got {test_split!r}")
+    for split in ("dev", test_split):
+        _count(f"{_OBSERVED}.{split}_scenarios", require(config, f"{_OBSERVED}.{split}_scenarios"))
     root = CONFIG_PATH.parent
     run_dir = _run_dir(config, run_id)
     config_path = run_dir / "config.yaml"
@@ -1315,7 +1368,8 @@ def run_loop(config: Mapping[str, Any], run_id: str, rounds: int, confirm_billin
 
     def state(value: str, **extra: Any) -> None:
         _merge_result(run_dir, run_id, {"loop": {"state": value, "rounds": rounds, "confirm_billing": confirm_billing,
-                                                 "attempt_episodes_per_round": n, "steps": steps,
+                                                 "attempt_episodes_per_round": n, "test_split": test_split,
+                                                 "round_choice_rule": ROUND_CHOICE_RULE, "steps": steps,
                                                  "wall_s": time.perf_counter() - clock, "log": rel(run_dir / "loop.log"),
                                                  **extra}})
 
@@ -1339,7 +1393,9 @@ def run_loop(config: Mapping[str, Any], run_id: str, rounds: int, confirm_billin
 
     try:
         say(f"loop {run_id}: round 0 + {rounds} improvement round(s), {n} attempt episodes per round, config "
-            f"{rel(config_path)} (digest {config_digest(config)[:12]}), confirm_billing {confirm_billing}")
+            f"{rel(config_path)} (digest {config_digest(config)[:12]}), confirm_billing {confirm_billing}; each round's "
+            f"student judged on dev, the run keeps the round with {ROUND_CHOICE_RULE}; that student alone then runs "
+            f"once on the held-out split {test_split}")
         state("running")
         for k in range(rounds + 1):
             round_clock = time.perf_counter()
@@ -1387,22 +1443,13 @@ def run_loop(config: Mapping[str, Any], run_id: str, rounds: int, confirm_billin
             if (folder / "student").exists():
                 shutil.rmtree(folder / "student")
             shutil.copytree(run_dir / "student", folder / "student")
-            last = k == rounds
-            if last:
-                code = step(k, "test", "learned_judgment.skills.reflex",
-                            ["run", "--student", rel(run_dir / "student"), "--split", "test",
-                             "--out", rel(run_dir / "test_run"), "--run", run_id])
-            else:
-                code = step(k, "test", "learned_judgment.skills.reflex",
-                            ["run", "--student", rel(folder / "student"), "--split", "test",
-                             "--out", rel(folder / "test_run"), "--methods", "snn"])
-            if code:
+            trained = json.loads((run_dir / "result.json").read_text(encoding="utf-8")).get("train")
+            atomic_write_text(folder / "train.json", json.dumps(trained, indent=1) + "\n")
+            if step(k, "dev", "learned_judgment.skills.reflex",
+                    ["run", "--student", rel(folder / "student"), "--split", "dev", "--out", rel(folder / "dev_run"),
+                     "--methods", "snn"]):
                 state("failed")
                 return 1
-            if last:
-                if (folder / "test_run").exists():
-                    shutil.rmtree(folder / "test_run")
-                shutil.copytree(run_dir / "test_run", folder / "test_run")
             with np.load(rows_dir / "rows.npz") as archive:
                 used, used_sources = int(archive["action"].shape[0]), _source_counts(archive["source"])
             with np.load(context / "rows.npz") as archive:
@@ -1416,17 +1463,45 @@ def run_loop(config: Mapping[str, Any], run_id: str, rounds: int, confirm_billin
                 "context_scenarios": [k * n, (k + 1) * n - 1], "new_rows": new, "new_rows_by_source": new_sources,
                 "n_real_decisions": used, "real_decisions_by_source": used_sources, "teacher_context": rel(rows_dir),
                 "dream_windows": windows, "dream": rel(dream_dir), "student": rel(folder / "student"),
-                "network_sha256": student_json.get("network", {}).get("sha256"),
-                "test": _test_digest(folder / "test_run" / "run.json", "snn"),
+                "network_sha256": student_json.get("network", {}).get("sha256"), "train": rel(folder / "train.json"),
+                "dev": _test_digest(folder / "dev_run" / "run.json", "snn"), "chosen": False,
                 "wall_s": round(time.perf_counter() - round_clock, 3)})
             _merge_result(run_dir, run_id, {"rounds": records})
-            t = records[-1]["test"]
-            say(f"round {k} done: {used} real decisions, {windows} dream windows; student on the test split reached "
+            t = records[-1]["dev"]
+            say(f"round {k} done: {used} real decisions, {windows} dream windows; student on the DEV split reached "
                 f"{t['reached']} of {t['n']}, mean miss at the line {t['mean_offset_at_goal_line_m']}; "
                 f"{records[-1]['wall_s']} s")
-        state("done")
-        say(f"loop done in {time.perf_counter() - clock:.1f} s: reached per round "
-            + ", ".join(f"{r['round']}: {r['test']['reached']}/{r['test']['n']}" for r in records))
+        best = max(records, key=_round_rank)
+        k_best = int(best["round"])
+        for r in records:
+            r["chosen"] = r["round"] == k_best
+        chosen_folder = run_dir / f"round_{k_best}"
+        if (run_dir / "student").exists():
+            shutil.rmtree(run_dir / "student")
+        shutil.copytree(chosen_folder / "student", run_dir / "student")
+        trained = json.loads((chosen_folder / "train.json").read_text(encoding="utf-8"))
+        choice = {"rule": ROUND_CHOICE_RULE, "round": k_best, "student": rel(chosen_folder / "student"),
+                  "network_sha256": best["network_sha256"], "copied_to": rel(run_dir / "student"),
+                  "dev": {k: best["dev"][k] for k in ("split", "n", "reached", "mean_offset_at_goal_line_m")},
+                  "dev_per_round": [{"round": r["round"], "reached": r["dev"]["reached"], "n": r["dev"]["n"],
+                                     "mean_offset_at_goal_line_m": r["dev"]["mean_offset_at_goal_line_m"]}
+                                    for r in records],
+                  "test_split": test_split, "test": None}
+        _merge_result(run_dir, run_id, {"rounds": records, "round_choice": choice,
+                                        "train": {**(trained or {}), "chosen_round": k_best}})
+        say("dev per round " + ", ".join(f"{r['round']}: {r['dev']['reached']}/{r['dev']['n']} (miss "
+                                         f"{r['dev']['mean_offset_at_goal_line_m']})" for r in records)
+            + f"; chosen round {k_best} ({ROUND_CHOICE_RULE}); its student is now {rel(run_dir / 'student')}")
+        if step(k_best, "test", "learned_judgment.skills.reflex",
+                ["run", "--student", rel(run_dir / "student"), "--split", test_split,
+                 "--out", rel(run_dir / "test_run"), "--run", run_id]):
+            state("failed")
+            return 1
+        choice["test"] = {m: _test_digest(run_dir / "test_run" / "run.json", m) for m in METHODS}
+        _merge_result(run_dir, run_id, {"round_choice": choice})
+        state("done", chosen_round=k_best)
+        say(f"loop done in {time.perf_counter() - clock:.1f} s: chosen round {k_best}; held-out {test_split} reached "
+            + ", ".join(f"{m} {choice['test'][m]['reached']}/{choice['test'][m]['n']}" for m in METHODS))
         return 0
     except BaseException as error:
         state("failed", error={"type": type(error).__name__, "message": str(error)})
@@ -1461,14 +1536,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     who = run.add_mutually_exclusive_group(required=True)
     who.add_argument("--student", help="exported student directory (observed train)")
     who.add_argument("--no-student", action="store_true", help="run only no_op and physics_only (no student yet)")
-    run.add_argument("--split", required=True, choices=("context", "dev", "test"))
+    run.add_argument("--split", required=True, choices=RUN_SPLITS)
     run.add_argument("--out", required=True)
     run.add_argument("--n", type=int, help="scenarios (default observed.reflex.<split>_scenarios)")
     run.add_argument("--run", help="run id: also merge the UI keys into <observed.runs_dir>/RUN/result.json")
     run.add_argument("--methods", nargs="+", choices=METHODS, help="only these methods (default all available)")
-    loop = commands.add_parser("loop", help="round 0 + N on-policy improvement rounds, then the test (billed teach)")
+    loop = commands.add_parser("loop", help="round 0 + N on-policy improvement rounds, each judged on dev; the best "
+                                            "round's student then runs once on the held-out split (billed teach)")
     loop.add_argument("--run", required=True, help="run id; its directory holds the run's config.yaml")
     loop.add_argument("--rounds", type=int, required=True, help="improvement rounds after round 0")
+    loop.add_argument("--test-split", choices=HELD_OUT_SPLITS, default="test2",
+                      help="held-out split of the final run (default test2)")
     loop.add_argument("--confirm-billing", action="store_true", help="allow the billed teach steps")
     args = parser.parse_args(argv)
     config = load_config()
@@ -1482,7 +1560,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     elif args.command == "dream":
         collect_dream(config, args.out, args.n, args.context)
     elif args.command == "loop":
-        return run_loop(config, args.run, args.rounds, args.confirm_billing)
+        return run_loop(config, args.run, args.rounds, args.confirm_billing, args.test_split)
     else:
         run_methods(config, None if args.no_student else args.student, args.split, args.out, args.n, args.run,
                     args.methods)

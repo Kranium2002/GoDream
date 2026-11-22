@@ -1,0 +1,3088 @@
+{
+ "skill": "reflex",
+ "student": null,
+ "network_sha256": null,
+ "split": "dev",
+ "n": 30,
+ "methods": [
+  "no_op",
+  "physics_only"
+ ],
+ "seeds": {
+  "runtime_seed": 20261121,
+  "split": "dev",
+  "split_code": 2,
+  "scenarios": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), rng.random(6) per scenario",
+  "attempt_seed": "scenario_id",
+  "world_seed": 0,
+  "world_preset": "default"
+ },
+ "config_digest": "45e33fea1c707b53475f65afd43506e5324c0742832b21c8a8bd40c8bde38ee5",
+ "lesson": {
+  "title": "Feel the slope, remember the path: over gentle, around steep, back to the line",
+  "senses": [
+   "tilt",
+   "turn_rates",
+   "heading",
+   "last_command",
+   "path_memory"
+  ],
+  "sense": {
+   "history_s": 0.8,
+   "sample_every_s": 0.1
+  },
+  "decide_every_s": 0.3,
+  "horizon_s": 1.5,
+  "time_limit_s": 24.0,
+  "start": "trotting",
+  "nominal_speed_m_s": 0.6,
+  "steer": {
+   "yaw_rate": [
+    -0.7,
+    -0.3,
+    0.0,
+    0.3,
+    0.7
+   ],
+   "vel_x": [
+    0.4,
+    0.6
+   ]
+  },
+  "goal": {
+   "forward_m": 6.0,
+   "tolerance_m": 0.6,
+   "weights": {
+    "progress": 10.0,
+    "offset": 6.0,
+    "tilt": 0.6,
+    "fall": 60.0,
+    "spread": 2.0
+   }
+  },
+  "practice_world": {
+   "flat_share": 0.2,
+   "radius_m": {
+    "min": 0.8,
+    "max": 1.6
+   },
+   "height_m": {
+    "min": 0.12,
+    "max": 0.42
+   },
+   "centre_ahead_m": {
+    "min": 2.2,
+    "max": 3.4
+   },
+   "centre_side_m": {
+    "min": -0.5,
+    "max": 0.5
+   }
+  }
+ },
+ "action_names": [
+  "yaw+0.00_vx0.60",
+  "yaw+0.00_vx0.40",
+  "yaw+0.30_vx0.60",
+  "yaw+0.30_vx0.40",
+  "yaw-0.30_vx0.60",
+  "yaw-0.30_vx0.40",
+  "yaw+0.70_vx0.60",
+  "yaw+0.70_vx0.40",
+  "yaw-0.70_vx0.60",
+  "yaw-0.70_vx0.40"
+ ],
+ "methods_described": {
+  "no_op": "the nominal command, never steering: what the walking policy does by itself",
+  "physics_only": "the rule of thumb (argmax of the objective of the physics guess); it reads the true position and heading, so it is a reference, not a blind policy",
+  "snn": "the trained spiking student's argmax candidate from the raw sensor window only"
+ },
+ "where": "simulation (MuJoCo Go2World); student inference on this computer's CPU (numpy)",
+ "records": [
+  {
+   "scenario_id": 0,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.5037683347835613,
+    "mound_y_m": 0.10688030231625001,
+    "mound_radius_m": 1.1745472167154873,
+    "mound_height_m": 0.36296657029232177
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 34.345101613991396,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 1.912689647845707,
+     "final_sideways_m": 10.274486289992508,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 3.892954748154305,
+     "path_memory_sideways_m": 11.073287985196282,
+     "max_tilt_deg": 9.678627854731392,
+     "fall": 0,
+     "foot_slip_m": 7.973821353347197,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.890766099997563,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.1233188943140835,
+     "closest_over_radius": 0.9563846206671375,
+     "ground_at_closest_m": 0.0339069219833783,
+     "ground_at_closest_over_height": 0.09341610153263079
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 19.88,
+     "end_s": 19.88,
+     "final_forward_m": 6.008938979350657,
+     "final_sideways_m": 0.02080190839231677,
+     "offset_at_goal_line_m": 0.02080190839231677,
+     "path_memory_forward_m": 11.262251392082845,
+     "path_memory_sideways_m": 2.9300843923227227,
+     "max_tilt_deg": 20.653576500097977,
+     "fall": 0,
+     "foot_slip_m": 14.150166314577525,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 64
+    },
+    "wall_s": 7.696355300024152,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.9105196473001262,
+     "closest_over_radius": 0.7752090629837004,
+     "ground_at_closest_m": 0.15329874492683593,
+     "ground_at_closest_over_height": 0.4223494874565831
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 47,
+     "yaw+0.30_vx0.60": 10,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 1,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.7026580486804352,
+    "mound_y_m": -0.19342063410143906,
+    "mound_radius_m": 1.53761447037363,
+    "mound_height_m": 0.34349176236975965
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 25.18539262759241,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 4.437419707910957,
+     "final_sideways_m": 10.50098043635163,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 5.749414235308821,
+     "path_memory_sideways_m": 10.906971835835293,
+     "max_tilt_deg": 13.846865925694921,
+     "fall": 0,
+     "foot_slip_m": 7.5048968460864645,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.645638000016334,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.189975317405219,
+     "closest_over_radius": 0.773910066751689,
+     "ground_at_closest_m": 0.14191807508591658,
+     "ground_at_closest_over_height": 0.41316296526827795
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 1.7943354499088258,
+     "final_sideways_m": 0.7026499250837137,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 13.729906866028633,
+     "path_memory_sideways_m": -3.755535013126543,
+     "max_tilt_deg": 19.380579973638273,
+     "fall": 0,
+     "foot_slip_m": 26.5739395121784,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.320871700008865,
+    "passage": {
+     "how": "not_past",
+     "closest_to_centre_m": 1.1682708732670297,
+     "closest_over_radius": 0.7597944060601535,
+     "ground_at_closest_m": 0.1494112009776285,
+     "ground_at_closest_over_height": 0.43497753758878027
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 58,
+     "yaw+0.30_vx0.60": 1,
+     "yaw-0.30_vx0.60": 19
+    }
+   }
+  },
+  {
+   "scenario_id": 2,
+   "kind": "flat",
+   "mound": null,
+   "difficulty": "flat",
+   "rim_slope_deg": null,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.040000000000001,
+     "end_s": 13.040000000000001,
+     "final_forward_m": 6.00076808993368,
+     "final_sideways_m": 3.1838478165552404,
+     "offset_at_goal_line_m": 3.1838478165552404,
+     "path_memory_forward_m": 6.815865028897668,
+     "path_memory_sideways_m": 3.2726575839653185,
+     "max_tilt_deg": 3.956071153612203,
+     "fall": 0,
+     "foot_slip_m": 3.3144836691588218,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 41
+    },
+    "wall_s": 4.960976699978346,
+    "passage": null,
+    "action_counts": {
+     "yaw+0.00_vx0.60": 41
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.040000000000001,
+     "end_s": 11.040000000000001,
+     "final_forward_m": 6.009958781209694,
+     "final_sideways_m": 0.07618116883345216,
+     "offset_at_goal_line_m": 0.07618116883345216,
+     "path_memory_forward_m": 6.617673811045177,
+     "path_memory_sideways_m": -0.06833853504633025,
+     "max_tilt_deg": 4.617302829609423,
+     "fall": 0,
+     "foot_slip_m": 2.7603677243329434,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 4.412473000003956,
+    "passage": null,
+    "action_counts": {
+     "yaw+0.00_vx0.60": 29,
+     "yaw-0.30_vx0.60": 6
+    }
+   }
+  },
+  {
+   "scenario_id": 3,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.5530343856683753,
+    "mound_y_m": -0.39923465829293636,
+    "mound_radius_m": 1.5002418256503618,
+    "mound_height_m": 0.1849680645942492
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 14.057299857383285,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 16.740000000000002,
+     "end_s": 16.740000000000002,
+     "final_forward_m": 6.002100988080067,
+     "final_sideways_m": 5.868434691897572,
+     "offset_at_goal_line_m": 5.868434691897572,
+     "path_memory_forward_m": 6.914426278901203,
+     "path_memory_sideways_m": 6.1575091825234,
+     "max_tilt_deg": 7.788400285981452,
+     "fall": 0,
+     "foot_slip_m": 4.361142162117365,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 54
+    },
+    "wall_s": 7.4144292999990284,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.9511090271151281,
+     "closest_over_radius": 0.6339704778613394,
+     "ground_at_closest_m": 0.11129979316485183,
+     "ground_at_closest_over_height": 0.6017243755510011
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 54
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.1,
+     "end_s": 11.1,
+     "final_forward_m": 6.006109557704982,
+     "final_sideways_m": 0.11863862781760015,
+     "offset_at_goal_line_m": 0.11863862781760015,
+     "path_memory_forward_m": 6.6530970840680395,
+     "path_memory_sideways_m": -0.08605226755832818,
+     "max_tilt_deg": 9.249916399062172,
+     "fall": 0,
+     "foot_slip_m": 2.901920693672335,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 4.901863900013268,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.5254414103957434,
+     "closest_over_radius": 0.35023780927315645,
+     "ground_at_closest_m": 0.16257782881345406,
+     "ground_at_closest_over_height": 0.8789508025079306
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 28,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 4,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.8230592822289498,
+    "mound_y_m": 0.47464892463236097,
+    "mound_radius_m": 0.8228561764533673,
+    "mound_height_m": 0.280417678840919
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 37.636759771088485,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 1.9295157464271488,
+     "final_sideways_m": 9.11982921943129,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 4.830835962763359,
+     "path_memory_sideways_m": 10.501936245177534,
+     "max_tilt_deg": 10.22166216750028,
+     "fall": 0,
+     "foot_slip_m": 9.531962204361834,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 10.026746599993203,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.845916384803394,
+     "closest_over_radius": 1.0280245916721678,
+     "ground_at_closest_m": 0.0,
+     "ground_at_closest_over_height": 0.0
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.38,
+     "end_s": 11.38,
+     "final_forward_m": 6.001725084951731,
+     "final_sideways_m": 0.04638893404536848,
+     "offset_at_goal_line_m": 0.04638893404536848,
+     "path_memory_forward_m": 6.753635259523785,
+     "path_memory_sideways_m": 0.5200015781814226,
+     "max_tilt_deg": 13.161719788161124,
+     "fall": 0,
+     "foot_slip_m": 4.0549302908892475,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 36
+    },
+    "wall_s": 4.822423000005074,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.7401417200609643,
+     "closest_over_radius": 0.899478841188366,
+     "ground_at_closest_m": 0.058949228443965884,
+     "ground_at_closest_over_height": 0.21021937235778843
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 25,
+     "yaw+0.30_vx0.60": 4,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 5,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.7375191847250515,
+    "mound_y_m": 0.3808399518824913,
+    "mound_radius_m": 1.5993150892971906,
+    "mound_height_m": 0.2709325969558878
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 19.229860739318006,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 14.64,
+     "end_s": 14.64,
+     "final_forward_m": 6.001827759329735,
+     "final_sideways_m": 4.138723203561754,
+     "offset_at_goal_line_m": 4.138723203561754,
+     "path_memory_forward_m": 7.066008189223832,
+     "path_memory_sideways_m": 4.328333669380182,
+     "max_tilt_deg": 12.899305739455524,
+     "fall": 0,
+     "foot_slip_m": 4.4330693344947925,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 47
+    },
+    "wall_s": 6.651940200012177,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.24290825441073535,
+     "closest_over_radius": 0.15188267530038746,
+     "ground_at_closest_m": 0.26485318306916117,
+     "ground_at_closest_over_height": 0.9775611574427258
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 47
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.4,
+     "end_s": 11.4,
+     "final_forward_m": 6.007968897600491,
+     "final_sideways_m": 0.04173768036924419,
+     "offset_at_goal_line_m": 0.04173768036924419,
+     "path_memory_forward_m": 6.823806999820708,
+     "path_memory_sideways_m": 0.2690182206929018,
+     "max_tilt_deg": 13.026007286837169,
+     "fall": 0,
+     "foot_slip_m": 3.6649446178150376,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 36
+    },
+    "wall_s": 4.906558899994707,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.37992275651863255,
+     "closest_over_radius": 0.23755341212067682,
+     "ground_at_closest_m": 0.25604714584770516,
+     "ground_at_closest_over_height": 0.9450584710904822
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 30,
+     "yaw-0.30_vx0.60": 6
+    }
+   }
+  },
+  {
+   "scenario_id": 6,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.5085035031511627,
+    "mound_y_m": 0.10728768693981694,
+    "mound_radius_m": 1.1224511379162798,
+    "mound_height_m": 0.2612985515677704
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 26.209296033360815,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 4.47224204600016,
+     "final_sideways_m": 10.110104789555278,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 5.960558907342188,
+     "path_memory_sideways_m": 10.708926981817642,
+     "max_tilt_deg": 14.312468137422881,
+     "fall": 0,
+     "foot_slip_m": 7.584105003128054,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.221554499992635,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.7851350257224575,
+     "closest_over_radius": 0.6994825869925915,
+     "ground_at_closest_m": 0.136983254572558,
+     "ground_at_closest_over_height": 0.5242403899702829
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 18.740000000000002,
+     "end_s": 18.740000000000002,
+     "final_forward_m": 6.003700511183948,
+     "final_sideways_m": 0.022539734099668474,
+     "offset_at_goal_line_m": 0.022539734099668474,
+     "path_memory_forward_m": 10.733508197122106,
+     "path_memory_sideways_m": 2.5029193037952027,
+     "max_tilt_deg": 17.069310308993384,
+     "fall": 0,
+     "foot_slip_m": 14.045887733835231,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 60
+    },
+    "wall_s": 7.093658500001766,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.7175221673976625,
+     "closest_over_radius": 0.6392457926762601,
+     "ground_at_closest_m": 0.1579087625175073,
+     "ground_at_closest_over_height": 0.6043231451918404
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 46,
+     "yaw+0.30_vx0.60": 5,
+     "yaw-0.30_vx0.60": 9
+    }
+   }
+  },
+  {
+   "scenario_id": 7,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.970122023812986,
+    "mound_y_m": -0.10090176081552771,
+    "mound_radius_m": 1.2527918546019474,
+    "mound_height_m": 0.4137645171884493
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 36.554087268042345,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 3.694282011080439,
+     "final_sideways_m": 10.412203820943757,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 4.940903809447447,
+     "path_memory_sideways_m": 10.993941083688329,
+     "max_tilt_deg": 10.013764076175994,
+     "fall": 0,
+     "foot_slip_m": 7.4264230321985005,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.756588399992324,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.2375634914336207,
+     "closest_over_radius": 0.9878444586685429,
+     "ground_at_closest_m": 0.011185016850872698,
+     "ground_at_closest_over_height": 0.027032324876177034
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 1.6009512242953583,
+     "final_sideways_m": 0.15137383868818927,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 14.172892333080847,
+     "path_memory_sideways_m": -2.1029249852138423,
+     "max_tilt_deg": 13.01000314312146,
+     "fall": 0,
+     "foot_slip_m": 23.108371239964644,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 8.595663300016895,
+    "passage": {
+     "how": "not_past",
+     "closest_to_centre_m": 1.1918582700385287,
+     "closest_over_radius": 0.9513617650533183,
+     "ground_at_closest_m": 0.04351847322085689,
+     "ground_at_closest_over_height": 0.10517690960202944
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 66,
+     "yaw-0.30_vx0.60": 12
+    }
+   }
+  },
+  {
+   "scenario_id": 8,
+   "kind": "flat",
+   "mound": null,
+   "difficulty": "flat",
+   "rim_slope_deg": null,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.040000000000001,
+     "end_s": 13.040000000000001,
+     "final_forward_m": 6.00076808993368,
+     "final_sideways_m": 3.1838478165552404,
+     "offset_at_goal_line_m": 3.1838478165552404,
+     "path_memory_forward_m": 6.815865028897668,
+     "path_memory_sideways_m": 3.2726575839653185,
+     "max_tilt_deg": 3.956071153612203,
+     "fall": 0,
+     "foot_slip_m": 3.3144836691588218,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 41
+    },
+    "wall_s": 5.406517000024905,
+    "passage": null,
+    "action_counts": {
+     "yaw+0.00_vx0.60": 41
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 10.96,
+     "end_s": 10.96,
+     "final_forward_m": 6.004058175892486,
+     "final_sideways_m": 0.0837746547077689,
+     "offset_at_goal_line_m": 0.0837746547077689,
+     "path_memory_forward_m": 6.57119654036886,
+     "path_memory_sideways_m": -0.04366323399883041,
+     "max_tilt_deg": 5.121984105722145,
+     "fall": 0,
+     "foot_slip_m": 2.61152699996516,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 34
+    },
+    "wall_s": 4.490180699998746,
+    "passage": null,
+    "action_counts": {
+     "yaw+0.00_vx0.60": 28,
+     "yaw-0.30_vx0.60": 6
+    }
+   }
+  },
+  {
+   "scenario_id": 9,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.740107605378597,
+    "mound_y_m": 0.20326061865812228,
+    "mound_radius_m": 1.0155756342337219,
+    "mound_height_m": 0.20678461168041104
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 23.017705184709154,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 17.0,
+     "end_s": 17.0,
+     "final_forward_m": 6.000544069730694,
+     "final_sideways_m": 5.972162156908603,
+     "offset_at_goal_line_m": 5.972162156908603,
+     "path_memory_forward_m": 7.092572884989814,
+     "path_memory_sideways_m": 6.148938300586781,
+     "max_tilt_deg": 12.446601472574878,
+     "fall": 0,
+     "foot_slip_m": 5.2829550265841965,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 54
+    },
+    "wall_s": 6.583143500000006,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.49232163693465897,
+     "closest_over_radius": 0.48477102082714735,
+     "ground_at_closest_m": 0.15969725181768535,
+     "ground_at_closest_over_height": 0.7722878918306554
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 54
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.18,
+     "end_s": 11.18,
+     "final_forward_m": 6.007414169423664,
+     "final_sideways_m": 0.09641471699613269,
+     "offset_at_goal_line_m": 0.09641471699613269,
+     "path_memory_forward_m": 6.6858235440202325,
+     "path_memory_sideways_m": 0.30121579032651413,
+     "max_tilt_deg": 12.82334410229923,
+     "fall": 0,
+     "foot_slip_m": 3.750054649969349,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 4.5204091999912634,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.29573448348136105,
+     "closest_over_radius": 0.29119887629492053,
+     "ground_at_closest_m": 0.18989303306236804,
+     "ground_at_closest_over_height": 0.9183131738828361
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 28,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 10,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 3.274794199799042,
+    "mound_y_m": -0.010954475139924535,
+    "mound_radius_m": 1.4975005952921752,
+    "mound_height_m": 0.16589262041498157
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 12.642864847192115,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 14.120000000000001,
+     "end_s": 14.120000000000001,
+     "final_forward_m": 6.0016788170033,
+     "final_sideways_m": 4.27936688923848,
+     "offset_at_goal_line_m": 4.27936688923848,
+     "path_memory_forward_m": 6.711707011286285,
+     "path_memory_sideways_m": 4.3549520463916025,
+     "max_tilt_deg": 7.433428621785383,
+     "fall": 0,
+     "foot_slip_m": 3.46574930530496,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 45
+    },
+    "wall_s": 5.607656500011217,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.8472090685174093,
+     "closest_over_radius": 0.5657487357139325,
+     "ground_at_closest_m": 0.11323619121343054,
+     "ground_at_closest_over_height": 0.6825872719966048
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 45
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.14,
+     "end_s": 11.14,
+     "final_forward_m": 6.007014705061566,
+     "final_sideways_m": 0.08960529476658641,
+     "offset_at_goal_line_m": 0.08960529476658641,
+     "path_memory_forward_m": 6.676282039362599,
+     "path_memory_sideways_m": -0.15511730022406672,
+     "max_tilt_deg": 8.84092815378932,
+     "fall": 0,
+     "foot_slip_m": 2.992734991221642,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 4.872492299997248,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.13499645361315601,
+     "closest_over_radius": 0.09014784637652652,
+     "ground_at_closest_m": 0.16456068621012854,
+     "ground_at_closest_over_height": 0.9919711063607218
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 29,
+     "yaw-0.30_vx0.60": 6
+    }
+   }
+  },
+  {
+   "scenario_id": 11,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 3.282645484178639,
+    "mound_y_m": -0.3842764926776978,
+    "mound_radius_m": 1.4117932909144213,
+    "mound_height_m": 0.2971767164946223
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 23.773979917056444,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 4.60848156076082,
+     "final_sideways_m": 9.971509153048984,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 5.560636727653961,
+     "path_memory_sideways_m": 10.788161945913098,
+     "max_tilt_deg": 9.350765342357606,
+     "fall": 0,
+     "foot_slip_m": 6.684697870301677,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 8.644056699995417,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.2816163578584465,
+     "closest_over_radius": 0.9077932060637156,
+     "ground_at_closest_m": 0.05424149339632267,
+     "ground_at_closest_over_height": 0.1825226889782404
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.76,
+     "end_s": 13.76,
+     "final_forward_m": 6.008130904420231,
+     "final_sideways_m": 0.11561437092778548,
+     "offset_at_goal_line_m": 0.11561437092778548,
+     "path_memory_forward_m": 7.909097190096043,
+     "path_memory_sideways_m": -1.7516389095868783,
+     "max_tilt_deg": 15.604049981033716,
+     "fall": 0,
+     "foot_slip_m": 8.056361634961863,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 44
+    },
+    "wall_s": 5.540573899983428,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.9377826370049694,
+     "closest_over_radius": 0.6642492516716564,
+     "ground_at_closest_m": 0.1692823210367176,
+     "ground_at_closest_over_height": 0.569635209088734
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 31,
+     "yaw+0.30_vx0.60": 1,
+     "yaw-0.30_vx0.60": 12
+    }
+   }
+  },
+  {
+   "scenario_id": 12,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.9864562982955563,
+    "mound_y_m": 0.42861108258536396,
+    "mound_radius_m": 1.32689325728769,
+    "mound_height_m": 0.39793092008147585
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 33.38762911270707,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 2.0608812401528294,
+     "final_sideways_m": 9.53924851055167,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 5.04947973905846,
+     "path_memory_sideways_m": 10.5775532339202,
+     "max_tilt_deg": 15.014057654082231,
+     "fall": 0,
+     "foot_slip_m": 9.539768269320977,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 8.606241700006649,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.167974488305699,
+     "closest_over_radius": 0.8802324391135745,
+     "ground_at_closest_m": 0.09616938526833074,
+     "ground_at_closest_over_height": 0.2416735679867254
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.6,
+     "end_s": 13.6,
+     "final_forward_m": 6.002596440480019,
+     "final_sideways_m": -0.005467517591612792,
+     "offset_at_goal_line_m": 0.005467517591612792,
+     "path_memory_forward_m": 7.73298224374424,
+     "path_memory_sideways_m": 1.8310315935618573,
+     "max_tilt_deg": 14.904550819273371,
+     "fall": 0,
+     "foot_slip_m": 6.522030535281307,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 43
+    },
+    "wall_s": 5.26170760000241,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.1243642079444875,
+     "closest_over_radius": 0.8473659819801985,
+     "ground_at_closest_m": 0.11973336304735183,
+     "ground_at_closest_over_height": 0.30088982033071615
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 24,
+     "yaw+0.30_vx0.60": 11,
+     "yaw-0.30_vx0.60": 8
+    }
+   }
+  },
+  {
+   "scenario_id": 13,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.8876525874587387,
+    "mound_y_m": -0.32928478280751006,
+    "mound_radius_m": 0.9809527541098627,
+    "mound_height_m": 0.13261760434951406
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 15.39857614374858,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.94,
+     "end_s": 13.94,
+     "final_forward_m": 6.00273623697603,
+     "final_sideways_m": 3.944478670566575,
+     "offset_at_goal_line_m": 3.944478670566575,
+     "path_memory_forward_m": 6.810211340803921,
+     "path_memory_sideways_m": 4.106972011907489,
+     "max_tilt_deg": 5.790145849145159,
+     "fall": 0,
+     "foot_slip_m": 3.4372482170573972,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 44
+    },
+    "wall_s": 5.261935300019104,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.9299647497121217,
+     "closest_over_radius": 0.9480219570370557,
+     "ground_at_closest_m": 0.013651943286383084,
+     "ground_at_closest_over_height": 0.10294216483057068
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 44
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 10.94,
+     "end_s": 10.94,
+     "final_forward_m": 6.0029462551134465,
+     "final_sideways_m": 0.09350853924722924,
+     "offset_at_goal_line_m": 0.09350853924722924,
+     "path_memory_forward_m": 6.550269755469628,
+     "path_memory_sideways_m": -0.15036679412613582,
+     "max_tilt_deg": 8.417095147748533,
+     "fall": 0,
+     "foot_slip_m": 2.9176642849332737,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 34
+    },
+    "wall_s": 4.41335399998934,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.4632450229521153,
+     "closest_over_radius": 0.4722398922998831,
+     "ground_at_closest_m": 0.10345824909537171,
+     "ground_at_closest_over_height": 0.7801245513582588
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 27,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 14,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 3.04093763190005,
+    "mound_y_m": 0.4081115385212607,
+    "mound_radius_m": 1.3278286305983362,
+    "mound_height_m": 0.2970209489567158
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 25.21776013512791,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 4.0121819477896725,
+     "final_sideways_m": 9.822930978178652,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 6.326696118941735,
+     "path_memory_sideways_m": 10.345836907081914,
+     "max_tilt_deg": 15.705322004510975,
+     "fall": 0,
+     "foot_slip_m": 8.92696543913889,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.374845999991521,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.8346111119738882,
+     "closest_over_radius": 0.628553333420595,
+     "ground_at_closest_m": 0.1831870516880718,
+     "ground_at_closest_over_height": 0.6167479173826464
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.26,
+     "end_s": 13.26,
+     "final_forward_m": 6.000758838586928,
+     "final_sideways_m": 0.006770417564731845,
+     "offset_at_goal_line_m": 0.006770417564731845,
+     "path_memory_forward_m": 7.604542920400772,
+     "path_memory_sideways_m": 1.67213138612254,
+     "max_tilt_deg": 14.668081555034503,
+     "fall": 0,
+     "foot_slip_m": 7.641728250394363,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 42
+    },
+    "wall_s": 5.206460199988214,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.9766329634417424,
+     "closest_over_radius": 0.7355113008835028,
+     "ground_at_closest_m": 0.14004290524666407,
+     "ground_at_closest_over_height": 0.4714916767270587
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 28,
+     "yaw+0.30_vx0.60": 6,
+     "yaw-0.30_vx0.60": 8
+    }
+   }
+  },
+  {
+   "scenario_id": 15,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 3.3666934367818224,
+    "mound_y_m": 0.37116477837961215,
+    "mound_radius_m": 1.4942650585954986,
+    "mound_height_m": 0.15578174490805707
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 11.903522741262735,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 14.0,
+     "end_s": 14.0,
+     "final_forward_m": 6.005448132412193,
+     "final_sideways_m": 3.9680688457453837,
+     "offset_at_goal_line_m": 3.9680688457453837,
+     "path_memory_forward_m": 6.831459347641131,
+     "path_memory_sideways_m": 4.0814880391509245,
+     "max_tilt_deg": 8.186804054749642,
+     "fall": 0,
+     "foot_slip_m": 3.5642855696422666,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 44
+    },
+    "wall_s": 5.9095020000240766,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.5465265683319203,
+     "closest_over_radius": 0.3657494131901979,
+     "ground_at_closest_m": 0.13513705604938497,
+     "ground_at_closest_over_height": 0.8674768415846371
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 44
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.22,
+     "end_s": 11.22,
+     "final_forward_m": 6.0001039678722154,
+     "final_sideways_m": 0.05506671738662727,
+     "offset_at_goal_line_m": 0.05506671738662727,
+     "path_memory_forward_m": 6.723693201136613,
+     "path_memory_sideways_m": -0.01547364098821927,
+     "max_tilt_deg": 8.734182418130093,
+     "fall": 0,
+     "foot_slip_m": 2.781184754404955,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 4.604973299981793,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.29227113824964407,
+     "closest_over_radius": 0.19559524367407605,
+     "ground_at_closest_m": 0.14988360295270287,
+     "ground_at_closest_over_height": 0.9621384266889852
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 28,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 16,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 3.041104112791331,
+    "mound_y_m": 0.22458465646629466,
+    "mound_radius_m": 0.8491312492201506,
+    "mound_height_m": 0.13359791265523085
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 17.88264683599925,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.98,
+     "end_s": 13.98,
+     "final_forward_m": 6.0023342014629675,
+     "final_sideways_m": 4.089993302514085,
+     "offset_at_goal_line_m": 4.089993302514085,
+     "path_memory_forward_m": 6.817007453714612,
+     "path_memory_sideways_m": 4.1468335603283455,
+     "max_tilt_deg": 8.263808806962645,
+     "fall": 0,
+     "foot_slip_m": 3.8806926384186444,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 44
+    },
+    "wall_s": 5.55397829998401,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.5172244705503959,
+     "closest_over_radius": 0.6091219361263871,
+     "ground_at_closest_m": 0.0847959070421056,
+     "ground_at_closest_over_height": 0.6347098196132298
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 44
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.14,
+     "end_s": 11.14,
+     "final_forward_m": 6.006502130536983,
+     "final_sideways_m": 0.07985086476480285,
+     "offset_at_goal_line_m": 0.07985086476480285,
+     "path_memory_forward_m": 6.676256444745441,
+     "path_memory_sideways_m": 0.04167559224052504,
+     "max_tilt_deg": 9.820905436460082,
+     "fall": 0,
+     "foot_slip_m": 2.770941676405356,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 4.6489306000003126,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.17451860523301968,
+     "closest_over_radius": 0.2055260660743543,
+     "ground_at_closest_m": 0.12808543483070167,
+     "ground_at_closest_over_height": 0.9587382937729353
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 28,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 17,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.868853565699335,
+    "mound_y_m": 0.031061547793763022,
+    "mound_radius_m": 1.127379293327091,
+    "mound_height_m": 0.39730486348224386
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 38.82639816813456,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 3.2678784402033023,
+     "final_sideways_m": 10.48674448470156,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 4.599616694569753,
+     "path_memory_sideways_m": 11.065000594465092,
+     "max_tilt_deg": 8.563112995313224,
+     "fall": 0,
+     "foot_slip_m": 6.868282814707758,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 8.750451100000646,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.1433141950450945,
+     "closest_over_radius": 1.0141344637180418,
+     "ground_at_closest_m": 0.0,
+     "ground_at_closest_over_height": 0.0
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 1.5975803310653514,
+     "final_sideways_m": -0.041978857921313895,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 14.233556550230515,
+     "path_memory_sideways_m": 1.336966303715604,
+     "max_tilt_deg": 11.356300749727316,
+     "fall": 0,
+     "foot_slip_m": 23.14829843455883,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 8.444901300012134,
+    "passage": {
+     "how": "not_past",
+     "closest_to_centre_m": 1.1196688473000413,
+     "closest_over_radius": 0.9931607347476689,
+     "ground_at_closest_m": 0.006170399867210019,
+     "ground_at_closest_over_height": 0.015530642673559377
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 67,
+     "yaw-0.30_vx0.60": 11
+    }
+   }
+  },
+  {
+   "scenario_id": 18,
+   "kind": "flat",
+   "mound": null,
+   "difficulty": "flat",
+   "rim_slope_deg": null,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.040000000000001,
+     "end_s": 13.040000000000001,
+     "final_forward_m": 6.00076808993368,
+     "final_sideways_m": 3.1838478165552404,
+     "offset_at_goal_line_m": 3.1838478165552404,
+     "path_memory_forward_m": 6.815865028897668,
+     "path_memory_sideways_m": 3.2726575839653185,
+     "max_tilt_deg": 3.956071153612203,
+     "fall": 0,
+     "foot_slip_m": 3.3144836691588218,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 41
+    },
+    "wall_s": 5.613648200000171,
+    "passage": null,
+    "action_counts": {
+     "yaw+0.00_vx0.60": 41
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 10.96,
+     "end_s": 10.96,
+     "final_forward_m": 6.004058175892486,
+     "final_sideways_m": 0.0837746547077689,
+     "offset_at_goal_line_m": 0.0837746547077689,
+     "path_memory_forward_m": 6.57119654036886,
+     "path_memory_sideways_m": -0.04366323399883041,
+     "max_tilt_deg": 5.121984105722145,
+     "fall": 0,
+     "foot_slip_m": 2.61152699996516,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 34
+    },
+    "wall_s": 4.390728899976239,
+    "passage": null,
+    "action_counts": {
+     "yaw+0.00_vx0.60": 28,
+     "yaw-0.30_vx0.60": 6
+    }
+   }
+  },
+  {
+   "scenario_id": 19,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.9108269811622525,
+    "mound_y_m": -0.2949149066261373,
+    "mound_radius_m": 1.2211395492113066,
+    "mound_height_m": 0.24482900764015458
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 22.67409724349925,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 4.763337120889826,
+     "final_sideways_m": 10.018844710831655,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 5.6973779141940675,
+     "path_memory_sideways_m": 10.796117647006138,
+     "max_tilt_deg": 9.231407108439594,
+     "fall": 0,
+     "foot_slip_m": 6.553591329881627,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.677393899997696,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.0229666907199113,
+     "closest_over_radius": 0.8377148143147206,
+     "ground_at_closest_m": 0.07510925376301136,
+     "ground_at_closest_over_height": 0.3067824947990053
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 12.280000000000001,
+     "end_s": 12.280000000000001,
+     "final_forward_m": 6.007146002045936,
+     "final_sideways_m": 0.031258506595427615,
+     "offset_at_goal_line_m": 0.031258506595427615,
+     "path_memory_forward_m": 7.251485912588786,
+     "path_memory_sideways_m": -0.92631410401122,
+     "max_tilt_deg": 13.026709032308043,
+     "fall": 0,
+     "foot_slip_m": 5.719154131297596,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 39
+    },
+    "wall_s": 4.8327662000083365,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.643971483432569,
+     "closest_over_radius": 0.5273529006971306,
+     "ground_at_closest_m": 0.17868233266137823,
+     "ground_at_closest_over_height": 0.7298250088241276
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 32,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 20,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 3.0187549225540495,
+    "mound_y_m": -0.3551760121931883,
+    "mound_radius_m": 1.379189447686505,
+    "mound_height_m": 0.3222869038501543
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 26.305551292753123,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 4.48427821369058,
+     "final_sideways_m": 10.191644697372281,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 5.413099134168342,
+     "path_memory_sideways_m": 10.856134341804257,
+     "max_tilt_deg": 8.113616726210015,
+     "fall": 0,
+     "foot_slip_m": 6.948972325530264,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 8.925556999980472,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.2719302884665362,
+     "closest_over_radius": 0.9222302930174759,
+     "ground_at_closest_m": 0.050504753398028956,
+     "ground_at_closest_over_height": 0.15670743301909312
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 14.0,
+     "end_s": 14.0,
+     "final_forward_m": 6.00165568675799,
+     "final_sideways_m": 0.08720103239533628,
+     "offset_at_goal_line_m": 0.08720103239533628,
+     "path_memory_forward_m": 8.052546165591657,
+     "path_memory_sideways_m": -1.8613171980186995,
+     "max_tilt_deg": 20.00145544203986,
+     "fall": 0,
+     "foot_slip_m": 8.366609396951038,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 44
+    },
+    "wall_s": 6.037565100006759,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.0141806591545202,
+     "closest_over_radius": 0.7353454312282756,
+     "ground_at_closest_m": 0.1524024956353971,
+     "ground_at_closest_over_height": 0.47287833856958666
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 32,
+     "yaw-0.30_vx0.60": 12
+    }
+   }
+  },
+  {
+   "scenario_id": 21,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 3.0201367970679778,
+    "mound_y_m": 0.40668277273748776,
+    "mound_radius_m": 1.4890428779777558,
+    "mound_height_m": 0.41104988556194855
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 30.86430537676234,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 1.5148607186070966,
+     "final_sideways_m": 9.67044356232557,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 4.338662721112754,
+     "path_memory_sideways_m": 10.678398429333468,
+     "max_tilt_deg": 17.996945394248183,
+     "fall": 0,
+     "foot_slip_m": 9.484620075558329,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 8.784908200002974,
+    "passage": {
+     "how": "not_past",
+     "closest_to_centre_m": 1.2227098766553948,
+     "closest_over_radius": 0.8211381248577184,
+     "ground_at_closest_m": 0.14094997894895878,
+     "ground_at_closest_over_height": 0.3429023675709465
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.0,
+     "end_s": 13.0,
+     "final_forward_m": 6.0054414278742945,
+     "final_sideways_m": -0.036695721843577944,
+     "offset_at_goal_line_m": 0.036695721843577944,
+     "path_memory_forward_m": 7.395483520192315,
+     "path_memory_sideways_m": 1.805745698428458,
+     "max_tilt_deg": 13.979262904798803,
+     "fall": 0,
+     "foot_slip_m": 6.464130356342625,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 41
+    },
+    "wall_s": 4.993346400005976,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.2754966074802303,
+     "closest_over_radius": 0.8565882328469016,
+     "ground_at_closest_m": 0.11578254615993044,
+     "ground_at_closest_over_height": 0.28167516943021037
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 25,
+     "yaw+0.30_vx0.60": 9,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 22,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.56678544783428,
+    "mound_y_m": -0.4993645095805487,
+    "mound_radius_m": 0.9109771296840861,
+    "mound_height_m": 0.33156855830226944
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 39.99999988892488,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 14.700000000000001,
+     "end_s": 14.700000000000001,
+     "final_forward_m": 6.001558694826014,
+     "final_sideways_m": 4.58364782606281,
+     "offset_at_goal_line_m": 4.58364782606281,
+     "path_memory_forward_m": 6.853361214861175,
+     "path_memory_sideways_m": 4.717539255229815,
+     "max_tilt_deg": 6.09262988864866,
+     "fall": 0,
+     "foot_slip_m": 3.7718263740340396,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 47
+    },
+    "wall_s": 5.784583400003612,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.039549173833246,
+     "closest_over_radius": 1.1411364127151544,
+     "ground_at_closest_m": 0.0,
+     "ground_at_closest_over_height": 0.0
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 47
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.08,
+     "end_s": 11.08,
+     "final_forward_m": 6.006910381010919,
+     "final_sideways_m": 0.08391118953610377,
+     "offset_at_goal_line_m": 0.08391118953610377,
+     "path_memory_forward_m": 6.5394485275215795,
+     "path_memory_sideways_m": -0.6221985811990832,
+     "max_tilt_deg": 11.259151853344404,
+     "fall": 0,
+     "foot_slip_m": 3.854261814507643,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 4.727271499985363,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.8576267193975263,
+     "closest_over_radius": 0.9414360596461286,
+     "ground_at_closest_m": 0.04261893424183727,
+     "ground_at_closest_over_height": 0.12853732108997007
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 23,
+     "yaw+0.30_vx0.60": 2,
+     "yaw-0.30_vx0.60": 10
+    }
+   }
+  },
+  {
+   "scenario_id": 23,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 3.3709830328491073,
+    "mound_y_m": 0.29488411205166365,
+    "mound_radius_m": 1.0584069711211412,
+    "mound_height_m": 0.36411204210288894
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 37.96837460350425,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 3.2355013377075803,
+     "final_sideways_m": 10.243999340239125,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 4.607757592535866,
+     "path_memory_sideways_m": 10.917325926729843,
+     "max_tilt_deg": 8.6776635715437,
+     "fall": 0,
+     "foot_slip_m": 6.749216777434806,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.644668900000397,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.073434131487178,
+     "closest_over_radius": 1.0141979038083233,
+     "ground_at_closest_m": 0.0,
+     "ground_at_closest_over_height": 0.0
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 15.42,
+     "end_s": 15.42,
+     "final_forward_m": 6.004061635286106,
+     "final_sideways_m": -0.0037211811043558196,
+     "offset_at_goal_line_m": 0.0037211811043558196,
+     "path_memory_forward_m": 8.915215679961175,
+     "path_memory_sideways_m": 1.7512551655888509,
+     "max_tilt_deg": 15.797694273612246,
+     "fall": 0,
+     "foot_slip_m": 7.949399650712177,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 49
+    },
+    "wall_s": 5.605492499977117,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.9521430394196548,
+     "closest_over_radius": 0.8996001211245577,
+     "ground_at_closest_m": 0.07660181054964688,
+     "ground_at_closest_over_height": 0.2103797779036408
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 31,
+     "yaw+0.30_vx0.60": 11,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 24,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 3.3390612163772238,
+    "mound_y_m": -0.2889845909151201,
+    "mound_radius_m": 1.5331022230576108,
+    "mound_height_m": 0.283365540211246
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 20.943762887017048,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 4.270400623423223,
+     "final_sideways_m": 9.90758319891309,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 5.396383408197226,
+     "path_memory_sideways_m": 10.689282317124654,
+     "max_tilt_deg": 9.454963144736395,
+     "fall": 0,
+     "foot_slip_m": 7.158809682839277,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.531777600001078,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 1.2404358852099258,
+     "closest_over_radius": 0.8091018762832443,
+     "ground_at_closest_m": 0.10007286094856127,
+     "ground_at_closest_over_height": 0.35315818879726174
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.4,
+     "end_s": 11.4,
+     "final_forward_m": 6.003615381033092,
+     "final_sideways_m": 0.07019612531352637,
+     "offset_at_goal_line_m": 0.07019612531352637,
+     "path_memory_forward_m": 6.827707996879521,
+     "path_memory_sideways_m": -0.20526066256769335,
+     "max_tilt_deg": 11.967059961432506,
+     "fall": 0,
+     "foot_slip_m": 3.6244641821120003,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 36
+    },
+    "wall_s": 4.632108599995263,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.4360340515998008,
+     "closest_over_radius": 0.2844129015286253,
+     "ground_at_closest_m": 0.2611435320434854,
+     "ground_at_closest_over_height": 0.9215782972368682
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 29,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 25,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.988395713890734,
+    "mound_y_m": 0.17627923960017122,
+    "mound_radius_m": 0.936941427455306,
+    "mound_height_m": 0.3410187898446178
+   },
+   "difficulty": "steep",
+   "rim_slope_deg": 39.999999892002975,
+   "no_op": {
+    "outcome": {
+     "end_reason": "time",
+     "reached": 0,
+     "crossed_goal_line": 0,
+     "time_to_goal_s": null,
+     "end_s": 24.0,
+     "final_forward_m": 3.604379843462522,
+     "final_sideways_m": 10.25657666675025,
+     "offset_at_goal_line_m": null,
+     "path_memory_forward_m": 5.059481037055274,
+     "path_memory_sideways_m": 10.90053039933659,
+     "max_tilt_deg": 9.907053253143957,
+     "fall": 0,
+     "foot_slip_m": 7.243895616722772,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 78
+    },
+    "wall_s": 9.834312000020873,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.9288032874097594,
+     "closest_over_radius": 0.9913141421575845,
+     "ground_at_closest_m": 0.006778478882889294,
+     "ground_at_closest_over_height": 0.01987714191929966
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 78
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 20.68,
+     "end_s": 20.68,
+     "final_forward_m": 6.006047539569196,
+     "final_sideways_m": 0.029639759102035645,
+     "offset_at_goal_line_m": 0.029639759102035645,
+     "path_memory_forward_m": 11.838932583894099,
+     "path_memory_sideways_m": 2.8138196656462027,
+     "max_tilt_deg": 12.660883308022948,
+     "fall": 0,
+     "foot_slip_m": 13.766205881542794,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 67
+    },
+    "wall_s": 8.674751599988667,
+    "passage": {
+     "how": "around",
+     "closest_to_centre_m": 0.8597714233285662,
+     "closest_over_radius": 0.9176362557301684,
+     "ground_at_closest_m": 0.06045033755703533,
+     "ground_at_closest_over_height": 0.17726394954535787
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 50,
+     "yaw+0.30_vx0.60": 8,
+     "yaw-0.30_vx0.60": 9
+    }
+   }
+  },
+  {
+   "scenario_id": 26,
+   "kind": "flat",
+   "mound": null,
+   "difficulty": "flat",
+   "rim_slope_deg": null,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.040000000000001,
+     "end_s": 13.040000000000001,
+     "final_forward_m": 6.00076808993368,
+     "final_sideways_m": 3.1838478165552404,
+     "offset_at_goal_line_m": 3.1838478165552404,
+     "path_memory_forward_m": 6.815865028897668,
+     "path_memory_sideways_m": 3.2726575839653185,
+     "max_tilt_deg": 3.956071153612203,
+     "fall": 0,
+     "foot_slip_m": 3.3144836691588218,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 41
+    },
+    "wall_s": 6.370625399984419,
+    "passage": null,
+    "action_counts": {
+     "yaw+0.00_vx0.60": 41
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.040000000000001,
+     "end_s": 11.040000000000001,
+     "final_forward_m": 6.009958781209694,
+     "final_sideways_m": 0.07618116883345216,
+     "offset_at_goal_line_m": 0.07618116883345216,
+     "path_memory_forward_m": 6.617673811045177,
+     "path_memory_sideways_m": -0.06833853504633025,
+     "max_tilt_deg": 4.617302829609423,
+     "fall": 0,
+     "foot_slip_m": 2.7603677243329434,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 5.409600600018166,
+    "passage": null,
+    "action_counts": {
+     "yaw+0.00_vx0.60": 29,
+     "yaw-0.30_vx0.60": 6
+    }
+   }
+  },
+  {
+   "scenario_id": 27,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.376330103626458,
+    "mound_y_m": 0.07316954190837421,
+    "mound_radius_m": 1.4431675084809497,
+    "mound_height_m": 0.16282688453295743
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 12.874467353363713,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.86,
+     "end_s": 13.86,
+     "final_forward_m": 6.002677260441924,
+     "final_sideways_m": 3.8784116279806042,
+     "offset_at_goal_line_m": 3.8784116279806042,
+     "path_memory_forward_m": 6.862753645808559,
+     "path_memory_sideways_m": 3.973529358986574,
+     "max_tilt_deg": 8.656834749072962,
+     "fall": 0,
+     "foot_slip_m": 3.561220122047611,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 44
+    },
+    "wall_s": 7.053153100016061,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.4260357253184844,
+     "closest_over_radius": 0.29520878402183637,
+     "ground_at_closest_m": 0.1487999867015528,
+     "ground_at_closest_over_height": 0.9138539199368796
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 44
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.18,
+     "end_s": 11.18,
+     "final_forward_m": 6.007532087529873,
+     "final_sideways_m": 0.07043367328178585,
+     "offset_at_goal_line_m": 0.07043367328178585,
+     "path_memory_forward_m": 6.703021248349214,
+     "path_memory_sideways_m": -0.018735467510194854,
+     "max_tilt_deg": 9.186091152787103,
+     "fall": 0,
+     "foot_slip_m": 2.899612865067804,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 5.957430799986469,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.028756892865585554,
+     "closest_over_radius": 0.01992623357759385,
+     "ground_at_closest_m": 0.16276304567140887,
+     "ground_at_closest_over_height": 0.9996079341459386
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 29,
+     "yaw-0.30_vx0.60": 6
+    }
+   }
+  },
+  {
+   "scenario_id": 28,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.393232301567324,
+    "mound_y_m": 0.27004845230688634,
+    "mound_radius_m": 1.5335322575619927,
+    "mound_height_m": 0.12256927563648454
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 9.139429719335826,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.76,
+     "end_s": 13.76,
+     "final_forward_m": 6.0012608985574465,
+     "final_sideways_m": 3.7543769512779503,
+     "offset_at_goal_line_m": 3.7543769512779503,
+     "path_memory_forward_m": 6.843823453842889,
+     "path_memory_sideways_m": 3.859718023349577,
+     "max_tilt_deg": 7.760766132047804,
+     "fall": 0,
+     "foot_slip_m": 3.450709331462717,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 44
+    },
+    "wall_s": 7.275124800013145,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.21742085628604657,
+     "closest_over_radius": 0.14177781733245176,
+     "ground_at_closest_m": 0.12012084539740897,
+     "ground_at_closest_over_height": 0.980024111047722
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 44
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 11.1,
+     "end_s": 11.1,
+     "final_forward_m": 6.002090673033199,
+     "final_sideways_m": 0.10401909795880204,
+     "offset_at_goal_line_m": 0.10401909795880204,
+     "path_memory_forward_m": 6.654556801974537,
+     "path_memory_sideways_m": -0.0023707741818486034,
+     "max_tilt_deg": 7.575881961225972,
+     "fall": 0,
+     "foot_slip_m": 2.7431664955732042,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 35
+    },
+    "wall_s": 6.069967299990822,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.16074903290656867,
+     "closest_over_radius": 0.10482272682162372,
+     "ground_at_closest_m": 0.1212309644808851,
+     "ground_at_closest_over_height": 0.9890811857323153
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 28,
+     "yaw-0.30_vx0.60": 7
+    }
+   }
+  },
+  {
+   "scenario_id": 29,
+   "kind": "mound",
+   "mound": {
+    "mound_x_m": 2.8214310834444962,
+    "mound_y_m": 0.3716256546706983,
+    "mound_radius_m": 0.8173307879264887,
+    "mound_height_m": 0.1257012110785227
+   },
+   "difficulty": "gentle",
+   "rim_slope_deg": 17.486573910931778,
+   "no_op": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 0,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 13.4,
+     "end_s": 13.4,
+     "final_forward_m": 6.003798464672347,
+     "final_sideways_m": 3.4997929723203516,
+     "offset_at_goal_line_m": 3.4997929723203516,
+     "path_memory_forward_m": 6.873161450998105,
+     "path_memory_sideways_m": 3.5511975090056422,
+     "max_tilt_deg": 8.724304283593106,
+     "fall": 0,
+     "foot_slip_m": 3.524413021502506,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 42
+    },
+    "wall_s": 7.191798800020479,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.3112661930297706,
+     "closest_over_radius": 0.38083258042858176,
+     "ground_at_closest_m": 0.10783288927557466,
+     "ground_at_closest_over_height": 0.8578508381133567
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 42
+    }
+   },
+   "physics_only": {
+    "outcome": {
+     "end_reason": "goal",
+     "reached": 1,
+     "crossed_goal_line": 1,
+     "time_to_goal_s": 10.84,
+     "end_s": 10.84,
+     "final_forward_m": 6.006951426597319,
+     "final_sideways_m": 0.05652590808378655,
+     "offset_at_goal_line_m": 0.05652590808378655,
+     "path_memory_forward_m": 6.490487208971365,
+     "path_memory_sideways_m": 0.18781065546704948,
+     "max_tilt_deg": 8.082230122158185,
+     "fall": 0,
+     "foot_slip_m": 2.9524376213430594,
+     "foot_slip_note": "over the whole stepped episode",
+     "n_decisions": 34
+    },
+    "wall_s": 6.005159200023627,
+    "passage": {
+     "how": "over",
+     "closest_to_centre_m": 0.3951235698520273,
+     "closest_over_radius": 0.48343164810226746,
+     "ground_at_closest_m": 0.09684984991589252,
+     "ground_at_closest_over_height": 0.7704766651404227
+    },
+    "action_counts": {
+     "yaw+0.00_vx0.60": 28,
+     "yaw-0.30_vx0.60": 6
+    }
+   }
+  }
+ ],
+ "summary": {
+  "no_op": {
+   "all": {
+    "n": 30,
+    "reached": 0,
+    "reached_rate": 0.0,
+    "reached_ci": [
+     0.0,
+     0.11351339317396873
+    ],
+    "falls": 0,
+    "crossed_goal_line": 15,
+    "mean_offset_at_goal_line_m": 4.047523226953008,
+    "mean_time_to_goal_s": null,
+    "mean_max_tilt_deg": 9.331853661819245,
+    "mean_foot_slip_m": 5.7390424806620075,
+    "mean_final_abs_sideways_m": 7.041332608782748
+   },
+   "flat": {
+    "n": 4,
+    "reached": 0,
+    "reached_rate": 0.0,
+    "reached_ci": [
+     0.0,
+     0.4898908364545972
+    ],
+    "falls": 0,
+    "crossed_goal_line": 4,
+    "mean_offset_at_goal_line_m": 3.1838478165552404,
+    "mean_time_to_goal_s": null,
+    "mean_max_tilt_deg": 3.956071153612203,
+    "mean_foot_slip_m": 3.3144836691588218,
+    "mean_final_abs_sideways_m": 3.1838478165552404
+   },
+   "mound": {
+    "n": 26,
+    "reached": 0,
+    "reached_rate": 0.0,
+    "reached_ci": [
+     0.0,
+     0.12872892185921525
+    ],
+    "falls": 0,
+    "crossed_goal_line": 11,
+    "mean_offset_at_goal_line_m": 4.361587012552197,
+    "mean_time_to_goal_s": null,
+    "mean_max_tilt_deg": 10.158897124620328,
+    "mean_foot_slip_m": 6.112051528585574,
+    "mean_final_abs_sideways_m": 7.63479180758698
+   }
+  },
+  "physics_only": {
+   "all": {
+    "n": 30,
+    "reached": 27,
+    "reached_rate": 0.9,
+    "reached_ci": [
+     0.7437891742081593,
+     0.9654001112526658
+    ],
+    "falls": 0,
+    "crossed_goal_line": 27,
+    "mean_offset_at_goal_line_m": 0.062441450602477286,
+    "mean_time_to_goal_s": 12.730370370370371,
+    "mean_max_tilt_deg": 11.791184854860031,
+    "mean_foot_slip_m": 7.272146381970318,
+    "mean_final_abs_sideways_m": 0.08606405959867011
+   },
+   "flat": {
+    "n": 4,
+    "reached": 4,
+    "reached_rate": 1.0,
+    "reached_ci": [
+     0.5101091635454027,
+     1.0
+    ],
+    "falls": 0,
+    "crossed_goal_line": 4,
+    "mean_offset_at_goal_line_m": 0.07997791177061053,
+    "mean_time_to_goal_s": 11.0,
+    "mean_max_tilt_deg": 4.869643467665784,
+    "mean_foot_slip_m": 2.6859473621490517,
+    "mean_final_abs_sideways_m": 0.07997791177061053
+   },
+   "mound": {
+    "n": 26,
+    "reached": 23,
+    "reached_rate": 0.8846153846153846,
+    "reached_ci": [
+     0.7102409678828636,
+     0.9599675537638939
+    ],
+    "falls": 0,
+    "crossed_goal_line": 23,
+    "mean_offset_at_goal_line_m": 0.05939163126888889,
+    "mean_time_to_goal_s": 13.031304347826088,
+    "mean_max_tilt_deg": 12.856037375966839,
+    "mean_foot_slip_m": 7.977715461942818,
+    "mean_final_abs_sideways_m": 0.08700039003375622
+   }
+  }
+ },
+ "by_difficulty": {
+  "no_op": {
+   "flat": {
+    "n": 4,
+    "reached": 0,
+    "reached_rate": 0.0,
+    "reached_ci": [
+     0.0,
+     0.4898908364545972
+    ],
+    "falls": 0,
+    "crossed_goal_line": 4,
+    "mean_offset_at_goal_line_m": 3.1838478165552404,
+    "mean_time_to_goal_s": null,
+    "mean_max_tilt_deg": 3.956071153612203,
+    "mean_foot_slip_m": 3.3144836691588218,
+    "mean_final_abs_sideways_m": 3.1838478165552404
+   },
+   "gentle": {
+    "n": 13,
+    "reached": 0,
+    "reached_rate": 0.0,
+    "reached_ci": [
+     0.0,
+     0.2280953723541983
+    ],
+    "falls": 0,
+    "crossed_goal_line": 10,
+    "mean_offset_at_goal_line_m": 4.339380931201136,
+    "mean_time_to_goal_s": null,
+    "mean_max_tilt_deg": 8.92211812237709,
+    "mean_foot_slip_m": 4.566044893204234,
+    "mean_final_abs_sideways_m": 5.6378266442157745,
+    "passage": {
+     "over": 6,
+     "around": 7,
+     "not_past": 0
+    },
+    "reached_by_passage": {
+     "over": 0,
+     "around": 0,
+     "not_past": 0
+    }
+   },
+   "steep": {
+    "n": 13,
+    "reached": 0,
+    "reached_rate": 0.0,
+    "reached_ci": [
+     0.0,
+     0.2280953723541983
+    ],
+    "falls": 0,
+    "crossed_goal_line": 1,
+    "mean_offset_at_goal_line_m": 4.58364782606281,
+    "mean_time_to_goal_s": null,
+    "mean_max_tilt_deg": 11.395676126863568,
+    "mean_foot_slip_m": 7.658058163966913,
+    "mean_final_abs_sideways_m": 9.631756970958184,
+    "passage": {
+     "over": 0,
+     "around": 12,
+     "not_past": 1
+    },
+    "reached_by_passage": {
+     "over": 0,
+     "around": 0,
+     "not_past": 0
+    }
+   }
+  },
+  "physics_only": {
+   "flat": {
+    "n": 4,
+    "reached": 4,
+    "reached_rate": 1.0,
+    "reached_ci": [
+     0.5101091635454027,
+     1.0
+    ],
+    "falls": 0,
+    "crossed_goal_line": 4,
+    "mean_offset_at_goal_line_m": 0.07997791177061053,
+    "mean_time_to_goal_s": 11.0,
+    "mean_max_tilt_deg": 4.869643467665784,
+    "mean_foot_slip_m": 2.6859473621490517,
+    "mean_final_abs_sideways_m": 0.07997791177061053
+   },
+   "gentle": {
+    "n": 13,
+    "reached": 13,
+    "reached_rate": 1.0,
+    "reached_ci": [
+     0.7719046276458016,
+     0.9999999999999999
+    ],
+    "falls": 0,
+    "crossed_goal_line": 13,
+    "mean_offset_at_goal_line_m": 0.0786823171930259,
+    "mean_time_to_goal_s": 11.436923076923078,
+    "mean_max_tilt_deg": 10.488800088867087,
+    "mean_foot_slip_m": 3.6749725075982673,
+    "mean_final_abs_sideways_m": 0.0786823171930259,
+    "passage": {
+     "over": 11,
+     "around": 2,
+     "not_past": 0
+    },
+    "reached_by_passage": {
+     "over": 11,
+     "around": 2,
+     "not_past": 0
+    }
+   },
+   "steep": {
+    "n": 13,
+    "reached": 10,
+    "reached_rate": 0.7692307692307693,
+    "reached_ci": [
+     0.49743624053272506,
+     0.9182047128150144
+    ],
+    "falls": 0,
+    "crossed_goal_line": 10,
+    "mean_offset_at_goal_line_m": 0.034313739567510784,
+    "mean_time_to_goal_s": 15.104,
+    "mean_max_tilt_deg": 15.223274663066594,
+    "mean_foot_slip_m": 12.28045841628737,
+    "mean_final_abs_sideways_m": 0.09531846287448652,
+    "passage": {
+     "over": 0,
+     "around": 10,
+     "not_past": 3
+    },
+    "reached_by_passage": {
+     "over": 0,
+     "around": 10,
+     "not_past": 0
+    }
+   }
+  }
+ },
+ "difficulty_rule": {
+  "steep_from_deg": 24.0,
+  "key": "skills.reflex.report.steep_from_deg",
+  "counts": {
+   "steep": 13,
+   "flat": 4,
+   "gentle": 13
+  },
+  "passage": "over: the path came within half the mound radius of its centre; around: it stayed farther out and came level with the centre; not_past: farther out and never level with the centre (scorer truth, the start frame)"
+ },
+ "paired_reached": [
+  {
+   "name": "reached",
+   "a": "physics_only",
+   "b": "no_op",
+   "diff": 0.9,
+   "ci_low": 0.7666666666666667,
+   "ci_high": 1.0,
+   "n": 30,
+   "method": "percentile bootstrap over scenarios",
+   "resamples": 9999,
+   "level": 0.95,
+   "stream": "reflex/run/dev/paired_bootstrap/physics_only[0]"
+  }
+ ],
+ "tracks": [
+  {
+   "file": "no_op_s0.npz",
+   "method": "no_op",
+   "scenario_id": 0,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.5037683347835613,
+    "mound_y_m": 0.10688030231625001,
+    "mound_radius_m": 1.1745472167154873,
+    "mound_height_m": 0.36296657029232177,
+    "centre_xy_m": [
+     3.389874435200241,
+     0.7414508470585008
+    ],
+    "sphere_radius_m": 2.081880287524428,
+    "sphere_centre_z_m": -1.7189137172321065,
+    "rim_slope_deg": 34.345101613991396,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "time",
+    "reached": 0,
+    "crossed_goal_line": 0,
+    "time_to_goal_s": null,
+    "end_s": 24.0,
+    "final_forward_m": 1.912689647845707,
+    "final_sideways_m": 10.274486289992508,
+    "offset_at_goal_line_m": null,
+    "path_memory_forward_m": 3.892954748154305,
+    "path_memory_sideways_m": 11.073287985196282,
+    "max_tilt_deg": 9.678627854731392,
+    "fall": 0,
+    "foot_slip_m": 7.973821353347197,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 78
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "physics_only_s0.npz",
+   "method": "physics_only",
+   "scenario_id": 0,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.5037683347835613,
+    "mound_y_m": 0.10688030231625001,
+    "mound_radius_m": 1.1745472167154873,
+    "mound_height_m": 0.36296657029232177,
+    "centre_xy_m": [
+     3.389874435200241,
+     0.7414508470585008
+    ],
+    "sphere_radius_m": 2.081880287524428,
+    "sphere_centre_z_m": -1.7189137172321065,
+    "rim_slope_deg": 34.345101613991396,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "goal",
+    "reached": 1,
+    "crossed_goal_line": 1,
+    "time_to_goal_s": 19.88,
+    "end_s": 19.88,
+    "final_forward_m": 6.008938979350657,
+    "final_sideways_m": 0.02080190839231677,
+    "offset_at_goal_line_m": 0.02080190839231677,
+    "path_memory_forward_m": 11.262251392082845,
+    "path_memory_sideways_m": 2.9300843923227227,
+    "max_tilt_deg": 20.653576500097977,
+    "fall": 0,
+    "foot_slip_m": 14.150166314577525,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 64
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "no_op_s1.npz",
+   "method": "no_op",
+   "scenario_id": 1,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.7026580486804352,
+    "mound_y_m": -0.19342063410143906,
+    "mound_radius_m": 1.53761447037363,
+    "mound_height_m": 0.34349176236975965,
+    "centre_xy_m": [
+     3.644180252885845,
+     0.4863698367920022
+    ],
+    "sphere_radius_m": 3.6132523720411567,
+    "sphere_centre_z_m": -3.269760609671397,
+    "rim_slope_deg": 25.18539262759241,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "time",
+    "reached": 0,
+    "crossed_goal_line": 0,
+    "time_to_goal_s": null,
+    "end_s": 24.0,
+    "final_forward_m": 4.437419707910957,
+    "final_sideways_m": 10.50098043635163,
+    "offset_at_goal_line_m": null,
+    "path_memory_forward_m": 5.749414235308821,
+    "path_memory_sideways_m": 10.906971835835293,
+    "max_tilt_deg": 13.846865925694921,
+    "fall": 0,
+    "foot_slip_m": 7.5048968460864645,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 78
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "physics_only_s1.npz",
+   "method": "physics_only",
+   "scenario_id": 1,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.7026580486804352,
+    "mound_y_m": -0.19342063410143906,
+    "mound_radius_m": 1.53761447037363,
+    "mound_height_m": 0.34349176236975965,
+    "centre_xy_m": [
+     3.644180252885845,
+     0.4863698367920022
+    ],
+    "sphere_radius_m": 3.6132523720411567,
+    "sphere_centre_z_m": -3.269760609671397,
+    "rim_slope_deg": 25.18539262759241,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "time",
+    "reached": 0,
+    "crossed_goal_line": 0,
+    "time_to_goal_s": null,
+    "end_s": 24.0,
+    "final_forward_m": 1.7943354499088258,
+    "final_sideways_m": 0.7026499250837137,
+    "offset_at_goal_line_m": null,
+    "path_memory_forward_m": 13.729906866028633,
+    "path_memory_sideways_m": -3.755535013126543,
+    "max_tilt_deg": 19.380579973638273,
+    "fall": 0,
+    "foot_slip_m": 26.5739395121784,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 78
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "no_op_s2.npz",
+   "method": "no_op",
+   "scenario_id": 2,
+   "kind": "flat",
+   "mound_world": null,
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "goal",
+    "reached": 0,
+    "crossed_goal_line": 1,
+    "time_to_goal_s": 13.040000000000001,
+    "end_s": 13.040000000000001,
+    "final_forward_m": 6.00076808993368,
+    "final_sideways_m": 3.1838478165552404,
+    "offset_at_goal_line_m": 3.1838478165552404,
+    "path_memory_forward_m": 6.815865028897668,
+    "path_memory_sideways_m": 3.2726575839653185,
+    "max_tilt_deg": 3.956071153612203,
+    "fall": 0,
+    "foot_slip_m": 3.3144836691588218,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 41
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "physics_only_s2.npz",
+   "method": "physics_only",
+   "scenario_id": 2,
+   "kind": "flat",
+   "mound_world": null,
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "goal",
+    "reached": 1,
+    "crossed_goal_line": 1,
+    "time_to_goal_s": 11.040000000000001,
+    "end_s": 11.040000000000001,
+    "final_forward_m": 6.009958781209694,
+    "final_sideways_m": 0.07618116883345216,
+    "offset_at_goal_line_m": 0.07618116883345216,
+    "path_memory_forward_m": 6.617673811045177,
+    "path_memory_sideways_m": -0.06833853504633025,
+    "max_tilt_deg": 4.617302829609423,
+    "fall": 0,
+    "foot_slip_m": 2.7603677243329434,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 35
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "no_op_s3.npz",
+   "method": "no_op",
+   "scenario_id": 3,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.5530343856683753,
+    "mound_y_m": -0.39923465829293636,
+    "mound_radius_m": 1.5002418256503618,
+    "mound_height_m": 0.1849680645942492,
+    "centre_xy_m": [
+     3.5381739781681514,
+     0.2550490145396128
+    ],
+    "sphere_radius_m": 6.176576279161418,
+    "sphere_centre_z_m": -5.991608214567169,
+    "rim_slope_deg": 14.057299857383285,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "goal",
+    "reached": 0,
+    "crossed_goal_line": 1,
+    "time_to_goal_s": 16.740000000000002,
+    "end_s": 16.740000000000002,
+    "final_forward_m": 6.002100988080067,
+    "final_sideways_m": 5.868434691897572,
+    "offset_at_goal_line_m": 5.868434691897572,
+    "path_memory_forward_m": 6.914426278901203,
+    "path_memory_sideways_m": 6.1575091825234,
+    "max_tilt_deg": 7.788400285981452,
+    "fall": 0,
+    "foot_slip_m": 4.361142162117365,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 54
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "physics_only_s3.npz",
+   "method": "physics_only",
+   "scenario_id": 3,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.5530343856683753,
+    "mound_y_m": -0.39923465829293636,
+    "mound_radius_m": 1.5002418256503618,
+    "mound_height_m": 0.1849680645942492,
+    "centre_xy_m": [
+     3.5381739781681514,
+     0.2550490145396128
+    ],
+    "sphere_radius_m": 6.176576279161418,
+    "sphere_centre_z_m": -5.991608214567169,
+    "rim_slope_deg": 14.057299857383285,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "goal",
+    "reached": 1,
+    "crossed_goal_line": 1,
+    "time_to_goal_s": 11.1,
+    "end_s": 11.1,
+    "final_forward_m": 6.006109557704982,
+    "final_sideways_m": 0.11863862781760015,
+    "offset_at_goal_line_m": 0.11863862781760015,
+    "path_memory_forward_m": 6.6530970840680395,
+    "path_memory_sideways_m": -0.08605226755832818,
+    "max_tilt_deg": 9.249916399062172,
+    "fall": 0,
+    "foot_slip_m": 2.901920693672335,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 35
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "no_op_s4.npz",
+   "method": "no_op",
+   "scenario_id": 4,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.8230592822289498,
+    "mound_y_m": 0.47464892463236097,
+    "mound_radius_m": 0.8228561764533673,
+    "mound_height_m": 0.280417678840919,
+    "centre_xy_m": [
+     3.6302017477989637,
+     1.165058273220909
+    ],
+    "sphere_radius_m": 1.347501278909572,
+    "sphere_centre_z_m": -1.067083600068653,
+    "rim_slope_deg": 37.636759771088485,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "time",
+    "reached": 0,
+    "crossed_goal_line": 0,
+    "time_to_goal_s": null,
+    "end_s": 24.0,
+    "final_forward_m": 1.9295157464271488,
+    "final_sideways_m": 9.11982921943129,
+    "offset_at_goal_line_m": null,
+    "path_memory_forward_m": 4.830835962763359,
+    "path_memory_sideways_m": 10.501936245177534,
+    "max_tilt_deg": 10.22166216750028,
+    "fall": 0,
+    "foot_slip_m": 9.531962204361834,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 78
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "physics_only_s4.npz",
+   "method": "physics_only",
+   "scenario_id": 4,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.8230592822289498,
+    "mound_y_m": 0.47464892463236097,
+    "mound_radius_m": 0.8228561764533673,
+    "mound_height_m": 0.280417678840919,
+    "centre_xy_m": [
+     3.6302017477989637,
+     1.165058273220909
+    ],
+    "sphere_radius_m": 1.347501278909572,
+    "sphere_centre_z_m": -1.067083600068653,
+    "rim_slope_deg": 37.636759771088485,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "goal",
+    "reached": 1,
+    "crossed_goal_line": 1,
+    "time_to_goal_s": 11.38,
+    "end_s": 11.38,
+    "final_forward_m": 6.001725084951731,
+    "final_sideways_m": 0.04638893404536848,
+    "offset_at_goal_line_m": 0.04638893404536848,
+    "path_memory_forward_m": 6.753635259523785,
+    "path_memory_sideways_m": 0.5200015781814226,
+    "max_tilt_deg": 13.161719788161124,
+    "fall": 0,
+    "foot_slip_m": 4.0549302908892475,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 36
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "no_op_s5.npz",
+   "method": "no_op",
+   "scenario_id": 5,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.7375191847250515,
+    "mound_y_m": 0.3808399518824913,
+    "mound_radius_m": 1.5993150892971906,
+    "mound_height_m": 0.2709325969558878,
+    "centre_xy_m": [
+     3.5648841519104497,
+     1.0561966945225132
+    ],
+    "sphere_radius_m": 4.855844694419229,
+    "sphere_centre_z_m": -4.5849120974633415,
+    "rim_slope_deg": 19.229860739318006,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "goal",
+    "reached": 0,
+    "crossed_goal_line": 1,
+    "time_to_goal_s": 14.64,
+    "end_s": 14.64,
+    "final_forward_m": 6.001827759329735,
+    "final_sideways_m": 4.138723203561754,
+    "offset_at_goal_line_m": 4.138723203561754,
+    "path_memory_forward_m": 7.066008189223832,
+    "path_memory_sideways_m": 4.328333669380182,
+    "max_tilt_deg": 12.899305739455524,
+    "fall": 0,
+    "foot_slip_m": 4.4330693344947925,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 47
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  },
+  {
+   "file": "physics_only_s5.npz",
+   "method": "physics_only",
+   "scenario_id": 5,
+   "kind": "mound",
+   "mound_world": {
+    "mound_x_m": 2.7375191847250515,
+    "mound_y_m": 0.3808399518824913,
+    "mound_radius_m": 1.5993150892971906,
+    "mound_height_m": 0.2709325969558878,
+    "centre_xy_m": [
+     3.5648841519104497,
+     1.0561966945225132
+    ],
+    "sphere_radius_m": 4.855844694419229,
+    "sphere_centre_z_m": -4.5849120974633415,
+    "rim_slope_deg": 19.229860739318006,
+    "rgba": [
+     0.45,
+     0.55,
+     0.35,
+     1.0
+    ]
+   },
+   "start": {
+    "base_pos_m": [
+     0.9565888821041442,
+     0.1419504797676363,
+     0.31966626362341
+    ],
+    "yaw_rad": 0.19890198406836604
+   },
+   "outcome": {
+    "end_reason": "goal",
+    "reached": 1,
+    "crossed_goal_line": 1,
+    "time_to_goal_s": 11.4,
+    "end_s": 11.4,
+    "final_forward_m": 6.007968897600491,
+    "final_sideways_m": 0.04173768036924419,
+    "offset_at_goal_line_m": 0.04173768036924419,
+    "path_memory_forward_m": 6.823806999820708,
+    "path_memory_sideways_m": 0.2690182206929018,
+    "max_tilt_deg": 13.026007286837169,
+    "fall": 0,
+    "foot_slip_m": 3.6649446178150376,
+    "foot_slip_note": "over the whole stepped episode",
+    "n_decisions": 36
+   },
+   "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh calf): the world's qpos, one row per control period from t_s 0"
+  }
+ ],
+ "wall_s": 73.47301479999442,
+ "episode_wall_s": {
+  "no_op": 7.765150640002685,
+  "physics_only": 5.703001313332546
+ }
+}

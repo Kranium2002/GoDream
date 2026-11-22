@@ -1,0 +1,26 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+
+== 1. one call with 10 vs. 5 then 10 ==
+  [ok] B: 5 rows after the first call
+  [ok] B: the second call ran attempts 5..9 only (progress done [6, 7, 8, 9, 10])
+  [ok] attempt files byte-identical (5906 bytes, 10 rows each)
+  [ok] same attempt seeds in the same order
+  [ok] B manifest history: 5 new rows, then 5 new rows
+  [ok] calls with 10 and 7 afterwards run nothing and change nothing
+  [ok] those calls are recorded with 0 new rows
+
+== 2. the pipeline's rows equal engine.collect.collect on the bare world ==
+  [ok] world seed is stream_seed(base, 'pipeline/world/default') = 647831257
+  [ok] rows collected without the observer are byte-identical to the pipeline's rows
+  [ok] the plan is not trivial (some non-zero side speeds)
+
+== 3. ObservedWorld ==
+  [ok] reset returns the wrapped world's value
+  [ok] step returns the wrapped world's value
+  [ok] finish_episode returns the wrapped world's value
+  [ok] one finished episode counted and reported
+  [ok] other attributes are read from the wrapped world
+  [ok] should_stop() true -> Stopped from reset -> Stopped: should_stop() was true before episode 1 of this world started
+  [ok] the wrapped reset was not called
+
+CHECK RESULT (plumbing): 17 assertions held, 0 failed 

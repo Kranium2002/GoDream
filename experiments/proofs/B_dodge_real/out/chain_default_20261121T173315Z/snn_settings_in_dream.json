@@ -1,0 +1,283 @@
+{
+  "label": "DEV RUN inside a saved dream; not an evaluation result",
+  "config_digest": "b895056d7bddf56d15d4a30cbe04a954c088e5f2da62981b43ec6820fef96d23",
+  "chain": "2026-11-21T17:33:15.486613+00:00",
+  "training_rows": 1700,
+  "heldout_rows": 300,
+  "results": [
+    {
+      "name": "start",
+      "variant": {
+        "name": "start",
+        "hidden_sizes": [
+          64
+        ],
+        "max_steps": 1500
+      },
+      "train_wall_s": 11.413038400001824,
+      "training": {
+        "steps_run": 1000,
+        "best_step": 500,
+        "stopped_early": true,
+        "initial_validation_loss": 0.9875080911154596,
+        "best_validation_loss": 0.492700060922082,
+        "firing_rate_per_layer": [
+          0.16904411764705882
+        ]
+      },
+      "heldout": {
+        "label": "held out: no row's situation was seen in training; measured inside the dream: dreamed objective scores of the dream's candidates, not outcomes in the simulator or on the robot",
+        "held_out": true,
+        "includes_situations_seen_in_training": false,
+        "network_sha256": "6a79acc70a080640908b50cafb662ff9f5282ce94ed4fcfa3b4f52b91c6e6200",
+        "score_spread": 2.9395077632043636,
+        "score_spread_definition": "targets.score_spread of these dreams' scores: median over rows of the row std",
+        "score_spread_undefined_reason": null
+      },
+      "heldout_detail": {
+        "overlap_with_training": {
+          "definition": "dream rows whose situation digest (learned_judgment.students.snn.situation_row_digests) is one of the student's training_situation_digests: every situation its optimiser trained on or its early stopping evaluated",
+          "n_rows": 300,
+          "n_distinct_situations": 300,
+          "rows_seen_in_training": 0,
+          "distinct_situations_seen_in_training": 0,
+          "n_training_situations": 1700,
+          "allow_seen": false
+        },
+        "dream": {
+          "skill": "dodge",
+          "method": "teacher",
+          "source": "provider_backed_teacher",
+          "source_description": "scores = objective of the physics guess plus the residual predicted by a provider-backed model; request_hashes name the cached provider requests behind them",
+          "provider_backed": true,
+          "n_rows": 300,
+          "n_distinct_situations": 300,
+          "n_candidates": 108,
+          "rows_sha256": "f9d4f5dee5350c51dc62e5463f66c8759cdf3ec8d34b726e147dff5b9ce064fe",
+          "out_of_range_policy": "error",
+          "rows_with_clipped_values": 0
+        },
+        "student": {
+          "agreement_with_dream_choice": 0.18333333333333332,
+          "agreement_with_physics_choice": 0.07
+        },
+        "physics_only_choice": {
+          "agreement_with_dream_choice": 0.39666666666666667
+        },
+        "paired_rows": {
+          "student_regret_lower": 0.25,
+          "equal": 0.07,
+          "student_regret_higher": 0.68
+        },
+        "per_row": {}
+      },
+      "digest": "6a79acc70a080640908b50cafb662ff9f5282ce94ed4fcfa3b4f52b91c6e6200"
+    },
+    {
+      "name": "longer",
+      "variant": {
+        "name": "longer",
+        "hidden_sizes": [
+          64
+        ],
+        "max_steps": 6000
+      },
+      "train_wall_s": 11.524390999984462,
+      "training": {
+        "steps_run": 1000,
+        "best_step": 500,
+        "stopped_early": true,
+        "initial_validation_loss": 0.9875080911154596,
+        "best_validation_loss": 0.492700060922082,
+        "firing_rate_per_layer": [
+          0.16904411764705882
+        ]
+      },
+      "heldout": {
+        "label": "held out: no row's situation was seen in training; measured inside the dream: dreamed objective scores of the dream's candidates, not outcomes in the simulator or on the robot",
+        "held_out": true,
+        "includes_situations_seen_in_training": false,
+        "network_sha256": "6a79acc70a080640908b50cafb662ff9f5282ce94ed4fcfa3b4f52b91c6e6200",
+        "score_spread": 2.9395077632043636,
+        "score_spread_definition": "targets.score_spread of these dreams' scores: median over rows of the row std",
+        "score_spread_undefined_reason": null
+      },
+      "heldout_detail": {
+        "overlap_with_training": {
+          "definition": "dream rows whose situation digest (learned_judgment.students.snn.situation_row_digests) is one of the student's training_situation_digests: every situation its optimiser trained on or its early stopping evaluated",
+          "n_rows": 300,
+          "n_distinct_situations": 300,
+          "rows_seen_in_training": 0,
+          "distinct_situations_seen_in_training": 0,
+          "n_training_situations": 1700,
+          "allow_seen": false
+        },
+        "dream": {
+          "skill": "dodge",
+          "method": "teacher",
+          "source": "provider_backed_teacher",
+          "source_description": "scores = objective of the physics guess plus the residual predicted by a provider-backed model; request_hashes name the cached provider requests behind them",
+          "provider_backed": true,
+          "n_rows": 300,
+          "n_distinct_situations": 300,
+          "n_candidates": 108,
+          "rows_sha256": "f9d4f5dee5350c51dc62e5463f66c8759cdf3ec8d34b726e147dff5b9ce064fe",
+          "out_of_range_policy": "error",
+          "rows_with_clipped_values": 0
+        },
+        "student": {
+          "agreement_with_dream_choice": 0.18333333333333332,
+          "agreement_with_physics_choice": 0.07
+        },
+        "physics_only_choice": {
+          "agreement_with_dream_choice": 0.39666666666666667
+        },
+        "paired_rows": {
+          "student_regret_lower": 0.25,
+          "equal": 0.07,
+          "student_regret_higher": 0.68
+        },
+        "per_row": {}
+      },
+      "digest": "6a79acc70a080640908b50cafb662ff9f5282ce94ed4fcfa3b4f52b91c6e6200"
+    },
+    {
+      "name": "wider",
+      "variant": {
+        "name": "wider",
+        "hidden_sizes": [
+          128
+        ],
+        "max_steps": 6000
+      },
+      "train_wall_s": 10.226847499987343,
+      "training": {
+        "steps_run": 1000,
+        "best_step": 500,
+        "stopped_early": true,
+        "initial_validation_loss": 1.0177698924855156,
+        "best_validation_loss": 0.48847294979350225,
+        "firing_rate_per_layer": [
+          0.15432904411764706
+        ]
+      },
+      "heldout": {
+        "label": "held out: no row's situation was seen in training; measured inside the dream: dreamed objective scores of the dream's candidates, not outcomes in the simulator or on the robot",
+        "held_out": true,
+        "includes_situations_seen_in_training": false,
+        "network_sha256": "57001053ea5412d093cb6138db540b222420b8ec4c6b0cc0d9294d7c86a7d7d2",
+        "score_spread": 2.9395077632043636,
+        "score_spread_definition": "targets.score_spread of these dreams' scores: median over rows of the row std",
+        "score_spread_undefined_reason": null
+      },
+      "heldout_detail": {
+        "overlap_with_training": {
+          "definition": "dream rows whose situation digest (learned_judgment.students.snn.situation_row_digests) is one of the student's training_situation_digests: every situation its optimiser trained on or its early stopping evaluated",
+          "n_rows": 300,
+          "n_distinct_situations": 300,
+          "rows_seen_in_training": 0,
+          "distinct_situations_seen_in_training": 0,
+          "n_training_situations": 1700,
+          "allow_seen": false
+        },
+        "dream": {
+          "skill": "dodge",
+          "method": "teacher",
+          "source": "provider_backed_teacher",
+          "source_description": "scores = objective of the physics guess plus the residual predicted by a provider-backed model; request_hashes name the cached provider requests behind them",
+          "provider_backed": true,
+          "n_rows": 300,
+          "n_distinct_situations": 300,
+          "n_candidates": 108,
+          "rows_sha256": "f9d4f5dee5350c51dc62e5463f66c8759cdf3ec8d34b726e147dff5b9ce064fe",
+          "out_of_range_policy": "error",
+          "rows_with_clipped_values": 0
+        },
+        "student": {
+          "agreement_with_dream_choice": 0.18,
+          "agreement_with_physics_choice": 0.06333333333333334
+        },
+        "physics_only_choice": {
+          "agreement_with_dream_choice": 0.39666666666666667
+        },
+        "paired_rows": {
+          "student_regret_lower": 0.2633333333333333,
+          "equal": 0.06333333333333334,
+          "student_regret_higher": 0.6733333333333333
+        },
+        "per_row": {}
+      },
+      "digest": "57001053ea5412d093cb6138db540b222420b8ec4c6b0cc0d9294d7c86a7d7d2"
+    },
+    {
+      "name": "two_layers",
+      "variant": {
+        "name": "two_layers",
+        "hidden_sizes": [
+          128,
+          64
+        ],
+        "max_steps": 6000
+      },
+      "train_wall_s": 62.6109817000106,
+      "training": {
+        "steps_run": 4400,
+        "best_step": 3900,
+        "stopped_early": true,
+        "initial_validation_loss": 0.7682972262080889,
+        "best_validation_loss": 0.04780231279908568,
+        "firing_rate_per_layer": [
+          0.18943933823529413,
+          0.2702941176470588
+        ]
+      },
+      "heldout": {
+        "label": "held out: no row's situation was seen in training; measured inside the dream: dreamed objective scores of the dream's candidates, not outcomes in the simulator or on the robot",
+        "held_out": true,
+        "includes_situations_seen_in_training": false,
+        "network_sha256": "e6a5d16b03e12fd24a83af17bb0fc639052fb5bb7e02696b07c71af1483b6a49",
+        "score_spread": 2.9395077632043636,
+        "score_spread_definition": "targets.score_spread of these dreams' scores: median over rows of the row std",
+        "score_spread_undefined_reason": null
+      },
+      "heldout_detail": {
+        "overlap_with_training": {
+          "definition": "dream rows whose situation digest (learned_judgment.students.snn.situation_row_digests) is one of the student's training_situation_digests: every situation its optimiser trained on or its early stopping evaluated",
+          "n_rows": 300,
+          "n_distinct_situations": 300,
+          "rows_seen_in_training": 0,
+          "distinct_situations_seen_in_training": 0,
+          "n_training_situations": 1700,
+          "allow_seen": false
+        },
+        "dream": {
+          "skill": "dodge",
+          "method": "teacher",
+          "source": "provider_backed_teacher",
+          "source_description": "scores = objective of the physics guess plus the residual predicted by a provider-backed model; request_hashes name the cached provider requests behind them",
+          "provider_backed": true,
+          "n_rows": 300,
+          "n_distinct_situations": 300,
+          "n_candidates": 108,
+          "rows_sha256": "f9d4f5dee5350c51dc62e5463f66c8759cdf3ec8d34b726e147dff5b9ce064fe",
+          "out_of_range_policy": "error",
+          "rows_with_clipped_values": 0
+        },
+        "student": {
+          "agreement_with_dream_choice": 0.29333333333333333,
+          "agreement_with_physics_choice": 0.26
+        },
+        "physics_only_choice": {
+          "agreement_with_dream_choice": 0.39666666666666667
+        },
+        "paired_rows": {
+          "student_regret_lower": 0.2,
+          "equal": 0.26,
+          "student_regret_higher": 0.54
+        },
+        "per_row": {}
+      },
+      "digest": "e6a5d16b03e12fd24a83af17bb0fc639052fb5bb7e02696b07c71af1483b6a49"
+    }
+  ]
+}

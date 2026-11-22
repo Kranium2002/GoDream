@@ -1,0 +1,19 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+settings: config.yaml copy with outputs under <tmp>; students.snn.max_steps=100
+
+== run 'orphan' with base seed A: collect 5, dream, train ==
+  [ok] run A: 5 attempts, a dream set and a student exist
+
+== manifest deleted; the same run_id opened with base seed B ==
+  [FAILED] opening refused (it was not: a fresh manifest was created over run A's files)
+  [FAILED] rows returned under base seed B carry base seed B's attempt seeds (got [1337377919, 1358579402]..., plan [2495091989, 1380701065]...)
+  [FAILED] the run under base seed B has no student of base seed A
+  [FAILED] nothing was written or changed by the refused open
+
+== collect compares stored rows with the plan even when no attempt is missing ==
+  [FAILED] collect_attempts(4) with 4 stored rows of which one differs from the plan did not raise RunStateError
+  [FAILED] collect_attempts(3) (fewer than stored) with the same file did not raise RunStateError
+  [FAILED] the step ends 'failed', not 'done'
+  [ok] an unchanged row still equals the plan (the comparison is exact, not loose)
+
+CHECK RESULT (plumbing): 2 assertions held, 7 failed ["opening refused (it was not: a fresh manifest was created over run A's files)", "rows returned under base seed B carry base seed B's attempt seeds (got [1337377919, 1358579402]..., plan [2495091989, 1380701065]...)", 'the run under base seed B has no student of base seed A', 'nothing was written or changed by the refused open', 'collect_attempts(4) with 4 stored rows of which one differs from the plan did not raise RunStateError', 'collect_attempts(3) (fewer than stored) with the same file did not raise RunStateError', "the step ends 'failed', not 'done'"]

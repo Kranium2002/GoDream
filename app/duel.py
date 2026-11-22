@@ -517,47 +517,11 @@ def story(h):
 
 def _story(folder):
     result = _read(folder / "result.json") or {}
-    rows_folder = folder / "context" if (folder / "context" / "rows.json").is_file() else folder / "dev"
-    rows = _read(rows_folder / "rows.json")
-    row_count = decision_count = None
-    try:
-        with np.load(rows_folder / "rows.npz", allow_pickle=False) as archive:
-            indices = np.asarray(archive["scenario_index"])
-            row_count, decision_count = int(np.unique(indices).size), int(indices.size)
-    except (OSError, ValueError, KeyError):
-        pass
-    dream = _read(folder / "dream" / "dream.json")
-    scores_path = folder / "scores.npz"
-    scores_exists = scores_path.is_file()
-    events = []
-    event_path = folder / "events.jsonl"
-    if event_path.is_file():
-        for line in event_path.read_text(encoding="utf-8", errors="replace").splitlines():
-            try: events.append(json.loads(line))
-            except ValueError: pass
-    attempts = None
-    episodes = ((rows or {}).get("episodes") or [])
-    if rows is not None:
-        scenarios = rows.get("scenarios") or []
-        outcomes = ([{"kind": x.get("kind"), "ended": (x.get("outcome") or {}).get("end_reason")}
-                     for x in episodes] if episodes else None)
-        obstacles = [x.get("mound") for x in scenarios if isinstance(x, dict) and x.get("mound") is not None]
-        attempts = {"n_tries": row_count if row_count is not None else (len(episodes) if episodes else None),
-                    "n_decisions": decision_count if decision_count is not None else
-                    (sum(int(x.get("decisions", 0)) for x in episodes) if episodes else None),
-                    "paths": None, "outcomes": outcomes, "obstacles": obstacles or None}
     metrics = result.get("metrics") if isinstance(result.get("metrics"), list) else None
     paired = result.get("paired") if isinstance(result.get("paired"), list) else None
-    brain = None
-    student = _read(folder / "student" / "student.json")
-    if student:
-        network = _read(folder / "student" / "network.json") or {}
-        sizes = network.get("layer_sizes")
-        brain = {"inputs": ((student.get("input") or {}).get("features") or
-                            (sizes[0] if isinstance(sizes, list) and sizes else None)),
-                 "neurons": ((student.get("training_settings") or {}).get("hidden_sizes") or
-                             (sizes[1:-1] if isinstance(sizes, list) and len(sizes) > 2 else None)),
-                 "choices": student.get("action_names"), "curve": None,
-                 "spikes_per_decision": None, "decision_ms": None}
-    return {"attempts": attempts, "what_if": None, "imagination": None, "brain": brain,
+    story_dir = folder / "story"
+    return {"attempts": _read(story_dir / "attempts.json"),
+            "what_if": _read(story_dir / "what_if.json"),
+            "imagination": _read(story_dir / "imagination.json"),
+            "brain": _read(story_dir / "brain.json"),
             "test": {"metrics": metrics, "paired": paired} if metrics is not None or paired is not None else None}
