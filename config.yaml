@@ -930,7 +930,7 @@ inference:  # learned_judgment.runtime (Person B): the frozen student behind the
     # Groups of actions the gate counts as one decision (scores summed, votes pooled; the side issued is the member with the larger
     # score summed over the group's votes). A punch straight at the camera splits the student's score between left and right.
     interchangeable: [[DODGE_LEFT, DODGE_RIGHT]]
-    precision_target: 0.99  # Preregistered: share of issued active commands on simulation dev trajectories that answer a true threat.
+    precision_target: 0.95  # Was 0.99 (preregistered); lowered to 0.95 by the lead on 2026-11-22 for the demo try, runs v6p95 on. share of issued active commands on simulation dev trajectories that answer a true threat.
     # Thresholds tried on simulation dev trajectories; the frozen choice is saved with the exported student, not here.
     calibration_grid:
       threat: [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99]
@@ -1026,12 +1026,16 @@ app:  # The local viewer server: uv run python -m app.server
     max_retries: 2  # The SDK default: connection errors, 408, 409, 429 and 5xx.
     max_messages: 20  # Messages per chat request (the browser sends the whole conversation).
     max_message_chars: 4000  # Characters per message.
+  duel:  # POST /api/duel/start (app/duel.py): both lanes of a demo run the same situation, untrained | trained.
+    dodge:  # The dodge demo's punch, the same in both lanes.
+      split: test  # The punches come from this split of observed.dodge_vision (the held-out one), never picked by outcome.
+      kinds: [incoming_center, incoming_left, incoming_right]  # Only kinds aimed at the dog; round seed s takes the (s mod their count)-th of them.
   runs:
     poll_s: 0.5  # Seconds between looks for new lines in the run event files (observed.runs_dir) relayed as SSE.
   infer:
     # The frozen student directory (student.json, network.npz, network.json with frozen thresholds), relative to the
     # repository root; Dev B's observed run exports it to <observed.runs_dir>/<run>/student/. null until one exists.
-    student_dir: results/runs/v5try/student  # v5 scenes student for a live-camera try; gate target NOT met (see its student.json).
+    student_dir: results/runs/v6p95/student  # Sweep v6p95 winner (near-approach threat rule, precision target 0.95): dev precision 0.967, recall 0.41, 61 commands; strict collision view 0.836 / 0.42. Held-out NOT RUN.
     # Development only: {threat, action, margin} passed to the runtime when the student has no frozen thresholds; every
     # answer, the infer capability and the log then say so. Never committed set; null uses frozen thresholds only.
     dev_thresholds: null

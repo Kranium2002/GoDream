@@ -7,7 +7,7 @@ import { normaliseCapabilities } from "./capabilities.js";
 import { cardsFrom } from "./flow.js";
 import { mountNotes } from "./notes.js";
 import { defaultParams, headlineSentence, readDemos } from "./demos.js";
-import { applyDuel, duelShows, emptyDuel } from "./duel.js";
+import { applyDuel, countRound, duelShows, emptyDuel, tallyText } from "./duel.js";
 import { readWindowSettings } from "./vision.js";
 import { $, el, setText } from "./dom.js";
 import { initStageView } from "./stage-view.js";
@@ -25,6 +25,7 @@ const DEMOS_RETRY_MS = 20000; // while the server has no demo list, ask again th
 let state = null, capabilities = [], cards = [], eyeSettings = null;
 let demosInfo = { ok: false, raw: null, demos: [], problems: [], message: null, unavailable: false };
 let current = null, mode = "sim", duel = emptyDuel(), starting = false;
+let tally = {}; // this page session's rounds per demo and lane (duel.js countRound); a reload starts it again
 const params = new Map(); // demo id -> {handle name: value}
 const bodies = new Map(), cached = new Map(), runLines = new Map();
 
@@ -96,9 +97,13 @@ function apply() {
   if (layout === "duel") {
     const mine = duelShows(duel, demo.id), running = mine && duel.state === "start";
     const otherRunning = duel.state === "start" && !mine;
+    stage.setSideView(demo.sense === "eye");
     controls.setHandles(demo, paramsOf(demo), running || starting);
     controls.setGo({ show: true, label: starting ? "Get ready" : running ? "Stop" : "Run both", disabled: !demo.available || starting || otherRunning, running });
-    for (const side of ["before", "after"]) stage.setOutcome(side, demo.outcomeFields, mine ? duel.sides[side] : null);
+    for (const side of ["before", "after"]) {
+      stage.setOutcome(side, demo.outcomeFields, mine ? duel.sides[side] : null);
+      stage.setTally(side, tallyText(tally[demo.id]?.[side]));
+    }
     const invite = $("invite");
     invite.hidden = mine || starting || !demo.tagline;
     setText(invite, demo.tagline ?? "");
@@ -231,6 +236,7 @@ function connectEvents() {
   on("duel", (d) => {
     const was = duel;
     duel = applyDuel(duel, d);
+    tally = countRound(tally, was, duel);
     if (d?.state === "start" && was.state !== "start" && !starting) { senses.clear(); stage.clearLanes(); }
     apply();
   });

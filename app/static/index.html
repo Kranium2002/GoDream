@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark">
   <title>Learned Judgment</title>
-  <link rel="preload" href="fonts/BricolageGrotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <script type="module" src="js/app.js"></script>
 </head>
@@ -24,12 +23,14 @@
       <canvas class="lane__view" id="view-before" tabindex="0" aria-label="The dog with its walking brain alone, live from the simulator. Drag to look around."></canvas>
       <h2 class="lane__name" id="name-before">Walking brain alone</h2>
       <p class="lane__outcome" id="outcome-before" aria-live="polite" hidden></p>
+      <p class="lane__tally" id="tally-before" hidden></p>
       <div class="sense" id="sense-before"></div>
     </section>
     <section class="lane lane--after" id="lane-after" aria-labelledby="name-after">
       <canvas class="lane__view" id="view-after" tabindex="0" aria-label="The dog with the learned reflex, live from the simulator. Drag to look around."></canvas>
       <h2 class="lane__name" id="name-after">With the learned reflex</h2>
       <p class="lane__outcome" id="outcome-after" aria-live="polite" hidden></p>
+      <p class="lane__tally" id="tally-after" hidden></p>
       <div class="sense" id="sense-after"></div>
     </section>
     <p class="invite" id="invite" hidden></p>
