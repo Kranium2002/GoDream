@@ -18,6 +18,7 @@ from learned_judgment.env import Go2World
 
 log = logging.getLogger(__name__)
 _DEMO_SKILLS = {"hills": "reflex", "dodge": "dodge_vision"}
+_HILL_BASELINE_YAW_TRIM_RAD_S = -0.10
 
 
 def _read(path):
@@ -110,7 +111,7 @@ def _reflex_handles(lesson):
     result = []
     for key, label, unit, kind in (
         ("radius_m", "Mound radius", "m", "amount"), ("height_m", "Mound height", "m", "amount"),
-        ("centre_ahead_m", "Mound distance", "m", "amount"), ("centre_side_m", "Mound side offset", "m", "offset")):
+        ("centre_ahead_m", "Mound distance", "m", "amount")):
         span = world.get(key)
         if isinstance(span, dict) and all(isinstance(span.get(k), (int, float)) for k in ("min", "max")):
             result.append({"name": key, "kind": kind, "label": label, "unit": unit,
@@ -160,8 +161,7 @@ def _demo(config, demo):
     if skill == "reflex":
         outcomes = [{"name": "reached", "kind": "flag", "label": "Reached"},
                     {"name": "fall", "kind": "flag", "label": "Fell"},
-                    {"name": "end_s", "kind": "seconds", "label": "Time"},
-                    {"name": "final_sideways_m", "kind": "metres", "label": "Side offset"}]
+                    {"name": "end_s", "kind": "seconds", "label": "Time"}]
         handles = _reflex_handles(skill_declaration)
         title = skill_declaration.get("title") or "Hill course"
         tagline = skill_declaration.get("summary") or skill_declaration.get("goal", {}).get("forward_m")
@@ -202,8 +202,9 @@ def demos(h):
 
 class _DuelWorld:
     """Go2World facade emitting the actual observations and pacing every control period."""
-    def __init__(self, world, manager, side, camera=None, visual=None):
+    def __init__(self, world, manager, side, camera=None, visual=None, yaw_trim_rad_s=0.0):
         self.world, self.manager, self.side, self.camera, self.visual = world, manager, side, camera, visual
+        self.yaw_trim_rad_s = float(yaw_trim_rad_s)
         self.config = world.config
 
     def __getattr__(self, key):
@@ -215,6 +216,9 @@ class _DuelWorld:
         return obs
 
     def step(self, command, duration_s, on_period=None):
+        if self.yaw_trim_rad_s and "yaw_rate" in command:
+            command = dict(command)
+            command["yaw_rate"] = float(np.clip(float(command["yaw_rate"]) + self.yaw_trim_rad_s, -1.0, 1.0))
         def cb(obs):
             if on_period:
                 on_period(obs)
@@ -329,7 +333,8 @@ class Duel:
         self.clock_origin = time.perf_counter()
         def go(side, world, policy):
             try:
-                wrapped = _DuelWorld(world, self, side)
+                trim = _HILL_BASELINE_YAW_TRIM_RAD_S if side == "before" else 0.0
+                wrapped = _DuelWorld(world, self, side, yaw_trim_rad_s=trim)
                 answer = reflex.run_episode(wrapped, scenario, seed, policy)
                 self.outcomes[side] = answer["outcome"]
             except Exception:

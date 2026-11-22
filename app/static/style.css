@@ -1,15 +1,4 @@
-/* Learned Judgment. One screen: two lanes of the same situation (before in slate, after in ember), what the dog senses
-   drawn under each, a glass control bar, a glass sheet for how it learned, a glass drawer for engineers.
-   Colour carries meaning: slate = before and quiet text, ember = after / learned and the main button, glacier = imagined
-   by TabPFN, signal = a hit or a fall. One family, Bricolage Grotesque (OFL, fonts/OFL.txt), bundled. */
-
-@font-face {
-  font-family: "Bricolage";
-  src: url("fonts/BricolageGrotesque-latin.woff2") format("woff2");
-  font-weight: 200 800;
-  font-stretch: 75% 100%;
-  font-display: swap;
-}
+/* Learned Judgment. Two lanes of the same situation, plus a compact controls bar and learning sheet. */
 
 :root {
   --navy: #0E1320;
@@ -38,7 +27,7 @@
   --sense-h: 108px;
   --gut: 18px;
   --sheet-w: min(560px, calc(100vw - 32px));
-  --font: "Bricolage", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
   color-scheme: dark;
 }
 
