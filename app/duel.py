@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+import mujoco
 import numpy as np
 
 from app import backend, robot
@@ -257,6 +258,8 @@ class Duel:
             if self.side_ticks[side] % self.server.sim.pose_every:
                 return
         d = world.policy.data
+        if reset:  # reset placed the object by writing qpos only: derive its position, else it shows where it was parked
+            mujoco.mj_kinematics(world.model, d)
         pose = robot.pose(d, obs["t_s"]) | {"side": side, "version": self.server.sim.robot_version}
         self.server.sim.announce("pose", pose, latest_only=True)
         from app.player import StageWorld

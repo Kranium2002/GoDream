@@ -97,6 +97,7 @@ function apply() {
   if (layout === "duel") {
     const mine = duelShows(duel, demo.id), running = mine && duel.state === "start";
     const otherRunning = duel.state === "start" && !mine;
+    stage.setSideView(demo.sense === "eye");
     controls.setHandles(demo, paramsOf(demo), running || starting);
     controls.setGo({ show: true, label: starting ? "Get ready" : running ? "Stop" : "Run both", disabled: !demo.available || starting || otherRunning, running });
     for (const side of ["before", "after"]) {

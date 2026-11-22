@@ -14,6 +14,10 @@ export function initStageView({ api, notes }) {
   // The two lanes look at their dogs from the same angle: behind and to the left, the heading of the first pose kept,
   // the frame widened to hold the hill or the incoming object.
   const laneOptions = { distance: 2.2, yaw: 2.6, pitch: 0.45, lockHeading: true, frameScene: true };
+  // A demo seen by eye (an object comes at the dog's head) is watched from the dog's left side instead, a little from
+  // behind: its head and what comes at it both show, the object entering from the left. From behind, the head is hidden.
+  const SIDE_YAW = 1.75;
+  const SIDE_FIT = 2.1; // wider than the hills' 1.45: a punch that glances off or is dodged keeps flying past the dog
   const lanes = {
     before: views.attach($("view-before"), { side: "before", palette: "before", ...laneOptions }),
     after: views.attach($("view-after"), { side: "after", palette: "after", ...laneOptions }),
@@ -106,6 +110,7 @@ export function initStageView({ api, notes }) {
     place,
     setOutcome,
     countIn,
+    setSideView(on) { for (const key of ["before", "after"]) lanes[key].setYaw(on ? SIDE_YAW : laneOptions.yaw, on ? SIDE_FIT : undefined); },
     setTally(side, text) { const p = $(`tally-${side}`); p.hidden = !text; setText(p, text ? `So far: ${text}` : ""); },
     clearLanes() { lanes.before.clear(); lanes.after.clear(); },
     onPose: (d) => views.onPose(d),
