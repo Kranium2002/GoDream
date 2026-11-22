@@ -1,0 +1,7105 @@
+{
+ "skill": "dodge_vision",
+ "student": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f8_events_h128/student",
+ "calibration": {
+  "split": "dev",
+  "n_scenarios": 240,
+  "threat_definition": {
+   "mode": "near_approach",
+   "separation_m": 0.08,
+   "outcome": "min_separation_m"
+  },
+  "n_threats": 134,
+  "grid_size": 240,
+  "chosen": {
+   "threat": 0.99,
+   "action": 0.8,
+   "margin": 0.5,
+   "emitted": 21,
+   "correct": 20,
+   "precision": 0.9523809523809523,
+   "recalled": 18,
+   "recall": 0.13432835820895522,
+   "false_activations": 1,
+   "precision_ci": [
+    0.7733063992587743,
+    0.9915440121901735
+   ],
+   "ci_level": 0.95,
+   "ci_method": "Wilson"
+  },
+  "strict_collision": {
+   "n_collisions": 111,
+   "emitted": 21,
+   "correct": 16,
+   "precision": 0.7619047619047619,
+   "recalled": 14,
+   "recall": 0.12612612612612611,
+   "false_activations": 5,
+   "precision_ci": [
+    0.5490882631704925,
+    0.8937198697736353
+   ],
+   "truth": "NO_OP collision; on time = at or before its first contact"
+  },
+  "precision_target": 0.95,
+  "gate_passed": true,
+  "rule": "precision >= target: highest recall, then fewer false activations, then higher threat, action, margin",
+  "seeds": {
+   "runtime_seed": 20261121,
+   "split": "dev",
+   "split_code": 2,
+   "scenarios": "dodge_vision._split_plan: np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), first n of sample_threat_scenarios",
+   "augmentation": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2)[1]), fresh for every episode of the scenario (paired)",
+   "attempt_seed": "scenario_id",
+   "camera_rate": "dodge_vision.scenario_rate: np.random.default_rng(spawn(2)[0]).integers over vision.sim_camera_rates_hz [15.0, 20.0, 30.0], one rate per scenario",
+   "world_seed": 0,
+   "world_preset": "default"
+  },
+  "t_hit": "Go2World.finish_episode first_collision_time_s of the NO_OP episode",
+  "deadline": "first contact of the NO_OP episode (t_hit); for a threat without contact, the object's straight-line arrival at the head (dodge_vision.arrival_time_s)",
+  "source": "offline: the saved NO_OP trace (dodge_eval trace), windows rebuilt from its frames, readouts batched through observed.student_readout, the same gate replay as calibrate",
+  "trace": "D:/BerlinPrior-eval/results/runs/v5/trace_dev.npz",
+  "trace_config_digest": "2b1bb41eb0d7fffa44d34a97156c4fd1d9dd9a9b8867cdd3b4eb74ecc2cd0231",
+  "readout_check": {
+   "n_frames": 50,
+   "max_abs_difference": 2.220446049250313e-16,
+   "tolerance": 1e-09,
+   "passed": true,
+   "seed": 20261121,
+   "method": "np.random.default_rng(runtime.seed).choice of (scenario, decision frame) without replacement; DodgeRuntime.readout of that window against the batched observed.student_readout"
+  },
+  "config_digest": "14c476b3c3820851f41173c623a6ff3abb69fc4f92a39493904a9698ad7644a3",
+  "run_id": "f8_events_h128",
+  "records": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f8_events_h128/calibration_dev_offline.json",
+  "traces": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f8_events_h128/calibration_dev_offline.npz",
+  "frozen_utc": null
+ },
+ "grid": [
+  {
+   "threat": 0.5,
+   "action": 0.4,
+   "margin": 0.1,
+   "emitted": 134,
+   "correct": 103,
+   "precision": 0.7686567164179104,
+   "recalled": 94,
+   "recall": 0.7014925373134329,
+   "false_activations": 31
+  },
+  {
+   "threat": 0.5,
+   "action": 0.4,
+   "margin": 0.2,
+   "emitted": 125,
+   "correct": 97,
+   "precision": 0.776,
+   "recalled": 86,
+   "recall": 0.6417910447761194,
+   "false_activations": 28
+  },
+  {
+   "threat": 0.5,
+   "action": 0.4,
+   "margin": 0.3,
+   "emitted": 115,
+   "correct": 90,
+   "precision": 0.782608695652174,
+   "recalled": 80,
+   "recall": 0.5970149253731343,
+   "false_activations": 25
+  },
+  {
+   "threat": 0.5,
+   "action": 0.4,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.5,
+   "action": 0.4,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.5,
+   "action": 0.5,
+   "margin": 0.1,
+   "emitted": 134,
+   "correct": 103,
+   "precision": 0.7686567164179104,
+   "recalled": 94,
+   "recall": 0.7014925373134329,
+   "false_activations": 31
+  },
+  {
+   "threat": 0.5,
+   "action": 0.5,
+   "margin": 0.2,
+   "emitted": 125,
+   "correct": 97,
+   "precision": 0.776,
+   "recalled": 86,
+   "recall": 0.6417910447761194,
+   "false_activations": 28
+  },
+  {
+   "threat": 0.5,
+   "action": 0.5,
+   "margin": 0.3,
+   "emitted": 115,
+   "correct": 90,
+   "precision": 0.782608695652174,
+   "recalled": 80,
+   "recall": 0.5970149253731343,
+   "false_activations": 25
+  },
+  {
+   "threat": 0.5,
+   "action": 0.5,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.5,
+   "action": 0.5,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.5,
+   "action": 0.6,
+   "margin": 0.1,
+   "emitted": 120,
+   "correct": 93,
+   "precision": 0.775,
+   "recalled": 83,
+   "recall": 0.6194029850746269,
+   "false_activations": 27
+  },
+  {
+   "threat": 0.5,
+   "action": 0.6,
+   "margin": 0.2,
+   "emitted": 120,
+   "correct": 93,
+   "precision": 0.775,
+   "recalled": 83,
+   "recall": 0.6194029850746269,
+   "false_activations": 27
+  },
+  {
+   "threat": 0.5,
+   "action": 0.6,
+   "margin": 0.3,
+   "emitted": 114,
+   "correct": 89,
+   "precision": 0.7807017543859649,
+   "recalled": 79,
+   "recall": 0.5895522388059702,
+   "false_activations": 25
+  },
+  {
+   "threat": 0.5,
+   "action": 0.6,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.5,
+   "action": 0.6,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.5,
+   "action": 0.7,
+   "margin": 0.1,
+   "emitted": 86,
+   "correct": 72,
+   "precision": 0.8372093023255814,
+   "recalled": 67,
+   "recall": 0.5,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.5,
+   "action": 0.7,
+   "margin": 0.2,
+   "emitted": 86,
+   "correct": 72,
+   "precision": 0.8372093023255814,
+   "recalled": 67,
+   "recall": 0.5,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.5,
+   "action": 0.7,
+   "margin": 0.3,
+   "emitted": 86,
+   "correct": 72,
+   "precision": 0.8372093023255814,
+   "recalled": 67,
+   "recall": 0.5,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.5,
+   "action": 0.7,
+   "margin": 0.5,
+   "emitted": 82,
+   "correct": 69,
+   "precision": 0.8414634146341463,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.5,
+   "action": 0.7,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.5,
+   "action": 0.8,
+   "margin": 0.1,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.5,
+   "action": 0.8,
+   "margin": 0.2,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.5,
+   "action": 0.8,
+   "margin": 0.3,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.5,
+   "action": 0.8,
+   "margin": 0.5,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.5,
+   "action": 0.8,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.5,
+   "action": 0.9,
+   "margin": 0.1,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.5,
+   "action": 0.9,
+   "margin": 0.2,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.5,
+   "action": 0.9,
+   "margin": 0.3,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.5,
+   "action": 0.9,
+   "margin": 0.5,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.5,
+   "action": 0.9,
+   "margin": 0.7,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.6,
+   "action": 0.4,
+   "margin": 0.1,
+   "emitted": 133,
+   "correct": 103,
+   "precision": 0.7744360902255639,
+   "recalled": 94,
+   "recall": 0.7014925373134329,
+   "false_activations": 30
+  },
+  {
+   "threat": 0.6,
+   "action": 0.4,
+   "margin": 0.2,
+   "emitted": 125,
+   "correct": 97,
+   "precision": 0.776,
+   "recalled": 86,
+   "recall": 0.6417910447761194,
+   "false_activations": 28
+  },
+  {
+   "threat": 0.6,
+   "action": 0.4,
+   "margin": 0.3,
+   "emitted": 115,
+   "correct": 90,
+   "precision": 0.782608695652174,
+   "recalled": 80,
+   "recall": 0.5970149253731343,
+   "false_activations": 25
+  },
+  {
+   "threat": 0.6,
+   "action": 0.4,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.6,
+   "action": 0.4,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.6,
+   "action": 0.5,
+   "margin": 0.1,
+   "emitted": 133,
+   "correct": 103,
+   "precision": 0.7744360902255639,
+   "recalled": 94,
+   "recall": 0.7014925373134329,
+   "false_activations": 30
+  },
+  {
+   "threat": 0.6,
+   "action": 0.5,
+   "margin": 0.2,
+   "emitted": 125,
+   "correct": 97,
+   "precision": 0.776,
+   "recalled": 86,
+   "recall": 0.6417910447761194,
+   "false_activations": 28
+  },
+  {
+   "threat": 0.6,
+   "action": 0.5,
+   "margin": 0.3,
+   "emitted": 115,
+   "correct": 90,
+   "precision": 0.782608695652174,
+   "recalled": 80,
+   "recall": 0.5970149253731343,
+   "false_activations": 25
+  },
+  {
+   "threat": 0.6,
+   "action": 0.5,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.6,
+   "action": 0.5,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.6,
+   "action": 0.6,
+   "margin": 0.1,
+   "emitted": 120,
+   "correct": 93,
+   "precision": 0.775,
+   "recalled": 83,
+   "recall": 0.6194029850746269,
+   "false_activations": 27
+  },
+  {
+   "threat": 0.6,
+   "action": 0.6,
+   "margin": 0.2,
+   "emitted": 120,
+   "correct": 93,
+   "precision": 0.775,
+   "recalled": 83,
+   "recall": 0.6194029850746269,
+   "false_activations": 27
+  },
+  {
+   "threat": 0.6,
+   "action": 0.6,
+   "margin": 0.3,
+   "emitted": 114,
+   "correct": 89,
+   "precision": 0.7807017543859649,
+   "recalled": 79,
+   "recall": 0.5895522388059702,
+   "false_activations": 25
+  },
+  {
+   "threat": 0.6,
+   "action": 0.6,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.6,
+   "action": 0.6,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.6,
+   "action": 0.7,
+   "margin": 0.1,
+   "emitted": 86,
+   "correct": 72,
+   "precision": 0.8372093023255814,
+   "recalled": 67,
+   "recall": 0.5,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.6,
+   "action": 0.7,
+   "margin": 0.2,
+   "emitted": 86,
+   "correct": 72,
+   "precision": 0.8372093023255814,
+   "recalled": 67,
+   "recall": 0.5,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.6,
+   "action": 0.7,
+   "margin": 0.3,
+   "emitted": 86,
+   "correct": 72,
+   "precision": 0.8372093023255814,
+   "recalled": 67,
+   "recall": 0.5,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.6,
+   "action": 0.7,
+   "margin": 0.5,
+   "emitted": 82,
+   "correct": 69,
+   "precision": 0.8414634146341463,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.6,
+   "action": 0.7,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.6,
+   "action": 0.8,
+   "margin": 0.1,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.6,
+   "action": 0.8,
+   "margin": 0.2,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.6,
+   "action": 0.8,
+   "margin": 0.3,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.6,
+   "action": 0.8,
+   "margin": 0.5,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.6,
+   "action": 0.8,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.6,
+   "action": 0.9,
+   "margin": 0.1,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.6,
+   "action": 0.9,
+   "margin": 0.2,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.6,
+   "action": 0.9,
+   "margin": 0.3,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.6,
+   "action": 0.9,
+   "margin": 0.5,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.6,
+   "action": 0.9,
+   "margin": 0.7,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.7,
+   "action": 0.4,
+   "margin": 0.1,
+   "emitted": 133,
+   "correct": 103,
+   "precision": 0.7744360902255639,
+   "recalled": 94,
+   "recall": 0.7014925373134329,
+   "false_activations": 30
+  },
+  {
+   "threat": 0.7,
+   "action": 0.4,
+   "margin": 0.2,
+   "emitted": 125,
+   "correct": 97,
+   "precision": 0.776,
+   "recalled": 86,
+   "recall": 0.6417910447761194,
+   "false_activations": 28
+  },
+  {
+   "threat": 0.7,
+   "action": 0.4,
+   "margin": 0.3,
+   "emitted": 113,
+   "correct": 90,
+   "precision": 0.7964601769911505,
+   "recalled": 80,
+   "recall": 0.5970149253731343,
+   "false_activations": 23
+  },
+  {
+   "threat": 0.7,
+   "action": 0.4,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.7,
+   "action": 0.4,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.7,
+   "action": 0.5,
+   "margin": 0.1,
+   "emitted": 133,
+   "correct": 103,
+   "precision": 0.7744360902255639,
+   "recalled": 94,
+   "recall": 0.7014925373134329,
+   "false_activations": 30
+  },
+  {
+   "threat": 0.7,
+   "action": 0.5,
+   "margin": 0.2,
+   "emitted": 125,
+   "correct": 97,
+   "precision": 0.776,
+   "recalled": 86,
+   "recall": 0.6417910447761194,
+   "false_activations": 28
+  },
+  {
+   "threat": 0.7,
+   "action": 0.5,
+   "margin": 0.3,
+   "emitted": 113,
+   "correct": 90,
+   "precision": 0.7964601769911505,
+   "recalled": 80,
+   "recall": 0.5970149253731343,
+   "false_activations": 23
+  },
+  {
+   "threat": 0.7,
+   "action": 0.5,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.7,
+   "action": 0.5,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.7,
+   "action": 0.6,
+   "margin": 0.1,
+   "emitted": 120,
+   "correct": 93,
+   "precision": 0.775,
+   "recalled": 83,
+   "recall": 0.6194029850746269,
+   "false_activations": 27
+  },
+  {
+   "threat": 0.7,
+   "action": 0.6,
+   "margin": 0.2,
+   "emitted": 120,
+   "correct": 93,
+   "precision": 0.775,
+   "recalled": 83,
+   "recall": 0.6194029850746269,
+   "false_activations": 27
+  },
+  {
+   "threat": 0.7,
+   "action": 0.6,
+   "margin": 0.3,
+   "emitted": 112,
+   "correct": 89,
+   "precision": 0.7946428571428571,
+   "recalled": 79,
+   "recall": 0.5895522388059702,
+   "false_activations": 23
+  },
+  {
+   "threat": 0.7,
+   "action": 0.6,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.7,
+   "action": 0.6,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.7,
+   "action": 0.7,
+   "margin": 0.1,
+   "emitted": 86,
+   "correct": 72,
+   "precision": 0.8372093023255814,
+   "recalled": 67,
+   "recall": 0.5,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.7,
+   "action": 0.7,
+   "margin": 0.2,
+   "emitted": 86,
+   "correct": 72,
+   "precision": 0.8372093023255814,
+   "recalled": 67,
+   "recall": 0.5,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.7,
+   "action": 0.7,
+   "margin": 0.3,
+   "emitted": 86,
+   "correct": 72,
+   "precision": 0.8372093023255814,
+   "recalled": 67,
+   "recall": 0.5,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.7,
+   "action": 0.7,
+   "margin": 0.5,
+   "emitted": 82,
+   "correct": 69,
+   "precision": 0.8414634146341463,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.7,
+   "action": 0.7,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.7,
+   "action": 0.8,
+   "margin": 0.1,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.7,
+   "action": 0.8,
+   "margin": 0.2,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.7,
+   "action": 0.8,
+   "margin": 0.3,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.7,
+   "action": 0.8,
+   "margin": 0.5,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.7,
+   "action": 0.8,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.7,
+   "action": 0.9,
+   "margin": 0.1,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.7,
+   "action": 0.9,
+   "margin": 0.2,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.7,
+   "action": 0.9,
+   "margin": 0.3,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.7,
+   "action": 0.9,
+   "margin": 0.5,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.7,
+   "action": 0.9,
+   "margin": 0.7,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.8,
+   "action": 0.4,
+   "margin": 0.1,
+   "emitted": 127,
+   "correct": 102,
+   "precision": 0.8031496062992126,
+   "recalled": 93,
+   "recall": 0.6940298507462687,
+   "false_activations": 25
+  },
+  {
+   "threat": 0.8,
+   "action": 0.4,
+   "margin": 0.2,
+   "emitted": 119,
+   "correct": 96,
+   "precision": 0.8067226890756303,
+   "recalled": 85,
+   "recall": 0.6343283582089553,
+   "false_activations": 23
+  },
+  {
+   "threat": 0.8,
+   "action": 0.4,
+   "margin": 0.3,
+   "emitted": 109,
+   "correct": 89,
+   "precision": 0.8165137614678899,
+   "recalled": 79,
+   "recall": 0.5895522388059702,
+   "false_activations": 20
+  },
+  {
+   "threat": 0.8,
+   "action": 0.4,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.8,
+   "action": 0.4,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.8,
+   "action": 0.5,
+   "margin": 0.1,
+   "emitted": 127,
+   "correct": 102,
+   "precision": 0.8031496062992126,
+   "recalled": 93,
+   "recall": 0.6940298507462687,
+   "false_activations": 25
+  },
+  {
+   "threat": 0.8,
+   "action": 0.5,
+   "margin": 0.2,
+   "emitted": 119,
+   "correct": 96,
+   "precision": 0.8067226890756303,
+   "recalled": 85,
+   "recall": 0.6343283582089553,
+   "false_activations": 23
+  },
+  {
+   "threat": 0.8,
+   "action": 0.5,
+   "margin": 0.3,
+   "emitted": 109,
+   "correct": 89,
+   "precision": 0.8165137614678899,
+   "recalled": 79,
+   "recall": 0.5895522388059702,
+   "false_activations": 20
+  },
+  {
+   "threat": 0.8,
+   "action": 0.5,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.8,
+   "action": 0.5,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.8,
+   "action": 0.6,
+   "margin": 0.1,
+   "emitted": 115,
+   "correct": 92,
+   "precision": 0.8,
+   "recalled": 82,
+   "recall": 0.6119402985074627,
+   "false_activations": 23
+  },
+  {
+   "threat": 0.8,
+   "action": 0.6,
+   "margin": 0.2,
+   "emitted": 115,
+   "correct": 92,
+   "precision": 0.8,
+   "recalled": 82,
+   "recall": 0.6119402985074627,
+   "false_activations": 23
+  },
+  {
+   "threat": 0.8,
+   "action": 0.6,
+   "margin": 0.3,
+   "emitted": 108,
+   "correct": 88,
+   "precision": 0.8148148148148148,
+   "recalled": 78,
+   "recall": 0.582089552238806,
+   "false_activations": 20
+  },
+  {
+   "threat": 0.8,
+   "action": 0.6,
+   "margin": 0.5,
+   "emitted": 83,
+   "correct": 70,
+   "precision": 0.8433734939759037,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.8,
+   "action": 0.6,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.8,
+   "action": 0.7,
+   "margin": 0.1,
+   "emitted": 84,
+   "correct": 71,
+   "precision": 0.8452380952380952,
+   "recalled": 66,
+   "recall": 0.4925373134328358,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.8,
+   "action": 0.7,
+   "margin": 0.2,
+   "emitted": 84,
+   "correct": 71,
+   "precision": 0.8452380952380952,
+   "recalled": 66,
+   "recall": 0.4925373134328358,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.8,
+   "action": 0.7,
+   "margin": 0.3,
+   "emitted": 84,
+   "correct": 71,
+   "precision": 0.8452380952380952,
+   "recalled": 66,
+   "recall": 0.4925373134328358,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.8,
+   "action": 0.7,
+   "margin": 0.5,
+   "emitted": 82,
+   "correct": 69,
+   "precision": 0.8414634146341463,
+   "recalled": 62,
+   "recall": 0.4626865671641791,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.8,
+   "action": 0.7,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.8,
+   "action": 0.8,
+   "margin": 0.1,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.8,
+   "action": 0.8,
+   "margin": 0.2,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.8,
+   "action": 0.8,
+   "margin": 0.3,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.8,
+   "action": 0.8,
+   "margin": 0.5,
+   "emitted": 56,
+   "correct": 48,
+   "precision": 0.8571428571428571,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.8,
+   "action": 0.8,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.8,
+   "action": 0.9,
+   "margin": 0.1,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.8,
+   "action": 0.9,
+   "margin": 0.2,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.8,
+   "action": 0.9,
+   "margin": 0.3,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.8,
+   "action": 0.9,
+   "margin": 0.5,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.8,
+   "action": 0.9,
+   "margin": 0.7,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.9,
+   "action": 0.4,
+   "margin": 0.1,
+   "emitted": 114,
+   "correct": 94,
+   "precision": 0.8245614035087719,
+   "recalled": 84,
+   "recall": 0.6268656716417911,
+   "false_activations": 20
+  },
+  {
+   "threat": 0.9,
+   "action": 0.4,
+   "margin": 0.2,
+   "emitted": 110,
+   "correct": 91,
+   "precision": 0.8272727272727273,
+   "recalled": 80,
+   "recall": 0.5970149253731343,
+   "false_activations": 19
+  },
+  {
+   "threat": 0.9,
+   "action": 0.4,
+   "margin": 0.3,
+   "emitted": 102,
+   "correct": 85,
+   "precision": 0.8333333333333334,
+   "recalled": 75,
+   "recall": 0.5597014925373134,
+   "false_activations": 17
+  },
+  {
+   "threat": 0.9,
+   "action": 0.4,
+   "margin": 0.5,
+   "emitted": 80,
+   "correct": 67,
+   "precision": 0.8375,
+   "recalled": 59,
+   "recall": 0.44029850746268656,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.9,
+   "action": 0.4,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.9,
+   "action": 0.5,
+   "margin": 0.1,
+   "emitted": 114,
+   "correct": 94,
+   "precision": 0.8245614035087719,
+   "recalled": 84,
+   "recall": 0.6268656716417911,
+   "false_activations": 20
+  },
+  {
+   "threat": 0.9,
+   "action": 0.5,
+   "margin": 0.2,
+   "emitted": 110,
+   "correct": 91,
+   "precision": 0.8272727272727273,
+   "recalled": 80,
+   "recall": 0.5970149253731343,
+   "false_activations": 19
+  },
+  {
+   "threat": 0.9,
+   "action": 0.5,
+   "margin": 0.3,
+   "emitted": 102,
+   "correct": 85,
+   "precision": 0.8333333333333334,
+   "recalled": 75,
+   "recall": 0.5597014925373134,
+   "false_activations": 17
+  },
+  {
+   "threat": 0.9,
+   "action": 0.5,
+   "margin": 0.5,
+   "emitted": 80,
+   "correct": 67,
+   "precision": 0.8375,
+   "recalled": 59,
+   "recall": 0.44029850746268656,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.9,
+   "action": 0.5,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.9,
+   "action": 0.6,
+   "margin": 0.1,
+   "emitted": 105,
+   "correct": 86,
+   "precision": 0.819047619047619,
+   "recalled": 76,
+   "recall": 0.5671641791044776,
+   "false_activations": 19
+  },
+  {
+   "threat": 0.9,
+   "action": 0.6,
+   "margin": 0.2,
+   "emitted": 105,
+   "correct": 86,
+   "precision": 0.819047619047619,
+   "recalled": 76,
+   "recall": 0.5671641791044776,
+   "false_activations": 19
+  },
+  {
+   "threat": 0.9,
+   "action": 0.6,
+   "margin": 0.3,
+   "emitted": 100,
+   "correct": 83,
+   "precision": 0.83,
+   "recalled": 73,
+   "recall": 0.5447761194029851,
+   "false_activations": 17
+  },
+  {
+   "threat": 0.9,
+   "action": 0.6,
+   "margin": 0.5,
+   "emitted": 80,
+   "correct": 67,
+   "precision": 0.8375,
+   "recalled": 59,
+   "recall": 0.44029850746268656,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.9,
+   "action": 0.6,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.9,
+   "action": 0.7,
+   "margin": 0.1,
+   "emitted": 80,
+   "correct": 67,
+   "precision": 0.8375,
+   "recalled": 61,
+   "recall": 0.4552238805970149,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.9,
+   "action": 0.7,
+   "margin": 0.2,
+   "emitted": 80,
+   "correct": 67,
+   "precision": 0.8375,
+   "recalled": 61,
+   "recall": 0.4552238805970149,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.9,
+   "action": 0.7,
+   "margin": 0.3,
+   "emitted": 80,
+   "correct": 67,
+   "precision": 0.8375,
+   "recalled": 61,
+   "recall": 0.4552238805970149,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.9,
+   "action": 0.7,
+   "margin": 0.5,
+   "emitted": 79,
+   "correct": 66,
+   "precision": 0.8354430379746836,
+   "recalled": 59,
+   "recall": 0.44029850746268656,
+   "false_activations": 13
+  },
+  {
+   "threat": 0.9,
+   "action": 0.7,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.9,
+   "action": 0.8,
+   "margin": 0.1,
+   "emitted": 54,
+   "correct": 47,
+   "precision": 0.8703703703703703,
+   "recalled": 43,
+   "recall": 0.3208955223880597,
+   "false_activations": 7
+  },
+  {
+   "threat": 0.9,
+   "action": 0.8,
+   "margin": 0.2,
+   "emitted": 54,
+   "correct": 47,
+   "precision": 0.8703703703703703,
+   "recalled": 43,
+   "recall": 0.3208955223880597,
+   "false_activations": 7
+  },
+  {
+   "threat": 0.9,
+   "action": 0.8,
+   "margin": 0.3,
+   "emitted": 54,
+   "correct": 47,
+   "precision": 0.8703703703703703,
+   "recalled": 43,
+   "recall": 0.3208955223880597,
+   "false_activations": 7
+  },
+  {
+   "threat": 0.9,
+   "action": 0.8,
+   "margin": 0.5,
+   "emitted": 54,
+   "correct": 47,
+   "precision": 0.8703703703703703,
+   "recalled": 43,
+   "recall": 0.3208955223880597,
+   "false_activations": 7
+  },
+  {
+   "threat": 0.9,
+   "action": 0.8,
+   "margin": 0.7,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 36,
+   "recall": 0.26865671641791045,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.9,
+   "action": 0.9,
+   "margin": 0.1,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.9,
+   "action": 0.9,
+   "margin": 0.2,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.9,
+   "action": 0.9,
+   "margin": 0.3,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.9,
+   "action": 0.9,
+   "margin": 0.5,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.9,
+   "action": 0.9,
+   "margin": 0.7,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.95,
+   "action": 0.4,
+   "margin": 0.1,
+   "emitted": 104,
+   "correct": 90,
+   "precision": 0.8653846153846154,
+   "recalled": 77,
+   "recall": 0.5746268656716418,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.95,
+   "action": 0.4,
+   "margin": 0.2,
+   "emitted": 99,
+   "correct": 87,
+   "precision": 0.8787878787878788,
+   "recalled": 74,
+   "recall": 0.5522388059701493,
+   "false_activations": 12
+  },
+  {
+   "threat": 0.95,
+   "action": 0.4,
+   "margin": 0.3,
+   "emitted": 92,
+   "correct": 81,
+   "precision": 0.8804347826086957,
+   "recalled": 70,
+   "recall": 0.5223880597014925,
+   "false_activations": 11
+  },
+  {
+   "threat": 0.95,
+   "action": 0.4,
+   "margin": 0.5,
+   "emitted": 72,
+   "correct": 64,
+   "precision": 0.8888888888888888,
+   "recalled": 56,
+   "recall": 0.417910447761194,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.95,
+   "action": 0.4,
+   "margin": 0.7,
+   "emitted": 43,
+   "correct": 38,
+   "precision": 0.8837209302325582,
+   "recalled": 35,
+   "recall": 0.26119402985074625,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.95,
+   "action": 0.5,
+   "margin": 0.1,
+   "emitted": 104,
+   "correct": 90,
+   "precision": 0.8653846153846154,
+   "recalled": 77,
+   "recall": 0.5746268656716418,
+   "false_activations": 14
+  },
+  {
+   "threat": 0.95,
+   "action": 0.5,
+   "margin": 0.2,
+   "emitted": 99,
+   "correct": 87,
+   "precision": 0.8787878787878788,
+   "recalled": 74,
+   "recall": 0.5522388059701493,
+   "false_activations": 12
+  },
+  {
+   "threat": 0.95,
+   "action": 0.5,
+   "margin": 0.3,
+   "emitted": 92,
+   "correct": 81,
+   "precision": 0.8804347826086957,
+   "recalled": 70,
+   "recall": 0.5223880597014925,
+   "false_activations": 11
+  },
+  {
+   "threat": 0.95,
+   "action": 0.5,
+   "margin": 0.5,
+   "emitted": 72,
+   "correct": 64,
+   "precision": 0.8888888888888888,
+   "recalled": 56,
+   "recall": 0.417910447761194,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.95,
+   "action": 0.5,
+   "margin": 0.7,
+   "emitted": 43,
+   "correct": 38,
+   "precision": 0.8837209302325582,
+   "recalled": 35,
+   "recall": 0.26119402985074625,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.95,
+   "action": 0.6,
+   "margin": 0.1,
+   "emitted": 94,
+   "correct": 82,
+   "precision": 0.8723404255319149,
+   "recalled": 70,
+   "recall": 0.5223880597014925,
+   "false_activations": 12
+  },
+  {
+   "threat": 0.95,
+   "action": 0.6,
+   "margin": 0.2,
+   "emitted": 94,
+   "correct": 82,
+   "precision": 0.8723404255319149,
+   "recalled": 70,
+   "recall": 0.5223880597014925,
+   "false_activations": 12
+  },
+  {
+   "threat": 0.95,
+   "action": 0.6,
+   "margin": 0.3,
+   "emitted": 91,
+   "correct": 80,
+   "precision": 0.8791208791208791,
+   "recalled": 69,
+   "recall": 0.5149253731343284,
+   "false_activations": 11
+  },
+  {
+   "threat": 0.95,
+   "action": 0.6,
+   "margin": 0.5,
+   "emitted": 72,
+   "correct": 64,
+   "precision": 0.8888888888888888,
+   "recalled": 56,
+   "recall": 0.417910447761194,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.95,
+   "action": 0.6,
+   "margin": 0.7,
+   "emitted": 43,
+   "correct": 38,
+   "precision": 0.8837209302325582,
+   "recalled": 35,
+   "recall": 0.26119402985074625,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.95,
+   "action": 0.7,
+   "margin": 0.1,
+   "emitted": 74,
+   "correct": 65,
+   "precision": 0.8783783783783784,
+   "recalled": 58,
+   "recall": 0.43283582089552236,
+   "false_activations": 9
+  },
+  {
+   "threat": 0.95,
+   "action": 0.7,
+   "margin": 0.2,
+   "emitted": 74,
+   "correct": 65,
+   "precision": 0.8783783783783784,
+   "recalled": 58,
+   "recall": 0.43283582089552236,
+   "false_activations": 9
+  },
+  {
+   "threat": 0.95,
+   "action": 0.7,
+   "margin": 0.3,
+   "emitted": 74,
+   "correct": 65,
+   "precision": 0.8783783783783784,
+   "recalled": 58,
+   "recall": 0.43283582089552236,
+   "false_activations": 9
+  },
+  {
+   "threat": 0.95,
+   "action": 0.7,
+   "margin": 0.5,
+   "emitted": 71,
+   "correct": 63,
+   "precision": 0.8873239436619719,
+   "recalled": 56,
+   "recall": 0.417910447761194,
+   "false_activations": 8
+  },
+  {
+   "threat": 0.95,
+   "action": 0.7,
+   "margin": 0.7,
+   "emitted": 43,
+   "correct": 38,
+   "precision": 0.8837209302325582,
+   "recalled": 35,
+   "recall": 0.26119402985074625,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.95,
+   "action": 0.8,
+   "margin": 0.1,
+   "emitted": 51,
+   "correct": 45,
+   "precision": 0.8823529411764706,
+   "recalled": 41,
+   "recall": 0.30597014925373134,
+   "false_activations": 6
+  },
+  {
+   "threat": 0.95,
+   "action": 0.8,
+   "margin": 0.2,
+   "emitted": 51,
+   "correct": 45,
+   "precision": 0.8823529411764706,
+   "recalled": 41,
+   "recall": 0.30597014925373134,
+   "false_activations": 6
+  },
+  {
+   "threat": 0.95,
+   "action": 0.8,
+   "margin": 0.3,
+   "emitted": 51,
+   "correct": 45,
+   "precision": 0.8823529411764706,
+   "recalled": 41,
+   "recall": 0.30597014925373134,
+   "false_activations": 6
+  },
+  {
+   "threat": 0.95,
+   "action": 0.8,
+   "margin": 0.5,
+   "emitted": 51,
+   "correct": 45,
+   "precision": 0.8823529411764706,
+   "recalled": 41,
+   "recall": 0.30597014925373134,
+   "false_activations": 6
+  },
+  {
+   "threat": 0.95,
+   "action": 0.8,
+   "margin": 0.7,
+   "emitted": 43,
+   "correct": 38,
+   "precision": 0.8837209302325582,
+   "recalled": 35,
+   "recall": 0.26119402985074625,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.95,
+   "action": 0.9,
+   "margin": 0.1,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.95,
+   "action": 0.9,
+   "margin": 0.2,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.95,
+   "action": 0.9,
+   "margin": 0.3,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.95,
+   "action": 0.9,
+   "margin": 0.5,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.95,
+   "action": 0.9,
+   "margin": 0.7,
+   "emitted": 13,
+   "correct": 11,
+   "precision": 0.8461538461538461,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.98,
+   "action": 0.4,
+   "margin": 0.1,
+   "emitted": 76,
+   "correct": 71,
+   "precision": 0.9342105263157895,
+   "recalled": 60,
+   "recall": 0.44776119402985076,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.98,
+   "action": 0.4,
+   "margin": 0.2,
+   "emitted": 74,
+   "correct": 69,
+   "precision": 0.9324324324324325,
+   "recalled": 60,
+   "recall": 0.44776119402985076,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.98,
+   "action": 0.4,
+   "margin": 0.3,
+   "emitted": 68,
+   "correct": 63,
+   "precision": 0.9264705882352942,
+   "recalled": 55,
+   "recall": 0.41044776119402987,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.98,
+   "action": 0.4,
+   "margin": 0.5,
+   "emitted": 50,
+   "correct": 46,
+   "precision": 0.92,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.98,
+   "action": 0.4,
+   "margin": 0.7,
+   "emitted": 32,
+   "correct": 30,
+   "precision": 0.9375,
+   "recalled": 28,
+   "recall": 0.208955223880597,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.98,
+   "action": 0.5,
+   "margin": 0.1,
+   "emitted": 76,
+   "correct": 71,
+   "precision": 0.9342105263157895,
+   "recalled": 60,
+   "recall": 0.44776119402985076,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.98,
+   "action": 0.5,
+   "margin": 0.2,
+   "emitted": 74,
+   "correct": 69,
+   "precision": 0.9324324324324325,
+   "recalled": 60,
+   "recall": 0.44776119402985076,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.98,
+   "action": 0.5,
+   "margin": 0.3,
+   "emitted": 68,
+   "correct": 63,
+   "precision": 0.9264705882352942,
+   "recalled": 55,
+   "recall": 0.41044776119402987,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.98,
+   "action": 0.5,
+   "margin": 0.5,
+   "emitted": 50,
+   "correct": 46,
+   "precision": 0.92,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.98,
+   "action": 0.5,
+   "margin": 0.7,
+   "emitted": 32,
+   "correct": 30,
+   "precision": 0.9375,
+   "recalled": 28,
+   "recall": 0.208955223880597,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.98,
+   "action": 0.6,
+   "margin": 0.1,
+   "emitted": 71,
+   "correct": 66,
+   "precision": 0.9295774647887324,
+   "recalled": 57,
+   "recall": 0.4253731343283582,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.98,
+   "action": 0.6,
+   "margin": 0.2,
+   "emitted": 71,
+   "correct": 66,
+   "precision": 0.9295774647887324,
+   "recalled": 57,
+   "recall": 0.4253731343283582,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.98,
+   "action": 0.6,
+   "margin": 0.3,
+   "emitted": 68,
+   "correct": 63,
+   "precision": 0.9264705882352942,
+   "recalled": 55,
+   "recall": 0.41044776119402987,
+   "false_activations": 5
+  },
+  {
+   "threat": 0.98,
+   "action": 0.6,
+   "margin": 0.5,
+   "emitted": 50,
+   "correct": 46,
+   "precision": 0.92,
+   "recalled": 44,
+   "recall": 0.3283582089552239,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.98,
+   "action": 0.6,
+   "margin": 0.7,
+   "emitted": 32,
+   "correct": 30,
+   "precision": 0.9375,
+   "recalled": 28,
+   "recall": 0.208955223880597,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.98,
+   "action": 0.7,
+   "margin": 0.1,
+   "emitted": 52,
+   "correct": 48,
+   "precision": 0.9230769230769231,
+   "recalled": 45,
+   "recall": 0.3358208955223881,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.98,
+   "action": 0.7,
+   "margin": 0.2,
+   "emitted": 52,
+   "correct": 48,
+   "precision": 0.9230769230769231,
+   "recalled": 45,
+   "recall": 0.3358208955223881,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.98,
+   "action": 0.7,
+   "margin": 0.3,
+   "emitted": 52,
+   "correct": 48,
+   "precision": 0.9230769230769231,
+   "recalled": 45,
+   "recall": 0.3358208955223881,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.98,
+   "action": 0.7,
+   "margin": 0.5,
+   "emitted": 50,
+   "correct": 46,
+   "precision": 0.92,
+   "recalled": 43,
+   "recall": 0.3208955223880597,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.98,
+   "action": 0.7,
+   "margin": 0.7,
+   "emitted": 32,
+   "correct": 30,
+   "precision": 0.9375,
+   "recalled": 28,
+   "recall": 0.208955223880597,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.98,
+   "action": 0.8,
+   "margin": 0.1,
+   "emitted": 38,
+   "correct": 35,
+   "precision": 0.9210526315789473,
+   "recalled": 32,
+   "recall": 0.23880597014925373,
+   "false_activations": 3
+  },
+  {
+   "threat": 0.98,
+   "action": 0.8,
+   "margin": 0.2,
+   "emitted": 38,
+   "correct": 35,
+   "precision": 0.9210526315789473,
+   "recalled": 32,
+   "recall": 0.23880597014925373,
+   "false_activations": 3
+  },
+  {
+   "threat": 0.98,
+   "action": 0.8,
+   "margin": 0.3,
+   "emitted": 38,
+   "correct": 35,
+   "precision": 0.9210526315789473,
+   "recalled": 32,
+   "recall": 0.23880597014925373,
+   "false_activations": 3
+  },
+  {
+   "threat": 0.98,
+   "action": 0.8,
+   "margin": 0.5,
+   "emitted": 38,
+   "correct": 35,
+   "precision": 0.9210526315789473,
+   "recalled": 32,
+   "recall": 0.23880597014925373,
+   "false_activations": 3
+  },
+  {
+   "threat": 0.98,
+   "action": 0.8,
+   "margin": 0.7,
+   "emitted": 32,
+   "correct": 30,
+   "precision": 0.9375,
+   "recalled": 28,
+   "recall": 0.208955223880597,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.98,
+   "action": 0.9,
+   "margin": 0.1,
+   "emitted": 12,
+   "correct": 11,
+   "precision": 0.9166666666666666,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.98,
+   "action": 0.9,
+   "margin": 0.2,
+   "emitted": 12,
+   "correct": 11,
+   "precision": 0.9166666666666666,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.98,
+   "action": 0.9,
+   "margin": 0.3,
+   "emitted": 12,
+   "correct": 11,
+   "precision": 0.9166666666666666,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.98,
+   "action": 0.9,
+   "margin": 0.5,
+   "emitted": 12,
+   "correct": 11,
+   "precision": 0.9166666666666666,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.98,
+   "action": 0.9,
+   "margin": 0.7,
+   "emitted": 12,
+   "correct": 11,
+   "precision": 0.9166666666666666,
+   "recalled": 10,
+   "recall": 0.07462686567164178,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.4,
+   "margin": 0.1,
+   "emitted": 51,
+   "correct": 47,
+   "precision": 0.9215686274509803,
+   "recalled": 35,
+   "recall": 0.26119402985074625,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.99,
+   "action": 0.4,
+   "margin": 0.2,
+   "emitted": 47,
+   "correct": 43,
+   "precision": 0.9148936170212766,
+   "recalled": 34,
+   "recall": 0.2537313432835821,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.99,
+   "action": 0.4,
+   "margin": 0.3,
+   "emitted": 45,
+   "correct": 41,
+   "precision": 0.9111111111111111,
+   "recalled": 33,
+   "recall": 0.2462686567164179,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.99,
+   "action": 0.4,
+   "margin": 0.5,
+   "emitted": 37,
+   "correct": 34,
+   "precision": 0.918918918918919,
+   "recalled": 31,
+   "recall": 0.23134328358208955,
+   "false_activations": 3
+  },
+  {
+   "threat": 0.99,
+   "action": 0.4,
+   "margin": 0.7,
+   "emitted": 17,
+   "correct": 16,
+   "precision": 0.9411764705882353,
+   "recalled": 15,
+   "recall": 0.11194029850746269,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.5,
+   "margin": 0.1,
+   "emitted": 51,
+   "correct": 47,
+   "precision": 0.9215686274509803,
+   "recalled": 35,
+   "recall": 0.26119402985074625,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.99,
+   "action": 0.5,
+   "margin": 0.2,
+   "emitted": 47,
+   "correct": 43,
+   "precision": 0.9148936170212766,
+   "recalled": 34,
+   "recall": 0.2537313432835821,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.99,
+   "action": 0.5,
+   "margin": 0.3,
+   "emitted": 45,
+   "correct": 41,
+   "precision": 0.9111111111111111,
+   "recalled": 33,
+   "recall": 0.2462686567164179,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.99,
+   "action": 0.5,
+   "margin": 0.5,
+   "emitted": 37,
+   "correct": 34,
+   "precision": 0.918918918918919,
+   "recalled": 31,
+   "recall": 0.23134328358208955,
+   "false_activations": 3
+  },
+  {
+   "threat": 0.99,
+   "action": 0.5,
+   "margin": 0.7,
+   "emitted": 17,
+   "correct": 16,
+   "precision": 0.9411764705882353,
+   "recalled": 15,
+   "recall": 0.11194029850746269,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.6,
+   "margin": 0.1,
+   "emitted": 46,
+   "correct": 42,
+   "precision": 0.9130434782608695,
+   "recalled": 33,
+   "recall": 0.2462686567164179,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.99,
+   "action": 0.6,
+   "margin": 0.2,
+   "emitted": 46,
+   "correct": 42,
+   "precision": 0.9130434782608695,
+   "recalled": 33,
+   "recall": 0.2462686567164179,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.99,
+   "action": 0.6,
+   "margin": 0.3,
+   "emitted": 45,
+   "correct": 41,
+   "precision": 0.9111111111111111,
+   "recalled": 33,
+   "recall": 0.2462686567164179,
+   "false_activations": 4
+  },
+  {
+   "threat": 0.99,
+   "action": 0.6,
+   "margin": 0.5,
+   "emitted": 37,
+   "correct": 34,
+   "precision": 0.918918918918919,
+   "recalled": 31,
+   "recall": 0.23134328358208955,
+   "false_activations": 3
+  },
+  {
+   "threat": 0.99,
+   "action": 0.6,
+   "margin": 0.7,
+   "emitted": 17,
+   "correct": 16,
+   "precision": 0.9411764705882353,
+   "recalled": 15,
+   "recall": 0.11194029850746269,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.7,
+   "margin": 0.1,
+   "emitted": 36,
+   "correct": 34,
+   "precision": 0.9444444444444444,
+   "recalled": 31,
+   "recall": 0.23134328358208955,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.99,
+   "action": 0.7,
+   "margin": 0.2,
+   "emitted": 36,
+   "correct": 34,
+   "precision": 0.9444444444444444,
+   "recalled": 31,
+   "recall": 0.23134328358208955,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.99,
+   "action": 0.7,
+   "margin": 0.3,
+   "emitted": 36,
+   "correct": 34,
+   "precision": 0.9444444444444444,
+   "recalled": 31,
+   "recall": 0.23134328358208955,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.99,
+   "action": 0.7,
+   "margin": 0.5,
+   "emitted": 36,
+   "correct": 34,
+   "precision": 0.9444444444444444,
+   "recalled": 31,
+   "recall": 0.23134328358208955,
+   "false_activations": 2
+  },
+  {
+   "threat": 0.99,
+   "action": 0.7,
+   "margin": 0.7,
+   "emitted": 17,
+   "correct": 16,
+   "precision": 0.9411764705882353,
+   "recalled": 15,
+   "recall": 0.11194029850746269,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.8,
+   "margin": 0.1,
+   "emitted": 21,
+   "correct": 20,
+   "precision": 0.9523809523809523,
+   "recalled": 18,
+   "recall": 0.13432835820895522,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.8,
+   "margin": 0.2,
+   "emitted": 21,
+   "correct": 20,
+   "precision": 0.9523809523809523,
+   "recalled": 18,
+   "recall": 0.13432835820895522,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.8,
+   "margin": 0.3,
+   "emitted": 21,
+   "correct": 20,
+   "precision": 0.9523809523809523,
+   "recalled": 18,
+   "recall": 0.13432835820895522,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.8,
+   "margin": 0.5,
+   "emitted": 21,
+   "correct": 20,
+   "precision": 0.9523809523809523,
+   "recalled": 18,
+   "recall": 0.13432835820895522,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.8,
+   "margin": 0.7,
+   "emitted": 17,
+   "correct": 16,
+   "precision": 0.9411764705882353,
+   "recalled": 15,
+   "recall": 0.11194029850746269,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.9,
+   "margin": 0.1,
+   "emitted": 10,
+   "correct": 9,
+   "precision": 0.9,
+   "recalled": 8,
+   "recall": 0.05970149253731343,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.9,
+   "margin": 0.2,
+   "emitted": 10,
+   "correct": 9,
+   "precision": 0.9,
+   "recalled": 8,
+   "recall": 0.05970149253731343,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.9,
+   "margin": 0.3,
+   "emitted": 10,
+   "correct": 9,
+   "precision": 0.9,
+   "recalled": 8,
+   "recall": 0.05970149253731343,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.9,
+   "margin": 0.5,
+   "emitted": 10,
+   "correct": 9,
+   "precision": 0.9,
+   "recalled": 8,
+   "recall": 0.05970149253731343,
+   "false_activations": 1
+  },
+  {
+   "threat": 0.99,
+   "action": 0.9,
+   "margin": 0.7,
+   "emitted": 10,
+   "correct": 9,
+   "precision": 0.9,
+   "recalled": 8,
+   "recall": 0.05970149253731343,
+   "false_activations": 1
+  }
+ ],
+ "records": [
+  {
+   "scenario_id": 0,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.036,
+   "t_deadline": 1.036,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 1,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.20265215802645187,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 2,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.362,
+   "t_deadline": 1.362,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 3,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.712,
+   "t_deadline": 0.712,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 4,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.82800885787717,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 5,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.9420000000000001,
+   "t_deadline": 0.9420000000000001,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 6,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.994,
+   "t_deadline": 0.994,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 7,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.7564666379265934,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.005619334858424953,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 0.64
+   }
+  },
+  {
+   "scenario_id": 8,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.5760000000000001,
+   "t_deadline": 0.5760000000000001,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 9,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.526,
+   "t_deadline": 0.526,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 10,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.788,
+   "t_deadline": 0.788,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 11,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 12,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.892,
+   "t_deadline": 0.892,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 0.46
+   }
+  },
+  {
+   "scenario_id": 13,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.78,
+   "t_deadline": 0.78,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 14,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.3585256284490065,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 15,
+   "kind": "ambiguous",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.12102671980589523,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 16,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 1.005627669088518,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.009596365775593148,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 0.66
+   }
+  },
+  {
+   "scenario_id": 17,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.5762164665076146,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 18,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.20258344291505065,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 19,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.786,
+   "t_deadline": 0.786,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 20,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.6809441274766898,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 21,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.5002493424346806,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 22,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.41,
+   "t_deadline": 1.41,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 23,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 24,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.806,
+   "t_deadline": 0.806,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 25,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.668,
+   "t_deadline": 0.668,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": {
+    "action": "DODGE_RIGHT",
+    "t_s": 0.34
+   }
+  },
+  {
+   "scenario_id": 26,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.6199564921369077,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 27,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 2.4268646149013544,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.058649250762854946,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 28,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.1824078699871216,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 29,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.708,
+   "t_deadline": 0.708,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 30,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.32989894746161913,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 31,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.5762909325607258,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 32,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.44,
+   "t_deadline": 1.44,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 1.6
+   }
+  },
+  {
+   "scenario_id": 33,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.9897169891051117,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 34,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.34,
+   "t_deadline": 1.34,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 35,
+   "kind": "ambiguous",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0947749051437335,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 36,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.22,
+   "t_deadline": 1.22,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 0.6
+   }
+  },
+  {
+   "scenario_id": 37,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 38,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.642,
+   "t_deadline": 0.642,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": {
+    "action": "DODGE_RIGHT",
+    "t_s": 0.6
+   }
+  },
+  {
+   "scenario_id": 39,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.368,
+   "t_deadline": 1.368,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 40,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.1419213023437743,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 41,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.396,
+   "t_deadline": 0.396,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 42,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 2.216,
+   "t_deadline": 2.216,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 43,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.4162470935699101,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 44,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.6191959048812755,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 45,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.8920000000000001,
+   "t_deadline": 1.8920000000000001,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 1.2
+   }
+  },
+  {
+   "scenario_id": 46,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 47,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.38823075791307143,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 48,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.5105276872001833,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 49,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.6656125175530787,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 50,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.8771461252911702,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 51,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.686,
+   "t_deadline": 0.686,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 52,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.918,
+   "t_deadline": 0.918,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": {
+    "action": "DODGE_RIGHT",
+    "t_s": 0.5
+   }
+  },
+  {
+   "scenario_id": 53,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.9551418564569573,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 54,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.36105723994884725,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 55,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.03,
+   "t_deadline": 1.03,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 56,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.7751219218732295,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 57,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.5378530615237145,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 58,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.162,
+   "t_deadline": 1.162,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 59,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.6280000000000001,
+   "t_deadline": 1.6280000000000001,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 60,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.4151057442581181,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 61,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.2916637037559626,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 62,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.66,
+   "t_deadline": 0.66,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 63,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.5978935342100004,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 64,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.6865646335682932,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 65,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.378202042698971,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 66,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.6920000000000001,
+   "t_deadline": 0.6920000000000001,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 67,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.5149429041493522,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 68,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.354,
+   "t_deadline": 0.354,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 69,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.9294366857745411,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.017849034677876865,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 0.66
+   }
+  },
+  {
+   "scenario_id": 70,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.488,
+   "t_deadline": 1.488,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 71,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.7213723201772808,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.031125583085615985,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 72,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.8774172441437254,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 73,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.438,
+   "t_deadline": 0.438,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 74,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.018,
+   "t_deadline": 1.018,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": {
+    "action": "DODGE_RIGHT",
+    "t_s": 0.84
+   }
+  },
+  {
+   "scenario_id": 75,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 1.407390473710731,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.008758778820344738,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": {
+    "action": "DODGE_RIGHT",
+    "t_s": 0.7000000000000001
+   }
+  },
+  {
+   "scenario_id": 76,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.7325603239042177,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 77,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.43368702318788965,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 78,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.672,
+   "t_deadline": 0.672,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 79,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.102,
+   "t_deadline": 1.102,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 80,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 1.958405676698693,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.010909922199884084,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 81,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.962,
+   "t_deadline": 0.962,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 82,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.8258150047244689,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 83,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.8592329076333249,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 84,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.3536877240741148,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 85,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.9560000000000001,
+   "t_deadline": 0.9560000000000001,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 86,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.642,
+   "t_deadline": 0.642,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 87,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.836,
+   "t_deadline": 0.836,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 88,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.36010547629308504,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 89,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.974,
+   "t_deadline": 1.974,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 90,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 1.498392506247596,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.045145239042293187,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 91,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.75,
+   "t_deadline": 0.75,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 92,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.2585721521490912,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 0.86
+   }
+  },
+  {
+   "scenario_id": 93,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.6580000000000001,
+   "t_deadline": 1.6580000000000001,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 94,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.9083627351027013,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 95,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.6795210064612153,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.040357110247246114,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 96,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.844,
+   "t_deadline": 0.844,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 0.46
+   }
+  },
+  {
+   "scenario_id": 97,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.258,
+   "t_deadline": 1.258,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 98,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.598,
+   "t_deadline": 0.598,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 99,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.418,
+   "t_deadline": 0.418,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 100,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.608,
+   "t_deadline": 0.608,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": {
+    "action": "DODGE_RIGHT",
+    "t_s": 0.36
+   }
+  },
+  {
+   "scenario_id": 101,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.3738534058566344,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 102,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 103,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.524,
+   "t_deadline": 0.524,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 104,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 105,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.49,
+   "t_deadline": 0.49,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 106,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 1.0757306740654908,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.07453318069942827,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 107,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.7070670462484491,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 108,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.262,
+   "t_deadline": 1.262,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 109,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.724,
+   "t_deadline": 1.724,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 110,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.5132746311011505,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 111,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.492,
+   "t_deadline": 0.492,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 112,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.49,
+   "t_deadline": 1.49,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 113,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 2.1629359662504366,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.03414818645669232,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 114,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.6259049920099131,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 115,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.31553355621741713,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 116,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.66,
+   "t_deadline": 0.66,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 117,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.2987108286944032,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 118,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.9946388837404946,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 119,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.706,
+   "t_deadline": 0.706,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 120,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.9770753054348276,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 121,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 122,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 123,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.534,
+   "t_deadline": 0.534,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 124,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.8235835848156485,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0530122270926974,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 125,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.59,
+   "t_deadline": 1.59,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 126,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.8927276227182755,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 127,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.812401668007885,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 128,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.47000000000000003,
+   "t_deadline": 0.47000000000000003,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 129,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.7482796780176255,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 130,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.47400000000000003,
+   "t_deadline": 0.47400000000000003,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 131,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 132,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.976,
+   "t_deadline": 0.976,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 133,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.52,
+   "t_deadline": 0.52,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 134,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.618,
+   "t_deadline": 0.618,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 135,
+   "kind": "ambiguous",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.12022799615643819,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 136,
+   "kind": "ambiguous",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.08962291996613371,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 137,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.5112839186735062,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 138,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.33,
+   "t_deadline": 1.33,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 139,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 1.5800458527240162,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.060680056739108604,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 140,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.48,
+   "t_deadline": 1.48,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 0.7000000000000001
+   }
+  },
+  {
+   "scenario_id": 141,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.9219941802864486,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.007600557776410222,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 142,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.762881173172221,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 143,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.42920882488718715,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 144,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 145,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.4017133424044977,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 146,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.5455007155538584,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 147,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.9621233773420772,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.03770536992207586,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 148,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.6206705483910894,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0674484164872497,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 149,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 150,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.7543836258153788,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 151,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.594,
+   "t_deadline": 0.594,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 152,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.738,
+   "t_deadline": 0.738,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 153,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.96,
+   "t_deadline": 0.96,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 154,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.646,
+   "t_deadline": 0.646,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 155,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.5856486807532,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 156,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.37032732097044463,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 157,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 2.5140000000000002,
+   "t_deadline": 2.5140000000000002,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 158,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.354,
+   "t_deadline": 0.354,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 159,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.8,
+   "t_deadline": 0.8,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 160,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.508,
+   "t_deadline": 0.508,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 161,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.9799984239954261,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 162,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.5063441210889071,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.03234625403943722,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 163,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.896,
+   "t_deadline": 0.896,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 164,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.298,
+   "t_deadline": 1.298,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 165,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.5566904973251486,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 166,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.842,
+   "t_deadline": 0.842,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 167,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.544,
+   "t_deadline": 0.544,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 168,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.918,
+   "t_deadline": 0.918,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 169,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.7198949270588656,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 170,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.608,
+   "t_deadline": 1.608,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 2.16
+   }
+  },
+  {
+   "scenario_id": 171,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.38959055065716197,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 172,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.20985456544425735,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 173,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.736,
+   "t_deadline": 0.736,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 174,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.3271955880049811,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 175,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.28,
+   "t_deadline": 1.28,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 176,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.3315651114559367,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 177,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 2.258,
+   "t_deadline": 2.258,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 1.24
+   }
+  },
+  {
+   "scenario_id": 178,
+   "kind": "ambiguous",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.13380059643830405,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 179,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.39491309075579645,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 180,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.5111101994407874,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 181,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.6426395435984387,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 182,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.808,
+   "t_deadline": 0.808,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 183,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.5421049558332534,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 184,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.3874549852966748,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 185,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.614,
+   "t_deadline": 0.614,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 186,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.026,
+   "t_deadline": 1.026,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 187,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 2.536,
+   "t_deadline": 2.536,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 188,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.594,
+   "t_deadline": 0.594,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 189,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.044,
+   "t_deadline": 1.044,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 1.0
+   }
+  },
+  {
+   "scenario_id": 190,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 2.17,
+   "t_deadline": 2.17,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 191,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.34656324511763725,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 192,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.44,
+   "t_deadline": 1.44,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 193,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.772,
+   "t_deadline": 0.772,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 194,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.6841385362334274,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 195,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.9588077933157807,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 196,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.36562525474405916,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 197,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.008,
+   "t_deadline": 1.008,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 198,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.456,
+   "t_deadline": 0.456,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 199,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.594,
+   "t_deadline": 0.594,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 200,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.7424252553383839,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.05584908885876473,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 201,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.634,
+   "t_deadline": 0.634,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 202,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.45682280151831595,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 203,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.4021516353291858,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 204,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.9331779216973678,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 205,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.002,
+   "t_deadline": 1.002,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 206,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.76,
+   "t_deadline": 1.76,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 207,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.17,
+   "t_deadline": 1.17,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 208,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.540947012564635,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 209,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 2.2840000000000003,
+   "t_deadline": 2.2840000000000003,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 210,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.988,
+   "t_deadline": 0.988,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 211,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 1.6558599023103995,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.022036196728566312,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 212,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.9342483755478671,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 213,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.058,
+   "t_deadline": 1.058,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 214,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.8128417447481625,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.012557582291806396,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 215,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.808,
+   "t_deadline": 0.808,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": {
+    "action": "DODGE_RIGHT",
+    "t_s": 0.6
+   }
+  },
+  {
+   "scenario_id": 216,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.642,
+   "t_deadline": 0.642,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 217,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.432,
+   "t_deadline": 1.432,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 218,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.3458401666399066,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 219,
+   "kind": "background_motion",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.4042544031378281,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 220,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.87,
+   "t_deadline": 0.87,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": {
+    "action": "DODGE_LEFT",
+    "t_s": 0.8
+   }
+  },
+  {
+   "scenario_id": 221,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 0.9944509365746282,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0068760680122258305,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 222,
+   "kind": "ambiguous",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.12248525092829297,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 223,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.4541002584614547,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 224,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.556,
+   "t_deadline": 0.556,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 225,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.33411893928942615,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 226,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.499532299581486,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 227,
+   "kind": "receding",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.14853148815041578,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 228,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.728,
+   "t_deadline": 0.728,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 229,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 2.462092771208474,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0028560784519582536,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 230,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 231,
+   "kind": "off_path",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.6555236347193809,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 232,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 233,
+   "kind": "ambiguous",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.05,
+   "t_deadline": 1.05,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 234,
+   "kind": "empty",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 2.0,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 235,
+   "kind": "incoming_right",
+   "threat": true,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": 1.0465631311432173,
+   "camera_rate_hz": 20.0,
+   "no_op": {
+    "min_separation_m": 0.005281798068849285,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 73,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 236,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.8140000000000001,
+   "t_deadline": 0.8140000000000001,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 237,
+   "kind": "incoming_center",
+   "threat": true,
+   "collision": true,
+   "t_hit": 1.206,
+   "t_deadline": 1.206,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 238,
+   "kind": "static",
+   "threat": false,
+   "collision": false,
+   "t_hit": null,
+   "t_deadline": null,
+   "camera_rate_hz": 15.0,
+   "no_op": {
+    "min_separation_m": 0.6546602596888732,
+    "collision": 0.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 53,
+   "chosen_issue": null
+  },
+  {
+   "scenario_id": 239,
+   "kind": "incoming_left",
+   "threat": true,
+   "collision": true,
+   "t_hit": 0.8220000000000001,
+   "t_deadline": 0.8220000000000001,
+   "camera_rate_hz": 30.0,
+   "no_op": {
+    "min_separation_m": 0.0,
+    "collision": 1.0,
+    "fall": 0.0,
+    "recovery_time_s": 0.0,
+    "command_travel_m": 0.0
+   },
+   "n_readouts": 113,
+   "chosen_issue": null
+  }
+ ]
+}

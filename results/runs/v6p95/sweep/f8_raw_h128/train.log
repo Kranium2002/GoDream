@@ -1,0 +1,25 @@
+$ D:\BerlinPrior\.venv\Scripts\python.exe -m learned_judgment.dodge_sweep _exec --config D:\BerlinPrior-eval\results\runs\v6p95\sweep\f8_raw_h128\config.yaml learned_judgment.observed train --run f8_raw_h128 --skill dodge_vision --dream D:\BerlinPrior-eval\results\runs\v5\dream --scores D:\BerlinPrior-eval\results\runs\v5\scores.npz --frames 8 --hidden 128 --steps 1500
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\BerlinPrior-eval\learned_judgment\dodge_sweep.py", line 562, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "D:\BerlinPrior-eval\learned_judgment\dodge_sweep.py", line 551, in main
+    return _exec(words[2], words[3], words[4:])
+  File "D:\BerlinPrior-eval\learned_judgment\dodge_sweep.py", line 527, in _exec
+    code = importlib.import_module(module).main(list(args))
+  File "D:\BerlinPrior-eval\learned_judgment\observed.py", line 1705, in main
+    code = command(args, config, spec, events, result)
+  File "D:\BerlinPrior-eval\learned_judgment\observed.py", line 1631, in _train_command
+    trained = train_student(spec, features, targets, config, hidden_sizes=hidden, max_steps=steps, seed=seed,
+                            groups=dream["scenario_index"], on_evaluation=progress)
+  File "D:\BerlinPrior-eval\learned_judgment\observed.py", line 1129, in train_student
+    report = snn_train.fit(
+        model,
+    ...<5 lines>...
+        on_evaluation=on_evaluation,
+    )
+  File "D:\BerlinPrior-eval\learned_judgment\students\snn_train.py", line 1131, in fit
+    raise TrainingError("; ".join(problems), report)
+learned_judgment.students.snn_train.TrainingError: head 'threat': the restored validation loss 0.7015218508415503 is not below 0.6777335463951766, the loss of the best constant prediction (the head's mean training target): the network does no better than ignoring the situation; head 'action': the restored validation loss 0.903605085539499 is not below 0.8410387198765866, the loss of the best constant prediction (the head's mean training target): the network does no better than ignoring the situation

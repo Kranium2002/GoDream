@@ -1,0 +1,481 @@
+{
+ "run_id": "f6_signed_diff_h128",
+ "skill": "dodge_vision",
+ "train": {
+  "state": "done",
+  "started_utc": "2026-11-22T05:45:17.182581+00:00",
+  "argv": [
+   "train",
+   "--run",
+   "f6_signed_diff_h128",
+   "--skill",
+   "dodge_vision",
+   "--dream",
+   "D:\\BerlinPrior-eval\\results\\runs\\v5\\dream",
+   "--scores",
+   "D:\\BerlinPrior-eval\\results\\runs\\v5\\scores.npz",
+   "--frames",
+   "6",
+   "--hidden",
+   "128",
+   "--steps",
+   "1500"
+  ],
+  "config_digest": "f5a53e6e2fc572de45a6d7326ceb016f0e0f9c169d7eba4b79351d72b7b90b7d",
+  "dream": "D:/BerlinPrior-eval/results/runs/v5/dream",
+  "scores": "D:/BerlinPrior-eval/results/runs/v5/scores.npz",
+  "frames": 6,
+  "window_encoding": "signed_diff",
+  "diff_floor": 0.1,
+  "hidden_sizes": [
+   128
+  ],
+  "max_steps": 1500,
+  "threat_target": {
+   "mode": "near_approach",
+   "separation_m": 0.08,
+   "outcome": "min_separation_m"
+  },
+  "student": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f6_signed_diff_h128/student",
+  "network_sha256": "f45dafab2f97971fda8224a3a3f6396b4ffdf6ff2a091dfd4c6c68a46698a999",
+  "split": {
+   "by": "group",
+   "validation_fraction": 0.1,
+   "n_train_rows": 13500,
+   "n_validation_rows": 1500,
+   "n_groups": 2500
+  },
+  "parity": {
+   "threat": {
+    "n_inputs_checked": 15000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 3.552713678800501e-15,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     19200000
+    ],
+    "total_spikes_per_layer_torch": [
+     3180398
+    ],
+    "total_spikes_per_layer_numpy": [
+     3180398
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "action": {
+    "n_inputs_checked": 15000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 2.6645352591003757e-15,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     19200000
+    ],
+    "total_spikes_per_layer_torch": [
+     3180398
+    ],
+    "total_spikes_per_layer_numpy": [
+     3180398
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "combined": {
+    "n_inputs_checked": 15000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": {
+     "threat": 0.0,
+     "action": 0.0
+    },
+    "action_decisions_differing": 0
+   }
+  },
+  "training": {
+   "loss": "per head KL(target || softmax(logits)) averaged over that head's rows, weighted by the head's share of the batch, plus spike_rate_penalty x mean hidden firing rate; early stopping on the sampling-weighted validation KL",
+   "acceptance": "the restored weights must have a total validation KL below initialisation, a validation KL per head below that of the head's mean training target (the best constant prediction), and spikes in every hidden layer on the validation rows; otherwise fit raises TrainingError",
+   "heads": [
+    "threat",
+    "action"
+   ],
+   "sampling": {
+    "threat": 0.5,
+    "action": 0.5
+   },
+   "n_train_rows": {
+    "threat": 13500,
+    "action": 13500
+   },
+   "n_validation_rows": {
+    "threat": 1500,
+    "action": 1500
+   },
+   "steps_run": 900,
+   "best_step": 400,
+   "stopped_early": true,
+   "initial_validation_loss": 0.885068410907591,
+   "best_validation_loss": 0.5114360283362298,
+   "best_validation_loss_per_head": {
+    "threat": 0.3748845195751488,
+    "action": 0.6479875370973108
+   },
+   "constant_predictor_validation_loss": {
+    "threat": 0.6777335463951766,
+    "action": 0.8410387198765866
+   },
+   "constant_predictor_validation_loss_null_means": "infinite",
+   "train_loss_curve": [
+    [
+     100,
+     0.746230402871449
+    ],
+    [
+     200,
+     0.5835412234588477
+    ],
+    [
+     300,
+     0.5015573585299493
+    ],
+    [
+     400,
+     0.4917283823742001
+    ],
+    [
+     500,
+     0.41438972701792254
+    ],
+    [
+     600,
+     0.40867077856925826
+    ],
+    [
+     700,
+     0.42221423972646127
+    ],
+    [
+     800,
+     0.40161934612132305
+    ],
+    [
+     900,
+     0.35748154458900083
+    ]
+   ],
+   "validation_loss_curve": [
+    [
+     0,
+     {
+      "threat": 0.6835978866870694,
+      "action": 1.0865389351281127
+     }
+    ],
+    [
+     100,
+     {
+      "threat": 0.47065275715589205,
+      "action": 0.8091466521097599
+     }
+    ],
+    [
+     200,
+     {
+      "threat": 0.405837918211598,
+      "action": 0.7222031299273973
+     }
+    ],
+    [
+     300,
+     {
+      "threat": 0.3754499908948708,
+      "action": 0.6996289084499444
+     }
+    ],
+    [
+     400,
+     {
+      "threat": 0.3748845195751488,
+      "action": 0.6479875370973108
+     }
+    ],
+    [
+     500,
+     {
+      "threat": 0.37080015865205473,
+      "action": 0.6636037370018261
+     }
+    ],
+    [
+     600,
+     {
+      "threat": 0.37819165889686385,
+      "action": 0.6875490066239456
+     }
+    ],
+    [
+     700,
+     {
+      "threat": 0.39564642626376245,
+      "action": 0.6761309391918681
+     }
+    ],
+    [
+     800,
+     {
+      "threat": 0.4014639077523447,
+      "action": 0.6427999946688404
+     }
+    ],
+    [
+     900,
+     {
+      "threat": 0.38113909372246874,
+      "action": 0.6685061198523448
+     }
+    ]
+   ],
+   "validation_total_curve": [
+    [
+     0,
+     0.885068410907591
+    ],
+    [
+     100,
+     0.639899704632826
+    ],
+    [
+     200,
+     0.5640205240694977
+    ],
+    [
+     300,
+     0.5375394496724076
+    ],
+    [
+     400,
+     0.5114360283362298
+    ],
+    [
+     500,
+     0.5172019478269404
+    ],
+    [
+     600,
+     0.5328703327604047
+    ],
+    [
+     700,
+     0.5358886827278153
+    ],
+    [
+     800,
+     0.5221319512105925
+    ],
+    [
+     900,
+     0.5248226067874068
+    ]
+   ],
+   "initial_firing_rate_per_layer": [
+    0.016084895833333335
+   ],
+   "firing_rate_per_layer": [
+    0.1651421875
+   ],
+   "dead_fraction_per_layer": [
+    0.0
+   ],
+   "saturated_fraction_per_layer": [
+    0.0
+   ],
+   "silent_layers": [],
+   "wall_seconds": 32.60747540000011,
+   "seed": 549658744,
+   "torch_threads": 1,
+   "versions": {
+    "torch": "2.15.0+cpu",
+    "snntorch": "1.0.0",
+    "numpy": "2.5.5",
+    "python": "3.13.16"
+   },
+   "optimizer": {
+    "name": "Adam",
+    "lr": 0.002,
+    "betas": [
+     0.9,
+     0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0
+   }
+  },
+  "wall_s": 49.71295129999635
+ },
+ "updated_utc": "2026-11-22T05:47:03.212791+00:00",
+ "calibration_dev_offline": {
+  "state": "done",
+  "argv": [
+   "calibrate",
+   "--run",
+   "f6_signed_diff_h128",
+   "--student",
+   "D:\\BerlinPrior-eval\\results\\runs\\v6p95\\sweep\\f6_signed_diff_h128\\student",
+   "--trace",
+   "D:\\BerlinPrior-eval\\results\\runs\\v5\\trace_dev.npz",
+   "--no-freeze"
+  ],
+  "frozen": false,
+  "student": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f6_signed_diff_h128/student",
+  "network_sha256": "f45dafab2f97971fda8224a3a3f6396b4ffdf6ff2a091dfd4c6c68a46698a999",
+  "frames": 6,
+  "window_encoding": "signed_diff",
+  "thresholds": {
+   "threat": 0.98,
+   "action": 0.5,
+   "margin": 0.2
+  },
+  "emitted": 49,
+  "correct": 47,
+  "precision": 0.9591836734693877,
+  "recalled": 45,
+  "recall": 0.3358208955223881,
+  "false_activations": 2,
+  "precision_ci": [
+   0.8628696769391992,
+   0.9887343666338142
+  ],
+  "gate_passed": true,
+  "n_scenarios": 240,
+  "threat_definition": {
+   "mode": "near_approach",
+   "separation_m": 0.08,
+   "outcome": "min_separation_m"
+  },
+  "n_threats": 134,
+  "strict_collision": {
+   "n_collisions": 111,
+   "emitted": 49,
+   "correct": 42,
+   "precision": 0.8571428571428571,
+   "recalled": 40,
+   "recall": 0.36036036036036034,
+   "false_activations": 7,
+   "precision_ci": [
+    0.733322937760856,
+    0.9290357627959324
+   ],
+   "truth": "NO_OP collision; on time = at or before its first contact"
+  },
+  "precision_target": 0.95,
+  "best_recall_at_precision": {
+   "0.95": {
+    "threat": 0.98,
+    "action": 0.5,
+    "margin": 0.2,
+    "emitted": 49,
+    "precision": 0.9591836734693877,
+    "recall": 0.3358208955223881,
+    "false_activations": 2
+   },
+   "0.90": {
+    "threat": 0.95,
+    "action": 0.5,
+    "margin": 0.1,
+    "emitted": 78,
+    "precision": 0.9230769230769231,
+    "recall": 0.4925373134328358,
+    "false_activations": 6
+   }
+  },
+  "readout_check": {
+   "n_frames": 50,
+   "max_abs_difference": 2.220446049250313e-16,
+   "tolerance": 1e-09,
+   "passed": true,
+   "seed": 20261121,
+   "method": "np.random.default_rng(runtime.seed).choice of (scenario, decision frame) without replacement; DodgeRuntime.readout of that window against the batched observed.student_readout"
+  },
+  "wall_s": 53.237091999995755,
+  "calibration": {
+   "split": "dev",
+   "n_scenarios": 240,
+   "threat_definition": {
+    "mode": "near_approach",
+    "separation_m": 0.08,
+    "outcome": "min_separation_m"
+   },
+   "n_threats": 134,
+   "grid_size": 240,
+   "chosen": {
+    "threat": 0.98,
+    "action": 0.5,
+    "margin": 0.2,
+    "emitted": 49,
+    "correct": 47,
+    "precision": 0.9591836734693877,
+    "recalled": 45,
+    "recall": 0.3358208955223881,
+    "false_activations": 2,
+    "precision_ci": [
+     0.8628696769391992,
+     0.9887343666338142
+    ],
+    "ci_level": 0.95,
+    "ci_method": "Wilson"
+   },
+   "strict_collision": {
+    "n_collisions": 111,
+    "emitted": 49,
+    "correct": 42,
+    "precision": 0.8571428571428571,
+    "recalled": 40,
+    "recall": 0.36036036036036034,
+    "false_activations": 7,
+    "precision_ci": [
+     0.733322937760856,
+     0.9290357627959324
+    ],
+    "truth": "NO_OP collision; on time = at or before its first contact"
+   },
+   "precision_target": 0.95,
+   "gate_passed": true,
+   "rule": "precision >= target: highest recall, then fewer false activations, then higher threat, action, margin",
+   "seeds": {
+    "runtime_seed": 20261121,
+    "split": "dev",
+    "split_code": 2,
+    "scenarios": "dodge_vision._split_plan: np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), first n of sample_threat_scenarios",
+    "augmentation": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2)[1]), fresh for every episode of the scenario (paired)",
+    "attempt_seed": "scenario_id",
+    "camera_rate": "dodge_vision.scenario_rate: np.random.default_rng(spawn(2)[0]).integers over vision.sim_camera_rates_hz [15.0, 20.0, 30.0], one rate per scenario",
+    "world_seed": 0,
+    "world_preset": "default"
+   },
+   "t_hit": "Go2World.finish_episode first_collision_time_s of the NO_OP episode",
+   "deadline": "first contact of the NO_OP episode (t_hit); for a threat without contact, the object's straight-line arrival at the head (dodge_vision.arrival_time_s)",
+   "source": "offline: the saved NO_OP trace (dodge_eval trace), windows rebuilt from its frames, readouts batched through observed.student_readout, the same gate replay as calibrate",
+   "trace": "D:/BerlinPrior-eval/results/runs/v5/trace_dev.npz",
+   "trace_config_digest": "2b1bb41eb0d7fffa44d34a97156c4fd1d9dd9a9b8867cdd3b4eb74ecc2cd0231",
+   "readout_check": {
+    "n_frames": 50,
+    "max_abs_difference": 2.220446049250313e-16,
+    "tolerance": 1e-09,
+    "passed": true,
+    "seed": 20261121,
+    "method": "np.random.default_rng(runtime.seed).choice of (scenario, decision frame) without replacement; DodgeRuntime.readout of that window against the batched observed.student_readout"
+   },
+   "config_digest": "f5a53e6e2fc572de45a6d7326ceb016f0e0f9c169d7eba4b79351d72b7b90b7d",
+   "run_id": "f6_signed_diff_h128",
+   "records": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f6_signed_diff_h128/calibration_dev_offline.json",
+   "traces": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f6_signed_diff_h128/calibration_dev_offline.npz",
+   "frozen_utc": null
+  }
+ }
+}

@@ -1,0 +1,481 @@
+{
+ "run_id": "f8_signed_diff_h128",
+ "skill": "dodge_vision",
+ "train": {
+  "state": "done",
+  "started_utc": "2026-11-22T05:47:05.096243+00:00",
+  "argv": [
+   "train",
+   "--run",
+   "f8_signed_diff_h128",
+   "--skill",
+   "dodge_vision",
+   "--dream",
+   "D:\\BerlinPrior-eval\\results\\runs\\v5\\dream",
+   "--scores",
+   "D:\\BerlinPrior-eval\\results\\runs\\v5\\scores.npz",
+   "--frames",
+   "8",
+   "--hidden",
+   "128",
+   "--steps",
+   "1500"
+  ],
+  "config_digest": "f5a53e6e2fc572de45a6d7326ceb016f0e0f9c169d7eba4b79351d72b7b90b7d",
+  "dream": "D:/BerlinPrior-eval/results/runs/v5/dream",
+  "scores": "D:/BerlinPrior-eval/results/runs/v5/scores.npz",
+  "frames": 8,
+  "window_encoding": "signed_diff",
+  "diff_floor": 0.1,
+  "hidden_sizes": [
+   128
+  ],
+  "max_steps": 1500,
+  "threat_target": {
+   "mode": "near_approach",
+   "separation_m": 0.08,
+   "outcome": "min_separation_m"
+  },
+  "student": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f8_signed_diff_h128/student",
+  "network_sha256": "59fa251a29d43626effde3386c5754c0a15381594f5060b5869d750d928cec5c",
+  "split": {
+   "by": "group",
+   "validation_fraction": 0.1,
+   "n_train_rows": 13500,
+   "n_validation_rows": 1500,
+   "n_groups": 2500
+  },
+  "parity": {
+   "threat": {
+    "n_inputs_checked": 15000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 3.1086244689504383e-15,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     19200000
+    ],
+    "total_spikes_per_layer_torch": [
+     3520286
+    ],
+    "total_spikes_per_layer_numpy": [
+     3520286
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "action": {
+    "n_inputs_checked": 15000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 2.220446049250313e-15,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     19200000
+    ],
+    "total_spikes_per_layer_torch": [
+     3520286
+    ],
+    "total_spikes_per_layer_numpy": [
+     3520286
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "combined": {
+    "n_inputs_checked": 15000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": {
+     "threat": 0.0,
+     "action": 0.0
+    },
+    "action_decisions_differing": 0
+   }
+  },
+  "training": {
+   "loss": "per head KL(target || softmax(logits)) averaged over that head's rows, weighted by the head's share of the batch, plus spike_rate_penalty x mean hidden firing rate; early stopping on the sampling-weighted validation KL",
+   "acceptance": "the restored weights must have a total validation KL below initialisation, a validation KL per head below that of the head's mean training target (the best constant prediction), and spikes in every hidden layer on the validation rows; otherwise fit raises TrainingError",
+   "heads": [
+    "threat",
+    "action"
+   ],
+   "sampling": {
+    "threat": 0.5,
+    "action": 0.5
+   },
+   "n_train_rows": {
+    "threat": 13500,
+    "action": 13500
+   },
+   "n_validation_rows": {
+    "threat": 1500,
+    "action": 1500
+   },
+   "steps_run": 900,
+   "best_step": 400,
+   "stopped_early": true,
+   "initial_validation_loss": 0.8813787836917023,
+   "best_validation_loss": 0.5286033082620766,
+   "best_validation_loss_per_head": {
+    "threat": 0.3840772505518346,
+    "action": 0.6731293659723185
+   },
+   "constant_predictor_validation_loss": {
+    "threat": 0.6777335463951766,
+    "action": 0.8410387198765866
+   },
+   "constant_predictor_validation_loss_null_means": "infinite",
+   "train_loss_curve": [
+    [
+     100,
+     0.7443903866526191
+    ],
+    [
+     200,
+     0.6050727390349062
+    ],
+    [
+     300,
+     0.5253846569667695
+    ],
+    [
+     400,
+     0.5059824134730567
+    ],
+    [
+     500,
+     0.42371548963260053
+    ],
+    [
+     600,
+     0.39912683110318037
+    ],
+    [
+     700,
+     0.41409633475650504
+    ],
+    [
+     800,
+     0.39713551559474974
+    ],
+    [
+     900,
+     0.3379515330372063
+    ]
+   ],
+   "validation_loss_curve": [
+    [
+     0,
+     {
+      "threat": 0.685847542810359,
+      "action": 1.0769100245730456
+     }
+    ],
+    [
+     100,
+     {
+      "threat": 0.4828986393415051,
+      "action": 0.82118080377401
+     }
+    ],
+    [
+     200,
+     {
+      "threat": 0.43432113272598827,
+      "action": 0.7496837676931045
+     }
+    ],
+    [
+     300,
+     {
+      "threat": 0.4061517741882078,
+      "action": 0.7075732865406911
+     }
+    ],
+    [
+     400,
+     {
+      "threat": 0.3840772505518346,
+      "action": 0.6731293659723185
+     }
+    ],
+    [
+     500,
+     {
+      "threat": 0.3978816999484952,
+      "action": 0.7299439455821128
+     }
+    ],
+    [
+     600,
+     {
+      "threat": 0.41202439705552524,
+      "action": 0.7303047779874193
+     }
+    ],
+    [
+     700,
+     {
+      "threat": 0.4043793782977688,
+      "action": 0.6806597167544384
+     }
+    ],
+    [
+     800,
+     {
+      "threat": 0.4071074117777798,
+      "action": 0.6738117293974641
+     }
+    ],
+    [
+     900,
+     {
+      "threat": 0.39399809425840854,
+      "action": 0.6837422276456288
+     }
+    ]
+   ],
+   "validation_total_curve": [
+    [
+     0,
+     0.8813787836917023
+    ],
+    [
+     100,
+     0.6520397215577576
+    ],
+    [
+     200,
+     0.5920024502095464
+    ],
+    [
+     300,
+     0.5568625303644494
+    ],
+    [
+     400,
+     0.5286033082620766
+    ],
+    [
+     500,
+     0.5639128227653041
+    ],
+    [
+     600,
+     0.5711645875214723
+    ],
+    [
+     700,
+     0.5425195475261035
+    ],
+    [
+     800,
+     0.540459570587622
+    ],
+    [
+     900,
+     0.5388701609520187
+    ]
+   ],
+   "initial_firing_rate_per_layer": [
+    0.0144390625
+   ],
+   "firing_rate_per_layer": [
+    0.183028125
+   ],
+   "dead_fraction_per_layer": [
+    0.0
+   ],
+   "saturated_fraction_per_layer": [
+    0.0
+   ],
+   "silent_layers": [],
+   "wall_seconds": 31.443419400020503,
+   "seed": 549658744,
+   "torch_threads": 1,
+   "versions": {
+    "torch": "2.15.0+cpu",
+    "snntorch": "1.0.0",
+    "numpy": "2.5.5",
+    "python": "3.13.16"
+   },
+   "optimizer": {
+    "name": "Adam",
+    "lr": 0.002,
+    "betas": [
+     0.9,
+     0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0
+   }
+  },
+  "wall_s": 52.59095189999789
+ },
+ "updated_utc": "2026-11-22T05:49:04.441224+00:00",
+ "calibration_dev_offline": {
+  "state": "done",
+  "argv": [
+   "calibrate",
+   "--run",
+   "f8_signed_diff_h128",
+   "--student",
+   "D:\\BerlinPrior-eval\\results\\runs\\v6p95\\sweep\\f8_signed_diff_h128\\student",
+   "--trace",
+   "D:\\BerlinPrior-eval\\results\\runs\\v5\\trace_dev.npz",
+   "--no-freeze"
+  ],
+  "frozen": false,
+  "student": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f8_signed_diff_h128/student",
+  "network_sha256": "59fa251a29d43626effde3386c5754c0a15381594f5060b5869d750d928cec5c",
+  "frames": 8,
+  "window_encoding": "signed_diff",
+  "thresholds": {
+   "threat": 0.98,
+   "action": 0.5,
+   "margin": 0.1
+  },
+  "emitted": 44,
+  "correct": 42,
+  "precision": 0.9545454545454546,
+  "recalled": 37,
+  "recall": 0.27611940298507465,
+  "false_activations": 2,
+  "precision_ci": [
+   0.8486500156237035,
+   0.987444890050405
+  ],
+  "gate_passed": true,
+  "n_scenarios": 240,
+  "threat_definition": {
+   "mode": "near_approach",
+   "separation_m": 0.08,
+   "outcome": "min_separation_m"
+  },
+  "n_threats": 134,
+  "strict_collision": {
+   "n_collisions": 111,
+   "emitted": 44,
+   "correct": 39,
+   "precision": 0.8863636363636364,
+   "recalled": 34,
+   "recall": 0.3063063063063063,
+   "false_activations": 5,
+   "precision_ci": [
+    0.7602084758339172,
+    0.950472193989075
+   ],
+   "truth": "NO_OP collision; on time = at or before its first contact"
+  },
+  "precision_target": 0.95,
+  "best_recall_at_precision": {
+   "0.95": {
+    "threat": 0.98,
+    "action": 0.5,
+    "margin": 0.1,
+    "emitted": 44,
+    "precision": 0.9545454545454546,
+    "recall": 0.27611940298507465,
+    "false_activations": 2
+   },
+   "0.90": {
+    "threat": 0.95,
+    "action": 0.5,
+    "margin": 0.2,
+    "emitted": 84,
+    "precision": 0.9166666666666666,
+    "recall": 0.5149253731343284,
+    "false_activations": 7
+   }
+  },
+  "readout_check": {
+   "n_frames": 50,
+   "max_abs_difference": 1.1102230246251565e-16,
+   "tolerance": 1e-09,
+   "passed": true,
+   "seed": 20261121,
+   "method": "np.random.default_rng(runtime.seed).choice of (scenario, decision frame) without replacement; DodgeRuntime.readout of that window against the batched observed.student_readout"
+  },
+  "wall_s": 63.48938489999273,
+  "calibration": {
+   "split": "dev",
+   "n_scenarios": 240,
+   "threat_definition": {
+    "mode": "near_approach",
+    "separation_m": 0.08,
+    "outcome": "min_separation_m"
+   },
+   "n_threats": 134,
+   "grid_size": 240,
+   "chosen": {
+    "threat": 0.98,
+    "action": 0.5,
+    "margin": 0.1,
+    "emitted": 44,
+    "correct": 42,
+    "precision": 0.9545454545454546,
+    "recalled": 37,
+    "recall": 0.27611940298507465,
+    "false_activations": 2,
+    "precision_ci": [
+     0.8486500156237035,
+     0.987444890050405
+    ],
+    "ci_level": 0.95,
+    "ci_method": "Wilson"
+   },
+   "strict_collision": {
+    "n_collisions": 111,
+    "emitted": 44,
+    "correct": 39,
+    "precision": 0.8863636363636364,
+    "recalled": 34,
+    "recall": 0.3063063063063063,
+    "false_activations": 5,
+    "precision_ci": [
+     0.7602084758339172,
+     0.950472193989075
+    ],
+    "truth": "NO_OP collision; on time = at or before its first contact"
+   },
+   "precision_target": 0.95,
+   "gate_passed": true,
+   "rule": "precision >= target: highest recall, then fewer false activations, then higher threat, action, margin",
+   "seeds": {
+    "runtime_seed": 20261121,
+    "split": "dev",
+    "split_code": 2,
+    "scenarios": "dodge_vision._split_plan: np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), first n of sample_threat_scenarios",
+    "augmentation": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2)[1]), fresh for every episode of the scenario (paired)",
+    "attempt_seed": "scenario_id",
+    "camera_rate": "dodge_vision.scenario_rate: np.random.default_rng(spawn(2)[0]).integers over vision.sim_camera_rates_hz [15.0, 20.0, 30.0], one rate per scenario",
+    "world_seed": 0,
+    "world_preset": "default"
+   },
+   "t_hit": "Go2World.finish_episode first_collision_time_s of the NO_OP episode",
+   "deadline": "first contact of the NO_OP episode (t_hit); for a threat without contact, the object's straight-line arrival at the head (dodge_vision.arrival_time_s)",
+   "source": "offline: the saved NO_OP trace (dodge_eval trace), windows rebuilt from its frames, readouts batched through observed.student_readout, the same gate replay as calibrate",
+   "trace": "D:/BerlinPrior-eval/results/runs/v5/trace_dev.npz",
+   "trace_config_digest": "2b1bb41eb0d7fffa44d34a97156c4fd1d9dd9a9b8867cdd3b4eb74ecc2cd0231",
+   "readout_check": {
+    "n_frames": 50,
+    "max_abs_difference": 1.1102230246251565e-16,
+    "tolerance": 1e-09,
+    "passed": true,
+    "seed": 20261121,
+    "method": "np.random.default_rng(runtime.seed).choice of (scenario, decision frame) without replacement; DodgeRuntime.readout of that window against the batched observed.student_readout"
+   },
+   "config_digest": "f5a53e6e2fc572de45a6d7326ceb016f0e0f9c169d7eba4b79351d72b7b90b7d",
+   "run_id": "f8_signed_diff_h128",
+   "records": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f8_signed_diff_h128/calibration_dev_offline.json",
+   "traces": "D:/BerlinPrior-eval/results/runs/v6p95/sweep/f8_signed_diff_h128/calibration_dev_offline.npz",
+   "frozen_utc": null
+  }
+ }
+}

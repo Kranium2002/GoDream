@@ -1,0 +1,32 @@
+sweep v6p95: 12 variants, 6 at once; dream D:\BerlinPrior-eval\results\runs\v5\dream, scores D:\BerlinPrior-eval\results\runs\v5\scores.npz, trace D:\BerlinPrior-eval\results\runs\v5\trace_dev.npz
+[1/12] f4_raw_h128: failed in train: TrainingError (34 s)
+[2/12] f4_events_h128: done precision 0.9772727272727273 recall 0.291044776119403 emitted 44 (106 s)
+[3/12] f6_signed_diff_h128: done precision 0.9591836734693877 recall 0.3358208955223881 emitted 49 (107 s)
+[4/12] f4_signed_diff_first_h128: done precision 0.9583333333333334 recall 0.14925373134328357 emitted 24 (108 s)
+[5/12] f4_signed_diff_h128: done precision 0.9672131147540983 recall 0.41044776119402987 emitted 61 (110 s)
+[6/12] f6_signed_diff_first_h128: done precision 0.95 recall 0.12686567164179105 emitted 20 (111 s)
+[7/12] f6_events_h128: done precision 0.9615384615384616 recall 0.17164179104477612 emitted 26 (106 s)
+[8/12] f6_raw_h128: failed in train: TrainingError (52 s)
+[9/12] f8_raw_h128: failed in train: TrainingError (66 s)
+[10/12] f8_events_h128: done precision 0.9523809523809523 recall 0.13432835820895522 emitted 21 (111 s)
+[11/12] f8_signed_diff_h128: done precision 0.9545454545454546 recall 0.27611940298507465 emitted 44 (121 s)
+[12/12] f8_signed_diff_first_h128: done precision 0.9333333333333333 recall 0.09701492537313433 emitted 15 (125 s)
+rank  variant                    status          Q  thr val/const  act val/const  thresholds t/a/m  gate  emit  prec   Wilson      recall  FA  r@.95  r@.90  coll prec  coll rec  train s  cal s
+1     f4_signed_diff_h128        done            Q  0.352/0.678    0.630/0.841    0.98/0.40/0.10    yes   61    0.967  0.89..0.99  0.410   2   0.410  0.410  0.836      0.423     60       50   
+2     f6_signed_diff_h128        done            Q  0.375/0.678    0.648/0.841    0.98/0.50/0.20    yes   49    0.959  0.86..0.99  0.336   2   0.336  0.493  0.857      0.360     53       55   
+3     f4_events_h128             done            Q  0.361/0.678    0.651/0.841    0.98/0.50/0.20    yes   44    0.977  0.88..1.00  0.291   1   0.291  0.560  0.886      0.315     59       47   
+4     f8_signed_diff_h128        done            Q  0.384/0.678    0.673/0.841    0.98/0.50/0.10    yes   44    0.955  0.85..0.99  0.276   2   0.276  0.515  0.886      0.306     57       65   
+5     f6_events_h128             done            Q  0.366/0.678    0.648/0.841    0.99/0.50/0.10    yes   26    0.962  0.81..0.99  0.172   1   0.172  0.396  0.769      0.162     53       53   
+6     f4_signed_diff_first_h128  done            Q  0.388/0.678    0.645/0.841    0.98/0.50/0.10    yes   24    0.958  0.80..0.99  0.149   1   0.149  0.418  0.833      0.153     51       57   
+7     f8_events_h128             done            Q  0.377/0.678    0.670/0.841    0.99/0.80/0.50    yes   21    0.952  0.77..0.99  0.134   1   0.134  0.448  0.762      0.126     55       56   
+8     f6_signed_diff_first_h128  done            Q  0.432/0.678    0.664/0.841    0.98/0.70/0.30    yes   20    0.950  0.76..0.99  0.127   1   0.127  0.299  0.900      0.144     53       58   
+9     f8_signed_diff_first_h128  done               0.439/0.678    0.679/0.841    0.90/0.90/0.70    no    15    0.933  0.70..0.99  0.097   1   -      0.433  0.600      0.072     69       56   
+10    f4_raw_h128                failed (train)     0.688/0.678    0.895/0.841    -                 -     -     -      -..-        -       -   -      -      -          -         34       -    
+11    f6_raw_h128                failed (train)     0.692/0.678    0.894/0.841    -                 -     -     -      -..-        -       -   -      -      -          -         52       -    
+12    f8_raw_h128                failed (train)     0.702/0.678    0.904/0.841    -                 -     -     -      -..-        -       -   -      -      -          -         66       -    
+  f4_raw_h128 failed in train: TrainingError: head 'threat': the restored validation loss 0.6879602361764494 is not below 0.6777335463951766, the loss of the best constant prediction (the head's mean training target): the network does no better than ignoring the situation; head 'action': the restored validation loss 0.8946076611390463 is not be
+  f6_raw_h128 failed in train: TrainingError: head 'threat': the restored validation loss 0.6917093711935468 is not below 0.6777335463951766, the loss of the best constant prediction (the head's mean training target): the network does no better than ignoring the situation; head 'action': the restored validation loss 0.8937024304212939 is not be
+  f8_raw_h128 failed in train: TrainingError: head 'threat': the restored validation loss 0.7015218508415503 is not below 0.6777335463951766, the loss of the best constant prediction (the head's mean training target): the network does no better than ignoring the situation; head 'action': the restored validation loss 0.903605085539499 is not bel
+rule: qualifies: offline dev calibration's chosen triple has precision >= inference.gate.precision_target and emitted >= observed.dodge_vision.sweep.min_emitted; among qualifying: highest dev recall, ties -> fewer frames, then smaller hidden size (total units, then layers, then sizes in order), then encoding order as listed; none qualifying: no winner, nothing relaxed
+winner f4_signed_diff_h128; D:\BerlinPrior-eval\results\runs\v6p95\sweep.json; 234 s
+--freeze-best: f4_signed_diff_h128 -> D:\BerlinPrior-eval\results\runs\v6p95\student thresholds {'threat': 0.98, 'action': 0.4, 'margin': 0.1}

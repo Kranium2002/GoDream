@@ -820,7 +820,7 @@ inference:  # learned_judgment.runtime (Person B): the frozen student behind the
     # Groups of actions the gate counts as one decision (scores summed, votes pooled; the side issued is the member with the larger
     # score summed over the group's votes). A punch straight at the camera splits the student's score between left and right.
     interchangeable: [[DODGE_LEFT, DODGE_RIGHT]]
-    precision_target: 0.99  # Preregistered: share of issued active commands on simulation dev trajectories that answer a true threat.
+    precision_target: 0.95  # Was 0.99 (preregistered); lowered to 0.95 by the lead on 2026-11-22 for the demo try, runs v6p95 on. share of issued active commands on simulation dev trajectories that answer a true threat.
     # Thresholds tried on simulation dev trajectories; the frozen choice is saved with the exported student, not here.
     calibration_grid:
       threat: [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99]
