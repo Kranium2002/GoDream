@@ -937,6 +937,14 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
     test_scenarios: 240  # Held-out split: run once, after the freeze.
     snn_hidden_sizes: [128]  # Starting value; compare on dev.
     snn_max_steps: 6000  # The configured 1500 was reached without convergence on DODGE (dev check E11).
+    conv_diagnostic:  # A plain conv net on the same dream and dev trace as the spiking student: a measurement, never a student.
+      frames: 4  # Newest frames of the window, as the v4 student reads.
+      steps: 2000  # Optimizer steps, as the v4 sweep.
+      channels: [16, 32]  # Output channels of the two 3 x 3 conv layers.
+      batch: 256  # Rows per optimizer step.
+      learning_rate: 0.001  # Adam.
+      network_limit_recall: 0.60  # Rule fixed before any result: dev recall at the chosen thresholds at or above this means the spiking network or its encoding is the limit.
+      input_limit_recall: 0.45  # At or below this, the 12 x 12 input or the dream labels are the limit; between the two the result is inconclusive.
   move:
     context_scenarios: 15  # x 32 candidates = 480 teacher context rows (every candidate is run per scenario).
     dev_scenarios: 45  # 1440 rows; physics rule and teacher are compared here.
