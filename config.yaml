@@ -904,7 +904,7 @@ app:  # The local viewer server: uv run python -m app.server
   infer:
     # The frozen student directory (student.json, network.npz, network.json with frozen thresholds), relative to the
     # repository root; Dev B's observed run exports it to <observed.runs_dir>/<run>/student/. null until one exists.
-    student_dir: results/runs/v4/student  # Sweep winner of run v4, thresholds frozen from dev calibration (see its student.json).
+    student_dir: results/runs/v4g/student  # Run v4 student, thresholds recalibrated on dev for the gate with interchangeable sidesteps (see its student.json).
     # Development only: {threat, action, margin} passed to the runtime when the student has no frozen thresholds; every
     # answer, the infer capability and the log then say so. Never committed set; null uses frozen thresholds only.
     dev_thresholds: null
