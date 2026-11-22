@@ -1068,6 +1068,10 @@ app:  # The local viewer server: uv run python -m app.server
     # Development only: {threat, action, margin} passed to the runtime when the student has no frozen thresholds; every
     # answer, the infer capability and the log then say so. Never committed set; null uses frozen thresholds only.
     dev_thresholds: null
+    # Threat cutoff the app runs the dodge student with (live camera and dodge duel), replacing only the threat value of
+    # its frozen thresholds; action and margin stay frozen. null = the frozen cutoff (v6p95: 0.98). Set to 0.95 by the
+    # lead on 2026-11-22 so the dog acts sooner; this is a choice for the demo, not a calibration result.
+    threat_threshold: 0.95
     # A frame age (receive time minus the browser's captured_ms, both wall clocks) outside 0 to this is clock skew:
     # it is taken as 0 and flagged in the answer, never an error.
     max_frame_age_ms: 2000

@@ -156,13 +156,27 @@ export function median(values) {
   return v.length % 2 ? v[k] : (v[k - 1] + v[k]) / 2;
 }
 
-// -> null before the first decision, else {ms: median of the last BRAIN_MEDIAN decision times, choice: plain words of
-// the newest choice, spikes: the spike counts of the kept decisions (null when none was sent), n}.
+// A dodge move stays on screen this long (simulated seconds) after the gate issued it, so the audience can read it.
+export const MOVE_SHOW_S = 1.0;
+
+// What the dog is doing, in plain words. The hills reflex sends a command at every decision (issued null): its newest
+// choice. The dodge network gives an opinion every frame but the dog only acts when the gate issues a command, so the
+// screen shows the last issued move for MOVE_SHOW_S, and "Watching" otherwise; opinions not acted on are not shown.
+function doing(list) {
+  const now = list.at(-1);
+  if (now.issued === null) return choiceWords(now.choice);
+  const move = [...list].reverse().find((x) => x.issued === true);
+  const fresh = move && finite(move.t) && finite(now.t) && now.t >= move.t && now.t - move.t <= MOVE_SHOW_S;
+  return fresh ? choiceWords(move.choice) : "Watching";
+}
+
+// -> null before the first decision, else {ms: median of the last BRAIN_MEDIAN decision times, choice: what the dog is
+// doing in plain words (see doing), spikes: the spike counts of the kept decisions (null when none was sent), n}.
 export function brainView(state, window = BRAIN_MEDIAN) {
   const list = state?.list ?? [];
   if (!list.length) return null;
   const spikes = list.map((x) => x.spikes);
-  return { ms: median(list.slice(-window).map((x) => x.ms)), choice: choiceWords(list.at(-1).choice), spikes: spikes.some((s) => s !== null) ? spikes : null, n: list.length };
+  return { ms: median(list.slice(-window).map((x) => x.ms)), choice: doing(list), spikes: spikes.some((s) => s !== null) ? spikes : null, n: list.length };
 }
 
 // ---- how it learned: the steps ------------------------------------------------------------------------------------------

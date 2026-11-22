@@ -105,6 +105,18 @@ test("the brain readout keeps the learned lane's last decisions and shows the me
   assert.equal(v.spikes, null); // no spike counts were sent
   b = applyBrain(b, { side: "after", decision_ms: 0.1, choice: "NO_OP", spikes: 97 });
   assert.equal(brainView(b).spikes.at(-1), 97);
+  // dodge: an opinion the gate did not act on is not shown; an issued move stays MOVE_SHOW_S, then "Watching"
+  let d = emptyBrain();
+  d = applyBrain(d, { side: "after", t_s: 1.0, decision_ms: 1, choice: "UNCERTAIN", issued: false });
+  assert.equal(brainView(d).choice, "Watching");
+  d = applyBrain(d, { side: "after", t_s: 1.1, decision_ms: 1, choice: "DODGE_RIGHT", issued: true });
+  d = applyBrain(d, { side: "after", t_s: 1.6, decision_ms: 1, choice: "UNCERTAIN", issued: false });
+  assert.equal(brainView(d).choice, "Step right");
+  d = applyBrain(d, { side: "after", t_s: 2.2, decision_ms: 1, choice: "DODGE_LEFT", issued: false });
+  assert.equal(brainView(d).choice, "Watching");
+  // hills: every decision is a command
+  let h = applyBrain(emptyBrain(), { side: "after", t_s: 0.5, decision_ms: 1, choice: "yaw+0.70_vx0.60" });
+  assert.equal(brainView(h).choice, "Steer left");
   assert.equal(median([3, 1, 2]), 2);
   assert.equal(median([4, 1, 2, 3]), 2.5);
   assert.equal(median([]), null);

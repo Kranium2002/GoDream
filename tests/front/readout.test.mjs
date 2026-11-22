@@ -90,8 +90,8 @@ test("threshold values and a provisional student show only when the server sends
 test("the plain state line names what the dog does, in the visitor's words", async () => {
   const { plainState } = await import("../../app/static/js/readout.js");
   const s = (over) => plainState(readout(answer(over)));
-  assert.equal(s({ action: "NO_OP", issued: false, cooldown_remaining_s: 0 }).text, "Calm. Nothing is coming.");
-  assert.equal(s({ action: "UNCERTAIN", issued: false, cooldown_remaining_s: 0 }).text, "Something moved. Not sure yet.");
+  assert.equal(s({ action: "NO_OP", issued: false, cooldown_remaining_s: 0 }).text, "Watching.");
+  assert.equal(s({ action: "UNCERTAIN", issued: false, cooldown_remaining_s: 0 }).text, "Watching.");
   assert.equal(s({ action: "DODGE_LEFT" }).text, "Dodging left!");
   assert.equal(s({ action: "DODGE_RIGHT" }).text, "Dodging right!");
   assert.equal(s({ action: "RETREAT" }).text, "Backing away!");

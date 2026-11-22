@@ -562,7 +562,8 @@ def start_duel(h):
             student_data = _read(student_folder / "student.json") or {}
             try:
                 from learned_judgment.runtime import DodgeRuntime
-                runtime = DodgeRuntime.load(student_folder, duel_gate_config(cfg, h.server.config["app"]["duel"]["dodge"]))
+                runtime = DodgeRuntime.load(student_folder, duel_gate_config(cfg, h.server.config["app"]["duel"]["dodge"]),
+                                            backend.app_thresholds(student_folder, h.server.config))
                 from learned_judgment.skills.dodge_vision import _actions
                 actions = _actions(cfg)
                 plan = {"folder": folder, "student_folder": student_folder, "config": cfg, "params": params, "student": student_data,

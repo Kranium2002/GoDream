@@ -100,8 +100,8 @@ export function plainState(view) {
   const code = view.action.code, v = view.values;
   if (MOVES[code]) return { text: MOVES[code], tone: "accent", kind: "move" };
   if (v.cooldown !== null && v.cooldown > 0) return { text: "Catching its breath", tone: "neutral", kind: "cooldown" };
-  if (code === "UNCERTAIN") return { text: "Something moved. Not sure yet.", tone: "warn", kind: "unsure" };
-  if (code === "NO_OP") return { text: "Calm. Nothing is coming.", tone: "calm", kind: "calm" };
+  // Not sure yet and nothing coming look the same: the dog does nothing in both, so the line does not flicker between them.
+  if (code === "UNCERTAIN" || code === "NO_OP") return { text: "Watching.", tone: "calm", kind: "calm" };
   return { text: "The dog gave an answer this page does not know.", tone: "neutral", kind: "unknown" };
 }
 

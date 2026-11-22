@@ -136,6 +136,25 @@ DEV_THRESHOLDS = ("Live inference uses development thresholds from config.yaml a
                   "ones.")
 
 
+def app_thresholds(student_dir, config):
+    """The gate thresholds the app runs a dodge student with, or None to use its frozen ones as they are: the frozen
+    calibration in student.json with the threat cutoff replaced by config.yaml app.infer.threat_threshold when that is
+    set (the lead's choice for the demo, not a calibration result). Used by the live camera and the dodge duel."""
+    cut = config["app"]["infer"].get("threat_threshold")
+    if cut is None:
+        return None
+    cut = float(cut)
+    if not 0.0 < cut <= 1.0:
+        raise ValueError(f"config.yaml app.infer.threat_threshold must lie in (0, 1]; got {cut!r}")
+    try:
+        frozen = json.loads((Path(student_dir) / "student.json").read_text(encoding="utf-8")).get("thresholds")
+    except (OSError, ValueError):
+        return None
+    if not isinstance(frozen, dict) or not frozen:
+        return None
+    return {**frozen, "threat": cut}
+
+
 def thresholds_mode():
     """"frozen" or "development" for the loaded student, None before one is loaded."""
     return _loaded.get("thresholds")
@@ -181,10 +200,11 @@ def inference(config: dict):
         return None, None, None, missing
     dev = config["app"]["infer"].get("dev_thresholds")
     with _runtime_lock:
-        if _loaded.get("key") != (directory, repr(dev)):
+        if _loaded.get("key") != (directory, repr(dev), repr(config["app"]["infer"].get("threat_threshold"))):
             try:
                 try:
-                    model, mode = runtime.DodgeRuntime.load(ROOT / directory, config), "frozen"
+                    model, mode = runtime.DodgeRuntime.load(ROOT / directory, config,
+                                                            app_thresholds(ROOT / directory, config)), "frozen"
                 except RuntimeError:  # Dev B's "no frozen thresholds"
                     if not dev:
                         raise
@@ -204,7 +224,7 @@ def inference(config: dict):
             student = json.loads((ROOT / directory / "student.json").read_text(encoding="utf-8"))
             calibration, spec = student.get("calibration"), student.get("input") or {}
             gate_passed = calibration.get("gate_passed") if isinstance(calibration, dict) else None
-            _loaded.update(key=(directory, repr(dev)), model=model, thresholds=mode, last_t=-math.inf,
+            _loaded.update(key=(directory, repr(dev), repr(config["app"]["infer"].get("threat_threshold"))), model=model, thresholds=mode, last_t=-math.inf,
                            window_encoding=spec.get("window_encoding", "raw"), diff_floor=spec.get("diff_floor"),
                            gate_passed=gate_passed if isinstance(gate_passed, bool) else None,
                            window={"frames": published["frames"], "height": model.frame_size, "width": model.frame_size},
