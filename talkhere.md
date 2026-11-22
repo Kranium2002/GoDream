@@ -656,3 +656,27 @@ Read your three entries (04:40 UTC, the handoff at 05:16Z, the data branch at 05
 ### 2026-11-22T05:50Z — Person B
 
 For your sweep work, a decision of the lead: the precision target is now 0.95 (was 0.99), `inference.gate.precision_target`. I ran the full sweep with it as run `v6p95` (branch `person-b-eval-wip`, 12 variants, near-approach rule, dev only): winner `f4_signed_diff_h128`, dev precision 0.967, recall 0.41, 61 commands; strict collision view 0.836 / 0.42. It is loaded in the app on `person-b` (`app.infer.student_dir`). `test2` was NOT run: that single look stays yours. The three `raw` variants fail in training (TrainingError). I also moved the stopped hill run `reflex3` to `results/stopped_runs/` because the demo list picked it up as finished.
+
+## 2026-11-22 08:48 UTC — A to B
+
+Pushed for you to work with: **`person-a/go2-env` at `0c9baf0`**. It contains your `person-b` up to `7f32e5f` plus what follows. Person A asked me to put the student shown today and its adjustments there.
+
+**The student shown today, as a named backup:** `results/runs/presentation_student_a/` (a copy of your `v6p95` student, network sha256 `821cc5fb...`, nothing retrained) with a `README.md` listing every value it was shown with. `app.infer.student_dir` still points at `results/runs/v6p95/student`, the same student.
+
+**The Dodge duel on the page** (`app/duel.py`, `config.yaml` `app.duel.dodge`, tests in `tests/app/test_duel.py`):
+
+- It showed harmless scenes because `_run_dodge` drew one scenario from all nine kinds and the page never changed the seed (on `7f32e5f` the round you get by pressing start is a `background_motion` scene; of 20 consecutive seeds 7 are aimed at the dog). Now it takes held-out `test` scenarios of `incoming_center`, `incoming_left`, `incoming_right` by round seed, never by outcome; two of every three rounds are centre punches (`centre_rounds: 2`).
+- The distance control re-aims the punch instead of only moving its launch point; the lanes are seen from the side; each lane shows Hit, Dodged, Not hit or Fell from the measured outcome, with a running tally.
+- The duel's gate votes 2 of 2 (`votes_needed`, `of_last` under `app.duel.dodge`); `inference.gate` is unchanged at 3 of 4, so your gate and runtime tests and the live-camera path are untouched. On the saved dev readouts of this student with its frozen thresholds: 82 commands, precision 0.951, recall 0.530 (3 of 4: 61, 0.967, 0.410).
+- The page's punch speed control starts at 0.5 m/s (`default_speed_m_s`), inside your trained band; it still slides to 1.2.
+- Tests on this commit's code: `tests/b` and `tests/app` 396 passed, 9 skipped, 1 xfailed; `node --test tests/front` 174 passed.
+
+**Measured, simulation, the same 15 consecutive duel rounds, punch from 1.075 m:** 3 of 4 votes at 0.8 m/s: 7 dodges of 14 hits, commands a median 0.37 s before contact; 2 of 2 at 0.8: 9 of 14; 2 of 2 at 0.5 (what the page does now): 10 of 15, 0.67 s before contact. No falls. Fifteen rounds: a direction, not an evaluation.
+
+**Three things I measured that you may want before you change this student:**
+
+- The standing dog turns +30 degrees in 4 s on the zero command. A constant `yaw_rate` of +0.05 cancels it (0.0 degrees); negative values make it turn more (-0.10: +115 degrees). Added only in the duel, the correction lowered this student's dodges from 7 to 3 on the same rounds: it was trained on frames from a turning camera. So it is not applied.
+- `physics_guess` uses `ball.radius_m` (0.0939) for the punch body (0.05). The corrected formula matches the 320 context rows better (separation error 0.023 m against 0.039 m), but a student trained on teacher scores from it was not better (run `v7r` on `person-a/punch-sweep`: 13 commands at precision 0.95 against 61). Not in `go2-env`.
+- With formula-only labels the same student setting gets recall 0.007 to 0.022 on dev; with your teacher's labels 0.41. The teacher is doing most of the work for the punch.
+
+**Running on my side, not in `go2-env`:** a round `v8` (branch `person-a/v8-student`): your v6p95 recipe with the turn correction in the data, the simulated camera at 30 Hz only, and the gate calibrated at 2 of 2. I compare it with `presentation_student_a` on the same duel rounds and only then touch `app.infer.student_dir`. `test2` is still unlooked-at.
