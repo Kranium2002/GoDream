@@ -101,7 +101,7 @@
    "parity_logit_tolerance": 1e-09,
    "out_of_range": "error"
   },
-  "status": "Sweep winner of run v4 (f4_events_h128: event-camera ON/OFF input, 4 frames). Calibrated on 240 simulation dev trajectories (107 threats): 39 issued commands, all on true threats (precision 1.0, Wilson 0.91-1.0), recall 0.34, 0 false activations; thresholds frozen from dev."
+  "status": "Sweep winner of run v4 (f4_events_h128: event-camera ON/OFF input, 4 frames). Calibrated on 240 simulation dev trajectories (107 threats): 39 issued commands, all on true threats (precision 1.0, Wilson 0.91-1.0), recall 0.34, 0 false activations; thresholds frozen from dev. HELD-OUT (240 test trajectories, 121 threats, closed loop, run once): 42 issued commands, 40 on true threats: precision 0.952 (Wilson 0.84-0.99), so the 0.99 precision target was NOT met on held-out data (2 false activations, 0.25 per safe-scene minute); recall 0.29; collisions 121 without action, 98 with the student (paired difference -0.096, 95% -0.138..-0.058); falls 0."
  },
  "network": {
   "files": [
