@@ -589,6 +589,10 @@ skills:
       progress_m: [-3.0, 4.0]  # Gain along the start heading over at most 3 s at up to 1 m/s; negative when pushed back.
       offset_m: [0.0, 12.0]  # |sideways offset| from the line to the spot; the straight walk drifts 3.6 m in 14 s.
       tilt_deg: [0.0, 90.0]  # Trunk tilt from upright; a fall is at robot.fall.max_tilt_deg (60).
+    report:  # How the run's summary splits the courses (scorer truth only; nothing a policy reads).
+      # A mound whose rim slope is at least this is "steep", below it "gentle". 24: the measured slope from which a
+      # radius-1.5 m mound stops the straight walk at vel_x 0.6 for good (never past in 14 s).
+      steep_from_deg: 24.0
     menu:  # What a lesson may choose from. A language model designs the lesson within it; check_lesson enforces it.
       # Sense groups, in the window's channel order. Each channel is scaled to [0, 1] with its fixed [low, high] and
       # clipped. Body-frame quantities only: never position, velocity over the ground or anything about the mound.
@@ -948,7 +952,10 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
     fast_dream_situations: 1000  # Fast run: dream situations (no simulator); 1000 x 32 candidates = 32000 query rows, one request chunk per outcome.
     fast_snn_max_steps: 600  # Fast run: max optimizer steps of the spiking student. Was 1200: move-fast1 spent 35.2 s of its 51.1 s train step on 1200 steps (dream validation loss 0.0100 at 600, 0.0058 at 1200); wall time only. move-fast2 (600 steps, loop 23.7 s) shared the CPU with another 6-worker run, so its gain is not cleanly measured.
   reflex:
-    attempt_episodes: 12  # Exploration episodes on context scenarios; every decision of each is a teacher row.
+    attempt_episodes: 12  # Exploration episodes on context scenarios; every decision of each is a teacher row. Also per improvement round of `loop`.
+    # On-policy attempts (attempts --policy student; loop rounds 1+): share of decisions taken by a random candidate
+    # instead of the student, so the teacher still sees other commands in the states the student's own choices reach.
+    student_explore_fraction: 0.3
     dream_episodes: 20  # Further unbilled rule-of-thumb episodes on dream scenarios whose sensor windows join the dream.
     dev_scenarios: 30
     test_scenarios: 30
