@@ -601,3 +601,30 @@ Read your 05:36 entry. Fine with `wip-dev-a` and the four checks; nothing of min
 - Know that v4 is the old punch scenes (uniform backdrop, 30 Hz only). A new run `v5` (patchy static backgrounds, 15 to 30 Hz camera rates, exposure drift, fresh held-out split `test2`) is training now in the same tree; the ceiling check is worth more on v5.
 - Hills, latest (`person-b` at `8138895`, run `reflex2`, 30 unseen courses with gentle and steep mounds): walk alone 0 of 30; blind student 11 of 30 after the last round (best round 15); the truth-reading rule of thumb 23 of 30. It goes over gentle mounds and around steep ones, but returns to the line imprecisely: it has no sense of how far sideways it went. A dead-reckoning sense and round choice on a dev split are being added now.
 - Server: `GET /api/demos`, `POST /api/duel/start|stop` (two real worlds side by side, same scenario and seed) and `GET /api/story/<run>` are in `app/duel.py` on `person-b` (written by a second tool on our side, in your files; `tests/app` 170 passed).
+
+### 2026-11-22T05:16Z — Person B
+
+## HANDOFF from Person B to Dev A — please take over the Dodge demo (B's session is out of usage)
+
+Thank you for picking this up. Everything is pushed: branch `person-b`, commit `ef1b060` (work in progress, NOT verified: no test run after the last edits; only `py_compile` and `load_config` passed). The lead allows you to edit Person B's files to finish.
+
+**State**
+- Hills demo: done, lead accepted it. Run `reflex2` (walk alone 0/30; student 28/30 past the hill, 24/30 within 1 m, strict 0.6 m rule 11/30). Do not change it. Run `reflex3` (path memory) was stopped part-way and is not used.
+- Server: `.venv\Scripts\python.exe -m app.server`, http://127.0.0.1:8765/. Restart after Python changes.
+- Punch student in the app: `app.infer.student_dir: results/runs/v5try/student` (gate target NOT met; held-out best so far is run v4: precision 0.952, recall 0.289).
+- The lead deleted the real webcam clips. No real camera data for training, tuning or checks. Simulation only.
+
+**Task 1 (first, the lead saw this bug): Dodge duel on the page**
+The lead's words: "it throws the ball away from the dog not towards it and that too at 90 degrees. Can we have like 2 visuals here. Trained and untrained. Where the ball hits one and the other dodges it."
+- Probable cause, not yet proven: `app/duel.py` draws the showcase punch from all scenario kinds, also the safe ones (receding, crossing, off_path). Codex's note: seed 42 gave closest separation 2 m on both sides. Also check the viewer's axis mapping for the object (`app/static/js/viewer/**`, scene helper in `app/player.py`).
+- Wanted: the duel draws only kinds aimed at the dog (name them in config under the dodge demo entry, random by seed from the held-out split, never chosen by outcome). Two lanes with the same punch: untrained dog | trained dog. Plain-word result per lane from the real outcome (hit / dodged), and a real running tally. Same camera framing in both lanes, object and dog in frame. No technical words on the page.
+- Nothing of this was started in the files (an agent was stopped before it edited `app/static`).
+
+**Task 2: faster reaction (measure first)**
+Nothing measured yet. Wanted numbers: time from command to 5/10/20 cm of body displacement for each dodge action with the real world and policy; time from punch start to contact from the config bands; time the eye needs (4/6/8 frames at 15-30 Hz, 3 of last 4 votes in `inference.gate`). Then choose levers. A change of votes or frames needs a new calibration on dev.
+
+**Task 3: punch student, "near approach" threat rule (started, not finished)**
+- Lead's decision: a flinch at an object that comes very close to the head is correct. Config now has `skills.dodge_vision.threat_target: {mode: near_approach, separation_m: 0.08, outcome: min_separation_m}`; the distance came from context + dev data by a rule fixed in advance (`experiments/proofs/B_v6_near_approach/threat_distance.py`, `results/runs/v6/threat_distance.json`). Code: `observed.py`, `dodge_eval.py`, `dodge_sweep.py`, `skills/dodge_vision.py`, tests `tests/b/test_dodge_eval.py`, `tests/b/test_observed.py`. These edits were ported to `D:\BerlinPrior` by an agent that was stopped at that moment: run those two test files before you trust them, and diff against `D:\BerlinPrior-eval` (same files, uncommitted there, plus `gate.py`, `runtime.py`).
+- Data and the stopped sweep are local on this laptop only: `D:\BerlinPrior-eval\results\runs\v5` (dream windows, scores) and `...\v6\sweep.log`. Sweep v6 reached 5 of 12 students, dev only: best `f4_signed_diff_h128` precision 0.967, recall 0.41, 61 commands (rule not met: needs >= 0.99 with >= 20 commands). Finish the sweep; winner -> freeze, then evaluate once on split `test2` (never looked at); no winner -> report it, do not weaken the rule. Always report the strict collision numbers beside the near-approach ones.
+
+**Rules that still hold:** no hardcoded or picked results; billed TabPFN only after usage + quote (about 33.4M of 35M tokens left); never read `.env`; LOG.md and DECISIONS.md are not yet updated for hills round 2/3, v5, v6, the UI rebuild (please add when you log your work). Not committed on purpose: `camera_punch_dataset.py` (records webcam clips; another tool wrote it) and `.claude/`.
