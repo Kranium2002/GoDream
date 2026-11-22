@@ -1,0 +1,30 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+held-out FIXTURE dream: 200 rows x 2 candidates; the same dream twice: 400 rows
+
+== agreement_with_dream states rows and distinct situations ==
+  once: 200 rows, 200 distinct situations; MECHANICS agreement 0.415, mean regret 0.4285
+  twice: 400 rows, 200 distinct situations; MECHANICS agreement 0.415, mean regret 0.4285
+  [ok] rows 200 and 400, distinct situations 200 in both
+  [ok] per_row.situation_group maps row i and row i + n to the same distinct situation
+
+== student_record: the regret-difference interval resamples distinct situations ==
+  MECHANICS: once [0.36795, 0.49104] (200 situations, 200 rows); twice [0.36795, 0.49104] (200 situations, 400 rows); a row bootstrap (the old code) gives once [0.36795, 0.49104], twice [0.38487, 0.47127]
+  [ok] the interval records its rows and its distinct situations
+  [ok] duplicating every situation leaves the interval exactly unchanged (the unit resampled is the distinct situation)
+  [ok] for contrast: a row bootstrap narrows the interval when the rows are duplicated
+  [ok] the record's held-out dream provenance states rows and distinct situations
+
+== measure_operations on situations given twice ==
+  [ok] spikes_per_decision.interval_total: identical interval on the situations given twice (60 distinct situations, 120 rows)
+  [ok] synaptic_ops_per_decision.interval: identical interval on the situations given twice (60 distinct situations, 120 rows)
+  [ok] energy_estimate.main_estimate.estimate_pj_interval: identical interval on the situations given twice (60 distinct situations, 120 rows)
+  [ok] energy_estimate.with_neuron_updates_estimate.estimate_pj_interval: identical interval on the situations given twice (60 distinct situations, 120 rows)
+  [ok] the operations record states rows and distinct situations
+
+== unevenly repeated situations ==
+  spikes per decision: estimate 5.5 (row mean 5.5), interval [4.5, 6.0], 3 situations in 8 rows
+  [ok] the estimate is the row mean; 8 rows in 3 distinct situations; each row's situation group is recorded
+  [ok] no torch in this process
+
+CHECK RESULT: 13 assertions held, 0 failed 

@@ -1,0 +1,7 @@
+# packages in the real project venv (p00 baseline) that the scratch uv sync (project deps + torch + snntorch) did NOT install -> 'uv sync' without --inexact would remove them
+absl-py
+etils
+glfw
+mujoco
+pyopengl
+zipp

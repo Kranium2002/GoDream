@@ -1,0 +1,19 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE provider in use: usage, quote and the estimator are stand-ins (no network); outputs are not evidence
+== request_key (installed client base URL: https://api.priorlabs.ai:443) ==
+  parameters: ['settings', 'x_train', 'y_train', 'x_query', 'categorical_indices', 'base_url']
+  [ok] request_key takes base_url and no column_names
+  [ok] another base URL changes the key
+  [ok] the keyed description is schema v2, holds base_url and no column names
+  [ok] an empty base URL raises ValueError: base_url must be a non-empty string; got ''
+
+== a renamed feature with identical bytes is a cache hit ==
+  [ok] the entry keeps the layout column names in its metadata
+  [ok] same key, served from the cache: 1 billable call in total
+  [ok] identical answers
+
+== another base URL is never served this cache entry ==
+  [ok] a new key and a new dispatch (2 billable calls)
+  [ok] its entry records the other base URL
+
+RESULT: 0 failed check(s)

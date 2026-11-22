@@ -1,0 +1,17 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+steps_run 300; best_step 300; observer calls 7
+  [ok] the observed training exports the same network, bit for bit
+  [ok] the observed training reports the same curves and best step
+  [ok] every event holds exactly the documented keys
+  [ok] one event at step 0 and one per validation evaluation, in order
+  [ok] the event at step 0 has no training loss
+  [ok] each event's validation loss is the report's value at that step
+  [ok] each event's training loss is the report's value at that step
+  [ok] the last event names the restored step and its loss
+  [ok] every event holds one firing rate in [0, 1] per hidden layer
+  [ok] every event names max_steps
+  [ok] an exception raised by the observer propagates -> Halt: stopped by the observer at step 100
+  [ok] the torch thread count and determinism flag are restored after the observer stopped the training
+
+CHECK RESULT: 12 assertions held, 0 failed 

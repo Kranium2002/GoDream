@@ -1,0 +1,98 @@
+### proj_pypi: $ uv lock --cache-dir D:/BerlinPrior/.uv-cache  (cwd=C:/Users/vidhu/AppData/Local/Temp/claude/07d910646a9cb71e/82e647f3-13a8-4067-91a4-d0b43ab8dda2/scratchpad/snn_probe/proj_pypi)
+Using CPython 3.13.16
+Resolved 78 packages in 712ms
+exit=0
+--- torch entries / sources / wheel tags in uv.lock:
+949:name = "torch"
+950-version = "2.15.0"
+951-source = { registry = "https://pypi.org/simple" }
+952-dependencies = [
+--- count of wheel lines for torch by platform:
+      1 macosx_14_0_arm64.whl
+      1 manylinux_2_28_aarch64.whl
+      1 manylinux_2_28_x86_64.whl
+      1 win_amd64.whl
+--- nvidia/cuda/triton packages in lock:
+name = "cuda-bindings"
+name = "cuda-pathfinder"
+name = "cuda-toolkit"
+name = "nvidia-cublas"
+name = "nvidia-cuda-cccl"
+name = "nvidia-cuda-cupti"
+name = "nvidia-cuda-nvrtc"
+name = "nvidia-cuda-runtime"
+name = "nvidia-cudnn-cu13"
+name = "nvidia-cufft"
+name = "nvidia-cufile"
+name = "nvidia-cusolver"
+name = "nvidia-cusparse"
+name = "nvidia-cusparselt-cu13"
+name = "nvidia-ml-py"
+name = "nvidia-nccl-cu13"
+name = "nvidia-nvjitlink"
+name = "nvidia-nvshmem-cu13"
+name = "nvidia-nvtx"
+name = "triton"
+--- n packages:
+78
+name = "numpy"
+version = "2.5.5"
+--
+name = "pandas"
+version = "2.3.3"
+--
+name = "scikit-learn"
+version = "1.9.0"
+--
+name = "scipy"
+version = "1.18.1"
+--
+name = "snntorch"
+version = "1.0.0"
+--
+name = "sympy"
+version = "1.14.0"
+
+### proj_cpuidx: $ uv lock --cache-dir D:/BerlinPrior/.uv-cache  (cwd=C:/Users/vidhu/AppData/Local/Temp/claude/07d910646a9cb71e/82e647f3-13a8-4067-91a4-d0b43ab8dda2/scratchpad/snn_probe/proj_cpuidx)
+Using CPython 3.13.16
+Resolved 60 packages in 362ms
+exit=0
+--- torch entries / sources / wheel tags in uv.lock:
+733:name = "torch"
+734-version = "2.15.0"
+735-source = { registry = "https://download.pytorch.org/whl/cpu" }
+736-resolution-markers = [
+--
+753:name = "torch"
+754-version = "2.15.0+cpu"
+755-source = { registry = "https://download.pytorch.org/whl/cpu" }
+756-resolution-markers = [
+--- count of wheel lines for torch by platform:
+      1 linux_s390x.whl
+      1 macosx_14_0_arm64.whl
+      1 manylinux_2_28_aarch64.whl
+      1 manylinux_2_28_x86_64.whl
+      1 win_amd64.whl
+      1 win_arm64.whl
+--- nvidia/cuda/triton packages in lock:
+name = "nvidia-ml-py"
+--- n packages:
+60
+name = "numpy"
+version = "2.5.5"
+--
+name = "pandas"
+version = "2.3.3"
+--
+name = "scikit-learn"
+version = "1.9.0"
+--
+name = "scipy"
+version = "1.18.1"
+--
+name = "snntorch"
+version = "1.0.0"
+--
+name = "sympy"
+version = "1.14.0"
+

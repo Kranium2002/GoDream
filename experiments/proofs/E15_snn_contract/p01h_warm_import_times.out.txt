@@ -1,0 +1,2 @@
+venv_pypi warm import torch 11.33s snntorch 0.11s 2.15.0+cpu
+venv_cpuidx warm import torch 10.40s snntorch 0.12s 2.15.0+cpu

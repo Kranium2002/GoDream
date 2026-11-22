@@ -1,0 +1,89 @@
+{
+ "format": "learned-judgment/observed-student/v1",
+ "skill": "reflex",
+ "action_names": [
+  "yaw+0.00_vx0.60",
+  "yaw+0.00_vx0.40",
+  "yaw+0.60_vx0.60",
+  "yaw+0.60_vx0.40",
+  "yaw-0.60_vx0.60",
+  "yaw-0.60_vx0.40"
+ ],
+ "heads": {
+  "action": [
+   0,
+   6
+  ]
+ },
+ "no_op_index": null,
+ "input": {
+  "features": 63,
+  "encoding": "(x - 0.5) * sqrt(12)"
+ },
+ "vision": null,
+ "thresholds": null,
+ "provenance": {
+  "dream": "results/runs/reflex1/dream",
+  "scores": "results/runs/reflex1/scores.npz",
+  "frames": null,
+  "window_encoding": null,
+  "diff_floor": null,
+  "hidden_sizes": [
+   64
+  ],
+  "max_steps": 3000,
+  "run_id": "reflex1",
+  "dream_config_digest": "96c28bc943d4a8e6549cb5111215cdf7c2fa92722e666f3ebab8d82dff39eb77",
+  "scores_sha256": "060e80862b6f7c9384258d95ae559cacb3bbd54bb3239f63cc24b5aa4e588a75",
+  "teacher_request_keys": [
+   "6f67f7c5f17e52d33802dcb5ecdc6cddbe263959f46358e0c15137771c05eb67"
+  ],
+  "config_digest": "96c28bc943d4a8e6549cb5111215cdf7c2fa92722e666f3ebab8d82dff39eb77",
+  "seeds": {
+   "seed": 20261121,
+   "streams": {
+    "validation_split": "reflex/observed/validation_split",
+    "init": "reflex/observed/init",
+    "train": "reflex/observed/train"
+   },
+   "init": 2799798159,
+   "train": 2539747869
+  },
+  "training_settings": {
+   "hidden_sizes": [
+    64
+   ],
+   "time_steps": 10,
+   "beta": 0.9,
+   "threshold": 1.0,
+   "readout_beta": 0.9,
+   "learn_beta": false,
+   "learn_threshold": false,
+   "surrogate": "atan",
+   "surrogate_alpha": 2.0,
+   "target_temperature": 0.5,
+   "target_spread": "global_median",
+   "spike_rate_penalty": 0.0,
+   "learning_rate": 0.002,
+   "adam_beta1": 0.9,
+   "adam_beta2": 0.999,
+   "adam_eps": 1e-08,
+   "weight_decay": 0.0,
+   "batch_size": 64,
+   "max_steps": 3000,
+   "validation_fraction": 0.1,
+   "evaluate_every_steps": 100,
+   "patience_evaluations": 5,
+   "torch_threads": 1,
+   "parity_logit_tolerance": 1e-09,
+   "out_of_range": "error"
+  }
+ },
+ "network": {
+  "files": [
+   "network.npz",
+   "network.json"
+  ],
+  "sha256": "f86ec4c33edc6c5ff1a0facec578b9a02b41f9186237f9bfa278dfdf2fa52db9"
+ }
+}

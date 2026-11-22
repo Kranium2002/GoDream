@@ -1,0 +1,7 @@
+DEV RUN inside a saved dream - design probe; no simulator episode and no TabPFN request; not an evaluation result
+config digest 958ae47edad8 | dream of run dodge/chain/20261121T173315Z (teacher, 2000 rows, 108 candidates) | training 1530, early stopping 170, kept out 300
+kept-out dreams: the physics choice gives up 0.0755 of dreamed objective on average (0.026 of the typical score spread 2.9395); it is the dream's best candidate in 0.397 of rows
+
+input                              hidden width steps  val loss   regret  vs phys  best  lower  equal higher     s
+situation                            [64]     9  1200    0.4661   0.2823  +0.2068  0.25   0.32   0.08   0.60    12
+situation                       [128, 64]     9  4400    0.0572   0.1361  +0.0606  0.27   0.23   0.19   0.58    91

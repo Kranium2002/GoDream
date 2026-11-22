@@ -1,0 +1,45 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE provider in use: usage, quote and the estimator are stand-ins (no network); outputs are not evidence
+== the three switches must be true ==
+  [ok] tabpfn.check_usage_before_uncached_request = False raises ConfigError: config.yaml key 'tabpfn.check_usage_before_uncached_request' must be true; got False. The teacher always reads account usage before every uncached request; this
+  [ok]   the message names tabpfn.check_usage_before_uncached_request and says it cannot be switched off
+  [ok] tabpfn.check_usage_before_uncached_request = None raises ConfigError: config.yaml key 'tabpfn.check_usage_before_uncached_request' is null: it must be set before this step can run
+  [ok] tabpfn.check_usage_before_uncached_request = yes raises ConfigError: config.yaml key 'tabpfn.check_usage_before_uncached_request' must be true; got 'yes'. The teacher always reads account usage before every uncached request; this
+  [ok] tabpfn.check_usage_before_uncached_request = <missing> raises ConfigError: config.yaml has no key 'tabpfn.check_usage_before_uncached_request'
+  [ok] tabpfn.estimate_cost_before_uncached_request = False raises ConfigError: config.yaml key 'tabpfn.estimate_cost_before_uncached_request' must be true; got False. The teacher always reads a cost quote before every uncached request; thi
+  [ok]   the message names tabpfn.estimate_cost_before_uncached_request and says it cannot be switched off
+  [ok] tabpfn.estimate_cost_before_uncached_request = None raises ConfigError: config.yaml key 'tabpfn.estimate_cost_before_uncached_request' is null: it must be set before this step can run
+  [ok] tabpfn.estimate_cost_before_uncached_request = yes raises ConfigError: config.yaml key 'tabpfn.estimate_cost_before_uncached_request' must be true; got 'yes'. The teacher always reads a cost quote before every uncached request; thi
+  [ok] tabpfn.estimate_cost_before_uncached_request = <missing> raises ConfigError: config.yaml has no key 'tabpfn.estimate_cost_before_uncached_request'
+  [ok] tabpfn.cache_requests_and_responses = False raises ConfigError: config.yaml key 'tabpfn.cache_requests_and_responses' must be true; got False. The teacher always caches every request and response; this cannot be switched off
+  [ok]   the message names tabpfn.cache_requests_and_responses and says it cannot be switched off
+  [ok] tabpfn.cache_requests_and_responses = None raises ConfigError: config.yaml key 'tabpfn.cache_requests_and_responses' is null: it must be set before this step can run
+  [ok] tabpfn.cache_requests_and_responses = yes raises ConfigError: config.yaml key 'tabpfn.cache_requests_and_responses' must be true; got 'yes'. The teacher always caches every request and response; this cannot be switched off
+  [ok] tabpfn.cache_requests_and_responses = <missing> raises ConfigError: config.yaml has no key 'tabpfn.cache_requests_and_responses'
+  [ok] all true (config.yaml as it is) is accepted
+
+== verified request limits are read with optional() ==
+  config.yaml: per_minute=None, per_hour=None
+  [ok] per_minute 60 is read
+  [ok] per_hour 500 is read
+  [ok] a missing key reads as None
+  [ok] per_minute 0 raises ConfigError: config.yaml tabpfn/engine settings are invalid: invalid TeacherSettings: verified_request_limit_per_minute must be null or a positive integer; got 0
+  [ok] per_minute '60' raises ConfigError: config.yaml key 'tabpfn.verified_request_limit_per_minute' must be null or an integer; got '60'
+  [ok] per_minute 1.5 raises ConfigError: config.yaml key 'tabpfn.verified_request_limit_per_minute' must be null or an integer; got 1.5
+
+== per-minute limit 2 ==
+  [ok] a 3rd dispatch 3 s after the first raises BudgetError: request 5a6b99e1aa95578a85581c23229b4a4b23c5b89cd035f6a32a03cf9886d8d3a9 refused before any billable call: 2 dispatches in the last minute plus this one exceed 
+  [ok] the reason names the per-minute limit
+  [ok] the refused record carries the window counts
+  [ok] 2 billable calls
+  [ok] 61 s later the 3rd request is sent
+  [ok] the dispatch record says rate_limit_configured true with its counts
+
+== per-hour limit 2 ==
+  [ok] a 3rd dispatch within the hour raises BudgetError: request 5a6b99e1aa95578a85581c23229b4a4b23c5b89cd035f6a32a03cf9886d8d3a9 refused before any billable call: 2 dispatches in the last hour plus this one exceed ta
+  [ok] an hour later it is sent; 3 billable calls in total
+
+== limits null (config.yaml today) ==
+  [ok] every dispatch record says rate_limit_configured false and carries no limit
+
+RESULT: 0 failed check(s)

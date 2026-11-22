@@ -1,0 +1,33 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+  [ok] importing learned_judgment.teacher did not import tabpfn_client
+== accepted: documented (Q, n) layout ==
+  [ok] quantiles transposed to (n, Q)
+  [ok] transpose is exact
+  [ok] mean/median/mode pass through unchanged (n,)
+  [ok] all outputs float64
+  [ok] list-of-lists input (as the server JSON decodes) is accepted
+  [ok] equal neighbouring quantiles (ties) are accepted
+
+== rejected with ProviderResponseError ==
+  [ok] NaN in quantiles rejected: 'main' output 'quantiles' has 1 non-finite values
+  [ok] inf in mean rejected: 'main' output 'mean' has 1 non-finite values
+  [ok] None inside a list (client keeps it as NaN) rejected: 'main' output 'median' has 1 non-finite values
+  [ok] decreasing quantiles in one row rejected: quantiles decrease along the level axis in 1 of 7 rows
+  [ok] quantiles given as (n, Q) instead of (Q, n) rejected: 'main' output 'quantiles' has shape (7, 5); the verified layout is (5, 7)
+  [ok] wrong number of rows in mode rejected: 'main' output 'mode' has shape (6,); the verified layout is (7,)
+  [ok] missing key 'mode' rejected: 'main' output keys ['mean', 'median', 'quantiles'] differ from the verified ['mean', 'median', 'mode', 'quantiles']
+  [ok] extra key 'logits' rejected: 'main' output keys ['logits', 'mean', 'median', 'mode', 'quantiles'] differ from the verified ['mean', 'median', 'mode', 'quantiles']
+  [ok] not a dict rejected: 'main' output must be a dict; got list
+
+== outgoing tabpfn_config of the pinned client (construction only, no network) ==
+  categorical (): {'n_estimators': 8, 'categorical_features_indices': [], 'random_state': 0, 'ignore_pretraining_limits': False, 'model_path': 'v3.5_default'}
+  [ok] config for categorical () equals the keyed settings
+  categorical (1,): {'n_estimators': 8, 'categorical_features_indices': [1], 'random_state': 0, 'ignore_pretraining_limits': False, 'model_path': 'v3.5_default'}
+  [ok] config for categorical (1,) equals the keyed settings
+  categorical (1, 5): {'n_estimators': 8, 'categorical_features_indices': [1, 5], 'random_state': 0, 'ignore_pretraining_limits': False, 'model_path': 'v3.5_default'}
+  [ok] config for categorical (1, 5) equals the keyed settings
+  installed tabpfn_client 0.10.1 | configured 0.10.1
+  [ok] installed client version equals tabpfn.client_version
+  [ok] no prediction call was started
+
+RESULT: 0 failed check(s)

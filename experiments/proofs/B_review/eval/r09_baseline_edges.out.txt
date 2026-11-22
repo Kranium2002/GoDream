@@ -1,0 +1,9 @@
+REVIEW REPRODUCTION - fixture, not evidence
+GB is_categorical_ of the mean model: [False, False, True, False, False, False, False] | layout categorical idx (2,)
+categories seen in training: [0.0, 2.0] | predicting with category 1.0 -> unseen | finite: True
+
+duplicated rows (every attempt twice), constant residual, binary-only residual, min counts:
+  constant_bias      min_attempts=1: dup finite=True | const residual 0.25 -> median 0.00e+00 off, spread max 0.00e+00 | at min count spread[sep] mean 0.0000
+  gaussian_process   min_attempts=2: dup finite=True | const residual 0.25 -> median 0.00e+00 off, spread max 1.57e-03 | at min count spread[sep] mean 0.0028
+  gradient_boosting  min_attempts=5: dup finite=True | const residual 0.25 -> median 0.00e+00 off, spread max 0.00e+00 | at min count spread[sep] mean 0.0482
+  mlp_on_attempts    min_attempts=5: dup finite=True | const residual 0.25 -> median 7.42e-04 off, spread max 5.16e-04 | at min count spread[sep] mean 0.0001

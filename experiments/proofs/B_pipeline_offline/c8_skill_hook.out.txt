@@ -1,0 +1,19 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+learned_judgment.env.sample_dodge_situations exists before the check: False
+
+== 1. load_skill_for_world through the module's for_world ==
+  [ok] the DODGE module defines for_world
+  [ok] a DodgeSpec named 'dodge'
+  [ok] sampled situations carry the world's declared values
+  [ok] a hook returning a mapping -> TypeError: for_world of skill 'dodge' must return a SkillSpec; got dict
+  [ok] a hook returning another skill's spec -> TypeError: for_world of skill 'dodge' built a spec named 'fixture_pipeline'
+  [ok] an unknown skill -> KeyError: "unknown skill 'no_such_skill'; available skills: ['dodge']"
+
+== 2. open_run on one real Go2World (no episode) ==
+  the default preset declares surface 'default'; the fixture surface list is set to include it
+  [ok] open_run returned a SkillRun of the registered skill
+  [ok] manifest names the world factory: learned_judgment.env.Go2World: MuJoCo Go2 with the borrowed, frozen walking policy (Person A)
+  [ok] no step was run
+  [ok] the manifest is under the temporary directory
+
+CHECK RESULT (plumbing): 10 assertions held, 0 failed 

@@ -1,0 +1,44 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+== constant outcomes ==
+  constant mask: [False, True, False]
+  [ok] outcome 1 (all -0.75) is constant, outcomes 0 and 2 are not
+  [ok] active outcomes are (0, 2)
+
+== two active outcomes: long format with an outcome column ==
+  x_long (10, 5), y_long (10,), mean [2.8562709372592208, -0.9940705044785834], std [2.150246118749392, 0.008264908671266833]
+  [ok] x_long shape (A*n, F+1)
+  [ok] y_long shape (A*n,)
+  [ok] every block's feature columns equal the training features exactly
+  [ok] outcome column holds the outcome index k of each block
+  [ok] rows are outcome-major (first n rows are outcome 0)
+  [ok] standardized targets have mean 0 and std 1 per outcome (float precision)
+  de-standardized vs original residuals: max |diff| 0.000e+00, 0.00 eps units of scale
+  [ok] de-standardization restores the residuals within 4 eps units of scale
+  [ok] query expansion shape (A*m, F+1)
+  [ok] query blocks equal the query exactly, outcome column = k
+
+== un-stacking predicted quantiles (stand-in arrays shaped like a response) ==
+  [ok] un-stacked quantiles (m, A, Q)
+  [ok] row (i, outcome j) of the result is long row j*m + i
+  [ok] de-standardization keeps quantiles non-decreasing
+  [ok] de-standardized quantile = value * std_k + mean_k exactly
+
+== filling the full outcome order (constant outcome) ==
+  [ok] full quantiles (m, K, Q)
+  [ok] constant outcome 1 is exactly -0.75 at every quantile
+  [ok] active outcomes are placed unchanged
+  [ok] no active outcome: every column is its constant
+
+== exactly one active outcome: no outcome column ==
+  [ok] x equals the features exactly (n, F), no extra column
+  [ok] query is unchanged (m, F)
+  single-outcome restore: 0.00 eps units of scale
+  [ok] single-outcome de-standardization within 4 eps units of scale
+
+== rejected inputs ==
+  [ok] a constant outcome among the active ones raises ValueError: every active outcome needs a finite positive standard deviation; got [2.150246118749392, 0.0]
+  [ok] unsorted active indices raises ValueError: active outcome indices must be strictly increasing and >= 0; got [2, 0]
+  [ok] active index out of range raises ValueError: active outcome index 3 is out of range for K=3
+  [ok] wrong row count for unstack raises ValueError: values must have 3 x 2 rows; got shape (7,)
+
+RESULT: 0 failed check(s)

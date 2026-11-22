@@ -1,0 +1,982 @@
+{
+ "run_id": "reflex3",
+ "skill": "reflex",
+ "loop": {
+  "state": "running",
+  "rounds": 3,
+  "confirm_billing": true,
+  "attempt_episodes_per_round": 12,
+  "test_split": "test2",
+  "round_choice_rule": "most dev courses reached; ties -> smaller mean |sideways offset| at the goal line on dev (no crossing counts as the worst); ties -> the later round",
+  "steps": [
+   {
+    "round": 0,
+    "step": "attempts",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.skills.reflex",
+     "attempts",
+     "--out",
+     "results/runs/reflex3/round_0/context",
+     "--n",
+     "12",
+     "--first",
+     "0"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T04:57:02.118877+00:00",
+    "wall_s": 18.294
+   },
+   {
+    "round": 0,
+    "step": "dream",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.skills.reflex",
+     "dream",
+     "--out",
+     "results/runs/reflex3/round_0/dream",
+     "--context",
+     "results/runs/reflex3/round_0/context"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T04:57:20.420208+00:00",
+    "wall_s": 25.156
+   },
+   {
+    "round": 0,
+    "step": "teach",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.observed",
+     "teach",
+     "--run",
+     "reflex3",
+     "--skill",
+     "reflex",
+     "--context",
+     "results/runs/reflex3/round_0/context",
+     "--dream",
+     "results/runs/reflex3/round_0/dream",
+     "--confirm-billing"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T04:57:45.584446+00:00",
+    "wall_s": 23.461
+   },
+   {
+    "round": 0,
+    "step": "train",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.observed",
+     "train",
+     "--run",
+     "reflex3",
+     "--skill",
+     "reflex",
+     "--dream",
+     "results/runs/reflex3/round_0/dream",
+     "--scores",
+     "results/runs/reflex3/round_0/scores.npz"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T04:58:09.057784+00:00",
+    "wall_s": 16.933
+   },
+   {
+    "round": 0,
+    "step": "dev",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.skills.reflex",
+     "run",
+     "--student",
+     "results/runs/reflex3/round_0/student",
+     "--split",
+     "dev",
+     "--out",
+     "results/runs/reflex3/round_0/dev_run",
+     "--methods",
+     "snn"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T04:58:26.019858+00:00",
+    "wall_s": 49.209
+   },
+   {
+    "round": 1,
+    "step": "attempts",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.skills.reflex",
+     "attempts",
+     "--out",
+     "results/runs/reflex3/round_1/context",
+     "--n",
+     "12",
+     "--first",
+     "12",
+     "--policy",
+     "student",
+     "--student",
+     "results/runs/reflex3/round_0/student"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T04:59:15.252947+00:00",
+    "wall_s": 21.253
+   },
+   {
+    "round": 1,
+    "step": "merge",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.skills.reflex",
+     "merge",
+     "--inputs",
+     "results/runs/reflex3/round_0/context",
+     "results/runs/reflex3/round_1/context",
+     "--out",
+     "results/runs/reflex3/round_1/rows"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T04:59:36.515099+00:00",
+    "wall_s": 1.18
+   },
+   {
+    "round": 1,
+    "step": "dream",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.skills.reflex",
+     "dream",
+     "--out",
+     "results/runs/reflex3/round_1/dream",
+     "--context",
+     "results/runs/reflex3/round_0/context",
+     "results/runs/reflex3/round_1/context"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T04:59:37.703391+00:00",
+    "wall_s": 27.459
+   },
+   {
+    "round": 1,
+    "step": "teach",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.observed",
+     "teach",
+     "--run",
+     "reflex3",
+     "--skill",
+     "reflex",
+     "--context",
+     "results/runs/reflex3/round_1/rows",
+     "--dream",
+     "results/runs/reflex3/round_1/dream",
+     "--confirm-billing"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T05:00:05.169565+00:00",
+    "wall_s": 28.876
+   },
+   {
+    "round": 1,
+    "step": "train",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.observed",
+     "train",
+     "--run",
+     "reflex3",
+     "--skill",
+     "reflex",
+     "--dream",
+     "results/runs/reflex3/round_1/dream",
+     "--scores",
+     "results/runs/reflex3/round_1/scores.npz"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T05:00:34.054987+00:00",
+    "wall_s": 15.596
+   },
+   {
+    "round": 1,
+    "step": "dev",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.skills.reflex",
+     "run",
+     "--student",
+     "results/runs/reflex3/round_1/student",
+     "--split",
+     "dev",
+     "--out",
+     "results/runs/reflex3/round_1/dev_run",
+     "--methods",
+     "snn"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T05:00:49.675806+00:00",
+    "wall_s": 44.422
+   },
+   {
+    "round": 2,
+    "step": "attempts",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.skills.reflex",
+     "attempts",
+     "--out",
+     "results/runs/reflex3/round_2/context",
+     "--n",
+     "12",
+     "--first",
+     "24",
+     "--policy",
+     "student",
+     "--student",
+     "results/runs/reflex3/round_1/student"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T05:01:34.127180+00:00",
+    "wall_s": 24.113
+   },
+   {
+    "round": 2,
+    "step": "merge",
+    "argv": [
+     "-m",
+     "learned_judgment.run_skill",
+     "_exec",
+     "--config",
+     "results/runs/reflex3/config.yaml",
+     "learned_judgment.skills.reflex",
+     "merge",
+     "--inputs",
+     "results/runs/reflex3/round_0/context",
+     "results/runs/reflex3/round_1/context",
+     "results/runs/reflex3/round_2/context",
+     "--out",
+     "results/runs/reflex3/round_2/rows"
+    ],
+    "returncode": 0,
+    "started_utc": "2026-11-22T05:01:58.249926+00:00",
+    "wall_s": 1.493
+   }
+  ],
+  "wall_s": 297.76849409998977,
+  "log": "results/runs/reflex3/loop.log"
+ },
+ "updated_utc": "2026-11-22T05:01:59.747185+00:00",
+ "quote": {
+  "state": "done",
+  "started_utc": "2026-11-22T04:48:52.642841+00:00",
+  "argv": [
+   "quote",
+   "--run",
+   "reflex3",
+   "--skill",
+   "reflex",
+   "--context",
+   "results/runs/reflex3/round_0/context",
+   "--dream",
+   "results/runs/reflex3/round_0/dream"
+  ],
+  "config_digest": "45e33fea1c707b53475f65afd43506e5324c0742832b21c8a8bd40c8bde38ee5",
+  "context": "results/runs/reflex3/round_0/context",
+  "dream": "results/runs/reflex3/round_0/dream",
+  "feature_set": [
+   "window",
+   "action",
+   "physics"
+  ],
+  "quote": {
+   "dream": {
+    "mode": "stacked",
+    "n_query_rows": 14410,
+    "n_train_rows": 545,
+    "n_features": 105,
+    "active_outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "constant_outcomes": [
+     "fall"
+    ],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "progress_m",
+       "offset_m",
+       "tilt_deg"
+      ],
+      "chunk": 0,
+      "n_chunks": 2,
+      "n_train": 1635,
+      "n_query": 32000,
+      "n_features": 106,
+      "padded_rows": 0,
+      "quote_tokens": 12238,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "progress_m",
+       "offset_m",
+       "tilt_deg"
+      ],
+      "chunk": 1,
+      "n_chunks": 2,
+      "n_train": 1635,
+      "n_query": 11230,
+      "n_features": 106,
+      "padded_rows": 0,
+      "quote_tokens": 10000,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 22238,
+    "usage": {
+     "current_usage": 1720291,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 923569,
+     "daily_token_limit": 35000000,
+     "daily_usage": 923569,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-23 00:00:00 UTC",
+     "monthly_tokens_used": 1720291,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 1720291,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 33279709,
+    "tokens_quoted_for_billed_calls": 534441,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   }
+  }
+ },
+ "teach": {
+  "state": "done",
+  "started_utc": "2026-11-22T05:00:06.086482+00:00",
+  "argv": [
+   "teach",
+   "--run",
+   "reflex3",
+   "--skill",
+   "reflex",
+   "--context",
+   "results/runs/reflex3/round_1/rows",
+   "--dream",
+   "results/runs/reflex3/round_1/dream",
+   "--confirm-billing"
+  ],
+  "config_digest": "45e33fea1c707b53475f65afd43506e5324c0742832b21c8a8bd40c8bde38ee5",
+  "context": "results/runs/reflex3/round_1/rows",
+  "dream": "results/runs/reflex3/round_1/dream",
+  "dev": null,
+  "feature_set": [
+   "window",
+   "action",
+   "physics"
+  ],
+  "teacher": {
+   "n_context_rows": 1179,
+   "n_features": 105,
+   "call_log": "D:/BerlinPrior/results/tabpfn_calls.jsonl"
+  },
+  "quote": {
+   "dream": {
+    "mode": "stacked",
+    "n_query_rows": 20750,
+    "n_train_rows": 1179,
+    "n_features": 105,
+    "active_outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "constant_outcomes": [
+     "fall"
+    ],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "progress_m",
+       "offset_m",
+       "tilt_deg"
+      ],
+      "chunk": 0,
+      "n_chunks": 2,
+      "n_train": 3537,
+      "n_query": 32000,
+      "n_features": 106,
+      "padded_rows": 0,
+      "quote_tokens": 12756,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "progress_m",
+       "offset_m",
+       "tilt_deg"
+      ],
+      "chunk": 1,
+      "n_chunks": 2,
+      "n_train": 3537,
+      "n_query": 30250,
+      "n_features": 106,
+      "padded_rows": 0,
+      "quote_tokens": 12279,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 25035,
+    "usage": {
+     "current_usage": 1742529,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 945807,
+     "daily_token_limit": 35000000,
+     "daily_usage": 945807,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-23 00:00:00 UTC",
+     "monthly_tokens_used": 1742529,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 1742529,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 33257471,
+    "tokens_quoted_for_billed_calls": 556679,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   }
+  },
+  "scores": {
+   "path": "D:/BerlinPrior/results/runs/reflex3/scores.npz",
+   "sha256": "33a809f9edb532b24c667442abee02002ca73aadaf2a3766646a49bb5223a9dc",
+   "shape": [
+    2075,
+    10
+   ],
+   "request_keys": [
+    "437e95cd8edb997e38db1783b9be3593202ae29a9376fed5be339c4c3404d81b",
+    "ea64cc9ed86a0965ae60a7e9b2981134f15c3b7b8751f3314cf65f20ed536340"
+   ]
+  }
+ },
+ "train": {
+  "state": "done",
+  "started_utc": "2026-11-22T05:00:35.031139+00:00",
+  "argv": [
+   "train",
+   "--run",
+   "reflex3",
+   "--skill",
+   "reflex",
+   "--dream",
+   "results/runs/reflex3/round_1/dream",
+   "--scores",
+   "results/runs/reflex3/round_1/scores.npz"
+  ],
+  "config_digest": "45e33fea1c707b53475f65afd43506e5324c0742832b21c8a8bd40c8bde38ee5",
+  "dream": "results/runs/reflex3/round_1/dream",
+  "scores": "results/runs/reflex3/round_1/scores.npz",
+  "frames": null,
+  "window_encoding": null,
+  "diff_floor": null,
+  "hidden_sizes": [
+   64
+  ],
+  "max_steps": 3000,
+  "student": "D:/BerlinPrior/results/runs/reflex3/student",
+  "network_sha256": "740e20195e444ea074c831df195abe6b53bc65e682c8d315c11f7396cef7d19d",
+  "split": {
+   "by": "group",
+   "validation_fraction": 0.1,
+   "n_train_rows": 1902,
+   "n_validation_rows": 173,
+   "n_groups": 44
+  },
+  "parity": {
+   "action": {
+    "n_inputs_checked": 2075,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 1.3322676295501878e-15,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     1328000
+    ],
+    "total_spikes_per_layer_torch": [
+     295204
+    ],
+    "total_spikes_per_layer_numpy": [
+     295204
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "combined": {
+    "n_inputs_checked": 2075,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": {
+     "action": 0.0
+    },
+    "action_decisions_differing": 0
+   }
+  },
+  "training": {
+   "loss": "per head KL(target || softmax(logits)) averaged over that head's rows, weighted by the head's share of the batch, plus spike_rate_penalty x mean hidden firing rate; early stopping on the sampling-weighted validation KL",
+   "acceptance": "the restored weights must have a total validation KL below initialisation, a validation KL per head below that of the head's mean training target (the best constant prediction), and spikes in every hidden layer on the validation rows; otherwise fit raises TrainingError",
+   "heads": [
+    "action"
+   ],
+   "sampling": {
+    "action": 1.0
+   },
+   "n_train_rows": {
+    "action": 1902
+   },
+   "n_validation_rows": {
+    "action": 173
+   },
+   "steps_run": 900,
+   "best_step": 400,
+   "stopped_early": true,
+   "initial_validation_loss": 2.126996829610063,
+   "best_validation_loss": 1.3774331268162807,
+   "best_validation_loss_per_head": {
+    "action": 1.3774331268162807
+   },
+   "constant_predictor_validation_loss": {
+    "action": 1.829595812258583
+   },
+   "constant_predictor_validation_loss_null_means": "infinite",
+   "train_loss_curve": [
+    [
+     100,
+     1.4337981954239667
+    ],
+    [
+     200,
+     1.14247802449779
+    ],
+    [
+     300,
+     1.010425812487715
+    ],
+    [
+     400,
+     0.9127075773498824
+    ],
+    [
+     500,
+     0.8201965287129491
+    ],
+    [
+     600,
+     0.7537391723479537
+    ],
+    [
+     700,
+     0.6876977080621655
+    ],
+    [
+     800,
+     0.6429174193369928
+    ],
+    [
+     900,
+     0.5946392096975328
+    ]
+   ],
+   "validation_loss_curve": [
+    [
+     0,
+     {
+      "action": 2.126996829610063
+     }
+    ],
+    [
+     100,
+     {
+      "action": 1.5222114770173645
+     }
+    ],
+    [
+     200,
+     {
+      "action": 1.4480872487028076
+     }
+    ],
+    [
+     300,
+     {
+      "action": 1.4547689238367845
+     }
+    ],
+    [
+     400,
+     {
+      "action": 1.3774331268162807
+     }
+    ],
+    [
+     500,
+     {
+      "action": 1.416271329708203
+     }
+    ],
+    [
+     600,
+     {
+      "action": 1.4366428294613007
+     }
+    ],
+    [
+     700,
+     {
+      "action": 1.4845340608703916
+     }
+    ],
+    [
+     800,
+     {
+      "action": 1.5171343380334863
+     }
+    ],
+    [
+     900,
+     {
+      "action": 1.5300013993706316
+     }
+    ]
+   ],
+   "validation_total_curve": [
+    [
+     0,
+     2.126996829610063
+    ],
+    [
+     100,
+     1.5222114770173645
+    ],
+    [
+     200,
+     1.4480872487028076
+    ],
+    [
+     300,
+     1.4547689238367845
+    ],
+    [
+     400,
+     1.3774331268162807
+    ],
+    [
+     500,
+     1.416271329708203
+    ],
+    [
+     600,
+     1.4366428294613007
+    ],
+    [
+     700,
+     1.4845340608703916
+    ],
+    [
+     800,
+     1.5171343380334863
+    ],
+    [
+     900,
+     1.5300013993706316
+    ]
+   ],
+   "initial_firing_rate_per_layer": [
+    0.06865968208092485
+   ],
+   "firing_rate_per_layer": [
+    0.216573338150289
+   ],
+   "dead_fraction_per_layer": [
+    0.0
+   ],
+   "saturated_fraction_per_layer": [
+    0.0
+   ],
+   "silent_layers": [],
+   "wall_seconds": 10.650398500001756,
+   "seed": 2539747869,
+   "torch_threads": 1,
+   "versions": {
+    "torch": "2.15.0+cpu",
+    "snntorch": "1.0.0",
+    "numpy": "2.5.5",
+    "python": "3.13.16"
+   },
+   "optimizer": {
+    "name": "Adam",
+    "lr": 0.002,
+    "betas": [
+     0.9,
+     0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0
+   }
+  },
+  "wall_s": 13.37980019999668
+ },
+ "rounds": [
+  {
+   "round": 0,
+   "policy": "rule",
+   "acting_student": null,
+   "attempt_episodes": 12,
+   "context_scenarios": [
+    0,
+    11
+   ],
+   "new_rows": 545,
+   "new_rows_by_source": {
+    "rule": 295,
+    "explore": 250,
+    "student": 0
+   },
+   "n_real_decisions": 545,
+   "real_decisions_by_source": {
+    "rule": 295,
+    "explore": 250,
+    "student": 0
+   },
+   "teacher_context": "results/runs/reflex3/round_0/context",
+   "dream_windows": 1441,
+   "dream": "results/runs/reflex3/round_0/dream",
+   "student": "results/runs/reflex3/round_0/student",
+   "network_sha256": "04e8e39ea901b06d01518148f01fc8483a148ed838699e28c4f8bfded047b69b",
+   "train": "results/runs/reflex3/round_0/train.json",
+   "dev": {
+    "split": "dev",
+    "method": "snn",
+    "run_json": "D:/BerlinPrior/results/runs/reflex3/round_0/dev_run/run.json",
+    "n": 30,
+    "reached": 2,
+    "crossed_goal_line": 4,
+    "falls": 0,
+    "mean_offset_at_goal_line_m": 0.7447538028504052,
+    "mean_final_abs_sideways_m": 4.418761909784534,
+    "mean_time_to_goal_s": 13.25,
+    "by_difficulty": {
+     "flat": {
+      "n": 4,
+      "reached": 0,
+      "crossed_goal_line": 0,
+      "falls": 0,
+      "mean_offset_at_goal_line_m": null,
+      "mean_final_abs_sideways_m": 6.196563435995442,
+      "mean_time_to_goal_s": null
+     },
+     "gentle": {
+      "n": 13,
+      "reached": 1,
+      "crossed_goal_line": 3,
+      "falls": 0,
+      "mean_offset_at_goal_line_m": 0.8388432587383071,
+      "mean_final_abs_sideways_m": 2.982949981394211,
+      "mean_time_to_goal_s": 12.5,
+      "passage": {
+       "over": 0,
+       "around": 12,
+       "not_past": 1
+      }
+     },
+     "steep": {
+      "n": 13,
+      "reached": 1,
+      "crossed_goal_line": 1,
+      "falls": 0,
+      "mean_offset_at_goal_line_m": 0.46248543518669916,
+      "mean_final_abs_sideways_m": 5.307557983956116,
+      "mean_time_to_goal_s": 14.0,
+      "passage": {
+       "over": 0,
+       "around": 13,
+       "not_past": 0
+      }
+     }
+    }
+   },
+   "chosen": false,
+   "wall_s": 133.126
+  },
+  {
+   "round": 1,
+   "policy": "student",
+   "acting_student": "results/runs/reflex3/round_0/student",
+   "attempt_episodes": 12,
+   "context_scenarios": [
+    12,
+    23
+   ],
+   "new_rows": 634,
+   "new_rows_by_source": {
+    "rule": 0,
+    "explore": 206,
+    "student": 428
+   },
+   "n_real_decisions": 1179,
+   "real_decisions_by_source": {
+    "rule": 295,
+    "explore": 456,
+    "student": 428
+   },
+   "teacher_context": "results/runs/reflex3/round_1/rows",
+   "dream_windows": 2075,
+   "dream": "results/runs/reflex3/round_1/dream",
+   "student": "results/runs/reflex3/round_1/student",
+   "network_sha256": "740e20195e444ea074c831df195abe6b53bc65e682c8d315c11f7396cef7d19d",
+   "train": "results/runs/reflex3/round_1/train.json",
+   "dev": {
+    "split": "dev",
+    "method": "snn",
+    "run_json": "D:/BerlinPrior/results/runs/reflex3/round_1/dev_run/run.json",
+    "n": 30,
+    "reached": 5,
+    "crossed_goal_line": 27,
+    "falls": 0,
+    "mean_offset_at_goal_line_m": 1.284789606575867,
+    "mean_final_abs_sideways_m": 1.2947236978805525,
+    "mean_time_to_goal_s": 13.244,
+    "by_difficulty": {
+     "flat": {
+      "n": 4,
+      "reached": 2,
+      "crossed_goal_line": 4,
+      "falls": 0,
+      "mean_offset_at_goal_line_m": 0.6916599070551377,
+      "mean_final_abs_sideways_m": 0.6916599070551377,
+      "mean_time_to_goal_s": 11.88
+     },
+     "gentle": {
+      "n": 13,
+      "reached": 2,
+      "crossed_goal_line": 11,
+      "falls": 0,
+      "mean_offset_at_goal_line_m": 1.2598140684237766,
+      "mean_final_abs_sideways_m": 1.3404568562470567,
+      "mean_time_to_goal_s": 12.219999999999999,
+      "passage": {
+       "over": 9,
+       "around": 4,
+       "not_past": 0
+      }
+     },
+     "steep": {
+      "n": 13,
+      "reached": 1,
+      "crossed_goal_line": 12,
+      "falls": 0,
+      "mean_offset_at_goal_line_m": 1.5053937497221932,
+      "mean_final_abs_sideways_m": 1.4345486289987917,
+      "mean_time_to_goal_s": 18.02,
+      "passage": {
+       "over": 0,
+       "around": 12,
+       "not_past": 1
+      }
+     }
+    }
+   },
+   "chosen": false,
+   "wall_s": 138.866
+  }
+ ]
+}

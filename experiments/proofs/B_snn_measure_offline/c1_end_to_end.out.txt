@@ -1,0 +1,116 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+config: config.yaml plus skills.fixture_measure.candidate_points_per_dim=[7, 5]; students.snn.max_steps reduced to 400 (config.yaml value 1500)
+
+== variant physics_only: dreams from the physics guess alone; the SNNStudent is passed as it is ==
+  dreams: train 1000 x 35 candidates, held-out 500
+  train_in_dream: 14.7 s incl. torch import; steps_run=400 best_step=400 validation loss 0.7948 -> 0.0477
+  student_record: 3.9 s
+  MECHANICS numbers on a fixture (inside the held-out fixture dream; not the robot or the simulator):
+    held-out dream: 500 rows, 500 distinct situations, source=physics_only, held_out=True; agreement with the dream's choice 0.282, zero-regret share 0.714
+    dream regret of the student: mean 0.0057 p90 0.0223 objective units; / spread: mean 0.0395 p90 0.1559
+    dream regret of the physics-only choice: mean 0.0000 p90 0.0000 objective units; / spread: mean 0.0000 p90 0.0000
+    student - physics mean regret 0.0057 [0.0047, 0.0068] (95% BCa, 9999 resamples, 500 distinct situations in 500 rows); rows lower/equal/higher 0.000/0.714/0.286
+    latency (in this process; torch loaded by training: True): full path median 401.9 us p95 566.8 us; index only median 371.4 us p95 416.8 us; grid check once at binding 1.69 ms
+    spikes per decision 128.2 [125.7, 130.7] (95% BCa, 9999 resamples, 1000 distinct situations in 1000 rows)
+    synaptic ops per decision 4487.4 [4400.1, 4576.2] (95% BCa, 9999 resamples, 1000 distinct situations in 1000 rows)
+    firing rate per layer [0.2003]; never fire [0.0625], fire every step [0.0]
+    energy main_estimate (pJ per decision): 5216.2 [5137.7, 5296.2] (95% BCa, 9999 resamples, 1000 distinct situations in 1000 rows); ratio to dense 0.454 [0.447, 0.461]; break-even rate 0.5111 vs weighted measured rate 0.2003
+    energy with_neuron_updates_estimate (pJ per decision): 10776.6 [10695.9, 10858.9] (95% BCa, 9999 resamples, 1000 distinct situations in 1000 rows); ratio to dense 0.939 [0.932, 0.946]; break-even rate 0.2343 vs weighted measured rate 0.2003
+    dense reference estimate 11481.6 pJ; H4 energy verdict from the estimates (mechanics only): 'supported'
+
+  -- mechanics assertions, variant physics_only --
+  [ok] record has exactly the documented top-level keys
+  [ok] JSON round trip: c1_record_physics_only.json reloads equal to the record
+  [ok] write_record wrote canonical JSON (sorted keys, compact, trailing newline)
+  [ok] fan-out of each hidden layer = width of the layer it feeds
+  [ok] synaptic ops per decision = spikes per decision x fan-out
+  [ok] reported means equal the means of the per-decision values
+  [ok] an independent operation_counts run gives the same spikes per decision
+  [ok] firing rate per layer = mean spikes / (H x T)
+  [ok] never-fire and fire-every-step fractions lie in [0, 1] and do not overlap
+  [ok] operations situations: 1000 rows, 1000 distinct situations stated
+  [ok] the estimates used the config.yaml constants e_mac=4.6 pJ, e_ac=0.9 pJ and their source
+  [ok] both estimates per decision and their means, and the dense reference, follow energy.py's formulas from the counts
+  [ok] main estimate: interval inside [min, max] of the per-decision values, config.yaml bootstrap settings, distinct situations resampled
+  [ok] main estimate: ratio = mean / dense; the weighted rate is below its break-even rate exactly when the mean is below the reference
+  [ok] with neuron updates estimate: interval inside [min, max] of the per-decision values, config.yaml bootstrap settings, distinct situations resampled
+  [ok] with neuron updates estimate: ratio = mean / dense; the weighted rate is below its break-even rate exactly when the mean is below the reference
+  [ok] H4 energy verdict 'supported' follows the rule from both means (stored with the rule text)
+  [ok] operations labelled with 'estimate' and carrying the energy caveats
+  [ok] spikes interval inside [min, max] of the per-decision values, with the config.yaml bootstrap settings
+  [ok] synaptic ops interval inside [min, max] of the per-decision values, with the config.yaml bootstrap settings
+  [ok] every dream regret is non-negative
+  [ok] recorded decisions and agreement reproduce from the deployed student's decide_index on the held-out dream
+  [ok] student regret = row max score - score of the decision
+  [ok] held-out dream: no row's situation was seen in training; rows and distinct situations stated
+  [ok] regret difference = mean(student - physics) with an interval that resamples distinct held-out situations
+  [ok] training and held-out dreams marked 'physics_only', not provider-backed
+  [ok] latency: both paths over config.yaml evaluation.latency_decisions calls; 0 < median <= p95; single-row = batched decisions
+  [ok] latency record: the grid check ran once at binding; the full path (with the candidate lookup) is the H3 timing
+  [ok] network digest is the same in every part of the record
+  [ok] physics-only dream: the physics choice is the dream's choice, so its dream regret is 0 on every row
+  [ok] student_record with the training dream as 'held-out' -> HeldOutOverlapError: dreams_heldout: 1000 of 1000 dream rows (1000 of 1000 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out; pass dreams made from situations the 
+  [ok] student_record with a spec of another name -> ValueError: this student was trained for skill 'fixture_measure', not 'fixture_other'
+
+== variant constant_bias: dreams scored with a fitted ConstantBiasResidual (eval.baselines); student.deployed() is passed ==
+  ConstantBiasResidual fitted on 40 FIXTURE attempt rows (made up, not episodes): mean residual [-0.0225, 0.0868, -0.057]
+  dreams: train 1000, held-out 500; share of training rows whose dream choice differs from the physics choice 0.307
+  [ok] the model-backed dream changes some choices away from the physics choice
+  [ok] the model-backed dream predicts outcomes that differ from the physics guess
+  train_in_dream: 7.5 s; steps_run=400 best_step=400 validation loss 0.8543 -> 0.0441
+  MECHANICS numbers on a fixture (inside the held-out fixture dream; not the robot or the simulator):
+    held-out dream: 500 rows, 500 distinct situations, source=local_residual_model, held_out=True; agreement with the dream's choice 0.358, zero-regret share 0.714
+    dream regret of the student: mean 0.0055 p90 0.0211 objective units; / spread: mean 0.0386 p90 0.1476
+    dream regret of the physics-only choice: mean 0.0109 p90 0.0440 objective units; / spread: mean 0.0761 p90 0.3083
+    student - physics mean regret -0.0054 [-0.0072, -0.0038] (95% BCa, 9999 resamples, 500 distinct situations in 500 rows); rows lower/equal/higher 0.212/0.662/0.126
+    latency (in this process; torch loaded by training: True): full path median 535.2 us p95 592.3 us; index only median 384.1 us p95 422.5 us; grid check once at binding 1.74 ms
+    spikes per decision 136.3 [133.7, 139.0] (95% BCa, 9999 resamples, 1000 distinct situations in 1000 rows)
+    synaptic ops per decision 4772.1 [4681.0, 4864.5] (95% BCa, 9999 resamples, 1000 distinct situations in 1000 rows)
+    firing rate per layer [0.213]; never fire [0.078125], fire every step [0.0]
+    energy main_estimate (pJ per decision): 5472.5 [5390.5, 5555.6] (95% BCa, 9999 resamples, 1000 distinct situations in 1000 rows); ratio to dense 0.477 [0.469, 0.484]; break-even rate 0.5111 vs weighted measured rate 0.2130
+    energy with_neuron_updates_estimate (pJ per decision): 11040.2 [10955.9, 11125.7] (95% BCa, 9999 resamples, 1000 distinct situations in 1000 rows); ratio to dense 0.962 [0.954, 0.969]; break-even rate 0.2343 vs weighted measured rate 0.2130
+    dense reference estimate 11481.6 pJ; H4 energy verdict from the estimates (mechanics only): 'supported'
+
+  -- mechanics assertions, variant constant_bias --
+  [ok] record has exactly the documented top-level keys
+  [ok] JSON round trip: c1_record_constant_bias.json reloads equal to the record
+  [ok] write_record wrote canonical JSON (sorted keys, compact, trailing newline)
+  [ok] fan-out of each hidden layer = width of the layer it feeds
+  [ok] synaptic ops per decision = spikes per decision x fan-out
+  [ok] reported means equal the means of the per-decision values
+  [ok] an independent operation_counts run gives the same spikes per decision
+  [ok] firing rate per layer = mean spikes / (H x T)
+  [ok] never-fire and fire-every-step fractions lie in [0, 1] and do not overlap
+  [ok] operations situations: 1000 rows, 1000 distinct situations stated
+  [ok] the estimates used the config.yaml constants e_mac=4.6 pJ, e_ac=0.9 pJ and their source
+  [ok] both estimates per decision and their means, and the dense reference, follow energy.py's formulas from the counts
+  [ok] main estimate: interval inside [min, max] of the per-decision values, config.yaml bootstrap settings, distinct situations resampled
+  [ok] main estimate: ratio = mean / dense; the weighted rate is below its break-even rate exactly when the mean is below the reference
+  [ok] with neuron updates estimate: interval inside [min, max] of the per-decision values, config.yaml bootstrap settings, distinct situations resampled
+  [ok] with neuron updates estimate: ratio = mean / dense; the weighted rate is below its break-even rate exactly when the mean is below the reference
+  [ok] H4 energy verdict 'supported' follows the rule from both means (stored with the rule text)
+  [ok] operations labelled with 'estimate' and carrying the energy caveats
+  [ok] spikes interval inside [min, max] of the per-decision values, with the config.yaml bootstrap settings
+  [ok] synaptic ops interval inside [min, max] of the per-decision values, with the config.yaml bootstrap settings
+  [ok] every dream regret is non-negative
+  [ok] recorded decisions and agreement reproduce from the deployed student's decide_index on the held-out dream
+  [ok] student regret = row max score - score of the decision
+  [ok] held-out dream: no row's situation was seen in training; rows and distinct situations stated
+  [ok] regret difference = mean(student - physics) with an interval that resamples distinct held-out situations
+  [ok] training and held-out dreams marked 'local_residual_model', not provider-backed
+  [ok] latency: both paths over config.yaml evaluation.latency_decisions calls; 0 < median <= p95; single-row = batched decisions
+  [ok] latency record: the grid check ran once at binding; the full path (with the candidate lookup) is the H3 timing
+  [ok] network digest is the same in every part of the record
+  [ok] the record names the dream's method 'constant_bias'
+
+== the latency path in a FRESH process (load the saved student, bind it to the spec once, numpy only) ==
+    FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+    worker: torch_in_sys_modules=False snntorch_in_sys_modules=False
+  [ok] fresh-process worker exit code 0
+  MECHANICS latency on a fixture student, fresh torch-free process: full path median 383.5 us, p95 495.1 us; index only median 262.7 us, p95 440.7 us over 1000 decisions each; processor 'Intel64 Family 6 Model 170 Stepping 4, GenuineIntel', cpu_count 22, python 3.13.16, numpy 2.5.5
+  [ok] loading the student, binding it and timing both deployed paths never imported torch or snntorch
+  [ok] the fresh process timed the same network (digest)
+  [ok] temporary directory removed
+
+CHECK RESULT: 68 assertions held, 0 failed 

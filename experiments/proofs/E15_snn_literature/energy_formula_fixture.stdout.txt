@@ -1,0 +1,22 @@
+FIXTURE ONLY - invented sizes and spike counts; not project evidence
+sizes=[10, 64, 64, 60] T=8 spikes_out_per_layer=[96, 80]
+  hidden layer 1: spikes per neuron per inference=1.500  per neuron per step=0.1875
+  hidden layer 2: spikes per neuron per inference=1.250  per neuron per step=0.1562
+[fp32] E_MAC=4.60 pJ  E_AC=0.90 pJ  (estimate, 45 nm CMOS)
+   dense reference: MACs=8576  E_ANN=39449.6 pJ
+   SNN A (first layer once):     first-layer MACs=640 SOPs=10944  E=12793.6 pJ  ratio E_ANN/E_SNN=3.08
+   SNN B (first layer x T):      first-layer MACs=5120 SOPs=10944  E=33401.6 pJ  ratio=1.18
+   SNN C (A + neuron updates):   {'leak_mults': 1504, 'bias_adds': 1504, 'reset_ops': 176}  E=21224.0 pJ  ratio=1.86
+   SDT break-even firing rate per neuron per step R* = E_MAC/(E_AC*T) = 0.639
+[int32] E_MAC=3.20 pJ  E_AC=0.10 pJ  (estimate, 45 nm CMOS)
+   dense reference: MACs=8576  E_ANN=27443.2 pJ
+   SNN A (first layer once):     first-layer MACs=640 SOPs=10944  E=3142.4 pJ  ratio E_ANN/E_SNN=8.73
+   SNN B (first layer x T):      first-layer MACs=5120 SOPs=10944  E=17478.4 pJ  ratio=1.57
+   SNN C (A + neuron updates):   {'leak_mults': 1504, 'bias_adds': 1504, 'reset_ops': 176}  E=8123.2 pJ  ratio=3.38
+   SDT break-even firing rate per neuron per step R* = E_MAC/(E_AC*T) = 4.000
+[int8] E_MAC=0.23 pJ  E_AC=0.03 pJ  (estimate, 45 nm CMOS)
+   dense reference: MACs=8576  E_ANN=1972.5 pJ
+   SNN A (first layer once):     first-layer MACs=640 SOPs=10944  E=475.5 pJ  ratio E_ANN/E_SNN=4.15
+   SNN B (first layer x T):      first-layer MACs=5120 SOPs=10944  E=1505.9 pJ  ratio=1.31
+   SNN C (A + neuron updates):   {'leak_mults': 1504, 'bias_adds': 1504, 'reset_ops': 176}  E=871.8 pJ  ratio=2.26
+   SDT break-even firing rate per neuron per step R* = E_MAC/(E_AC*T) = 0.958

@@ -1,0 +1,59 @@
+SIGNATURE GPR (self, kernel=None, *, alpha=1e-10, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=False, copy_X_train=True, n_targets=None, random_state=None)
+SIGNATURE GPR.predict (self, X, return_std=False, return_cov=False)
+SIGNATURE RBF (self, length_scale=1.0, length_scale_bounds=(1e-05, 100000.0))
+SIGNATURE WhiteKernel (self, noise_level=1.0, noise_level_bounds=(1e-05, 100000.0))
+SIGNATURE ConstantKernel (self, constant_value=1.0, constant_value_bounds=(1e-05, 100000.0))
+
+== n sweep, 1-D y, normalize_y=True, n_restarts_optimizer=5, random_state=0 ==
+[n=0] EXC ValueError: Found array with 0 sample(s) (shape=(0, 4)) while a minimum of 1 is required by GaussianProcessRegressor.
+[n=1] OK mu.shape=(7,) std.shape=(7,) std[:3]=[0.0313 0.0316 0.0302] kernel_=0.0316**2 * RBF(length_scale=[1, 1, 1, 1]) + WhiteKernel(noise_level=1e-06) lml=2.5344
+    WARN ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k1__constant_value is close to the specified lower bound 0.001. Decreasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-06. Decreasing the bound and calling fit again may find a better value.
+[n=2] OK mu.shape=(7,) std.shape=(7,) std[:3]=[0.233  0.4176 0.4176] kernel_=0.997**2 * RBF(length_scale=[288, 658, 0.0116, 90.9]) + WhiteKernel(noise_level=0.00531) lml=-2.8379
+[n=5] OK mu.shape=(7,) std.shape=(7,) std[:3]=[0.0719 0.1053 0.2621] kernel_=1.96**2 * RBF(length_scale=[1.22, 1e+03, 1e+03, 1.18]) + WhiteKernel(noise_level=1e-06) lml=-4.4148
+    WARN ConvergenceWarning: The optimal value found for dimension 1 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 2 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-06. Decreasing the bound and calling fit again may find a better value.
+[n=40] OK mu.shape=(7,) std.shape=(7,) std[:3]=[0.0542 0.0575 0.0592] kernel_=4.46**2 * RBF(length_scale=[0.964, 9.43, 1e+03, 1e+03]) + WhiteKernel(noise_level=0.00568) lml=19.8422
+    WARN ConvergenceWarning: The optimal value found for dimension 2 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 3 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.
+
+== unfitted GP predict (prior) ==
+prior predict OK shapes (7,) (7,) std[:2] [1.0488 1.0488]
+
+== constant y (n=5), normalize_y=True ==
+OK mu[:3] [2.5 2.5 2.5] std[:3] [0.00109607 0.0010967  0.00109647] _y_train_std 1.0
+    WARN ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k1__constant_value is close to the specified lower bound 0.001. Decreasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 1 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 2 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 3 of parameter k1__k2__length_scale is close to the specified upper bound 1000.0. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-06. Decreasing the bound and calling fit again may find a better value.
+
+== multi-output: 2-D y with one shared kernel vs one GP per target ==
+2-D y: mu.shape (7, 2) std.shape (7, 2) kernel_ (SHARED hyperparameters across outputs): 5.82**2 * RBF(length_scale=[1.17, 16.8, 2.83, 9.74]) + WhiteKernel(noise_level=0.00588)
+2-D y: return_cov shape (7, 7, 2)
+  per-target GP j=0: kernel_=3.4**2 * RBF(length_scale=[0.857, 6.36, 1e+03, 172]) + WhiteKernel(noise_level=0.00749)
+  per-target GP j=1: kernel_=11.7**2 * RBF(length_scale=[1e+03, 1e+03, 3.25, 12.9]) + WhiteKernel(noise_level=0.00514)
+  return_std and return_cov together:
+  EXC RuntimeError: At most one of return_std or return_cov can be requested.
+
+== determinism via random_state (restarts sample from log-uniform within bounds) ==
+rs=0 twice bitwise equal theta: True pred: True
+rs=0 vs rs=1 theta equal: False max|dtheta| 1.1459386651591075e-05
+theta is log-transformed hyperparameters, len 6 kernel_.bounds shape (6, 2)
+
+== bounds ConvergenceWarning trigger: tight bounds ==
+    WARN ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k1__constant_value is close to the specified lower bound 0.9. Decreasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k2__length_scale is close to the specified lower bound 0.5. Decreasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 1 of parameter k1__k2__length_scale is close to the specified upper bound 0.6. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 2 of parameter k1__k2__length_scale is close to the specified upper bound 0.6. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 3 of parameter k1__k2__length_scale is close to the specified upper bound 0.6. Increasing the bound and calling fit again may find a better value.
+    WARN ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 0.01. Decreasing the bound and calling fit again may find a better value.
+
+== optimizer=None keeps given hyperparameters; alpha default ==
+optimizer=None kernel_ == kernel: False | theta equal: True | kernel_ is kernel: False  default alpha: 1e-10
+normalize_y with n=1: _y_train_std = 1.0
+sample_y shape (7 queries, 3 draws, 1-D y): (7, 3)
+sample_y shape (7 queries, 3 draws, 2-D y): (7, 2, 3)
+exit=0

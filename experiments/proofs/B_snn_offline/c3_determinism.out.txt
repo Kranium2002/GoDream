@@ -1,0 +1,13 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+workers: max_steps=150 (config 1500), torch_threads=1 (config); seeds 11, 11, 12
+  process pid=13128 exit=0: RESULT base_seed=11 digest=d906f860c0356fe832d9c0681d3257e7f969a45420ea6c5a461367bd836b7e11 steps_run=150 best_step=150 best_validation_loss=0.101656723278734 init_seed=2351017682 train_seed=2673137959
+  [ok] worker for seed 11 finished
+  process pid=34068 exit=0: RESULT base_seed=11 digest=d906f860c0356fe832d9c0681d3257e7f969a45420ea6c5a461367bd836b7e11 steps_run=150 best_step=150 best_validation_loss=0.101656723278734 init_seed=2351017682 train_seed=2673137959
+  [ok] worker for seed 11 finished
+  process pid=52540 exit=0: RESULT base_seed=12 digest=dbae54f8b7be095e81dfad2e81ef2c5a6acfa4d89192a34f581ceea509c5b01a steps_run=150 best_step=150 best_validation_loss=0.09756548248222138 init_seed=2674260802 train_seed=1121773762
+  [ok] worker for seed 12 finished
+  [ok] same seed in two separate processes -> identical network digest
+  [ok] different seed -> different network digest
+
+CHECK RESULT: 5 assertions held, 0 failed 

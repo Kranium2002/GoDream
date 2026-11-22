@@ -1,0 +1,7 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+fresh process: exit 0 digest 9c05faf4d3724c71a8f5aa40b4cbed789205fe933debc047952d47f563c0ebe3
+after training: torch threads 3 (caller set 3), deterministic flag False (caller set False)
+in-process run 1 digest 9c05faf4d3724c71a8f5aa40b4cbed789205fe933debc047952d47f563c0ebe3
+in-process run 2 (perturbed global state) digest 9c05faf4d3724c71a8f5aa40b4cbed789205fe933debc047952d47f563c0ebe3
+in-process run 3 (after training seed 12 -> 40686f078df13c03...) digest 9c05faf4d3724c71a8f5aa40b4cbed789205fe933debc047952d47f563c0ebe3
+all equal to the fresh process: True

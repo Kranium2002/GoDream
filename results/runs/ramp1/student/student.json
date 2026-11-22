@@ -1,0 +1,87 @@
+{
+ "format": "learned-judgment/observed-student/v1",
+ "skill": "ramp",
+ "action_names": [
+  "vx+0.40_yaw+0.00",
+  "vx+0.60_yaw+0.00",
+  "vx+0.80_yaw+0.00",
+  "vx+1.00_yaw+0.00"
+ ],
+ "heads": {
+  "action": [
+   0,
+   4
+  ]
+ },
+ "no_op_index": null,
+ "input": {
+  "features": 4,
+  "encoding": "(x - 0.5) * sqrt(12)"
+ },
+ "vision": null,
+ "thresholds": null,
+ "provenance": {
+  "dream": "results/runs/ramp1/dream",
+  "scores": "results/runs/ramp1/scores.npz",
+  "frames": null,
+  "hidden_sizes": [
+   32
+  ],
+  "max_steps": 3000,
+  "run_id": "ramp1",
+  "dream_config_digest": "f5e3d127895a2b176f98e4e3a8158a0357cc476d1a49198256abf31e2450ac93",
+  "scores_sha256": "0498367ef8d12cf1255b4333a52f2b5cb1b1008cdc47b10231040d884a5aafd1",
+  "teacher_request_keys": [
+   "1fe01631dd925db98ac54cea29dcbff99aff4e0aaa0304db299ce9e388e1dd1f",
+   "2b52cc642828e0fefd2eaa781d6a224aeb20859411da3084dfc2b69bcaf961cb",
+   "f3def5d26a3b8ad899f8df6db26cd1414bd244988355a806d1246abd6cda7b35"
+  ],
+  "config_digest": "f5e3d127895a2b176f98e4e3a8158a0357cc476d1a49198256abf31e2450ac93",
+  "seeds": {
+   "seed": 20261121,
+   "streams": {
+    "validation_split": "ramp/observed/validation_split",
+    "init": "ramp/observed/init",
+    "train": "ramp/observed/train"
+   },
+   "init": 872435232,
+   "train": 1453346127
+  },
+  "training_settings": {
+   "hidden_sizes": [
+    32
+   ],
+   "time_steps": 10,
+   "beta": 0.9,
+   "threshold": 1.0,
+   "readout_beta": 0.9,
+   "learn_beta": false,
+   "learn_threshold": false,
+   "surrogate": "atan",
+   "surrogate_alpha": 2.0,
+   "target_temperature": 0.5,
+   "target_spread": "global_median",
+   "spike_rate_penalty": 0.0,
+   "learning_rate": 0.002,
+   "adam_beta1": 0.9,
+   "adam_beta2": 0.999,
+   "adam_eps": 1e-08,
+   "weight_decay": 0.0,
+   "batch_size": 64,
+   "max_steps": 3000,
+   "validation_fraction": 0.1,
+   "evaluate_every_steps": 100,
+   "patience_evaluations": 5,
+   "torch_threads": 1,
+   "parity_logit_tolerance": 1e-09,
+   "out_of_range": "error"
+  }
+ },
+ "network": {
+  "files": [
+   "network.npz",
+   "network.json"
+  ],
+  "sha256": "0ac19fc832e06c20863149a54220ecbbc9a990371ee9f4cfc54db07cadd3e862"
+ }
+}

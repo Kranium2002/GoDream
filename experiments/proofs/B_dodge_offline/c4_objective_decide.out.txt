@@ -1,0 +1,41 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+weights (config skills.dodge.objective_weights): DodgeObjectiveWeights(collision=10.0, fall=10.0, separation=1.0, separation_cap_m=0.5, contact_margin_m=0.02, motion=0.5, recovery=0.5)
+quantile levels (config engine.quantile_levels): [0.1, 0.25, 0.5, 0.75, 0.9]
+
+== exact value of one point row ==
+  objective -0.15000000000000002 (hand -0.15000000000000002)
+PASS  point row scores the hand-computed value
+
+== collision, fall, contact margin ==
+  no collision 0.2000, collision -9.8000, fall -9.8000
+PASS  a collision scores below the same outcome without one
+PASS  a fall scores below the same outcome without one
+PASS  collision penalty equals the collision weight
+  separation inside the contact margin -10.0900, outside -0.0600
+PASS  a separation inside the contact margin is penalised as contact
+
+== separation reward up to the cap ==
+  separations [0.05, 0.1, 0.2, 0.4, 0.5, 0.8]: [-0.05, 0.0, 0.1, 0.3, 0.4, 0.4]
+PASS  more separation scores higher below the cap
+PASS  separation beyond the cap scores the same as the cap
+
+== commanded motion and recovery ==
+PASS  more commanded sideways travel scores lower
+PASS  a longer recovery scores lower
+
+== predictive uncertainty lowers the score ==
+  point 0.2000, wide spread with the same median -1.0000
+PASS  a wider separation distribution scores lower than a point with the same median
+PASS  a distribution of other outcomes is refused  [ValueError: predicted outcomes ('a', 'b', 'c', 'd', 'e') are not the DODGE outcomes ('min_separation_m', 'collision', 'fall', 'recovery_time_s', 'lateral_command_m')]
+
+== decide_batch, physics only ==
+PASS  40 decisions with 108 candidates each
+PASS  every chosen action is inside the declared bounds
+PASS  physics only: chosen index equals the physics index
+PASS  no provider request behind physics-only decisions
+  ball aimed at the trunk: chosen side -1.0 m/s, delay 0.00 s, hold 0.60 s; guessed separation 0.0930 m, collision 0.1348
+PASS  ball aimed at the trunk: the choice is not 'no dodge'
+PASS  ball aimed at the trunk: every no-dodge candidate scores below the choice
+
+17 passed, 0 failed

@@ -1,0 +1,35 @@
+﻿python 3.13.16 (main, Oct 14 2026, 01:05:56) [MSC v.1944 64 bit (AMD64)]
+platform Windows-11-10.0.26300-SP0 Intel64 Family 6 Model 170 Stepping 4, GenuineIntel
+scikit-learn==1.9.0
+scipy==1.18.1
+numpy==2.5.5
+pandas==2.3.3
+pyarrow==25.0.1
+xxhash==4.1.0
+joblib==1.6.0
+threadpoolctl==3.8.0
+torch: NOT INSTALLED
+tabpfn-client==0.10.1
+--- required by -> joblib
+    scikit-learn: joblib>=1.4.0
+    scikit-learn: joblib>=1.4.0; extra == "install"
+--- required by -> pyarrow
+    fsspec: pyarrow>=1; extra == 'arrow'
+    fsspec: pyarrow>=1; extra == 'full'
+    fsspec: pyarrow>=1; extra == 'hdfs'
+    fsspec: pyarrow>=1; extra == 'test-full'
+    narwhals: pyarrow>=13.0.0 ; extra == 'pyarrow'
+    pandas: pyarrow>=10.0.1; extra == "all"
+    pandas: pyarrow>=10.0.1; extra == "feather"
+    pandas: pyarrow>=10.0.1; extra == "parquet"
+    pandas: pyarrow>=10.0.1; extra == "pyarrow"
+    scikit-learn: pyarrow>=13.0.0; extra == "tests"
+    tabpfn-client: pyarrow<=25.0.1,>=14.0.0
+--- required by -> scipy
+    pandas: scipy>=1.10.0; extra == "all"
+    pandas: scipy>=1.10.0; extra == "computation"
+    scikit-learn: scipy>=1.10.0
+    scikit-learn: scipy>=1.10.0; extra == "build"
+    scikit-learn: scipy>=1.10.0; extra == "install"
+--- required by -> xxhash
+    tabpfn-client: xxhash<=4.1.0,>=1.1.0

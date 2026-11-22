@@ -1,0 +1,57 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+
+$ fixture_cli.py --config <tmp>/config.yaml run --skill fixture_pipeline --preset default --run-id cli --steps collect,teacher,dream,train,evaluate --method constant_bias --attempts 10 --dreams 800 --eval-situations 5 --eval-repeats 2
+  exit code 0; last lines:   result    eval001-dev physics_only: <tmp>/run_results/cli/eval001-dev/physics_only.json |   result    eval001-dev constant_bias: <tmp>/run_results/cli/eval001-dev/constant_bias.json |   result    eval001-dev snn_per_skill: <tmp>/run_results/cli/eval001-dev/snn_per_skill.json
+  [ok] full chain exit code 0 == 0 
+  [ok] collect: start and finish lines printed
+  [ok] teacher: start and finish lines printed
+  [ok] dream: start and finish lines printed
+  [ok] train: start and finish lines printed
+  [ok] evaluate: start and finish lines printed
+  [ok] one collect progress line per attempt
+  [ok] summary lists the manifest, the student and 3 results
+  [ok] manifest: every step done
+  [ok] default evaluation methods: physics_only, --method, snn_per_skill
+  [ok] default base seed: runtime.seed
+
+$ fixture_cli.py --config <tmp>/config.yaml decide --skill fixture_pipeline --preset default --run-id cli --brain physics_only --situation fx_lateral=0.25 fx_speed=4 fx_surface=slip
+  exit code 0; last lines:  "situation_clipped": false, |  "skill": "fixture_pipeline" | }
+  [ok] decide --brain physics_only: exit 0, JSON answer with 35 candidates
+
+$ fixture_cli.py --config <tmp>/config.yaml decide --skill fixture_pipeline --preset default --run-id cli --brain snn_per_skill --situation fx_lateral=0.25 fx_speed=4 fx_surface=slip
+  exit code 0; last lines:  "situation_clipped": false, |  "skill": "fixture_pipeline" | }
+  [ok] decide --brain snn_per_skill: exit 0, JSON answer with 35 candidates
+
+$ fixture_cli.py --config <tmp>/config.yaml status
+  exit code 0; last lines:   "unreadable_manifests": [] |  } | }
+  [ok] status: exit 0, registered skills ['dodge']
+  [ok] status lists the fixture run under other_manifests (its skill is not registered)
+
+$ fixture_cli.py --config <tmp>/config.yaml run --skill fixture_pipeline --preset default --run-id cli --steps collect,bogus
+  exit code 2; last lines: PLUMBING CHECK wrapper: pipeline.main with the fixture world; not the Go2 simulator
+  [ok] unknown step: exit code 2 == 2
+
+$ fixture_cli.py --config <tmp>/config.yaml run --skill fixture_pipeline --preset default --run-id cli --steps dream
+  exit code 2; last lines: PLUMBING CHECK wrapper: pipeline.main with the fixture world; not the Go2 simulator
+  [ok] dream without --method: exit code 2 == 2
+
+$ fixture_cli.py --config <tmp>/config.yaml run --skill fixture_pipeline --preset default --run-id cli --steps train
+  exit code 1; last lines:   result    eval001-dev constant_bias: <tmp>/run_results/cli/eval001-dev/constant_bias.json |   result    eval001-dev physics_only: <tmp>/run_results/cli/eval001-dev/physics_only.json |   result    eval001-dev snn_per_skill: <tmp>/run_results/cli/eval001-dev/snn_per_skill.json
+  [ok] train again on a run with a student: exit code 1 == 1
+
+$ fixture_cli.py --config <tmp>/config.yaml run --skill fixture_pipeline --preset default --run-id cli_teacher --steps collect,dream --method teacher --attempts 6 --dreams 10
+  exit code 3; last lines:   train     not_run |   evaluate  not_run |   attempts  <tmp>/attempts/cli_teacher.jsonl
+  [ok] teacher dream with the budget null: exit code 3 == 3
+  [ok] manifest: collect done, dream refused
+  [ok] call log: 1 refusal(s), no dispatch
+
+$ fixture_cli.py --fixture-stop-after 2 --config <tmp>/config.yaml run --skill fixture_pipeline --preset default --run-id cli_stop --steps collect --attempts 6
+  exit code 4; last lines:   train     not_run |   evaluate  not_run |   attempts  <tmp>/attempts/cli_stop.jsonl
+  [ok] stop after 2 episodes: exit code 4 == 4
+  [ok] manifest: collect stopped with 2 rows
+
+$ fixture_cli.py --config <tmp>/config.yaml run --skill fixture_pipeline --preset heavy_payload --run-id cli --steps collect --attempts 2
+  exit code 1; last lines: PLUMBING CHECK wrapper: pipeline.main with the fixture world; not the Go2 simulator | FAILED open: RunMismatchError: run 'cli' already exists (<tmp>\manifests\cli.json) with another identity; world_preset: manifest has 'default', this call has 'heavy_payload'; world_seed: manifest has 647831257, this call has 1077479832. A run is never continued under another skill, preset, base seed, world or con
+  [ok] same run_id, other preset: exit code 1 == 1
+
+CHECK RESULT (plumbing): 24 assertions held, 0 failed 

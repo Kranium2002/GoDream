@@ -1,0 +1,33 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE provider in use: usage, quote and the estimator are stand-ins (no network); outputs are not evidence
+== pure rules (Q = 5) ==
+  [ok] parse_main_output with n_rows == Q raises ValueError: n_rows == 5 quantile levels: the quantile layout cannot be told from its shape
+  [ok] provider.validate_request with Q query rows raises ValueError: 5 query rows equal the number of quantile levels: the response layout would be ambiguous; pad the query with one duplicated row
+  [ok] no billable call was started
+
+== the teacher pads a Q-row request by one duplicated row ==
+  [ok] 6 rows were sent: the 5 query rows plus the last one again
+  [ok] 5 answer rows are returned
+  [ok] the key covers the padded matrix
+  [ok] the entry stores the 6 sent rows and 6 answer rows
+  [ok] the entry records padded_rows 1
+  [ok] the response metadata records max|median - q0.5| (0.0 for the fixture)
+  [ok] the completed record says padded_rows 1, n_query 6
+  [ok] a repeat is a cache hit with the same 5 rows
+
+== the same 5 rows inside an unpadded 6-row request give the same answers ==
+  [ok] rows 0..4 equal
+
+== a transposed answer is now rejected by shape (and kept unvalidated) ==
+  [ok] a Q-row request answered in the transposed layout raises ProviderResponseError: 'main' output 'quantiles' has shape (6, 5); the verified layout is (5, 6). The billed response is kept unvalidated at <tmp>\tmpl6z6u
+  [ok] the raw (6, 5) answer is on disk
+  [ok] nothing was cached as valid
+
+== per_outcome mode pads each Q-row request ==
+  [ok] 3 requests of 6 sent rows each
+
+== a median that differs from quantile(0.5) is recorded, not rejected ==
+  recorded gap: 0.25
+  [ok] the gap (0.25) is stored in the response metadata and the request completed
+
+RESULT: 0 failed check(s)

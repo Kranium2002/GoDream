@@ -1,0 +1,90 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+check config: config.yaml with students.snn.shared_feature_width=6 (fixture) and students.snn.max_steps=300 (config.yaml 1500); shared_skill_slots=8, shared_retention_fraction=0.1, validation_fraction=0.1, rehearsal_fraction=0.5 (config.yaml)
+  fixture fx_alpha: S=3 encoded D=4 C=35 grid=(7, 5) dream rows=1000 method=physics_only
+  fixture fx_beta: S=5 encoded D=5 C=15 grid=(15,) dream rows=800 method=physics_only
+  fixture fx_gamma: S=2 encoded D=3 C=18 grid=(3, 6) dream rows=600 method=physics_only
+
+== 1. fx_alpha -> fx_beta -> fx_gamma with rehearsal=True ==
+  + fx_alpha (slot 0): steps_run=300 best_step=300 validation total 1.2510 -> 0.0267; add wall 5.5 s; heads trained ['fx_alpha'] sampling={'fx_alpha': 1.0}
+  + fx_beta (slot 1): steps_run=300 best_step=300 validation total 0.5468 -> 0.0387; add wall 4.3 s; heads trained ['fx_beta', 'fx_alpha'] sampling={'fx_beta': 0.5, 'fx_alpha': 0.5}
+  + fx_gamma (slot 2): steps_run=300 best_step=300 validation total 0.6750 -> 0.0184; add wall 6.4 s; heads trained ['fx_gamma', 'fx_alpha', 'fx_beta'] sampling={'fx_gamma': 0.5, 'fx_alpha': 0.25, 'fx_beta': 0.25}
+  wall 16.2 s incl. torch import; versions {'torch': '2.15.0+cpu', 'snntorch': '1.0.0', 'numpy': '2.5.5', 'python': '3.13.16'}
+
+== 1. the same sequence, seeds and settings with rehearsal=False ==
+  + fx_alpha (slot 0): steps_run=300 best_step=300 validation total 1.2510 -> 0.0267; add wall 2.3 s; heads trained ['fx_alpha'] sampling={'fx_alpha': 1.0}
+  + fx_beta (slot 1): steps_run=300 best_step=300 validation total 1.0670 -> 0.0521; add wall 2.6 s; heads trained ['fx_beta'] sampling={'fx_beta': 1.0}
+  + fx_gamma (slot 2): steps_run=300 best_step=300 validation total 1.2913 -> 0.0051; add wall 3.5 s; heads trained ['fx_gamma'] sampling={'fx_gamma': 1.0}
+  [ok] both runs complete
+  [ok] slots in add order: {'fx_alpha': 0, 'fx_beta': 1, 'fx_gamma': 2}; 5 free
+  [ok] same seeds, splits and settings in both runs
+  [ok] first add identical in both runs (nothing to rehearse)
+  [ok] batch shares: with rehearsal new skill 1 - rehearsal_fraction and earlier skills split the rest; without, the new skill only
+  [ok] rehearsal=True: after every add every view passes parity on every row of its dream
+  [ok] rehearsal=False: after every add every view passes parity on every row of its dream
+
+== 2(i). retention rows vs the recorded situation digests ==
+  [ok] rehearsal=True fx_alpha: 100 retention situations, none among the 810 optimiser and 90 early-stopping situations recorded; the 3 add(s) that trained fx_alpha passed the same recorded sets
+  [ok] rehearsal=True fx_beta: 80 retention situations, none among the 648 optimiser and 72 early-stopping situations recorded; the 2 add(s) that trained fx_beta passed the same recorded sets
+  [ok] rehearsal=True fx_gamma: 60 retention situations, none among the 486 optimiser and 54 early-stopping situations recorded; the 1 add(s) that trained fx_gamma passed the same recorded sets
+  [ok] rehearsal=False fx_alpha: 100 retention situations, none among the 810 optimiser and 90 early-stopping situations recorded; the 1 add(s) that trained fx_alpha passed the same recorded sets
+  [ok] rehearsal=False fx_beta: 80 retention situations, none among the 648 optimiser and 72 early-stopping situations recorded; the 1 add(s) that trained fx_beta passed the same recorded sets
+  [ok] rehearsal=False fx_gamma: 60 retention situations, none among the 486 optimiser and 54 early-stopping situations recorded; the 1 add(s) that trained fx_gamma passed the same recorded sets
+
+== 2(ii). retention rows vs the arrays snn_train.fit actually received ==
+    rehearsal=True stage 0 fx_alpha: batches from 810 rows, early stopping on 90, retention overlap 0
+    rehearsal=True stage 1 fx_beta: batches from 648 rows, early stopping on 72, retention overlap 0
+    rehearsal=True stage 1 fx_alpha: batches from 810 rows, early stopping on 90, retention overlap 0
+    rehearsal=True stage 2 fx_gamma: batches from 486 rows, early stopping on 54, retention overlap 0
+    rehearsal=True stage 2 fx_alpha: batches from 810 rows, early stopping on 90, retention overlap 0
+    rehearsal=True stage 2 fx_beta: batches from 648 rows, early stopping on 72, retention overlap 0
+  [ok] rehearsal=True: at every add, fit's training inputs are exactly the training rows and its validation inputs exactly the early-stopping rows of each trained skill; no retention row was passed to fit
+    rehearsal=False stage 0 fx_alpha: batches from 810 rows, early stopping on 90, retention overlap 0
+    rehearsal=False stage 1 fx_beta: batches from 648 rows, early stopping on 72, retention overlap 0
+    rehearsal=False stage 2 fx_gamma: batches from 486 rows, early stopping on 54, retention overlap 0
+  [ok] rehearsal=False: at every add, fit's training inputs are exactly the training rows and its validation inputs exactly the early-stopping rows of each trained skill; no retention row was passed to fit
+  [ok] rehearsal draws earlier skills' training rows only in the rehearsal run
+
+== 3. retention matrices from the retention rows only ==
+  [ok] rehearsal=True: every R[i][j] is reproduced by deployed(skill_j, stage=i) on skill j's retention rows, none of which it saw in training
+  [ok] rehearsal=True: matrices 3 x 3 with null above the diagonal; backward_transfer = mean over j < last of (R[last][j] - R[j][j])
+  [ok] rehearsal=False: every R[i][j] is reproduced by deployed(skill_j, stage=i) on skill j's retention rows, none of which it saw in training
+  [ok] rehearsal=False: matrices 3 x 3 with null above the diagonal; backward_transfer = mean over j < last of (R[last][j] - R[j][j])
+  [ok] no rehearsal: fx_alpha's readout is untouched by later adds while the shared trunk moved (stage 0 vs stage 2 views)
+  [ok] rehearsal: fx_alpha's readout is trained again at later adds
+
+  MECHANICS numbers on FIXTURE dreams, inside the dream, on RETENTION rows only
+  (max_steps=300; no claim about which run is better is made or asserted)
+  agreement_with_dream_choice:
+    stage                     rehearsal=True                  rehearsal=False
+                fx_alpha   fx_beta  fx_gamma     fx_alpha   fx_beta  fx_gamma
+    0 fx_alpha    0.8300         -         -       0.8300         -         -
+    1 fx_beta     0.8100    0.6000         -       0.3500    0.6750         -
+    2 fx_gamma    0.8300    0.7500    0.9167       0.3300    0.5250    0.9333
+  mean_dream_regret_over_spread:
+    stage                     rehearsal=True                  rehearsal=False
+                fx_alpha   fx_beta  fx_gamma     fx_alpha   fx_beta  fx_gamma
+    0 fx_alpha    0.0109         -         -       0.0109         -         -
+    1 fx_beta     0.0115    0.0853         -       0.2714    0.0572         -
+    2 fx_gamma    0.0133    0.0461    0.0043       0.3664    0.1500    0.0039
+  fraction_with_zero_dream_regret:
+    stage                     rehearsal=True                  rehearsal=False
+                fx_alpha   fx_beta  fx_gamma     fx_alpha   fx_beta  fx_gamma
+    0 fx_alpha    0.8300         -         -       0.8300         -         -
+    1 fx_beta     0.8100    0.6000         -       0.3500    0.6750         -
+    2 fx_gamma    0.8300    0.7500    0.9167       0.3300    0.5250    0.9333
+  backward_transfer agreement_with_dream_choice: rehearsal=True +0.0750   rehearsal=False -0.3250
+  backward_transfer fraction_with_zero_dream_regret: rehearsal=True +0.0750   rehearsal=False -0.3250
+  backward_transfer mean_dream_regret: rehearsal=True -0.0108   rehearsal=False +0.1295
+  backward_transfer mean_dream_regret_over_spread: rehearsal=True -0.0184   rehearsal=False +0.2242
+  early-stopping rows (NOT held out: they chose the restored weights), agreement at the skill's own add, for contrast:
+    rehearsal=True: fx_alpha 0.8444, fx_beta 0.5833, fx_gamma 0.9444
+    rehearsal=False: fx_alpha 0.8444, fx_beta 0.6111, fx_gamma 0.9444
+  [ok] the records label early-stopping numbers NOT held out and retention numbers held out
+
+== 4. a dream with every situation twice (fx_beta, max_steps=100) ==
+  1600 rows, 800 distinct situations; rows per part {'training': 1296, 'early_stopping': 144, 'retention': 160}
+  [ok] both copies of each of the 80 retention situations are retention rows; no situation is in two parts
+  for comparison, the committed code's row split (stream fx_beta/snn/validation_split, validation_fraction 0.1 of ROWS) on this dream: 144 of 160 held-out rows have a training copy
+
+CHECK RESULT: 24 assertions held, 0 failed 

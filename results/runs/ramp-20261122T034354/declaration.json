@@ -1,0 +1,115 @@
+{
+ "declaration": {
+  "skill": "RAMP",
+  "source_text": "Teach it to cross this slope safely."
+ },
+ "resolved": {
+  "skill": "RAMP",
+  "spec": "ramp",
+  "params": {
+   "incline_deg": 12.0,
+   "nominal_speed_m_s": 0.6
+  },
+  "actions": [
+   "climb_speed_m_s",
+   "climb_yaw_rate_rad_s"
+  ],
+  "outcomes": [
+   "progress_m",
+   "reached_top",
+   "fall",
+   "sideways_m",
+   "slip_m"
+  ],
+  "source_text": "Teach it to cross this slope safely."
+ },
+ "confirm_billing": true,
+ "mode": "fast",
+ "started_utc": "2026-11-22T03:43:54.959495+00:00",
+ "steps": [
+  {
+   "name": "attempts",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.skills.ramp",
+    "attempts",
+    "--out",
+    "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\context"
+   ]
+  },
+  {
+   "name": "dream",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.skills.ramp",
+    "dream",
+    "--out",
+    "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\dream",
+    "--n",
+    "1000"
+   ]
+  },
+  {
+   "name": "teach",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.observed",
+    "teach",
+    "--run",
+    "ramp-20261122T034354",
+    "--skill",
+    "ramp",
+    "--context",
+    "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\context",
+    "--dream",
+    "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\dream",
+    "--confirm-billing"
+   ]
+  },
+  {
+   "name": "train",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.observed",
+    "train",
+    "--run",
+    "ramp-20261122T034354",
+    "--skill",
+    "ramp",
+    "--dream",
+    "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\dream",
+    "--scores",
+    "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\scores.npz",
+    "--steps",
+    "1200"
+   ]
+  },
+  {
+   "name": "run_test",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.skills.ramp",
+    "run",
+    "--student",
+    "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\student",
+    "--split",
+    "test",
+    "--out",
+    "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\test_run",
+    "--run",
+    "ramp-20261122T034354"
+   ]
+  }
+ ],
+ "recorded_only": {
+  "incline_deg": "recorded only: no command takes it; the run uses skills.ramp.scenarios.incline_deg = [15.0, 18.0]",
+  "nominal_speed_m_s": "recorded only: no command takes it; the run uses skills.ramp.scenarios.nominal_speed_m_s = [0.6, 0.6]"
+ },
+ "config": "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\config.yaml",
+ "config_digest": "e0a10e69bdfff118bac366ed9ccdd19b1411a11a731cbe9ad647ab1589a80595"
+}

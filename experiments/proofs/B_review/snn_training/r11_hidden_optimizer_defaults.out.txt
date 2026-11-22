@@ -1,0 +1,4 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+optimizer recorded in the student's meta: {'name': 'Adam', 'lr': 0.002, 'betas': [0.9, 0.999], 'eps': 1e-08, 'weight_decay': 0.0}
+config.yaml students.snn keys: ['batch_size', 'beta', 'energy', 'evaluate_every_steps', 'hidden_sizes', 'learn_beta', 'learn_threshold', 'learning_rate', 'max_steps', 'patience_evaluations', 'readout_beta', 'rehearsal_fraction', 'shared_feature_width', 'shared_skills', 'spike_rate_penalty', 'surrogate', 'surrogate_alpha', 'target_temperature', 'threshold', 'time_steps', 'torch_threads', 'validation_fraction']
+optimizer keys (adam*/optimizer*/weight_decay/eps/betas) in config: []

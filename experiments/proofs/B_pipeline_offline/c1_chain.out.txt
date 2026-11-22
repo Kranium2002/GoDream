@@ -1,0 +1,93 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+settings: config.yaml copy with outputs under <tmp>; students.snn.max_steps=300 (config value 1500)
+
+== manifest at creation ==
+  [ok] manifest format tag
+  [ok] every step not_run
+  [ok] world seed = stream_seed(base, 'pipeline/world/default')
+  [ok] config digest recorded
+  [ok] world description recorded: PLUMBING FIXTURE world (experiments/proofs/B_pipeline_offlin...
+  [ok] manifest written under the temporary directory
+
+== collect ==
+  [ok] 12 attempt rows
+  [ok] collect done
+  [ok] counts {'rows_before': 0, 'done': 12, 'new_rows': 12, 'rows_after': 12}
+  [ok] times and wall seconds recorded
+  [ok] collect events start ... finish
+  [ok] one progress event per episode
+  [ok] event keys
+
+== residual model (constant_bias) ==
+  [ok] constant_bias fitted
+  [ok] manifest step 'teacher' records method and n_context
+  [ok] same method and attempts: no refit
+  [ok] physics_only: no model
+  [ok] local cost preview: nothing billed
+
+== dream ==
+  [ok] dream set 800 x 35
+  [ok] no threshold configured: null and the reason recorded
+  [ok] dream files saved
+  [ok] second dream refused -> RunStateError: run 'chain' already has a dream set (<tmp>\dreams\chain.npz); a run has one dream set and it is never overwritten: start a new run_id for other dreams
+
+== train ==
+  [ok] network digest recorded
+  [ok] training report recorded
+  [ok] train emits start and finish only
+  [ok] second train refused -> RunStateError: run 'chain' already has a student (<tmp>\students\chain); it is never overwritten
+
+== evaluate on dev ==
+  [ok] evaluation id eval001-dev
+  [ok] physics_only: run result readable, harness manifest completed
+  [ok] physics_only: harness used the run's world seed
+  [ok] physics_only: 16 episodes
+  [ok] physics_only: result names the fixture world
+  [ok] constant_bias: run result readable, harness manifest completed
+  [ok] constant_bias: harness used the run's world seed
+  [ok] constant_bias: 16 episodes
+  [ok] constant_bias: result names the fixture world
+  [ok] snn_per_skill: run result readable, harness manifest completed
+  [ok] snn_per_skill: harness used the run's world seed
+  [ok] snn_per_skill: 16 episodes
+  [ok] snn_per_skill: result names the fixture world
+  [ok] every method met the same attempt seeds
+  metrics (fixture, mechanics only): {"n_situations": 8, "n_repeats": 2, "n_episodes": 16, "loss_mean": 0.19886211511278137, "tolerance_rate": 0.5625, "tolerance_count": 9, "fx_fall_rate": 0.125, "fx_fall_count": 2, "agreement_with_physics_only": 1.0}
+  [ok] repeat evaluate gets a new id eval002-dev
+  [ok] first evaluation's files unchanged
+  [ok] same situations, seeds and world: identical metrics
+  [ok] evaluations listed in the manifest
+  [ok] oracle is not built -> MethodNotBuiltError: the oracle method is not built in this pipeline: it needs the evaluation-only oracle search over supported actions with repeated noise draws, which does not exist yet
+  [ok] snn_shared is not part of a single-skill run -> MethodNotBuiltError: snn_shared is a multi-skill student (students.shared_snn) and is not part of a single-skill run
+  [ok] test split without final_evaluation -> SealedSplitError: the test split is sealed: only evaluate(..., split='test', final_evaluation=True) reads it
+  [ok] final_evaluation with another split -> ValueError: final_evaluation=True reads the sealed test split; pass split='test'
+  [ok] the sealed test split was never read (no access-log line)
+
+== decide_with every brain ==
+  [ok] physics_only: JSON, chosen index 10 -> {'fx_side_speed': -0.2, 'fx_delay': 0.0}, objective
+  [ok] physics_only: objective scores and predicted outcome
+  [ok] constant_bias: JSON, chosen index 10 -> {'fx_side_speed': -0.2, 'fx_delay': 0.0}, objective
+  [ok] constant_bias: objective scores and predicted outcome
+  [ok] gaussian_process: JSON, chosen index 0 -> {'fx_side_speed': -0.6, 'fx_delay': 0.0}, objective
+  [ok] gaussian_process: objective scores and predicted outcome
+  [ok] gradient_boosting: JSON, chosen index 0 -> {'fx_side_speed': -0.6, 'fx_delay': 0.0}, objective
+  [ok] gradient_boosting: objective scores and predicted outcome
+  [ok] mlp_on_attempts: JSON, chosen index 5 -> {'fx_side_speed': -0.4, 'fx_delay': 0.0}, objective
+  [ok] mlp_on_attempts: objective scores and predicted outcome
+  [ok] snn_per_skill: JSON, chosen index 10 -> {'fx_side_speed': -0.2, 'fx_delay': 0.0}, snn_readout
+  [ok] student: readout per candidate, no predicted outcome
+  [ok] an encoded row gives the same answer as the mapping
+  [ok] oracle brain -> MethodNotBuiltError: the oracle method is not built in this pipeline: it needs the evaluation-only oracle search over supported actions with repeated noise draws, which does not exist yet
+
+== reload in a fresh process ==
+  [ok] worker (fresh process) exit code 0 
+  [ok] step states {'collect': 'done', 'teacher': 'done', 'dream': 'done', 'train': 'done', 'evaluate': 'done'}
+  [ok] history reloads
+  [ok] evaluations reload
+  [ok] attempt rows reload
+  [ok] dream set reloads
+  [ok] student reloads with the same network digest
+  [ok] every run result reloads (digests re-checked) with the same metrics
+  [ok] reloaded student makes the same decision
+
+CHECK RESULT (plumbing): 72 assertions held, 0 failed 

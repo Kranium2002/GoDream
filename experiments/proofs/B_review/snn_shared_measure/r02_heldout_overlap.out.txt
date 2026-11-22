@@ -1,0 +1,10 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+student trained on 150 dream rows (135 optimiser rows, 15 validation rows), steps 300
+student's own validation_in_dream agreement: 0.333
+
+held-out set  rows  train rows in it  outcome
+fresh          500                 0  ACCEPTED: agreement_with_dream_choice 0.434, fraction_zero regret 0.434, mean regret/spread 0.1430, paired student-physics 0.0841
+minus_one      149               134  ACCEPTED: agreement_with_dream_choice 0.832, fraction_zero regret 0.832, mean regret/spread 0.0231, paired student-physics 0.0135
+train_only     135               135  ACCEPTED: agreement_with_dream_choice 0.881, fraction_zero regret 0.881, mean regret/spread 0.0079, paired student-physics 0.0046
+superset       650               135  ACCEPTED: agreement_with_dream_choice 0.525, fraction_zero regret 0.525, mean regret/spread 0.1154, paired student-physics 0.0679
+exact          150               135  REFUSED: dreams_heldout are exactly the rows the student was trained on; pass held-out dreams

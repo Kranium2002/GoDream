@@ -1,0 +1,39 @@
+mujoco 4.0.1 numpy 2.5.5 python 3.13.18 cpu_count 4
+timestep 0.002 integrator mjINT_EULER cone mjCONE_ELLIPTIC impratio 100.0 solver mjSOL_NEWTON iterations 100 ls_iterations 50 gravity [ 0.    0.   -9.81] nativeccd True
+nq 19 nv 18 nu 12 na 0 njnt 13 nbody 14 ngeom 57 nkey 1 nsensor 0
+JOINTS (index name type qposadr dofadr range):
+  0 <free, unnamed> mjJNT_FREE 0 0 [0. 0.]
+  1 FL_hip_joint mjJNT_HINGE 7 6 [-1.0472  1.0472]
+  2 FL_thigh_joint mjJNT_HINGE 8 7 [-1.5708  3.4907]
+  3 FL_calf_joint mjJNT_HINGE 9 8 [-2.7227  -0.83776]
+  4 FR_hip_joint mjJNT_HINGE 10 9 [-1.0472  1.0472]
+  5 FR_thigh_joint mjJNT_HINGE 11 10 [-1.5708  3.4907]
+  6 FR_calf_joint mjJNT_HINGE 12 11 [-2.7227  -0.83776]
+  7 RL_hip_joint mjJNT_HINGE 13 12 [-1.0472  1.0472]
+  8 RL_thigh_joint mjJNT_HINGE 14 13 [-0.5236  4.5379]
+  9 RL_calf_joint mjJNT_HINGE 15 14 [-2.7227  -0.83776]
+  10 RR_hip_joint mjJNT_HINGE 16 15 [-1.0472  1.0472]
+  11 RR_thigh_joint mjJNT_HINGE 17 16 [-0.5236  4.5379]
+  12 RR_calf_joint mjJNT_HINGE 18 17 [-2.7227  -0.83776]
+ACTUATORS (index name -> joint, trntype dyntype gaintype biastype gainprm[0] biasprm[0:3] ctrlrange forcerange ctrllimited):
+  0 FL_hip -> FL_hip_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-23.7  23.7] [0. 0.] True
+  1 FL_thigh -> FL_thigh_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-23.7  23.7] [0. 0.] True
+  2 FL_calf -> FL_calf_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-45.43  45.43] [0. 0.] True
+  3 FR_hip -> FR_hip_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-23.7  23.7] [0. 0.] True
+  4 FR_thigh -> FR_thigh_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-23.7  23.7] [0. 0.] True
+  5 FR_calf -> FR_calf_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-45.43  45.43] [0. 0.] True
+  6 RL_hip -> RL_hip_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-23.7  23.7] [0. 0.] True
+  7 RL_thigh -> RL_thigh_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-23.7  23.7] [0. 0.] True
+  8 RL_calf -> RL_calf_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-45.43  45.43] [0. 0.] True
+  9 RR_hip -> RR_hip_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-23.7  23.7] [0. 0.] True
+  10 RR_thigh -> RR_thigh_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-23.7  23.7] [0. 0.] True
+  11 RR_calf -> RR_calf_joint mjTRN_JOINT mjDYN_NONE mjGAIN_FIXED mjBIAS_NONE 1.0 [0. 0. 0.] [-45.43  45.43] [0. 0.] True
+KEY 0 'home' qpos [ 0.    0.    0.27  1.    0.    0.    0.    0.    0.9  -1.8   0.    0.9  -1.8   0.    0.9  -1.8   0.    0.9  -1.8 ] ctrl [ 0.   0.9 -1.8  0.   0.9 -1.8  0.   0.9 -1.8  0.   0.9 -1.8]
+floor geom id 0 type mjGEOM_PLANE friction [1.     0.005  0.0001] condim 3 priority 0
+foot geoms: [('FL', array([0.8 , 0.02, 0.01]), 6, 1, 0.022), ('FR', array([0.8 , 0.02, 0.01]), 6, 1, 0.022), ('RL', array([0.8 , 0.02, 0.01]), 6, 1, 0.022), ('RR', array([0.8 , 0.02, 0.01]), 6, 1, 0.022)]
+joint damping/armature/frictionloss (dof 6..17): [2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2.] [0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01] [0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2]
+total mass 15.2064 site imu id 0
+python loop of mj_step(m, d): N=20000 steps/s runs=[9011, 10206, 8644, 8521, 9760] median=9011 min=8521 real-time factor (median*dt)=18.0x  cpu/wall=0.75
+mj_step(m, d, nstep=N) single call: N=20000 steps/s runs=[8736, 9401, 9689, 9479, 7102] median=9401 min=7102 real-time factor (median*dt)=18.8x  cpu/wall=0.78
+ncon at end: 12 base z 0.0771
+PD hold (kp=30, kd=0.5, python loop): steps/s runs=[9065, 9554, 10054] median=9554 RTF=19.1x  ncon 6 base z 0.2076

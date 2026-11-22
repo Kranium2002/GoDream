@@ -1,0 +1,48 @@
+utc_now = 2026-11-21T13:34:43+00:00
+tabpfn_client 0.10.1 | base_url = https://api.priorlabs.ai:443
+prior_labs.connect(): OK in 0.34s (Config.is_initialized=True)
+
+tabpfn_client.get_api_usage() -> str in 0.06s
+    Currently, you have used 40000 of the allowed limit of 35000000 credits. The limit will reset at 2026-12-01 00:00:00 UTC.
+
+ServiceClient.get_api_usage(token) -> dict in 0.06s
+response keys = ['current_usage', 'daily_limit', 'daily_reset_time', 'daily_token_limit', 'daily_tokens_used', 'daily_usage', 'intro_expires_at', 'monthly_limit', 'monthly_reset_time', 'monthly_token_limit', 'monthly_token_limit_after_intro', 'monthly_tokens_used', 'monthly_usage', 'reset_time', 'thinking_fit_count', 'thinking_fit_limit', 'usage_limit']
+   current_usage = 40000
+   daily_limit = 35000000
+   daily_reset_time = 2026-11-22 00:00:00 UTC
+   daily_token_limit = 35000000
+   daily_tokens_used = 40000
+   daily_usage = 40000
+   intro_expires_at = <redacted NoneType>
+   monthly_limit = 35000000
+   monthly_reset_time = 2026-12-01 00:00:00 UTC
+   monthly_token_limit = 35000000
+   monthly_token_limit_after_intro = <redacted NoneType>
+   monthly_tokens_used = 40000
+   monthly_usage = 40000
+   reset_time = 2026-12-01 00:00:00 UTC
+   thinking_fit_count = 0
+   thinking_fit_limit = 0
+   usage_limit = 35000000
+validates as api_models.APIUsageData: True
+unlimited marker: usage_limit == -1 -> False
+
+=== server settings cached by init() (GET /tabpfn/get_settings; no account data) ===
+default_model_version = v3.5
+thinking_default_model_version = ModelVersion.V3_5
+dataset_max_size_bytes = 10737418240
+inline_test_set_max_parquet_bytes = 2000000
+async_settings = {"use_above_trainset_size_bytes": 52428800, "poll_timeout_secs": 105900.0, "predict_use_above": {"train_rows": 50000, "test_rows": 100000}, "thinking_predict_use_above": {"train_rows": 25000, "test_rows": 10000}}
+max_model_limit = {"train_set_max_rows": 1100000, "train_set_max_cells": 200000000, "train_set_max_upload_cells": 500000000, "test_set_max_rows": 1100000, "max_classes": 160, "max_cols": 23000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 200000000}
+model_limits[v2] = {"train_set_max_rows": 50000, "train_set_max_cells": 20000000, "train_set_max_upload_cells": 20000000, "test_set_max_rows": 50000, "max_classes": 10, "max_cols": 2000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 20000000}
+model_limits[v2.5] = {"train_set_max_rows": 50000, "train_set_max_cells": 20000000, "train_set_max_upload_cells": 20000000, "test_set_max_rows": 50000, "max_classes": 10, "max_cols": 2000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 20000000}
+model_limits[v2.6] = {"train_set_max_rows": 100000, "train_set_max_cells": 20000000, "train_set_max_upload_cells": 20000000, "test_set_max_rows": 100000, "max_classes": 10, "max_cols": 2000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 20000000}
+model_limits[v3] = {"train_set_max_rows": 1000000, "train_set_max_cells": 200000000, "train_set_max_upload_cells": 200000000, "test_set_max_rows": 1000000, "max_classes": 160, "max_cols": 2000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 200000000}
+model_limits[v3.5] = {"train_set_max_rows": 1100000, "train_set_max_cells": 200000000, "train_set_max_upload_cells": 500000000, "test_set_max_rows": 1100000, "max_classes": 160, "max_cols": 23000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 200000000}
+model_limits[v3.5-fast] = {"train_set_max_rows": 1100000, "train_set_max_cells": 200000000, "train_set_max_upload_cells": 500000000, "test_set_max_rows": 1100000, "max_classes": 160, "max_cols": 23000, "predict_row_pairs_budget": 250000000000, "test_set_max_rows_w_full_regression_output": 300000, "test_set_max_cells": 200000000}
+thinking_max_timeout_secs = 57600.0
+thinking_model_limits[v3] efforts = ['medium', 'high'] | max_timeout_secs = {'medium': 2400.0, 'high': 2400.0}
+thinking_model_limits[v3.5] efforts = ['micro', 'mini', 'low', 'medium', 'high', 'xhigh', 'max'] | max_timeout_secs = {'micro': 300.0, 'mini': 900.0, 'low': 1800.0, 'medium': 3600.0, 'high': 7200.0, 'xhigh': 14400.0, 'max': 57600.0}
+
+warnings captured = none
+DONE (no fit/predict/upload called)

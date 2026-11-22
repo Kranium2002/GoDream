@@ -1,0 +1,5 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+1 row: mis-exported network ACCEPTED; spike mismatches [0], decisions differing 0, max |logit diff| 0.723
+10 rows: mis-exported network ACCEPTED; spike mismatches [0], decisions differing 0, max |logit diff| 1.105
+600 rows: ParityError: 27 decisions differ, max |logit diff| 1.715
+decisions of the mis-exported vs correct network on 600 rows differ in 27 rows

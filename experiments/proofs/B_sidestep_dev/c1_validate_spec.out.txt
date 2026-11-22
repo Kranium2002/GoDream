@@ -1,0 +1,30 @@
+DEV RUN on the real Go2 simulator (Person A's Go2World, preset default, no ball) - development check of the sidestep_reach dev skill; not an evaluation result, not in any report or table
+config digest ce120918902c | runtime.seed 20261121 | world seed 1015552365 (stream 'sidestep_reach/dev/world') | preset default
+validation settings: {'hidden_value_names': ('payload_mass_kg', 'payload_off_center_range_m', 'declared_mass_error_fraction', 'surface_friction_by_type', 'friction_per_run_variation', 'slope_deg', 'motor_strength_fraction', 'command_latency_s', 'command_latency_jitter_s'), 'quantile_levels': (0.1, 0.25, 0.5, 0.75, 0.9), 'probe_seed': 20261121, 'probe_situations': 16, 'probe_points_per_dim': 3}
+world built in 0.81 s; declared values read from the observation of world.reset() (attributes not present yet)
+PASS  for_world(config, world) builds the spec and validate_spec passes inside it  [declared payload 0.0 kg, surface level 'default']
+PASS  spec is a SidestepReachSpec named 'sidestep_reach'
+PASS  the spec exposes its reset request and command sequence (reset_situation + commands, checked by validate_spec)
+PASS  validate_spec passes again, called directly with the project's settings
+PASS  command binding: every command dimension is a verified field inside its verified range  [problems []]
+PASS  the side-velocity dimension spans exactly the verified range of DODGE's side field  [vel_y [-1.0, 1.0] m/s]
+
+== the spec ==
+  situation dog_forward_speed_m_s    float       m/s   [0.3, 0.9]
+  situation target_sideways_m        float       m     [-0.4, 0.4]
+  situation declared_payload_kg      float       kg    [0.0, 3.6]
+  situation declared_surface         categorical label ['default']
+  action    side_velocity_m_s        role command field vel_y    [-1.0, 1.0] m/s
+  action    hold_duration_s          role timing  field None     [0.2, 0.8] s
+  outcome   sideways_error_m         regression m
+  outcome   fall                     binary     flag
+  outcome   lateral_command_m        regression m
+  episode 1.8 s = 90 control periods of 0.02 s; candidate grid (9, 7)
+
+== can the formula reach every dev target? (physics-only decisions, no simulator) ==
+  formula travel over the 63 candidates: -0.7882 to 0.7882 m
+  dev targets: -0.3699 to 0.3549 m; forward speeds 0.324 to 0.899 m/s
+  formula error of the physics-only choice: mean 0.0077 m, largest 0.0227 m
+PASS  the formula reaches every dev target within success_tolerance_m (the targets are reachable by the formula)  [largest 0.0227 m <= 0.05 m]
+
+7 passed, 0 failed

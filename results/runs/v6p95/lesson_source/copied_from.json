@@ -1,0 +1,53 @@
+{
+ "what": "Small metadata files of run v5, whose dream and teacher scores trained the v6p95 student (student.json provenance.dream). Copied unchanged; the .npz arrays were not copied.",
+ "source": "D:/BerlinPrior-eval/results/runs/v5",
+ "copied_utc": "2026-11-22T06:51:41.510238+00:00",
+ "max_bytes": 3145728,
+ "files": [
+  {
+   "path": "result.json",
+   "bytes": 7914,
+   "sha256": "9dba76d206185976c95980e9793e13a84b6ffc93920d77159d2337e4b854c666"
+  },
+  {
+   "path": "events.jsonl",
+   "bytes": 5729,
+   "sha256": "f769f4f2a69d5de0b9f0ca653288d46f4ea07509e86c2d6a6c9001cbb8cb76a3"
+  },
+  {
+   "path": "context/rows.json",
+   "bytes": 42575,
+   "sha256": "2c95e19fb2c844a44d59dd8be25a68ea92e61d2e4761d03f0aa9ec68b154b4ce"
+  },
+  {
+   "path": "dream/dream.json",
+   "bytes": 1309350,
+   "sha256": "465247256b07522cbbde9ee6dcf0a8958c82009a121fbe5cc86c9fdfb675b7d8"
+  },
+  {
+   "path": "context.log",
+   "bytes": 641,
+   "sha256": "a570b66316b4b00ce043b9bdb539819ee385a5e4f863b17504b7c8759f4041d7"
+  },
+  {
+   "path": "dream.log",
+   "bytes": 841,
+   "sha256": "ae1417b218efda6ca27657585bcd4509d026972e064175e640df3476741608e1"
+  },
+  {
+   "path": "sweep.log",
+   "bytes": 2465,
+   "sha256": "aa5477000ce9f3e4f6dc388541c97b9a685328465be9a345817141b0dd916667"
+  },
+  {
+   "path": "teach.log",
+   "bytes": 3499,
+   "sha256": "6e7fc33c67a7fc7006f413ca1d2a804a4c578bc9484b1926449327616f9ae7d4"
+  },
+  {
+   "path": "trace.log",
+   "bytes": 316,
+   "sha256": "8cd066cc03f2ba841d3d82790aea1eacaccf90fc34a9064929c191080e45ad89"
+  }
+ ]
+}

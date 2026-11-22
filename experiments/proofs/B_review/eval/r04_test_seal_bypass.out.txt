@@ -1,0 +1,9 @@
+REVIEW REPRODUCTION - fixture, not evidence
+(1) stream_rng reconstruction == sealed test situations (bitwise): True
+(2) project test access log changed: False | exists: False
+(3) three final-evaluation accesses allowed; lines in caller-chosen log: 3
+    test noise seeds available without the flag: [1677126029, 2617128726]
+(4) dev n=20 rows == first 20 rows of dev n=100: False | identical rows: 0 of 20
+    noise seeds n=20 == first 20 of n=100: True
+    dev[0] at n=20 : [4.661176917113967, -0.4157986564272593, 2.0]
+    dev[0] at n=100: [4.661176917113967, -0.7663333881015577, 2.0] -> same noise seed 4225875052 == 4225875052

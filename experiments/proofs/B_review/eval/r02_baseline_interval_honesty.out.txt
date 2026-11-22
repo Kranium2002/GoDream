@@ -1,0 +1,18 @@
+REVIEW REPRODUCTION - fixture, not evidence
+method               n  cov80(separation)  mean spread  (nominal 0.80; mean over 5 fixture seeds)
+constant_bias        5  0.617              0.1963
+constant_bias       10  0.646              0.2122
+constant_bias       20  0.643              0.2079
+constant_bias       40  0.755              0.2409
+gaussian_process     5  0.260              0.0607
+gaussian_process    10  0.509              0.0843
+gaussian_process    20  0.690              0.0654
+gaussian_process    40  0.815              0.0722
+gradient_boosting    5  0.201              0.0636
+gradient_boosting   10  0.313              0.0958
+gradient_boosting   20  0.370              0.1149
+gradient_boosting   40  0.601              0.1207
+mlp_on_attempts      5  0.000              0.0000
+mlp_on_attempts     10  0.001              0.0001
+mlp_on_attempts     20  0.001              0.0001
+mlp_on_attempts     40  0.002              0.0002

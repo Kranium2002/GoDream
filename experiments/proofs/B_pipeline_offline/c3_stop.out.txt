@@ -1,0 +1,25 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+
+== 1. stop during collect ==
+  [ok] collect_attempts(8) stops -> Stopped: should_stop() was true before episode 4 of this world started
+  [ok] manifest: collect stopped (should_stop() was true before episode 4 of this world started)
+  [ok] 3 measured rows kept on disk and counted
+  [ok] the state on disk is 'stopped'
+  [ok] a new SkillRun on the run collects the remaining 5
+  [ok] stopped + resumed attempt file is byte-identical to one call with 8
+
+== 2. stop during evaluate ==
+  [ok] evaluate(2 methods x 5 situations x 2 repeats) stops -> Stopped: should_stop() was true before episode 8 of this world started
+  [ok] manifest: evaluate stopped
+  [ok] the evaluation is listed with state stopped
+  [ok] 7 episodes were finished before the stop
+  [ok] no run-result file was written for the stopped evaluation
+  [ok] the next evaluate gets eval002-dev and completes
+  [ok] its run results read back with 10 episodes each
+
+== 3. stop before a step starts ==
+  [ok] residual_model with should_stop() true -> Stopped: should_stop() was true before the step started; nothing was run
+  [ok] manifest: teacher stopped, in history
+  [ok] the run stays usable afterwards
+
+CHECK RESULT (plumbing): 16 assertions held, 0 failed 

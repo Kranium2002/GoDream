@@ -1,0 +1,15 @@
+current_usage BEFORE = 40000
+(train_rows, test_rows, n_features[, kw]) -> (estimated_cost, pricing_version, n_estimators)
+(40, 32000, 10)  -> (10000, 'quota_v3', 8)
+(40, 100000, 10)  -> (26170, 'quota_v3', 8)
+(40, 300000, 10)  -> (184312, 'quota_v3', 8)
+(40, 1000000, 10)  -> (1962515, 'quota_v3', 8)
+(1000, 10000, 10)  -> (10000, 'quota_v3', 8)
+(10000, 10000, 10)  -> (10000, 'quota_v3', 8)
+(10000, 100000, 10)  -> (30366, 'quota_v3', 8)
+(100000, 100000, 10)  -> (85770, 'quota_v3', 8)
+(100000, 100000, 10) {'n_estimators': 1} -> (10721, 'quota_v3', 1)
+(100000, 100000, 50)  -> (96138, 'quota_v3', 8)
+(100000, 100000, 10) {'operation': 'cache_predict'} -> (21442, 'quota_v3', 8)
+current_usage AFTER = 40000 | unchanged: True
+DONE (no fit/predict/upload called)

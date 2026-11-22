@@ -1,0 +1,243 @@
+{
+  "label": "DEV RUN on the real Go2 simulator (Person A's Go2World with the simulated ball) - the DODGE learning chain; one world, one seed; not an evaluation result, not in any report or table",
+  "started_utc": "2026-11-21T17:33:15.486613+00:00",
+  "finished_utc": "2026-11-21T17:39:52.886435+00:00",
+  "command": "experiments/proofs/B_dodge_real/dodge_chain.py --preset default",
+  "config_digest": "6aef6cb771af247db3f82dcfcbd2bf77558f981f99e597b0981e43d150d19718",
+  "base_seed": 20261121,
+  "world_seed": 774610046,
+  "world_seed_stream": "dodge/dev/world/default",
+  "world_preset": "default",
+  "skill": "dodge",
+  "n_context": 40,
+  "n_dev": 100,
+  "n_dreams": 2000,
+  "dreams_kept": 2000,
+  "confidence_threshold": null,
+  "candidate_points_per_dim": [
+    9,
+    4,
+    3
+  ],
+  "exploration_stream": "dodge/context/default/exploration",
+  "runs": {
+    "context/explore": {
+      "run_id": "dodge/chain/20261121T173315Z/context/explore",
+      "episodes": 40,
+      "wall_s": 26.789046400022926
+    },
+    "dev/physics_only": {
+      "run_id": "dodge/chain/20261121T173315Z/dev/physics_only",
+      "episodes": 100,
+      "wall_s": 82.89881499999319
+    },
+    "dev/teacher": {
+      "run_id": "dodge/chain/20261121T173315Z/dev/teacher",
+      "episodes": 100,
+      "wall_s": 79.30757659999654
+    },
+    "dev/snn_per_skill": {
+      "run_id": "dodge/chain/20261121T173315Z/dev/snn_per_skill",
+      "episodes": 100,
+      "wall_s": 94.86552609998034
+    }
+  },
+  "timings_s": {
+    "teacher_dev_decisions_s": 5.203195100009907,
+    "dream_s": 80.40910340001574,
+    "train_s": 18.685161100002006,
+    "snn_dev_decisions_s": 0.009526900015771389
+  },
+  "tabpfn": {
+    "billed_requests": 15,
+    "tokens_quoted": 150000,
+    "cache_hits": 0,
+    "usage_before": {
+      "current_usage": 100000,
+      "usage_limit": 35000000,
+      "reset_time": "2026-12-01 00:00:00 UTC",
+      "daily_tokens_used": 100000,
+      "daily_token_limit": 35000000,
+      "daily_usage": 100000,
+      "daily_limit": 35000000,
+      "daily_reset_time": "2026-11-22 00:00:00 UTC",
+      "monthly_tokens_used": 100000,
+      "monthly_token_limit": 35000000,
+      "monthly_usage": 100000,
+      "monthly_limit": 35000000,
+      "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+      "thinking_fit_count": 0,
+      "thinking_fit_limit": 0
+    },
+    "usage_after": {
+      "current_usage": 250000,
+      "usage_limit": 35000000,
+      "reset_time": "2026-12-01 00:00:00 UTC",
+      "daily_tokens_used": 250000,
+      "daily_token_limit": 35000000,
+      "daily_usage": 250000,
+      "daily_limit": 35000000,
+      "daily_reset_time": "2026-11-22 00:00:00 UTC",
+      "monthly_tokens_used": 250000,
+      "monthly_token_limit": 35000000,
+      "monthly_usage": 250000,
+      "monthly_limit": 35000000,
+      "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+      "thinking_fit_count": 0,
+      "thinking_fit_limit": 0
+    },
+    "request_hashes": [
+      "0141834ba0601b5bddb234b42f7d4a755c668f8b6990f49e6c07b8558de97eb3",
+      "36096e922459a13ca892c0a1e773be187f5306127c5c73367b8450baaa2b3a60",
+      "3faad5a5235547754bd7b3cab42f3d3189df669d9ab6cf3f73f901e110aee097",
+      "488c52b9e35f1765501199807fcfd46beceb35fe8e1b44eeebd232191ba81ea4",
+      "52a0080fda6d01a717bfbed211db1c7211e1f79755071a0a858a4e8076a2e26b",
+      "55cc801bf76f1a4f308f97873f82158801442bee9ac13e8b3baa54b52478c1e8",
+      "62240157690075ed6642dbc0678afd92afbaa64c0bcf1e3a5c89a33374f99756",
+      "6254a55ad803579fbdae04b29664ee6c2f71d465d062f5431d34070eb45a0248",
+      "6afbb7c0b3c56a321397831b36e483d10c077d09149ef74d21b2f25bca22827f",
+      "72b045073ca7e1eefaf9f767867e93892e66c043894658c2eb24d3eefddd7021",
+      "92cb9fb602bdaca5167d9fc3e6ba0dc84b38d0cf4573f58b613872c9b7f0c7f0",
+      "b77fde35b1da5ed252c38ca80673f5a6daf4715f239aba211b215f56fb827bef",
+      "be60b36e9e1077dc9edb3dddd3ae6d8317671047a6240f3044de1d446163a5df",
+      "cc9b958fd1fe50f6bc9d7c086b47bc425c2701ed2100b24e7d518be7ca61b237",
+      "d97acbbb886f05889ff16b01ebe70a7bc8e20492c4abfe621cbe8189ca4e2631"
+    ]
+  },
+  "student": {
+    "digest": "a6b8823cb41671b6d93211e868768a7403e57bbc942c4d2da914d9b4cd89cde4",
+    "path": "student.npz"
+  },
+  "training_error": null,
+  "summary": {
+    "physics_only": {
+      "mean_min_separation_m": 0.31146743692295725,
+      "mean_collision": 0.01,
+      "mean_fall": 0.0,
+      "mean_recovery_time_s": 0.00019999999999999963,
+      "mean_lateral_command_m": 0.4480000000000001,
+      "mean_loss": 0.01,
+      "success_rate": 0.99,
+      "n": 100
+    },
+    "teacher": {
+      "mean_min_separation_m": 0.411869521718234,
+      "mean_collision": 0.01,
+      "mean_fall": 0.0,
+      "mean_recovery_time_s": 0.00019999999999999963,
+      "mean_lateral_command_m": 0.6260000000000001,
+      "mean_loss": 0.01,
+      "success_rate": 0.99,
+      "n": 100,
+      "paired_mean_loss_minus_physics": 0.0
+    },
+    "snn_per_skill": {
+      "mean_min_separation_m": 0.5023965588142384,
+      "mean_collision": 0.05,
+      "mean_fall": 0.0,
+      "mean_recovery_time_s": 0.0003999999999999998,
+      "mean_lateral_command_m": 0.875,
+      "mean_loss": 0.05,
+      "success_rate": 0.95,
+      "n": 100,
+      "paired_mean_loss_minus_physics": 0.04
+    }
+  },
+  "watch_index": 0,
+  "watch": {
+    "physics_only": {
+      "action": {
+        "side_velocity_m_s": -0.5,
+        "start_delay_s": 0.0,
+        "hold_duration_s": 0.6000000000000001
+      },
+      "commands": [
+        [
+          {
+            "vel_x": 0.8408486253927803,
+            "vel_y": -0.5,
+            "yaw_rate": 0.0
+          },
+          0.6000000000000001
+        ],
+        [
+          {
+            "vel_x": 0.8408486253927803,
+            "vel_y": 0.0,
+            "yaw_rate": 0.0
+          },
+          2.4
+        ]
+      ],
+      "measured": {
+        "min_separation_m": 0.12179556239380547,
+        "collision": 0.0,
+        "fall": 0.0,
+        "recovery_time_s": 0.0,
+        "lateral_command_m": 0.30000000000000004
+      },
+      "viewer_command": [
+        "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+        "-m",
+        "app.view_episode",
+        "--seed",
+        "774610046",
+        "--preset",
+        "default",
+        "--situation",
+        "D:\\BerlinPrior\\experiments\\proofs\\B_dodge_real\\out\\chain_default_20261121T173315Z\\watch_situation.json",
+        "--command",
+        "0.8408486253927803,-0.5,0.0,0.6000000000000001",
+        "--command",
+        "0.8408486253927803,0.0,0.0,2.4"
+      ]
+    },
+    "snn_per_skill": {
+      "action": {
+        "side_velocity_m_s": -1.0,
+        "start_delay_s": 0.0,
+        "hold_duration_s": 1.0
+      },
+      "commands": [
+        [
+          {
+            "vel_x": 0.8408486253927803,
+            "vel_y": -1.0,
+            "yaw_rate": 0.0
+          },
+          1.0
+        ],
+        [
+          {
+            "vel_x": 0.8408486253927803,
+            "vel_y": 0.0,
+            "yaw_rate": 0.0
+          },
+          2.0
+        ]
+      ],
+      "measured": {
+        "min_separation_m": 0.5602016289408991,
+        "collision": 0.0,
+        "fall": 0.0,
+        "recovery_time_s": 0.0,
+        "lateral_command_m": 1.0
+      },
+      "viewer_command": [
+        "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+        "-m",
+        "app.view_episode",
+        "--seed",
+        "774610046",
+        "--preset",
+        "default",
+        "--situation",
+        "D:\\BerlinPrior\\experiments\\proofs\\B_dodge_real\\out\\chain_default_20261121T173315Z\\watch_situation.json",
+        "--command",
+        "0.8408486253927803,-1.0,0.0,1.0",
+        "--command",
+        "0.8408486253927803,0.0,0.0,2.0"
+      ]
+    }
+  }
+}

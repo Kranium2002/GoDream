@@ -1,0 +1,33 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+check config: config.yaml with students.snn.shared_feature_width=6 (fixture), students.snn.max_steps=300 (config.yaml 1500) and evaluation.latency_decisions=100 (config.yaml 1000)
+
+== engine.dream.select_rows ==
+  [ok] indices select those rows in the given order
+  [ok] a boolean mask selects the marked rows in row order
+  [ok] the header (skill, method, candidate count) is kept
+  [ok] selecting no rows gives an empty DreamSet
+  [ok] keep_confident at the smallest spread (0) keeps exactly the rows at or below it (1000 of 1000)
+  [ok] keep_confident at the median spread (0) keeps exactly the rows at or below it (1000 of 1000)
+  [ok] keep_confident at the largest spread (0) keeps exactly the rows at or below it (1000 of 1000)
+  [ok] a repeated row index is refused -> ValueError: row indices must not repeat
+  [ok] a row index outside the set is refused -> ValueError: row indices must lie in [0, 1000); got 1000..1000
+  [ok] a mask of the wrong length is refused -> ValueError: a row mask must have length 1000; got 999
+  [ok] non-integer row indices are refused -> ValueError: rows must be integer indices or a boolean mask; got dtype float64
+
+== a shared student holding one skill ==
+  slots {'fx_alpha': 0}; input width 14; retention rows 100 of 1000; view network digest 7bb1f403e90f
+  [ok] shared.deployed(skill) is a DeployedStudent
+  [ok] the selected rows are exactly the skill's retention situations
+  [ok] the view saw none of the retention situations in training
+
+== measure.student_record on the shared view ==
+  record keys: ['agreement_with_heldout_dream', 'config', 'dream_provenance', 'dream_regret_difference_student_minus_physics', 'format', 'label', 'latency', 'operations', 'out_of_scope', 'seeds', 'skill', 'student', 'student_meta', 'versions']
+  record size 104588 bytes; JSON without NaN: yes
+  [ok] the record names the view's network digest
+  [ok] that digest is the shared student's network view of the skill
+  [ok] the record states that 0 held-out rows were seen in training
+  [ok] the operation counts use the padded input: first layer 14 x 64 = 896 MACs
+  [ok] the skill's whole stored dream is refused as held-out data -> HeldOutOverlapError: dreams_heldout: 900 of 1000 dream rows (900 of 1000 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out; pass drea
+
+CHECK RESULT: 19 assertions held, 0 failed 

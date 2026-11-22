@@ -1,0 +1,110 @@
+
+=== versions ===
+tabpfn_client.__version__ = 0.10.1
+tabpfn-common-utils dist version = 0.2.23
+ServiceClient.base_url (forced dead) = http://127.0.0.1:9
+TORCH_AVAILABLE (estimator) = False
+tabpfn importable = False
+
+=== signatures ===
+TabPFNRegressor.__init__(self, model_path: 'str | None' = None, n_estimators: 'int | None' = None, softmax_temperature: 'float | None' = None, average_before_softmax: "bool | Literal['auto'] | None" = None, ignore_pretraining_limits: 'bool' = False, inference_precision: "Literal['autocast', 'auto'] | None" = None, random_state: 'int | None' = 0, inference_config: 'dict[str, Any] | None' = None, presets: 'RegressorPresetLiteral | list[RegressorPresetLiteral] | None' = None, categorical_features_indices: 'list[int] | None' = None, fit_mode: 'FitModeLiteral | None' = None, paper_version: 'bool' = False, thinking_mode: 'bool' = False, thinking_effort: 'ThinkingEffort | None' = None, thinking_timeout_s: 'float | None' = None, thinking_metric: 'str | None' = None, group_col: 'str | list[str] | None' = None, time_col: 'str | None' = None, group_time_col: 'str | None' = None, api_mode: 'ApiMode' = <ApiMode.AUTO: 'auto'>, client_options: 'ClientOptions | None' = None, text_handling: 'TextHandling' = 'advanced')
+TabPFNRegressor.fit(self, X: 'pd.DataFrame | np.ndarray', y: 'pd.Series | np.ndarray', description: 'str | None' = None)
+TabPFNRegressor.predict(self, X: 'pd.DataFrame | np.ndarray', output_type: 'RegressorOutputLiteral' = 'mean', quantiles: 'list[float] | None' = None) -> 'np.ndarray | list[np.ndarray] | dict[str, np.ndarray]'
+TabPFNRegressor.submit_predict(self, X: 'pd.DataFrame | np.ndarray', output_type: 'RegressorOutputLiteral' = 'mean', quantiles: 'list[float] | None' = None) -> 'Self'
+TabPFNRegressor.save_model(self, path: 'str | Path | None' = None) -> 'dict[str, Any]'
+TabPFNRegressor.load_model(source: 'str | Path | dict[str, Any]') -> 'Self'
+TabPFNClassifier.__init__(self, model_path: 'str | None' = None, n_estimators: 'int | None' = None, softmax_temperature: 'float | None' = None, balance_probabilities: 'bool' = False, average_before_softmax: "bool | Literal['auto'] | None" = None, ignore_pretraining_limits: 'bool' = False, inference_precision: "Literal['autocast', 'auto'] | None" = None, random_state: 'int | None' = 0, inference_config: 'dict[str, Any] | None' = None, presets: 'ClassifierPresetLiteral | list[ClassifierPresetLiteral] | None' = None, categorical_features_indices: 'list[int] | None' = None, fit_mode: 'FitModeLiteral | None' = None, paper_version: 'bool' = False, thinking_mode: 'bool' = False, thinking_effort: 'ThinkingEffort | None' = None, thinking_timeout_s: 'float | None' = None, thinking_metric: 'str | None' = None, group_col: 'str | list[str] | None' = None, time_col: 'str | None' = None, group_time_col: 'str | None' = None, api_mode: 'ApiMode' = <ApiMode.AUTO: 'auto'>, client_options: 'ClientOptions | None' = None, text_handling: 'TextHandling' = 'advanced')
+TabPFNClassifier.fit(self, X: 'pd.DataFrame | np.ndarray', y: 'pd.Series | np.ndarray', description: 'str | None' = None)
+TabPFNClassifier.predict(self, X)
+TabPFNClassifier.predict_proba(self, X)
+tabpfn_client.estimate_cost(X_train: numpy.ndarray | pandas.core.frame.DataFrame, X_test: numpy.ndarray | pandas.core.frame.DataFrame | None = None, *, model_version: str | None = None, operation: Literal['predict', 'thinking_fit', 'thinking_predict', 'cache_predict'] = 'predict', n_estimators: int | None = None, thinking_effort: Optional[Literal['micro', 'mini', 'low', 'medium', 'high', 'xhigh', 'max']] = None) -> tabpfn_client.api_models.EstimateCostResponse
+tabpfn_client.get_api_usage() -> str
+tabpfn_client.init(use_server: bool = True)
+ServiceClient.estimate_cost(req: 'EstimateCostRequest', *, access_token: 'str') -> 'EstimateCostResponse'
+ServiceClient.get_api_usage(access_token: 'str')
+
+=== legal output types (client-side Literal) ===
+RegressorOutputLiteral = ('mean', 'median', 'mode', 'quantiles', 'full', 'main')
+ClassifierOutputLiteral = ('preds', 'probas')
+RegressorOutputType enum = ['mean', 'median', 'mode', 'quantiles', 'full', 'main']
+ClassifierOutputType enum (server schema) = ['probas', 'preds', 'top_k']
+invalid output_type -> ValueError : output_type must be one of 'mean', 'median', 'mode', 'quantiles', 'full', 'main', not 'bogus'.
+
+=== model names / versions (client-side lists, no network) ===
+ModelVersion = ['v2', 'v2.5', 'v2.6', 'v3', 'v3.5', 'v3.5-fast']
+_DEFAULT_MODEL_NAMES = ('v3.5-fast_default', 'v3.5_default', 'v3_default', 'v2.6_default', 'v2.5_default', 'v2_default')
+TabPFNRegressor.list_available_models() = ['v3.5-fast_default', 'v3.5_default', 'v3_default', 'v2.6_default', 'v2.5_default', 'v2_default', 'v2.5_low-skew', 'v2.5_quantiles', 'v2.5_real-variant', 'v2.5_real', 'v2.5_small-samples', 'v2.5_variant', 'auto', 'default', '2noar4o2', '5wof9ojf', '09gpqh39', 'wyl4o83o']
+TabPFNClassifier.list_available_models() = ['v2.5_default-2', 'v3.5-fast_default', 'v3.5_default', 'v3_default', 'v2.6_default', 'v2.5_default', 'v2_default', 'v2.5_large-features-L', 'v2.5_large-features-XL', 'v2.5_large-samples', 'v2.5_real-large-features', 'v2.5_real-large-samples-and-features', 'v2.5_real', 'v2.5_variant', 'auto', 'default', 'gn2p4bpt', 'llderlii', 'od3j1g5m', 'vutqq28w', 'znskzxi4']
+_AUTO_MODEL_PATH_ALIASES = (None, 'auto', 'default')
+create_default_for_version('v3.5').model_path = v3.5_default
+QuotaOperation = ['predict', 'thinking_predict', 'thinking_fit', 'cache_predict']
+ThinkingEffort = ('micro', 'mini', 'low', 'medium', 'high', 'xhigh', 'max')
+
+=== what is SENT: RegressorTabPFNConfig fields and default-constructed payload ===
+RegressorTabPFNConfig fields = ['n_estimators', 'categorical_features_indices', 'softmax_temperature', 'average_before_softmax', 'random_state', 'inference_config', 'inference_precision', 'presets', 'group_col', 'ignore_pretraining_limits', 'fit_mode', 'model_path']
+ClassifierTabPFNConfig fields = ['n_estimators', 'categorical_features_indices', 'softmax_temperature', 'average_before_softmax', 'random_state', 'inference_config', 'inference_precision', 'presets', 'group_col', 'ignore_pretraining_limits', 'fit_mode', 'model_path', 'balance_probabilities']
+TabPFNRegressor() tabpfn_config sent (exclude_none) = {"random_state": 0, "ignore_pretraining_limits": false}
+RegressorFitTaskConfig sent = {"task": "regression", "tabpfn_config": {"random_state": 0, "ignore_pretraining_limits": false}}
+tabpfn_systems default = ['preprocessing', 'text'] | paper_version=True -> []
+example custom tabpfn_config sent = {"n_estimators": 8, "categorical_features_indices": [0], "softmax_temperature": 0.9, "random_state": 42, "ignore_pretraining_limits": false, "model_path": "v3.5_default"}
+params NOT in tabpfn_config (client-side only / other request fields) = ['api_mode', 'client_options', 'group_time_col', 'paper_version', 'text_handling', 'thinking_effort', 'thinking_metric', 'thinking_mode', 'thinking_timeout_s', 'time_col']
+
+=== predict params payload (what one predict request carries) ===
+RegressorPredictParams fields = ['output_type', 'quantiles']
+{'output_type': 'main', 'quantiles': [0.1, 0.5, 0.9]} -> task_config = {"task": "regression", "tabpfn_config": {"random_state": 0, "ignore_pretraining_limits": false}, "predict_params": {"output_type": "main", "quantiles": [0.1, 0.5, 0.9]}}
+{'output_type': 'quantiles', 'quantiles': None} -> task_config = {"task": "regression", "tabpfn_config": {"random_state": 0, "ignore_pretraining_limits": false}, "predict_params": {"output_type": "quantiles"}}
+{'output_type': 'median', 'quantiles': None} -> task_config = {"task": "regression", "tabpfn_config": {"random_state": 0, "ignore_pretraining_limits": false}, "predict_params": {"output_type": "median"}}
+
+=== _finish_predict shaping (pure; synthetic PredictionResult, no server) ===
+quantiles: server (2,3) array -> list len 2 elem shape (3,)
+main (synthetic dict as server would send) -> dict {'mean': ('ndarray', (3,)), 'median': ('ndarray', (3,)), 'mode': ('ndarray', (3,)), 'quantiles': ('ndarray', (3, 3))}
+metadata dict keys kept on estimator._last_meta = ['package_version', 'tabpfn_config', 'task', 'test_set_num_cols', 'test_set_num_rows']
+_FULL_OUTPUT_ROW_AXIS = {'mean': 0, 'median': 0, 'mode': 0, 'logits': 0, 'quantiles': 1, 'borders': None}
+
+=== targets: 1-D only, NaN rejected (pure _validate_targets) ===
+y 1-D float: accepted 
+y (n,1): accepted (warning: DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().)
+y (n,2) multi-target: ValueError: y should be a 1d array, got an array of shape (3, 2) instead.
+y with NaN: ValueError: Input y contains NaN.
+MIN_TRAIN_ROWS = 2
+
+=== categoricals / text: client-side transform and the parquet actually uploaded ===
+input dtypes = {'side_cat': 'category', 'side_str': 'object', 'side_int': 'int64', 'speed': 'float64'}
+after _clean_text_features dtypes = {'side_cat': 'category', 'side_str': 'object', 'side_int': 'int64', 'speed': 'float64'}
+side_str after clean = ['left hard', 'right', 'left', 'none'] (commas stripped, whitespace collapsed)
+side_cat after clean = ['left', 'right', 'left', 'none']
+uploaded parquet schema:
+    side_cat : dictionary<values=string, indices=int8, ordered=0>
+    side_str : string
+    side_int : int64
+    speed : double
+uploaded parquet bytes = 3088 | crc32c(base64, used as dedup hash) = Oikb5g==
+round-trip pandas dtypes = {'side_cat': 'category', 'side_str': 'object', 'side_int': 'int64', 'speed': 'float64'} | speed NaN kept: True
+numeric numpy passes through unchanged: True
+numpy -> DataFrame column names in parquet = ['0', '1']
+
+=== identical inputs -> identical upload bytes/hash (basis of server-side upload dedup) ===
+crc equal for identical frame: True
+
+=== client limits / timeouts / retry constants (source constants) ===
+Options defaults: TABPFN_CLIENT_TIMEOUT = 900.0 | UPLOAD_TIMEOUT = 7200.0 | DEDUP_DATASETS = True | FORCE_REUPLOAD = False | ASYNC_USE_ABOVE_TRAINSET_SIZE = 52428800 | ASYNC_POLL_TIMEOUT = 7200.0
+ClientOptions().timeout = 900.0
+FALLBACK_PREDICT_ROW_PAIRS_BUDGET = 250000000000
+_MAX_PREDICT_JOBS_IN_FLIGHT = 4 | _MAX_POLL_TIMEOUT_SECS = 120.0 | _MIN_RETRY_INTERVAL_SECS = 0.3
+_REFIT_ERROR_CODES = ['KV_CACHE_INVALID', 'NEEDS_REFITTING']
+CACHE_DIR (token cache location; contents never read) = D:\BerlinPrior\.venv\Lib\site-packages\tabpfn_client\.tabpfn | exists: False
+
+=== retry decorators on billable calls (backoff config read from wrapped functions) ===
+ServiceClient._fit: retries on backoff.constant, ( httpx.ConnectError, httpx.ConnectTimeout, ), max_tries=2
+ServiceClient._submit_fit_job: retries on backoff.constant, ( httpx.ConnectError, httpx.ConnectTimeout, ), max_tries=2
+ServiceClient._predict: retries on backoff.constant, ( httpx.ConnectError, httpx.ConnectTimeout, ), max_tries=2
+ServiceClient._submit_predict_job: retries on backoff.constant, ( httpx.ConnectError, httpx.ConnectTimeout, ), max_tries=2
+
+=== estimate_cost request model (what the quote sends) ===
+EstimateCostRequest fields = ['train_rows', 'raw_columns', 'test_rows', 'model_version', 'operation', 'n_estimators', 'thinking_effort']
+EstimateCostResponse fields = ['estimated_cost', 'pricing_version', 'inputs']
+APIUsageData fields = ['daily_tokens_used', 'daily_token_limit', 'monthly_tokens_used', 'monthly_token_limit', 'current_usage', 'usage_limit', 'reset_time', 'monthly_usage', 'monthly_limit', 'monthly_reset_time', 'daily_usage', 'daily_limit', 'daily_reset_time', 'thinking_fit_count', 'thinking_fit_limit']
+RegressorMetadata fields = ['test_set_num_rows', 'test_set_num_cols', 'n_estimators', 'billing_model_version', 'execution_mode', 'cache_outcome', 'task', 'package_version', 'tabpfn_config']
+ModelLimit fields = ['train_set_max_rows', 'train_set_max_cells', 'train_set_max_upload_cells', 'test_set_max_rows', 'max_classes', 'max_cols', 'predict_row_pairs_budget', 'test_set_max_rows_w_full_regression_output', 'test_set_max_cells']
+
+DONE (no network used)

@@ -1,0 +1,21 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+
+== 1. continue from the manifest ==
+  [ok] states read from the manifest
+  [ok] history read from the manifest
+  [ok] collect_attempts(6) on the reopened run gives 6 rows
+  [ok] only attempts 4 and 5 ran
+  [ok] history: 4 new rows, then 2
+
+== 2. a changed identity is refused ==
+  [ok] another skill -> RunMismatchError: run 'resume' already exists (<tmp>\manifests\resume.json) with another identity; skill: manifest has 'fixture_pipeline', this call has 'fixture_pipeline_other'. A run is never continued under another 
+  [ok] another world preset -> RunMismatchError: run 'resume' already exists (<tmp>\manifests\resume.json) with another identity; world_preset: manifest has 'default', this call has 'heavy_payload'; world_seed: manifest has 647831257, this call has 
+  [ok] another base seed -> RunMismatchError: run 'resume' already exists (<tmp>\manifests\resume.json) with another identity; base_seed: manifest has 20261121, this call has 20261122; world_seed: manifest has 647831257, this call has 3219560683.
+  [ok] config with one changed value -> RunMismatchError: run 'resume' already exists (<tmp>\manifests\resume.json) with another identity; config_digest: manifest has '53cd6abc10b7655abba57cdef7cba95fac1253c7be210d9f5ba820d4346bf0dd', this call has 'aebd58ed
+  [ok] another world factory -> RunMismatchError: run 'resume' already exists (<tmp>\manifests\resume.json) with another identity; world: manifest has 'PLUMBING FIXTURE world (experiments/proofs/B_pipeline_offline/fixture_pipeline.py); not the Go2 si
+  [ok] the manifest file is unchanged after every refusal
+  [ok] the original identity still opens the run
+  [ok] an invalid run id -> ValueError: run_id must match ^[A-Za-z0-9_-]+$ (it names files); got 'bad.id'
+  [ok] an unknown preset -> ValueError: world_preset 'no_such_preset' is not a key of config.yaml world.presets
+
+CHECK RESULT (plumbing): 14 assertions held, 0 failed 

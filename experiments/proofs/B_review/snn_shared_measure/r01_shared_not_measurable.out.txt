@@ -1,0 +1,17 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+shared student holds ('fx_alpha',); view layer sizes (11, 64, 35)
+
+measure.* on the shared student:
+  measure_decision_latency(shared, ...): TypeError: student must be an SNNStudent; got SharedSNNStudent
+  measure_operations(shared, ...): TypeError: student must be an SNNStudent; got SharedSNNStudent
+  agreement_with_dream(shared, dreams): TypeError: student must be an SNNStudent; got SharedSNNStudent
+  student_record(shared, ...): TypeError: student must be an SNNStudent; got SharedSNNStudent
+
+wrapping the shared view of fx_alpha in an SNNStudent (the only type measure accepts):
+  SNNStudent(network=view, encoder=fx_alpha's own encoder): ValueError: the network takes 11 inputs but the encoder gives 4
+
+what remains for the shared student: operation_counts + energy.estimate_energy (no latency, no firing
+statistics, no never/always-fire fractions, no bootstrap intervals, no provenance record):
+  layer sizes (11, 64, 35) first-layer MACs 704 dense MACs 2944
+  keys of estimate_energy: ['caveats', 'constants', 'dense_reference_macs', 'dense_reference_pj_per_decision', 'firing_rate_per_layer', 'first_layer_counted'] ... (no latency key anywhere)
+  hasattr(shared, 'digest')=False hasattr(shared, 'meta')=False

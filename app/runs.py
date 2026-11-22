@@ -1,0 +1,337 @@
+"""Learning runs: GET /api/runs, GET /api/runs/{run_id}, POST /api/runs and the SSE `run` events.
+
+    GET  /api/runs           the run ids found in config.yaml observed.runs_dir (Dev B), sorted; ?summary=1 gives a
+                             card per run instead: {run_id, skill, state, updated_utc, steps_done, has_result,
+                             has_student}, state "unreadable" for a folder that cannot be read
+    GET  /api/runs/{run_id}  {run_id, state, steps: [{step, state, done, total, time_utc, data}], baseline, results,
+                             problems}
+    GET  /api/runs/{run_id}/events  every complete, valid line of the run's events.jsonl in file order, unchanged
+                             from <runs_dir>/<run_id>/events.jsonl and result.json, read as they are now
+    GET  /api/runs/{run_id} also carries status: Dev B's run_status (state, step, alive, reason, history, ...) for a
+                             run started through run_skill, null for a run recorded without run_status.json
+    POST /api/runs           {declared_spec, confirm_cost, mode?}: 202 with what run_skill.start_run returns ({run_id,
+                             pid, ...}); 422 invalid_declaration with Dev B's problems; 422 mode_not_supported with
+                             run_skill's own sentence when plan_run refuses the mode (mode "fast" for DODGE); 409
+                             run_in_progress {run_id} while another run's worker is alive; without confirm_cost true
+                             409 cost_confirmation_required with quote_run's fields flat (mode among them) plus
+                             plan_run's recorded_only; 503 runs_unavailable naming what is missing while
+                             learned_judgment.run_skill does not import. mode is "full" (the default) or "fast", passed
+                             unchanged to plan_run, quote_run and start_run.
+    POST /api/runs/{run_id}/stop  run_skill.stop_run's answer (the run's status); 409 run_not_started_here for a run
+                             recorded without run_status.json
+Each new complete line of any run's events.jsonl is relayed as an SSE `run` event, unchanged. Dev B's `data` is
+passed through untouched everywhere: the page shows what Dev B sends. A bad line is reported and skipped, never fatal.
+"""
+import json
+import logging
+import threading
+from urllib.parse import parse_qs, unquote, urlsplit
+import re
+
+from app import backend
+from app.routes import Refusal, capability, route
+
+EVENTS, RESULT = "events.jsonl", "result.json"
+STEPS = ("baseline", "attempts", "teacher_fit", "dream", "train", "evaluate")  # pipeline order (Dev B, 20:55 UTC)
+STATES = ("running", "done", "failed", "refused", "stopped")
+ENDED = ("failed", "refused", "stopped")
+KEYS = {"run_id", "skill", "step", "state", "done", "total", "time_utc", "data"}
+RUN_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")  # a folder name: no separator, no leading dot
+MESSAGES = {
+    "malformed_line": "A line of the run's event file is not a complete event; it was skipped.",
+    "unknown_step": "A line of the run's event file names a step this server does not know; it was skipped.",
+    "unknown_state": "A line of the run's event file names a state this server does not know; it was skipped.",
+    "malformed_result": "The run's result file is not valid JSON, so no results are shown.",
+}
+log = logging.getLogger(__name__)
+
+
+def _count(value) -> bool:
+    return value is None or (type(value) is int and value >= 0)
+
+
+def _event(raw: bytes):
+    """(event, None) for a valid line, else (None, problem code)."""
+    try:
+        event = json.loads(raw.decode("utf-8"))
+    except ValueError:  # UnicodeDecodeError is a ValueError
+        return None, "malformed_line"
+    if not (isinstance(event, dict) and KEYS <= set(event)
+            and all(isinstance(event[k], str) for k in ("run_id", "skill", "time_utc"))
+            and _count(event["done"]) and _count(event["total"])):
+        return None, "malformed_line"
+    if event["step"] not in STEPS:
+        return None, "unknown_step"
+    if event["state"] not in STATES:
+        return None, "unknown_state"
+    return event, None
+
+
+def parse_lines(data: bytes):
+    """(events, problems, consumed) for the complete lines of data. A last line without its newline is not read:
+    consumed stops before it, for the next read. Blank lines are skipped; each bad line is one problem
+    {offset, code, message}, offset counted in bytes from the start of data."""
+    events, problems, offset = [], [], 0
+    while (end := data.find(b"\n", offset)) != -1:
+        raw = data[offset:end]
+        if raw.strip():
+            event, code = _event(raw)
+            if code:
+                problems.append({"offset": offset, "code": code, "message": MESSAGES[code]})
+            else:
+                events.append(event)
+        offset = end + 1
+    return events, problems, offset
+
+
+def _latest(events) -> dict:
+    latest = {}
+    for event in events:
+        latest[event["step"]] = event
+    return latest
+
+
+def summarize(events) -> list:
+    """The newest line of each step, in pipeline order, as {step, state, done, total, time_utc, data}."""
+    latest = _latest(events)
+    return [{k: latest[s][k] for k in ("step", "state", "done", "total", "time_utc", "data")}
+            for s in STEPS if s in latest]
+
+
+def all_events(folder) -> list:
+    """Every complete, valid line of a run's events.jsonl in file order, unchanged; [] without the file."""
+    events_file = folder / EVENTS
+    return parse_lines(events_file.read_bytes())[0] if events_file.is_file() else []
+
+
+def run_state(events) -> str:
+    """starting before any line; the first ended state (failed, refused, stopped) of a step in pipeline order; done once
+    evaluate is done; else running."""
+    if not events:
+        return "starting"
+    steps = summarize(events)
+    ended = [s["state"] for s in steps if s["state"] in ENDED]
+    if ended:
+        return ended[0]
+    return "done" if steps[-1]["step"] == "evaluate" and steps[-1]["state"] == "done" else "running"
+
+
+def report(folder) -> dict:
+    """GET /api/runs/{run_id}'s answer for a run folder, read now."""
+    events_file, result_file = folder / EVENTS, folder / RESULT
+    events, problems, _ = parse_lines(events_file.read_bytes() if events_file.is_file() else b"")
+    steps, results = summarize(events), None
+    if result_file.is_file():
+        try:
+            results = json.loads(result_file.read_bytes().decode("utf-8"))
+        except ValueError:
+            problems.append({"offset": None, "code": "malformed_result", "message": MESSAGES["malformed_result"]})
+    return {"run_id": folder.name, "state": run_state(events), "steps": steps,
+            "baseline": next((s["data"] for s in steps if s["step"] == "baseline"), None),
+            "results": results, "problems": problems}
+
+
+def summary(folder, names: dict | None = None) -> dict:
+    """A skill card for a run folder, from its files only: {run_id, skill, display_name, state, updated_utc,
+    steps_done, has_result, has_student, timing}. skill and updated_utc come from the newest event line, else from
+    result.json, else null; display_name is names[skill] (backend.skill_names: the catalogue's name of that spec), else
+    null; timing is result.json's top-level "timing" as Dev B's run_skill worker measured it (wall clock on this
+    machine), else null; a folder whose files cannot be read is state "unreadable"."""
+    card = {"run_id": folder.name, "skill": None, "display_name": None, "state": "unreadable", "updated_utc": None,
+            "steps_done": 0, "has_result": False, "has_student": False, "timing": None}
+    try:
+        events_file, result_file = folder / EVENTS, folder / RESULT
+        events, _, _ = parse_lines(events_file.read_bytes() if events_file.exists() else b"")
+        try:
+            result = json.loads(result_file.read_bytes().decode("utf-8")) if result_file.exists() else None
+        except ValueError:
+            result = None
+        has_student = (folder / "student" / "student.json").is_file()
+    except OSError:
+        return card
+    fallback = result if isinstance(result, dict) else {}
+    newest = events[-1] if events else {}
+    skill = newest.get("skill", fallback.get("skill"))
+    timing = fallback.get("timing")
+    return card | {"skill": skill, "display_name": (names or {}).get(skill), "state": run_state(events),
+                   "updated_utc": newest.get("time_utc", fallback.get("updated_utc")),
+                   "steps_done": sum(1 for s in summarize(events) if s["state"] == "done"),
+                   "has_result": result is not None, "has_student": has_student,
+                   "timing": timing if isinstance(timing, dict) else None}
+
+
+def scan(root, offsets: dict, emit, first: bool = False) -> None:
+    """Hand emit each new complete line of every <root>/<run_id>/events.jsonl, keeping each file's read position in
+    offsets. On the first scan what is already there is history and is skipped; a file seen later is read from its
+    start; a file shorter than its position was rewritten and is read again from its start."""
+    for path in sorted(root.glob(f"*/{EVENTS}")):
+        if not RUN_ID.fullmatch(path.parent.name):
+            continue
+        with open(path, "rb") as f:
+            data = f.read()
+        if path not in offsets:
+            offsets[path] = data.rfind(b"\n") + 1 if first else 0
+        if len(data) < offsets[path]:
+            offsets[path] = 0
+        start = offsets[path]
+        events, problems, consumed = parse_lines(data[start:])
+        offsets[path] = start + consumed
+        for p in problems:
+            log.warning("Run %s: %s at byte %d of its event file", path.parent.name, p["code"], start + p["offset"])
+        for event in events:
+            emit(event)
+
+
+def watch(server) -> None:
+    """Relay new run lines as SSE `run` events every app.runs.poll_s, in a thread of its own, until server.closing."""
+    root, _ = backend.runs_dir(server.config)
+    if root is None:
+        return
+
+    def loop():
+        first = True
+        offsets = {}
+        while not server.closing.is_set():
+            try:
+                scan(root, offsets, lambda event: server.sim.announce("run", event), first)
+                first = False
+            except OSError as e:  # a file being written or removed; the next scan tries again
+                log.warning("Reading the run files failed: %s", type(e).__name__)
+            server.closing.wait(server.config["app"]["runs"]["poll_s"])
+
+    threading.Thread(target=loop, name="runs", daemon=True).start()
+
+
+STATUS = "run_status.json"  # written by Dev B's run_skill worker for runs it started; recorded runs may have none
+
+
+def run_status(folder, runner, config: dict):
+    """Dev B's run_status(run_id, config) for a run started through run_skill, None for a run recorded without
+    run_status.json."""
+    return runner.status(folder.name, config) if (folder / STATUS).is_file() else None
+
+
+def running_run(root, runner, config: dict):
+    """The id of a run whose status is running and whose worker is alive, or None (one run at a time here)."""
+    for folder in sorted(root.iterdir()) if root.is_dir() else []:
+        if RUN_ID.fullmatch(folder.name) and (folder / STATUS).is_file():
+            try:
+                status = runner.status(folder.name, config)
+            except (ValueError, OSError):  # a status file being written; it does not block a new run
+                continue
+            if status.get("state") == "running" and status.get("alive"):
+                return folder.name
+    return None
+
+
+def start_run(body: dict, config: dict, runner, root) -> dict:
+    """Check a run request and start it through Dev B's runner; what start_run returns (at least run_id).
+    Refusal 400 for a malformed request, 422 with Dev B's problems for an invalid declaration, 409 run_in_progress
+    while another run is running, 409 cost_confirmation_required with the quote (flat) and what is only recorded until
+    the cost is confirmed. Billing is confirmed only by confirm_cost true. mode ("full" or "fast", default "full") goes
+    to every runner call unchanged; a mode plan_run refuses (ValueError, e.g. "fast" for DODGE) is 422
+    mode_not_supported with run_skill's own sentence."""
+    if not (set(body) <= {"declared_spec", "confirm_cost", "mode"} and isinstance(body.get("declared_spec"), dict)
+            and isinstance(body.get("confirm_cost", False), bool) and isinstance(body.get("mode", "full"), str)):
+        raise Refusal(400, "invalid_body", "A run request is a declared_spec from the chat, confirm_cost true or "
+                                           "false, and an optional mode, full or fast.")
+    declaration, mode = body["declared_spec"], body.get("mode", "full")
+    try:
+        plan = runner.plan(declaration, config, mode=mode)
+    except runner.DeclarationError as e:
+        raise Refusal(422, "invalid_declaration", "The declaration does not pass its checks; problems lists them.",
+                      {"problems": list(e.problems)}) from None
+    except ValueError as e:  # Dev B's refusal of the mode (or of a skill without a run chain), as Dev B wrote it
+        raise Refusal(422, "mode_not_supported", f"The run cannot start in mode {mode!r}: {str(e).rstrip('.')}.",
+                      {"mode": mode}) from None
+    busy = running_run(root, runner, config)
+    if busy:
+        raise Refusal(409, "run_in_progress", "Another learning run is still running; stop it or wait for it to end.",
+                      {"run_id": busy})
+    if body.get("confirm_cost") is not True:
+        raise Refusal(409, "cost_confirmation_required", "This run spends simulator time and hosted TabPFN usage; "
+                                                         "confirm the quoted cost to start it.",
+                      {**runner.quote(declaration, config, mode=mode), "recorded_only": plan["recorded_only"]})
+    return runner.start(declaration, config, confirm_billing=True, mode=mode)
+
+
+def _needs(what: str, missing: list) -> str:
+    return f"{what} need {'; and '.join(missing)}."
+
+
+@capability("runs")
+def runs_capability(server) -> dict:
+    missing = backend.runner(server.config)[1] + backend.declared()[1]
+    return {"available": not missing, "reason": _needs("Learning runs", missing) if missing else ""}
+
+
+@capability("results")
+def results_capability(server) -> dict:
+    missing = backend.runs_dir(server.config)[1]
+    return {"available": not missing, "reason": _needs("Run results", missing) if missing else ""}
+
+
+def _root(h):
+    root, missing = backend.runs_dir(h.server.config)
+    if root is None:
+        raise Refusal(503, "runs_unavailable", _needs("Run results", missing))
+    return root
+
+
+@route("GET", "/api/runs")
+def list_runs(h) -> None:
+    root = _root(h)
+    found = sorted(p.name for p in root.iterdir() if p.is_dir() and RUN_ID.fullmatch(p.name)) if root.is_dir() else []
+    wants_summary = parse_qs(urlsplit(h.path).query).get("summary", ["0"])[-1] == "1"
+    names = backend.skill_names(h.server.config) if wants_summary else {}
+    h.send_json(200, [summary(root / name, names) for name in found] if wants_summary else found)
+
+
+def _run_folder(h):
+    """The folder of the run named by the path's fourth segment (/api/runs/<run_id>...); Refusal 404 otherwise."""
+    run_id = unquote(urlsplit(h.path).path.split("/")[3])
+    root = _root(h)
+    if not RUN_ID.fullmatch(run_id) or not (root / run_id).is_dir():
+        raise Refusal(404, "unknown_run", "There is no run with that id.")
+    return root / run_id
+
+
+@route("GET", "/api/runs/*")
+def get_run(h) -> None:
+    folder = _run_folder(h)
+    answer = report(folder)
+    runner, _ = backend.runner(h.server.config)
+    try:
+        answer["status"] = run_status(folder, runner, h.server.config) if runner else None
+    except (ValueError, OSError) as e:  # a status file being rewritten, or not JSON
+        log.warning("Run %s: its run status cannot be read (%s)", folder.name, type(e).__name__)
+        answer["status"] = None
+        answer["problems"].append({"offset": None, "code": "unreadable_status",
+                                   "message": "The run's status file cannot be read now."})
+    h.send_json(200, answer)
+
+
+@route("POST", "/api/runs/*/stop")
+def stop_a_run(h) -> None:
+    runner, missing = backend.runner(h.server.config)
+    if missing:
+        raise Refusal(503, "runs_unavailable", _needs("Learning runs", missing))
+    folder = _run_folder(h)
+    if not (folder / STATUS).is_file():
+        raise Refusal(409, "run_not_started_here", "That run was recorded without a run status, so there is no "
+                                                   "process to stop.")
+    h.send_json(200, runner.stop(folder.name, h.server.config))
+
+
+@route("GET", "/api/runs/*/events")
+def get_run_events(h) -> None:
+    h.send_json(200, all_events(_run_folder(h)))
+
+
+@route("POST", "/api/runs")
+def post_run(h) -> None:
+    runner, missing = backend.runner(h.server.config)
+    missing = missing + backend.declared()[1]
+    if missing:
+        raise Refusal(503, "runs_unavailable", _needs("Learning runs", missing))
+    h.send_json(202, start_run(h.read_body(), h.server.config, runner, _root(h)))

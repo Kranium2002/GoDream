@@ -1,0 +1,86 @@
+=== process 1 (PYTHONHASHSEED=1)
+PYTHONHASHSEED= 1 numpy 2.5.5 pandas 2.3.3 xxhash 4.1.0
+BASE KEY e063cd1e3e602e7a5e6fb503b2c8de4f2f6348a30b11eaf90c0aa85a80584175
+  one cell +1ulp                             differs=True  0bc75c08726cfad7
+  dtype float64->float32 one column          differs=True  082f47106c92363a
+  column order swapped                       differs=True  d08cddd83c0e14ba
+  column renamed                             differs=True  d39c1f53d7ba09b4
+  extra categorical level (same values)      differs=True  007ffaae7417ef05
+  categorical level order                    differs=True  a410228a98f950e1
+  quantile list changed                      differs=True  1d553a53cf33c728
+  setting n_estimators 8->4                  differs=True  f0943bd13d59e33b
+  setting int 0 -> float 0.0 (seed)          differs=True  3eada487ff589473
+  settings dict insertion order only         differs=False  e063cd1e3e602e7a
+  y_train as float32                         differs=True  50af7cf2c0472c75
+  y_train transposed copy (2,40)             differs=True  21a58c972fd83138
+  y_train Fortran-order same values          differs=False  e063cd1e3e602e7a
+  y_train big-endian same values             differs=False  e063cd1e3e602e7a
+
+== -0.0 / NaN normalisation ==
+raw bytes equal for 0.0 vs -0.0: False | canon equal: True
+NaN payloads raw equal: False | canon equal: True
+int64 [1,2] vs float64 [1.,2.] canon differ: True
+
+== canonical JSON ==
+{"a":[1,2.0,1e-17,123456789.12345679],"b":0.1,"c":0.30000000000000004,"d":3,"t":[0.25,0.75]}
+allow_nan=False rejects nan: ValueError: Out of range float values are not JSON compliant: nan
+allow_nan=False rejects inf: ValueError: Out of range float values are not JSON compliant: inf
+json repr round-trip 0.1+0.2: True 0.30000000000000004
+
+== pandas.util.hash_pandas_object pitfalls (NOT recommended as the sole key) ==
+int vs float column same values -> equal row hashes: False
+categorical with extra unused level -> equal row hashes: True
+-0.0 vs 0.0 -> equal: False
+DataFrame column order swapped -> equal row hashes: False
+
+== speed on (2040, 12) float64 ( 195840 bytes ) median of 2000 ==
+  sha256          :    164.4 us
+  blake2b(32)     :    389.9 us
+  xxh3_128        :      6.5 us
+  xxh64           :     20.6 us
+  canon+sha256 full:    336.3 us
+xproc digest of A: 38aa739e9b127027d7afecce39558d72b0ec4bd4f2377d08482fe1e1f9babd58
+exit=0
+=== process 2 (PYTHONHASHSEED=2)
+PYTHONHASHSEED= 2 numpy 2.5.5 pandas 2.3.3 xxhash 4.1.0
+BASE KEY e063cd1e3e602e7a5e6fb503b2c8de4f2f6348a30b11eaf90c0aa85a80584175
+  one cell +1ulp                             differs=True  0bc75c08726cfad7
+  dtype float64->float32 one column          differs=True  082f47106c92363a
+  column order swapped                       differs=True  d08cddd83c0e14ba
+  column renamed                             differs=True  d39c1f53d7ba09b4
+  extra categorical level (same values)      differs=True  007ffaae7417ef05
+  categorical level order                    differs=True  a410228a98f950e1
+  quantile list changed                      differs=True  1d553a53cf33c728
+  setting n_estimators 8->4                  differs=True  f0943bd13d59e33b
+  setting int 0 -> float 0.0 (seed)          differs=True  3eada487ff589473
+  settings dict insertion order only         differs=False  e063cd1e3e602e7a
+  y_train as float32                         differs=True  50af7cf2c0472c75
+  y_train transposed copy (2,40)             differs=True  21a58c972fd83138
+  y_train Fortran-order same values          differs=False  e063cd1e3e602e7a
+  y_train big-endian same values             differs=False  e063cd1e3e602e7a
+
+== -0.0 / NaN normalisation ==
+raw bytes equal for 0.0 vs -0.0: False | canon equal: True
+NaN payloads raw equal: False | canon equal: True
+int64 [1,2] vs float64 [1.,2.] canon differ: True
+
+== canonical JSON ==
+{"a":[1,2.0,1e-17,123456789.12345679],"b":0.1,"c":0.30000000000000004,"d":3,"t":[0.25,0.75]}
+allow_nan=False rejects nan: ValueError: Out of range float values are not JSON compliant: nan
+allow_nan=False rejects inf: ValueError: Out of range float values are not JSON compliant: inf
+json repr round-trip 0.1+0.2: True 0.30000000000000004
+
+== pandas.util.hash_pandas_object pitfalls (NOT recommended as the sole key) ==
+int vs float column same values -> equal row hashes: False
+categorical with extra unused level -> equal row hashes: True
+-0.0 vs 0.0 -> equal: False
+DataFrame column order swapped -> equal row hashes: False
+
+== speed on (2040, 12) float64 ( 195840 bytes ) median of 2000 ==
+  sha256          :    169.2 us
+  blake2b(32)     :    421.1 us
+  xxh3_128        :      7.1 us
+  xxh64           :     22.8 us
+  canon+sha256 full:    300.1 us
+xproc digest of A: 38aa739e9b127027d7afecce39558d72b0ec4bd4f2377d08482fe1e1f9babd58
+exit=0

@@ -1,0 +1,16 @@
+cpu: Intel64 Family 6 Model 170 Stepping 4, GenuineIntel os.cpu_count 22 threadpools [('openblas', 22), ('openmp', 22), ('openblas', 22)]
+    hidden   act   MACs params  max|np-sk| sk_med_us sk_p95_us np_med_us np_p95_us
+     (16,)  relu    192    210   0.000e+00     209.9     307.1      12.9      18.1
+     (32,)  relu    384    418   0.000e+00     212.2     288.9      15.6      20.0
+     (64,)  relu    768    834   0.000e+00     211.5     338.5      11.4      16.1
+  (32, 32)  relu   1408   1474   0.000e+00     201.0     317.6      24.7      32.1
+  (64, 64)  relu   4864   4994   0.000e+00     216.9     313.7      25.1      36.4
+     (16,)  tanh    192    210   0.000e+00     228.7     418.4      17.4      27.7
+     (32,)  tanh    384    418   0.000e+00     206.0     278.9      15.3      18.8
+     (64,)  tanh    768    834   0.000e+00     229.1     321.9      16.1      20.6
+  (32, 32)  tanh   1408   1474   0.000e+00     217.7     315.3      24.5      32.6
+  (64, 64)  tanh   4864   4994   0.000e+00     225.9     314.8      27.4      32.1
+MAC formula: sum_l coefs_[l].shape[0]*coefs_[l].shape[1]  (= d*h1 + h1*h2 + ... + hL*k); adds for biases = sum_l intercepts_[l].size; activations = sum hidden units
+batched predict of 64 candidate rows (relu (64,64)):
+  sk predict 64 rows med/p95 us: (np.float64(315.2), np.float64(465.4)) shape (64, 2)
+exit=0

@@ -1,0 +1,2 @@
+throws with every outcome equal to the exact-every-step run (artifacts/env/dodge-calibration/2-aim-0.7/seed11): 40 of 40
+min_separation_m of the misses: [0.0925, 0.0723, 0.1608, 0.0174, 0.0462, 0.0523, 0.0079, 0.1378, 0.3799, 0.0083, 0.11, 0.0484, 0.331, 0.2042, 0.3494, 0.1076, 0.3502, 0.0163, 0.0778, 0.343, 0.3882, 0.248, 0.2799]

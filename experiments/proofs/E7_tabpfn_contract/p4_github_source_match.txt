@@ -1,0 +1,11 @@
+GitHub PriorLabs/tabpfn-client tag v0.10.1 -> commit eb3fa878ed1e3662086b250a54a4785bc1fdcd80
+estimator.py github=001e1bebb8d9bbfb installed=001e1bebb8d9bbfb IDENTICAL
+client.py github=6be956541be2e6f0 installed=6be956541be2e6f0 IDENTICAL
+cost.py github=edf3939c98e7a66a installed=edf3939c98e7a66a IDENTICAL
+config.py github=3e410292ddf259ef installed=3e410292ddf259ef IDENTICAL
+api_models.py github=bea74378775cfc2a installed=bea74378775cfc2a IDENTICAL
+options.py github=972e807cacabbf99 installed=972e807cacabbf99 IDENTICAL
+models.py github=af2a67c48df722ca installed=af2a67c48df722ca IDENTICAL
+constants.py github=6e5b4a9265eb8859 installed=6e5b4a9265eb8859 IDENTICAL
+service_wrapper.py github=cea1f1aabdfd8c73 installed=cea1f1aabdfd8c73 IDENTICAL
+explain.py github=43939dce501fdf33 installed=43939dce501fdf33 IDENTICAL

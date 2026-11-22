@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "D:\BerlinPrior\experiments\proofs\B_dodge_real\snn_settings_in_dream.py", line 99, in <module>
+    print(f"\nwritten: {out_path.relative_to(ROOT_DIR).as_posix()}")
+                        ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\vidhu\AppData\Roaming\uv\python\cpython-3.13-windows-x86_64-none\Lib\pathlib\_local.py", line 385, in relative_to
+    raise ValueError(f"{str(self)!r} is not in the subpath of {str(other)!r}")
+ValueError: 'experiments\\proofs\\B_dodge_real\\out\\chain_default_20261121T173315Z\\snn_settings_in_dream.json' is not in the subpath of 'D:\\BerlinPrior'

@@ -1,0 +1,10 @@
+platform: Windows-11-10.0.26300-SP0 | processor: Intel64 Family 6 Model 170 Stepping 4, GenuineIntel | torch 2.15.0+cpu threads 1
+torch h32_T5     float32 1-thread  no_grad: median   1137.5 us  p95   2200.2 us | inference_mode: median   1108.5 us  p95   2046.3 us
+torch h32_T10    float32 1-thread  no_grad: median   2286.3 us  p95   4158.8 us | inference_mode: median   2140.8 us  p95   3430.0 us
+torch h32_T25    float32 1-thread  no_grad: median   6061.0 us  p95  10279.3 us | inference_mode: median   5602.7 us  p95   8682.1 us
+torch h64_T5     float32 1-thread  no_grad: median   1204.3 us  p95   2648.8 us | inference_mode: median   1130.4 us  p95   2325.6 us
+torch h64_T10    float32 1-thread  no_grad: median   2363.7 us  p95   4277.1 us | inference_mode: median   2259.0 us  p95   4100.1 us
+torch h64_T25    float32 1-thread  no_grad: median   6036.2 us  p95   9209.1 us | inference_mode: median   5572.0 us  p95   8283.1 us
+torch h64x64_T5  float32 1-thread  no_grad: median   1852.2 us  p95   3447.9 us | inference_mode: median   1748.1 us  p95   2906.8 us
+torch h64x64_T10 float32 1-thread  no_grad: median   3661.3 us  p95   5744.6 us | inference_mode: median   3434.6 us  p95   5318.3 us
+torch h64x64_T25 float32 1-thread  no_grad: median   9317.1 us  p95  13845.9 us | inference_mode: median   8634.0 us  p95  12384.4 us

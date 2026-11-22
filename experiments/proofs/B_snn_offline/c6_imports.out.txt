@@ -1,0 +1,15 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+  learned_judgment.students.targets: imported in 0.42 s; torch_in_sys_modules=False snntorch_in_sys_modules=False
+  [ok] learned_judgment.students.targets imports (exit 0)
+  [ok] learned_judgment.students.targets leaves torch and snntorch unimported
+  learned_judgment.students.snn_train: imported in 0.56 s; torch_in_sys_modules=False snntorch_in_sys_modules=False
+  [ok] learned_judgment.students.snn_train imports (exit 0)
+  [ok] learned_judgment.students.snn_train leaves torch and snntorch unimported
+  learned_judgment.students.snn: imported in 0.65 s; torch_in_sys_modules=False snntorch_in_sys_modules=False
+  [ok] learned_judgment.students.snn imports (exit 0)
+  [ok] learned_judgment.students.snn leaves torch and snntorch unimported
+  learned_judgment.engine.train_in_dream: imported in 0.63 s; torch_in_sys_modules=False snntorch_in_sys_modules=False
+  [ok] learned_judgment.engine.train_in_dream imports (exit 0)
+  [ok] learned_judgment.engine.train_in_dream leaves torch and snntorch unimported
+
+CHECK RESULT: 8 assertions held, 0 failed 

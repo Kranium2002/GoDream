@@ -1,0 +1,17 @@
+dream: 2500 episodes x 6 windows = 15000 situations, render kinematic
+250/2500
+500/2500
+750/2500
+1000/2500
+1250/2500
+1500/2500
+1750/2500
+2000/2500
+2250/2500
+2500/2500
+kind counts (episodes): empty 209, static 169, receding 202, off_path 280, background_motion 173, ambiguous 291, incoming_left 364, incoming_center 402, incoming_right 410
+physics-guess NO_OP collision p > 0.5 (windows): empty 0/1254, static 0/1014, receding 0/1212, off_path 0/1680, background_motion 0/1038, ambiguous 996/1746, incoming_left 2184/2184, incoming_center 2412/2412, incoming_right 2460/2460
+render kinematic: 13524 kinematic, 1476 physics windows
+windows per camera rate (Hz): 15 5020, 20 5028, 30 4952
+wall time 277.2 s for 2500 scenes (15000 windows): 0.111 s per scene, 54.1 windows/s
+wrote results\runs\v5\dream\dream.npz and dream.json

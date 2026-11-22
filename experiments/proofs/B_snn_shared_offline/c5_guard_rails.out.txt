@@ -1,0 +1,94 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+settings: students.snn with max_steps=30 evaluate_every_steps=10 (config 1500 / 100); n_slots=8 (config) width=6 (fixture) rehearsal_fraction=0.5 retention_fraction=0.1 (config) out_of_range='error' (config)
+
+== construction refusals ==
+  [ok] create with config.yaml as is -> ConfigError: config.yaml key 'students.snn.shared_feature_width' is null: it must be set before this step can run
+  [ok] create with students.shared_snn false -> ValueError: config.yaml students.shared_snn is not true: no shared spiking student is configured
+  [ok] create with students.kind 'mlp' -> ValueError: config.yaml students.kind is 'mlp'; the shared student is a spiking network ('snn')
+  [ok] create without students.snn.shared_skill_slots -> ConfigError: config.yaml has no key 'students.snn.shared_skill_slots'
+  [ok] create without students.snn.shared_retention_fraction -> ConfigError: config.yaml has no key 'students.snn.shared_retention_fraction'
+  [ok] create without students.snn.rehearsal_fraction -> ConfigError: config.yaml has no key 'students.snn.rehearsal_fraction'
+  [ok] create from an old config that lists shared_skills instead of slots -> ConfigError: config.yaml has no key 'students.snn.shared_skill_slots'
+  [ok] rehearsal_fraction 0.0 -> ValueError: students.snn.rehearsal_fraction must lie in (0, 1); got 0.0
+  [ok] rehearsal_fraction 1.0 -> ValueError: students.snn.rehearsal_fraction must lie in (0, 1); got 1.0
+  [ok] retention_fraction 0.0 -> ValueError: students.snn.shared_retention_fraction must lie in (0, 1); got 0.0
+  [ok] retention_fraction 1.0 -> ValueError: students.snn.shared_retention_fraction must lie in (0, 1); got 1.0
+  [ok] retention_fraction nan -> ValueError: students.snn.shared_retention_fraction must lie in (0, 1); got nan
+  [ok] n_slots 0 -> ValueError: students.snn.shared_skill_slots must be an integer >= 1; got 0
+  [ok] n_slots 2.5 -> ValueError: students.snn.shared_skill_slots must be an integer >= 1; got 2.5
+  [ok] n_slots True -> ValueError: students.snn.shared_skill_slots must be an integer >= 1; got True
+  [ok] feature_width 6.0 -> ValueError: students.snn.shared_feature_width must be an integer >= 1; got 6.0
+  [ok] feature_width 0 -> ValueError: students.snn.shared_feature_width must be an integer >= 1; got 0
+  [ok] settings given as a dict -> TypeError: settings must be SNNSettings; got dict
+
+== add_skill and decide refusals on an empty student (before any training) ==
+  [ok] a skill name that is not an identifier ('fx.alpha') -> ValueError: skill name 'fx.alpha' must be a Python identifier: it names the skill's head and its files
+  [ok] ENCODED WIDTH ABOVE the shared width (fx_wide encodes 7 > 6) -> ValueError: skill 'fx_wide' encodes its situation into 7 columns but students.snn.shared_feature_width is 6
+  [ok] rehearsal='yes' -> ValueError: rehearsal must be True or False; got 'yes'
+  [ok] base_seed -1 -> ValueError: base_seed must be a non-negative integer; got -1
+  [ok] fx_beta's dreams for fx_alpha -> ValueError: DreamSet.skill 'fx_beta' does not match the spec's 'fx_alpha'
+  [ok] points_per_dim (5, 7) instead of (7, 5) -> ValueError: dream row 0: the dream's 35 candidates are not the grid spec.candidate_actions(situation, points_per_dim=[5, 7]) gives (35 candidates); train with the points_per_dim the dream was made with
+  [ok] a single dream row -> ValueError: skill 'fx_alpha': cannot hold out retention situations (students.snn.shared_retention_fraction 0.1): 1 rows hold 1 distinct situation(s): holding out 1 of them (fraction 0.1) leaves no train
+  [ok] two dream rows -> ValueError: skill 'fx_alpha': after the 1 retention rows, cannot hold out early-stopping situations (students.snn.validation_fraction 0.1): 1 rows hold 1 distinct situation(s): holding out 1 of them (fr
+  [ok] a dream situation outside the declared ranges -> ValueError: dream row 10: situation feature 'fx_a_speed' = 7.5 lies outside its declared range [0.5, 2.0]; the shared student is trained on the declared situation space only
+  [ok] decide_index on an empty student -> ValueError: skill 'fx_alpha' has not been added to this shared student; skills held: [] (8 of 8 slots free)
+  [ok] deployed() on an empty student -> ValueError: skill 'fx_alpha' has not been added to this shared student; skills held: [] (8 of 8 slots free)
+  [ok] network_digests() on an empty student -> ValueError: this shared student holds no skill yet; it has no stage
+  [ok] save an empty student -> ValueError: this shared student holds no skill yet; there is nothing to save
+  [ok] every refusal above happened before training: nothing held, every slot free, torch and snntorch never imported
+
+== a TrainingError leaves the student unchanged (learning_rate 1e-300, 30 steps) ==
+  [ok] TrainingError with report (best_step 0): the trained network's validation loss 1.307704959878179 is not below its loss at initialisation 1.307704959878179 (steps
+  [ok] after the TrainingError the student is still empty and every slot is free
+
+== NO FREE SLOT and HELD TWICE (a fixture student with 1 slot, 30 steps) ==
+  [ok] one slot: input width 7, no free slot after fx_alpha
+  [ok] adding fx_beta with no free slot -> ValueError: no free skill slot: all 1 slots (students.snn.shared_skill_slots) are held by {'fx_alpha': 0}; skill 'fx_beta' cannot be added to this network
+  [ok] adding fx_alpha again when no slot is free (held twice wins) -> ValueError: skill 'fx_alpha' already holds slot 0 (added at stage 0; skills held ['fx_alpha']); each skill is added once
+  [ok] after both refusals the student is unchanged
+
+== guard rails on a student holding fx_alpha (30 steps) ==
+  [ok] adding fx_alpha a second time (HELD TWICE) -> ValueError: skill 'fx_alpha' already holds slot 0 (added at stage 0; skills held ['fx_alpha']); each skill is added once
+  [ok] decide_index for fx_beta (not held) -> ValueError: skill 'fx_beta' has not been added to this shared student; skills held: ['fx_alpha'] (7 of 8 slots free)
+  [ok] decide_index with NaN -> ValueError: situations contain non-finite values (first at row 4, feature 'fx_a_speed'); the student refuses to decide on them
+  [ok] decide with inf -> ValueError: situations contain non-finite values (first at row 2, feature 'fx_a_offset'); the student refuses to decide on them
+  [ok] operation_counts with NaN -> ValueError: situations contain non-finite values (first at row 4, feature 'fx_a_speed'); the student refuses to decide on them
+  [ok] decide_index with 2 columns -> ValueError: situations must have shape (n, 3); got (20, 2)
+  [ok] decide with fx_beta's spec -> ValueError: skill 'fx_beta' has not been added to this shared student; skills held: ['fx_alpha'] (7 of 8 slots free)
+  [ok] decide with an fx_alpha spec whose speed range changed -> ValueError: spec 'fx_alpha' encodes its situation differently from the encoder this student was trained with (situation variables, ranges or levels changed)
+  [ok] GRID CHANGED: decide with side-speed bounds [-0.3, 0.3] -> GridMismatchError: spec 'fx_alpha': action dimension 0 ('fx_a_vy') has low -0.3; the student was trained with -0.6; output k of the student would stand for a different command, so it refuses to decide (retrain
+  [ok] GRID CHANGED: decide_one with side-speed bounds [-0.3, 0.3] -> GridMismatchError: spec 'fx_alpha': action dimension 0 ('fx_a_vy') has low -0.3; the student was trained with -0.6; output k of the student would stand for a different command, so it refuses to decide (retrain
+  [ok] GRID CHANGED: check_spec with side-speed bounds [-0.3, 0.3] -> GridMismatchError: spec 'fx_alpha': action dimension 0 ('fx_a_vy') has low -0.3; the student was trained with -0.6; output k of the student would stand for a different command, so it refuses to decide (retrain
+  [ok] GRID CHANGED: same action records, candidate order reversed (only the grid digest sees it) -> GridMismatchError: spec 'fx_alpha': candidate_actions over the 16 stored probe situations at points_per_dim [7, 5] differs from the grid the student was trained on (digest df801cd0c06c1a31... instead of 3deb3f
+  [ok] GRID CHANGED: the stage-0 view refuses too -> GridMismatchError: spec 'fx_alpha': candidate_actions over the 16 stored probe situations at points_per_dim [7, 5] differs from the grid the student was trained on (digest df801cd0c06c1a31... instead of 3deb3f
+  [ok] OUT OF RANGE: decide_index (out_of_range 'error') -> OutOfRangeError: situation feature 'fx_a_speed' = 9.0 at row 3 lies outside its declared range [0.5, 2.0] (1 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to d
+  [ok] OUT OF RANGE: decide -> OutOfRangeError: situation feature 'fx_a_speed' = 9.0 at row 3 lies outside its declared range [0.5, 2.0] (1 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to d
+  [ok] OUT OF RANGE: operation_counts -> OutOfRangeError: situation feature 'fx_a_speed' = 9.0 at row 3 lies outside its declared range [0.5, 2.0] (1 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to d
+  [ok] OUT OF RANGE: decide_index_one -> OutOfRangeError: situation feature 'fx_a_speed' = 9.0 at row 0 lies outside its declared range [0.5, 2.0] (1 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to d
+  [ok] OUT OF RANGE: decide_one -> OutOfRangeError: situation feature 'fx_a_speed' = 9.0 at row 0 lies outside its declared range [0.5, 2.0] (1 value(s) out of range in total); students.snn.out_of_range is 'error', so the student refuses to d
+  [ok] the deployed view carries students.snn.out_of_range ('error')
+
+== out_of_range 'clip' (a fixture student, 30 steps) ==
+  out_of_range log: {'policy': 'clip', 'decisions': 20, 'decisions_with_clipping': 1, 'values_clipped': 1, 'per_feature': {'fx_a_offset': 0, 'fx_a_speed': 1, 'fx_a_surface': 0}}
+  [ok] clip: the out-of-range value is clipped into [0.5, 2.0], decided like the clipped situation, and counted
+
+== a failure after training leaves the student as it was ==
+  [ok] add fx_beta with a failure injected after fit -> RuntimeError: FIXTURE failure injected after training
+  [ok] after the failure: same skills, slots, stages, network digests, records and decisions
+  [ok] the next add (torch model rebuilt from the committed state) takes slot 1 and matches a student that never failed
+
+== tampered files are refused on load ==
+  [ok] the untouched copy loads with both stages
+  [ok] a changed model_state.npz -> ValueError: <tmp>\state: model_state.npz does not match the sha256 in the manifest
+  [ok] stage 1's arrays of fx_alpha in place of stage 0's -> ValueError: <tmp>\network\networks\stage_0\fx_alpha.npz does not match the digest recorded in <tmp>\network\networks\stage_0\fx_alpha.json
+  [ok] stage 1's whole view of fx_alpha in place of stage 0's -> ValueError: <tmp>\swapped: networks/stage_0/fx_alpha is not the view of 'fx_alpha' at stage 0
+  [ok] a changed stored dream set -> ValueError: <tmp>\dreams\dreams\fx_alpha.npz does not match the sha256 recorded in <tmp>\dreams\dreams\fx_alpha.json
+  [ok] a retention row moved into the training rows -> ValueError: <tmp>\rows: the stored rows of 'fx_alpha' do not match the recorded situation digests, or a retention situation is also a training or early-stopping situation
+  [ok] a manifest that moves fx_beta to slot 5 -> ValueError: <tmp>\slot: skill 'fx_beta' records slot 5; the next free slot was 1
+  [ok] a stage entry pointing at another stage's file -> ValueError: <tmp>\path: stage 0 names 'networks/stage_1/fx_alpha' for 'fx_alpha', not 'networks/stage_0/fx_alpha'
+  [ok] a manifest of another format -> ValueError: <tmp>\format\manifest.json is not a learned-judgment/shared-spiking-student/v2 manifest (format 'something-else')
+  [ok] a retired v1 manifest -> ValueError: <tmp>\v1\manifest.json is an old learned-judgment/shared-spiking-student/v1 manifest, which is no longer read: it fixed a list of skill names instead of reserving skill slots, kept only the 
+  [ok] temporary directory removed
+
+CHECK RESULT: 72 assertions held, 0 failed 

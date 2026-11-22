@@ -1,0 +1,58 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE provider in use: usage, quote and the estimator are stand-ins (no network); outputs are not evidence
+== A. the validated-entry write fails after a valid billed response ==
+  [ok] first prediction raises OSError: [Errno 28] No space left on device (injected)
+  [ok] the raw billed response is on disk in unvalidated/<key>.npz
+  [ok] its request is the query exactly as sent
+  [ok] its quantiles keep the received (Q, n) layout
+  [ok] no validated entry was written
+  [ok] events: dispatch, cache_write_failed
+  [ok] plain re-run raises UnresolvedDispatchError: request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2dbeb643d4e9d04 was dispatched at 2026-11-21T12:00:02+00:00 (call log <tmp>
+  [ok] the error names the key and the unvalidated file
+  [ok] re-run made no billable call (1 in total)
+  [ok] re-run read neither usage nor quote
+  [ok] exactly one dispatch record
+  [ok] adopt logs completed with adopted true
+  [ok] adopt made no billable call and no usage/quote read
+  [ok] the unvalidated file is gone after the validated entry exists
+  [ok] the next run is a cache hit (still 1 billable call)
+  [ok] the adopted answer equals the answer of an undisturbed run
+
+== B. killed during the single atomic write of <key>.npz ==
+  [ok] first prediction raises KeyboardInterrupt: simulated kill during the validated-entry write
+  [ok] no half-written entry: no <key>.npz and get() is None
+  [ok] the raw response is on disk
+  [ok] plain re-run raises UnresolvedDispatchError: request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2dbeb643d4e9d04 was dispatched at 2026-11-21T12:00:02+00:00 (call log <tmp>
+  [ok] still exactly 1 billable call and 1 dispatch record
+  [ok] after adopt: cache hit, still 1 billable call, same answer
+
+== C. the response fails validation; adopt is rejected; abandon allows a new dispatch ==
+  [ok] first prediction raises ProviderResponseError: 'main' output 'mean' has 1 non-finite values. The billed response is kept unvalidated at <tmp>\tmp5yb21xfl\cache\unvalidated\7c2648c
+  [ok] the error says where the billed response is kept
+  [ok] the raw response is stored exactly as received (NaN included)
+  [ok] events: dispatch, response_rejected
+  [ok] plain re-run raises UnresolvedDispatchError: request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2dbeb643d4e9d04 was dispatched at 2026-11-21T12:00:02+00:00 (call log <tmp>
+  [ok] still 1 billable call
+  [ok] adopt of the invalid response raises ProviderResponseError: 'main' output 'mean' has 1 non-finite values
+  [ok] re-run after a rejected adopt raises UnresolvedDispatchError: request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2dbeb643d4e9d04 was dispatched at 2026-11-21T12:00:02+00:00 (call log <tmp>
+  [ok] adopt_rejected is logged and the key stays unresolved
+  [ok] abandon logs abandoned and keeps the raw response as evidence under unvalidated/abandoned/
+  [ok] after abandon the request is dispatched again (2 billable calls, 2 dispatch records)
+  [ok] events end with dispatch, completed
+  [ok] the new answer equals an undisturbed run
+
+== D. the provider fails after the network stage (no response) ==
+  [ok] first prediction raises TimeoutError: read timed out (injected)
+  [ok] provider_error is logged as possibly billed in phase 'predict'
+  [ok] plain re-run raises UnresolvedDispatchError: request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2dbeb643d4e9d04 was dispatched at 2026-11-21T12:00:02+00:00 (call log <tmp>
+  [ok] adopt without a stored response raises ValueError: no response is stored for request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2dbeb643d4e9d04 at <tmp>\tmp9yhsk1nk\cache\unvali
+  [ok] still 1 billable call
+  [ok] after abandon: dispatched once more and completed
+
+== E. resolve_unresolved rules ==
+  [ok] a key whose dispatch completed raises ValueError: the call log <tmp>\tmpvge48qc3\calls.jsonl has no unresolved dispatch of request 7c2648cff08bc01b5940f0eccce7a31dc5be1c98cf6c4cc3c2d
+  [ok] an unknown action raises ValueError: action must be one of ('adopt', 'abandon'); got 'retry'
+  [ok] a malformed key raises ValueError: a cache key must be 64 lowercase hex characters (sha256); got 'abc'
+  [ok] nothing was billed by these calls
+
+RESULT: 0 failed check(s)

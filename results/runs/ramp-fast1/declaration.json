@@ -1,0 +1,116 @@
+{
+ "declaration": {
+  "skill": "RAMP",
+  "params": {},
+  "source_text": "teach how to walk up the ramp"
+ },
+ "resolved": {
+  "skill": "RAMP",
+  "spec": "ramp",
+  "params": {
+   "incline_deg": 12.0,
+   "nominal_speed_m_s": 0.6
+  },
+  "actions": [
+   "climb_speed_m_s",
+   "climb_yaw_rate_rad_s"
+  ],
+  "outcomes": [
+   "progress_m",
+   "reached_top",
+   "fall",
+   "sideways_m",
+   "slip_m"
+  ],
+  "source_text": "teach how to walk up the ramp"
+ },
+ "confirm_billing": true,
+ "mode": "fast",
+ "started_utc": "2026-11-22T03:20:21.148022+00:00",
+ "steps": [
+  {
+   "name": "attempts",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.skills.ramp",
+    "attempts",
+    "--out",
+    "D:\\BerlinPrior\\results\\runs\\ramp-fast1\\context"
+   ]
+  },
+  {
+   "name": "dream",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.skills.ramp",
+    "dream",
+    "--out",
+    "D:\\BerlinPrior\\results\\runs\\ramp-fast1\\dream",
+    "--n",
+    "1000"
+   ]
+  },
+  {
+   "name": "teach",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.observed",
+    "teach",
+    "--run",
+    "ramp-fast1",
+    "--skill",
+    "ramp",
+    "--context",
+    "D:\\BerlinPrior\\results\\runs\\ramp-fast1\\context",
+    "--dream",
+    "D:\\BerlinPrior\\results\\runs\\ramp-fast1\\dream",
+    "--confirm-billing"
+   ]
+  },
+  {
+   "name": "train",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.observed",
+    "train",
+    "--run",
+    "ramp-fast1",
+    "--skill",
+    "ramp",
+    "--dream",
+    "D:\\BerlinPrior\\results\\runs\\ramp-fast1\\dream",
+    "--scores",
+    "D:\\BerlinPrior\\results\\runs\\ramp-fast1\\scores.npz",
+    "--steps",
+    "1200"
+   ]
+  },
+  {
+   "name": "run_test",
+   "argv": [
+    "D:\\BerlinPrior\\.venv\\Scripts\\python.exe",
+    "-m",
+    "learned_judgment.skills.ramp",
+    "run",
+    "--student",
+    "D:\\BerlinPrior\\results\\runs\\ramp-fast1\\student",
+    "--split",
+    "test",
+    "--out",
+    "D:\\BerlinPrior\\results\\runs\\ramp-fast1\\test_run",
+    "--run",
+    "ramp-fast1"
+   ]
+  }
+ ],
+ "recorded_only": {
+  "incline_deg": "recorded only: no command takes it; the run uses skills.ramp.scenarios.incline_deg = [15.0, 18.0]",
+  "nominal_speed_m_s": "recorded only: no command takes it; the run uses skills.ramp.scenarios.nominal_speed_m_s = [0.6, 0.6]"
+ },
+ "config": "D:\\BerlinPrior\\results\\runs\\ramp-fast1\\config.yaml",
+ "config_digest": "4cc5d7cfd8ad29061e62654f1d5b786ca347b8ddf3f2171b55ce2fa9f50de729"
+}

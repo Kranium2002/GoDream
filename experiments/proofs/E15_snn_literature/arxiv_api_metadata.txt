@@ -1,0 +1,115 @@
+ID http://arxiv.org/abs/2402.06971v1 | pub 2024-02-10
+  T: In-Context Data Distillation with TabPFN
+  A: Junwei Ma, Valentin Thomas, Guangwei Yu, Anthony Caterini
+  JR:  | C:  | DOI: 
+  S: Foundation models have revolutionized tasks in computer vision and natural language processing. However, in the realm of tabular data, tree-based models like XGBoost continue to dominate. TabPFN, a transformer model tailored for tabular data, mirrors recent foundation models in its exceptional in-context learning capability, being competitive with XGBoost's performance without the need for task-specific training or hyperparameter tuning. Despite its promise, TabPFN's applicability is hindered by its data size constraint, limiting its use in real-world scenarios. To address this, we present in-context data distillation (ICD), a novel methodology that effectively eliminates these constraints b
+ID http://arxiv.org/abs/1801.10112v3 | pub 2018-01-30
+  T: Riemannian Walk for Incremental Learning: Understanding Forgetting and Intransigence
+  A: Arslan Chaudhry, Puneet K. Dokania, Thalaiyasingam Ajanthan, Philip H. S. Torr
+  JR:  | C:  | DOI: 10.1007/978-3-030-01252-6_33
+  S: Incremental learning (IL) has received a lot of attention recently, however, the literature lacks a precise problem definition, proper evaluation settings, and metrics tailored specifically for the IL problem. One of the main objectives of this work is to fill these gaps so as to provide a common ground for better understanding of IL. The main challenge for an IL algorithm is to update the classifier whilst preserving existing knowledge. We observe that, in addition to forgetting, a known issue while preserving knowledge, IL also suffers from a problem we call intransigence, inability of a model to update its knowledge. We introduce two metrics to quantify forgetting and intransigence that a
+ID http://arxiv.org/abs/2503.09985v2 | pub 2025-03-13
+  T: ES-Parkour: Advanced Robot Parkour with Bio-inspired Event Camera and Spiking Neural Network
+  A: Qiang Zhang, Jiahang Cao, Jingkai Sun, Yecheng Shao et al.
+  JR:  | C:  | DOI: 
+  S: In recent years, quadruped robotics has advanced significantly, particularly in perception and motion control via reinforcement learning, enabling complex motions in challenging environments. Visual sensors like depth cameras enhance stability and robustness but face limitations, such as low operating frequencies relative to joint control and sensitivity to lighting, which hinder outdoor deployment. Additionally, deep neural networks in sensor and control systems increase computational demands. To address these issues, we introduce spiking neural networks (SNNs) and event cameras to perform a challenging quadruped parkour task. Event cameras capture dynamic visual data, while SNNs efficientl
+ID http://arxiv.org/abs/2106.07172v2 | pub 2021-06-14
+  T: Energy-efficient Knowledge Distillation for Spiking Neural Networks
+  A: Dongjin Lee, Seongsik Park, Jongwan Kim, Wuhyeong Doh et al.
+  JR:  | C: The manuscript was withdrawn because it contains inappropriate content for posting | DOI: 
+  S: Spiking neural networks (SNNs) have been gaining interest as energy-efficient alternatives of conventional artificial neural networks (ANNs) due to their event-driven computation. Considering the future deployment of SNN models to constrained neuromorphic devices, many studies have applied techniques originally used for ANN model compression, such as network quantization, pruning, and knowledge distillation, to SNNs. Among them, existing works on knowledge distillation reported accuracy improvements of student SNN model. However, analysis on energy efficiency, which is also an important feature of SNN, was absent. In this paper, we thoroughly analyze the performance of the distilled SNN mode
+ID http://arxiv.org/abs/2605.18702v1 | pub 2026-05-18
+  T: Distilling Tabular Foundation Models for Structured Health Data
+  A: Aditya Tanna, Nassim Bouarour, Mohamed Bouadi, Vinay Kumar Sankarapu et al.
+  JR:  | C:  | DOI: 
+  S: Tabular foundation models (TFMs) achieve strong performance on health datasets, but their inference cost and infrastructure requirements limit practical use. We study whether their predictive behavior can be transferred to lightweight tabular models through knowledge distillation. Since in-context TFMs condition on the training set at inference time, naive distillation can introduce context leakage; we address this with stratified out-of-fold teacher labeling. Across $19$ healthcare datasets, $6$ TFM teachers, $4$ student families, and several multi-teacher ensembles, we find that distilled students retain at least $90\%$ of teacher AUC, outperforming teachers in some cases, while running at
+ID http://arxiv.org/abs/2609.16091v1 | pub 2026-09-14
+  T: Distilling Foundation Models for Agentic What-If Reasoning:Cost, Latency, and Governance in a Hybrid LLM+SLM Architecture
+  A: Sourish Dey, Aditya Kumar
+  JR:  | C: 13 pages, 1 figure, 7 tables | DOI: 
+  S: Tabular foundation models deliver strong zero-training predictive performance via in-context learning, but their high inference latency makes them impractical as hot-path decision backends in interactive agentic loops. We distill a TabPFN teacher into a compact feed-forward student across a business-decision simulation on UCI Adult and five OpenML benchmarks: the classification head compresses 53.2M parameters to 8,546 (6,220x); the deployed two-head loan pipeline compresses 111.4M parameters to 17,059 (6,532x). The student retains 95.4-100.5% accuracy and 96.8-100.0% AUC, with the lowest accuracy retention on credit-g at 95.4%; an alpha = 0 hard-label control shows that the teacher's soft t
+ID http://arxiv.org/abs/1912.01703v1 | pub 2019-12-03
+  T: PyTorch: An Imperative Style, High-Performance Deep Learning Library
+  A: Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer et al.
+  JR:  | C: 12 pages, 3 figures, NeurIPS 2019 | DOI: 
+  S: Deep learning frameworks have often focused on either usability or speed, but not both. PyTorch is a machine learning library that shows that these two goals are in fact compatible: it provides an imperative and Pythonic programming style that supports code as a model, makes debugging easy and is consistent with other popular scientific computing libraries, while remaining efficient and supporting hardware accelerators such as GPUs. In this paper, we detail the principles that drove the implementation of PyTorch and how they are reflected in its architecture. We emphasize that every aspect of PyTorch is a regular Python program under the full control of its user. We also explain how the care
+ID http://arxiv.org/abs/2304.05627v2 | pub 2023-04-12
+  T: Constructing Deep Spiking Neural Networks from Artificial Neural Networks with Knowledge Distillation
+  A: Qi Xu, Yaxin Li, Jiangrong Shen, Jian K Liu et al.
+  JR:  | C:  | DOI: 
+  S: Spiking neural networks (SNNs) are well known as the brain-inspired models with high computing efficiency, due to a key component that they utilize spikes as information units, close to the biological neural systems. Although spiking based models are energy efficient by taking advantage of discrete spike signals, their performance is limited by current network structures and their training methods. As discrete signals, typical SNNs cannot apply the gradient descent rules directly into parameters adjustment as artificial neural networks (ANNs). Aiming at this limitation, here we propose a novel method of constructing deep SNN models with knowledge distillation (KD) that uses ANN as teacher mo
+ID http://arxiv.org/abs/2304.09101v1 | pub 2023-04-17
+  T: LaSNN: Layer-wise ANN-to-SNN Distillation for Effective and Efficient Training in Deep Spiking Neural Networks
+  A: Di Hong, Jiangrong Shen, Yu Qi, Yueming Wang
+  JR:  | C:  | DOI: 
+  S: Spiking Neural Networks (SNNs) are biologically realistic and practically promising in low-power computation because of their event-driven mechanism. Usually, the training of SNNs suffers accuracy loss on various tasks, yielding an inferior performance compared with ANNs. A conversion scheme is proposed to obtain competitive accuracy by mapping trained ANNs' parameters to SNNs with the same structures. However, an enormous number of time steps are required for these converted SNNs, thus losing the energy-efficient benefit. Utilizing both the accuracy advantages of ANNs and the computing efficiency of SNNs, a novel SNN training framework is proposed, namely layer-wise ANN-to-SNN knowledge dis
+ID http://arxiv.org/abs/2407.03111v2 | pub 2024-05-08
+  T: Compressed Latent Replays for Lightweight Continual Learning on Spiking Neural Networks
+  A: Alberto Dequino, Alessio Carpegna, Davide Nadalini, Alessandro Savino et al.
+  JR: 2024 IEEE Computer Society Annual Symposium on VLSI (ISVLSI) | C:  | DOI: 10.1109/ISVLSI61997.2024.00052
+  S: Rehearsal-based Continual Learning (CL) has been intensely investigated in Deep Neural Networks (DNNs). However, its application in Spiking Neural Networks (SNNs) has not been explored in depth. In this paper we introduce the first memory-efficient implementation of Latent Replay (LR)-based CL for SNNs, designed to seamlessly integrate with resource-constrained devices. LRs combine new samples with latent representations of previously learned data, to mitigate forgetting. Experiments on the Heidelberg SHD dataset with Sample and Class-Incremental tasks reach a Top-1 accuracy of 92.5% and 92%, respectively, without forgetting the previously learned information. Furthermore, we minimize the LR
+ID http://arxiv.org/abs/2601.20870v1 | pub 2026-01-16
+  T: STAER: Temporal Aligned Rehearsal for Continual Spiking Neural Network
+  A: Matteo Gianferrari, Omayma Moussadek, Riccardo Salami, Cosimo Fiorini et al.
+  JR:  | C:  | DOI: 
+  S: Spiking Neural Networks (SNNs) are inherently suited for continuous learning due to their event-driven temporal dynamics; however, their application to Class-Incremental Learning (CIL) has been hindered by catastrophic forgetting and the temporal misalignment of spike patterns. In this work, we introduce Spiking Temporal Alignment with Experience Replay (STAER), a novel framework that explicitly preserves temporal structure to bridge the performance gap between SNNs and ANNs. Our approach integrates a differentiable Soft-DTW alignment loss to maintain spike timing fidelity and employs a temporal expansion and contraction mechanism on output logits to enforce robust representation learning. I
+ID http://arxiv.org/abs/2410.09218v3 | pub 2024-10-11
+  T: Continual Learning with Neuromorphic Computing: Foundations, Methods, and Emerging Applications
+  A: Mishal Fatima Minhas, Rachmad Vidya Wicaksana Putra, Falah Awwad, Osman Hasan et al.
+  JR:  | C: This work has been accepted for publication in IEEE Access | DOI: 10.1109/ACCESS.2025.3588665
+  S: The challenging deployment of compute- and memory-intensive methods from Deep Neural Network (DNN)-based Continual Learning (CL) underscores the critical need for a paradigm shift towards more efficient approaches. Neuromorphic Continual Learning (NCL) appears as an emerging solution, by leveraging the principles of Spiking Neural Networks (SNNs) which enable efficient CL algorithms executed in dynamically-changed environments with resource-constrained computing systems. Motivated by the need for a holistic study of NCL, in this survey, we first provide a detailed background on CL, encompassing the desiderata, settings, metrics, scenario taxonomy, Online Continual Learning (OCL) paradigm, re
+ID http://arxiv.org/abs/2611.11921v1 | pub 2026-11-09
+  T: An Evaluation of Tabular Foundation Models as Training-Free World Models
+  A: Xian Yeow Lee, Ryoichi Takase, Ahmed Farahat
+  JR:  | C:  | DOI: 
+  S: World models are widely considered to be a potential key component of model-based reinforcement learning and robot planning, but typically require task-specific training on substantial interaction data. We investigate whether a pretrained tabular foundation model (TabFM) can serve as a training-free dynamics model for world modeling by framing next-state prediction as in-context regression over transition pairs, and where such a model helps and where it breaks. Across synthetic dynamical systems and robot locomotion benchmarks, TabFM is more accurate than LSTM and MLP models trained from scratch on the same limited transitions in almost all settings, and among regressors fitted to the same d
+ID http://arxiv.org/abs/2210.03515v2 | pub 2022-10-06
+  T: Spiking neural networks for nonlinear regression
+  A: Alexander Henkes, Jason K. Eshraghian, Henning Wessels
+  JR:  | C:  | DOI: 
+  S: Spiking neural networks, also often referred to as the third generation of neural networks, carry the potential for a massive reduction in memory and energy consumption over traditional, second-generation neural networks. Inspired by the undisputed efficiency of the human brain, they introduce temporal and neuronal sparsity, which can be exploited by next-generation neuromorphic hardware. To open the pathway toward engineering applications, we introduce this exciting technology in the context of continuum mechanics. However, the nature of spiking neural networks poses a challenge for regression problems, which frequently arise in the modeling of engineering sciences. To overcome this problem
+ID http://arxiv.org/abs/2312.08598v2 | pub 2023-12-14
+  T: MotherNet: Fast Training and Inference via Hyper-Network Transformers
+  A: Andreas Müller, Carlo Curino, Raghu Ramakrishnan
+  JR:  | C: 17 pages, 13 figures | DOI: 
+  S: Foundation models are transforming machine learning across many modalities, with in-context learning replacing classical model training. Recent work on tabular data hints at a similar opportunity to build foundation models for classification for numerical data. However, existing meta-learning approaches can not compete with tree-based methods in terms of inference time. In this paper, we propose MotherNet, a hypernetwork architecture trained on synthetic classification tasks that, once prompted with a never-seen-before training set generates the weights of a trained ``child'' neural-network by in-context learning using a single forward pass. In contrast to most existing hypernetworks that ar
+ID http://arxiv.org/abs/2310.05022v3 | pub 2023-10-08
+  T: Fully Spiking Neural Network for Legged Robots
+  A: Xiaoyang Jiang, Qiang Zhang, Jingkai Sun, Jiahang Cao et al.
+  JR:  | C:  | DOI: 
+  S: Recent advancements in legged robots using deep reinforcement learning have led to significant progress. Quadruped robots can perform complex tasks in challenging environments, while bipedal and humanoid robots have also achieved breakthroughs. Current reinforcement learning methods leverage diverse robot bodies and historical information to perform actions, but previous research has not emphasized the speed and energy consumption of network inference and the biological significance of neural networks. Most networks are traditional artificial neural networks that utilize multilayer perceptrons (MLP). This paper presents a novel Spiking Neural Network (SNN) for legged robots, showing exceptio
+ID http://arxiv.org/abs/2605.18654v1 | pub 2026-05-18
+  T: Pocket Foundation Models: Distilling TFMs into CPU-Ready Gradient-Boosted Trees
+  A: Aditya Tanna, Nassim Bouarour, Mohamed Bouadi, Vinay kumar Sankarapu et al.
+  JR:  | C:  | DOI: 
+  S: A fraud scorer needs to answer in under 2 ms. The best tabular foundation models (TFMs) take 151-1,275 ms on GPU. We close this gap by distilling the TFM offline into an XGBoost or CatBoost student that runs natively on CPU. The central obstacle is specific to in-context learning (ICL) teachers: they leak labels when scoring their own training set, so the soft targets collapse to near-one-hot vectors with no inter-class structure left to distill. Stratified out-of-fold (OOF) teacher labeling prevents this. Across 153 classification datasets drawn from TALENT, OpenML-CC18, TabZilla, and TabArena, distilling TabICLv2 into XGBoost gives 0.882 macro-mean AUC (96.5% of teacher AUC) at 1.9 ms on C
+ID http://arxiv.org/abs/2601.22371v2 | pub 2026-01-29
+  T: FIRE: Multi-fidelity Regression with Distribution-conditioned In-context Learning using Tabular Foundation Models
+  A: Rosen Ting-Ying Yu, Nicholas Sung, Faez Ahmed
+  JR:  | C:  | DOI: 
+  S: Multi-fidelity (MF) regression often operates in regimes of extreme data imbalance, where the commonly-used Gaussian-process (GP) surrogates struggle with cubic scaling costs and overfit to sparse high-fidelity observations, limiting efficiency and generalization in real-world applications. We introduce FIRE, a training-free MF framework that couples tabular foundation models (TFMs) to perform zero-shot in-context Bayesian inference via a high-fidelity correction model conditioned on the low-fidelity model's posterior predictive distributions. This cross-fidelity information transfer via distributional summaries captures heteroscedastic errors, enabling robust residual learning without model
+ID http://arxiv.org/abs/2005.00288v1 | pub 2020-05-01
+  T: Distilling Spikes: Knowledge Distillation in Spiking Neural Networks
+  A: Ravi Kumar Kushawaha, Saurabh Kumar, Biplab Banerjee, Rajbabu Velmurugan
+  JR:  | C: Preprint: Manuscript under review | DOI: 
+  S: Spiking Neural Networks (SNN) are energy-efficient computing architectures that exchange spikes for processing information, unlike classical Artificial Neural Networks (ANN). Due to this, SNNs are better suited for real-life deployments. However, similar to ANNs, SNNs also benefit from deeper architectures to obtain improved performance. Furthermore, like the deep ANNs, the memory, compute and power requirements of SNNs also increase with model size, and model compression becomes a necessity. Knowledge distillation is a model compression technique that enables transferring the learning of a large machine learning model to a smaller model with minimal loss in performance. In this paper, we pr
+ID http://arxiv.org/abs/1706.08840v6 | pub 2017-06-26
+  T: Gradient Episodic Memory for Continual Learning
+  A: David Lopez-Paz, Marc'Aurelio Ranzato
+  JR:  | C: Published at NIPS 2017 | DOI: 
+  S: One major obstacle towards AI is the poor ability of models to solve new problems quicker, and without forgetting previously acquired knowledge. To better understand this issue, we study the problem of continual learning, where the model observes, once and one by one, examples concerning a sequence of tasks. First, we propose a set of metrics to evaluate models learning over a continuum of data. These metrics characterize models not only by their test accuracy, but also in terms of their ability to transfer knowledge across tasks. Second, we propose a model for continual learning, called Gradient Episodic Memory (GEM) that alleviates forgetting, while allowing beneficial transfer of knowledg
+ID http://arxiv.org/abs/2507.02901v3 | pub 2025-06-23
+  T: Online Continual Learning via Spiking Neural Networks with Sleep Enhanced Latent Replay
+  A: Erliang Lin, Wenbin Luo, Wei Jia, Yu Chen et al.
+  JR:  | C: There are some errors in the data of the paper. It will take some time to conduct additional experiments for adjustment. We hope to temporarily withdraw the pre | DOI: 
+  S: Edge computing scenarios necessitate the development of hardware-efficient online continual learning algorithms to be adaptive to dynamic environment. However, existing algorithms always suffer from high memory overhead and bias towards recently trained tasks. To tackle these issues, this paper proposes a novel online continual learning approach termed as SESLR, which incorporates a sleep enhanced latent replay scheme with spiking neural networks (SNNs). SESLR leverages SNNs' binary spike characteristics to store replay features in single bits, significantly reducing memory overhead. Furthermore, inspired by biological sleep-wake cycles, SESLR introduces a noise-enhanced sleep phase where th
+ID http://arxiv.org/abs/2511.05704v2 | pub 2025-11-07
+  T: TabDistill: Distilling Transformers into Neural Nets for Few-Shot Tabular Classification
+  A: Pasan Dissanayake, Sanghamitra Dutta
+  JR:  | C:  | DOI: 
+  S: Transformer-based models have shown promising performance on tabular data compared to their classical counterparts such as neural networks and Gradient Boosted Decision Trees (GBDTs) in scenarios with limited training data. They utilize their pre-trained knowledge to adapt to new domains, achieving commendable performance with only a few training examples, also called the few-shot regime. However, the performance gain in the few-shot regime comes at the expense of significantly increased complexity and number of parameters. To circumvent this trade-off, we introduce TabDistill, a new strategy to distill the pre-trained knowledge in complex transformer-based models into simpler neural network
+ID http://arxiv.org/abs/2509.11259v2 | pub 2025-09-14
+  T: ICR-RL: Deep Reinforcement Learning via In-Context Regression
+  A: David Schiff, Ofir Lindenbaum, Yonathan Efroni
+  JR:  | C: Accepted to ICML 2026 Main Track | DOI: 
+  S: Recent advancements in machine learning have largely been driven by foundation models (FMs) trained on large, diverse datasets, enabling them to generalize effectively to new, related tasks. However, extending this paradigm to reinforcement learning (RL), where an agent interacts with an environment to select actions, remains a significant challenge. Most existing approaches train FMs directly on sets of control tasks, but developing diverse RL environments and scaling training across them can be costly and complex. In this study, we explore a simpler alternative approach based on a classical reduction from RL to regression. We demonstrate that a foundation model pre-trained for regression t

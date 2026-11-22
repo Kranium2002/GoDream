@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <title>GoDream</title>
+  <link rel="preload" href="fonts/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body data-view="home" data-layout="home" data-mode="sim">
+  <a class="skip" href="#" id="skip">Skip to content</a>
+
+  <!-- The landing page: "/" with no hash. -->
+  <div class="home" id="home">
+    <header class="hnav">
+      <a class="brand" href="#" data-home>GoDream</a>
+      <nav class="hnav__links" id="home-links" aria-label="Demos"></nav>
+    </header>
+
+    <main class="home__main" id="home-main" tabindex="-1">
+      <section class="hero" aria-labelledby="hero-h">
+        <h1 class="hero__h" id="hero-h">A robot dog that learns judgment.</h1>
+        <p class="hero__sub" id="hero-sub"></p>
+        <div class="hero__ctas">
+          <a class="pill pill--light pill--lg" href="#hills">Watch it feel the slope</a>
+          <a class="pill pill--glass pill--lg" href="#dodge">Watch it dodge</a>
+        </div>
+        <figure class="hero__visual" id="hero-visual">
+          <canvas id="view-hero" tabindex="0" aria-label="The simulated robot dog, live from the simulator. Drag sideways to look around."></canvas>
+          <figcaption class="hero__status" id="hero-status"></figcaption>
+        </figure>
+      </section>
+
+      <section class="section how" aria-labelledby="how-h">
+        <h2 class="section-h" id="how-h">How it learns</h2>
+        <ol class="how__steps" id="how-steps"></ol>
+      </section>
+
+      <section class="section stats" id="stats" aria-label="In numbers" hidden>
+        <ul class="stats__list" id="stats-list"></ul>
+      </section>
+
+      <section class="section cards" id="cards" aria-labelledby="cards-h" hidden>
+        <h2 class="section-h" id="cards-h">See it for yourself</h2>
+        <ul class="cards__list" id="cards-list"></ul>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>Simulated Unitree Go2 in MuJoCo. The simulator and the spiking brain run on this laptop. TabPFN ran as a hosted service while the dog learned.</p>
+    </footer>
+  </div>
+
+  <!-- The demo screen: #<demo id>. -->
+  <div class="app" id="app">
+    <header class="top">
+      <a class="brand" href="#" data-home>GoDream</a>
+      <nav class="seg" id="tabs" aria-label="Demos" hidden></nav>
+    </header>
+
+    <main class="stage" id="stage" tabindex="-1">
+      <!-- Two lanes of the same situation: before, and with what it learned. -->
+      <section class="lane lane--before" id="lane-before" aria-labelledby="name-before">
+        <canvas class="lane__view" id="view-before" tabindex="0" aria-label="The dog before it learned, live from the simulator. Drag to look around."></canvas>
+        <div class="lane__head" id="head-before">
+          <h2 class="lane__name" id="name-before"></h2>
+          <p class="lane__result" id="result-before" aria-live="polite" hidden></p>
+          <p class="lane__detail" id="detail-before" hidden></p>
+          <p class="lane__tally" id="tally-before" hidden></p>
+        </div>
+        <div class="sense" id="sense-before"></div>
+      </section>
+      <section class="lane lane--after" id="lane-after" aria-labelledby="name-after">
+        <canvas class="lane__view" id="view-after" tabindex="0" aria-label="The dog with what it learned, live from the simulator. Drag to look around."></canvas>
+        <div class="lane__head" id="head-after">
+          <h2 class="lane__name" id="name-after"></h2>
+          <p class="lane__result" id="result-after" aria-live="polite" hidden></p>
+          <p class="lane__detail" id="detail-after" hidden></p>
+          <p class="lane__tally" id="tally-after" hidden></p>
+        </div>
+        <!-- Its spiking brain, live: from the server's "brain" events only. -->
+        <div class="brain" id="brain" hidden>
+          <p class="brain__ms">Decided in <span class="brain__num" id="brain-ms"></span></p>
+          <p class="brain__note">Live, sensing included</p>
+          <p class="brain__choice" id="brain-choice" hidden></p>
+          <figure class="spark" id="brain-spikes" hidden>
+            <svg class="spark__svg" id="brain-bars" role="img" aria-label="Spikes per decision, newest on the right"></svg>
+            <figcaption>Spikes per decision</figcaption>
+          </figure>
+        </div>
+        <div class="sense" id="sense-after"></div>
+      </section>
+      <div class="invite" id="invite" hidden>
+        <p class="invite__title" id="invite-title"></p>
+        <p class="invite__text" id="invite-text"></p>
+        <p class="invite__hint">Press Run both to watch them side by side.</p>
+      </div>
+      <div class="countin" id="countin" aria-hidden="true" hidden></div>
+
+      <!-- Your fist: the camera and what the dog's eye makes of it. -->
+      <section class="lane lane--cam" id="lane-cam" aria-labelledby="name-cam">
+        <h2 class="lane__name lane__name--plain" id="name-cam">What its eye notices</h2>
+        <div class="eye-big">
+          <canvas class="pixelated" id="eye-events" width="1" height="1" role="img" aria-label="The dog's 12 by 12 eye: cells that got brighter are white, darker are black, unchanged are grey."></canvas>
+          <p class="eye-big__key" id="eye-key"></p>
+        </div>
+        <figure class="cam">
+          <div class="cam__box"><video id="cam-video" muted playsinline></video><div class="cam__crop" id="cam-crop" hidden></div></div>
+          <figcaption>Your camera. The outlined square is all the dog sees.</figcaption>
+        </figure>
+        <p class="cam__idle" id="cam-idle">Start the camera, then push your fist toward it.</p>
+      </section>
+
+      <!-- The single stage: the dog exactly as the simulator streams it (no side). -->
+      <section class="lane lane--single" id="lane-single" aria-labelledby="name-single">
+        <canvas class="lane__view" id="view-single" tabindex="0" aria-label="The simulated robot dog, live from the simulator. Drag to look around."></canvas>
+        <img class="lane__view" id="view-single-fallback" alt="The simulator's own camera view of the dog" hidden>
+        <h2 class="lane__name lane__name--plain" id="name-single">The simulator, live</h2>
+        <p class="lane__status" id="status-single"></p>
+        <div class="react" id="react" hidden>
+          <p class="react__state" id="state-line" aria-live="polite" data-tone="calm"></p>
+          <div class="danger">
+            <div class="danger__bar" id="danger" role="meter" aria-label="Danger" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+              <span class="danger__fill" id="danger-fill"></span>
+              <span class="danger__mark" id="danger-mark" hidden><span class="danger__label">acts above here</span></span>
+            </div>
+            <span class="danger__name">Danger</span>
+          </div>
+          <p class="react__why" id="why-line"></p>
+          <p class="react__fine" id="honesty" hidden></p>
+          <p class="react__fine">Your camera never leaves this computer and nothing is saved.</p>
+        </div>
+      </section>
+    </main>
+
+    <div class="dock">
+      <!-- The controls of the demo on show. -->
+      <section class="bar glass" id="bar" aria-label="Controls">
+        <div class="switch" id="mode-switch" role="radiogroup" aria-label="What comes at the dog" hidden>
+          <button class="switch__opt" type="button" role="radio" data-mode="sim" aria-checked="true" id="mode-sim"></button>
+          <button class="switch__opt" type="button" role="radio" data-mode="camera" aria-checked="false" id="mode-camera">Your fist</button>
+        </div>
+        <div class="handles" id="handles"></div>
+        <button class="go" id="go" type="button" hidden>Run both</button>
+        <button class="go" id="cam-toggle" type="button" data-on="false" hidden>Start camera</button>
+        <p class="bar__line" id="bar-line" aria-live="polite"></p>
+        <p class="bar__hint" id="slow-hint" role="status" hidden>Your camera is slow in this light; brighter light helps the dog react faster.</p>
+      </section>
+
+      <!-- How it learned and how it did: always in view, nothing to click. -->
+      <section class="band" id="band" aria-labelledby="band-h" hidden>
+        <div class="band__story">
+          <h2 class="band__h" id="band-h">How it learned</h2>
+          <ol class="steps" id="steps"></ol>
+          <div class="band__foot">
+            <p class="band__learned" id="learned-in" hidden></p>
+          </div>
+        </div>
+        <div class="band__tested">
+          <h2 class="band__h" id="tested-title"></h2>
+          <table class="tested" id="tested-table" hidden></table>
+          <p class="band__empty" id="tested-empty" hidden></p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <p class="toast" id="conn" role="status" hidden></p>
+</body>
+</html>

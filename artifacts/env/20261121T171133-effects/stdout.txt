@@ -1,0 +1,30 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- ~\projects\hackaton\GoDream\.claude\worktrees\agent-ab1fb41675a2f3f34\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: ~\projects\hackaton\GoDream\.claude\worktrees\agent-ab1fb41675a2f3f34
+configfile: pyproject.toml
+plugins: anyio-4.16.0, platformdirs-4.14.8
+collecting ... collected 20 items
+
+tests/env/test_effects.py::test_all_effects_off_equals_baseline PASSED   [  5%]
+tests/env/test_effects.py::test_one_effect_changes_only_its_measurement[payload] PASSED [ 10%]
+tests/env/test_effects.py::test_one_effect_changes_only_its_measurement[friction] PASSED [ 15%]
+tests/env/test_effects.py::test_one_effect_changes_only_its_measurement[slope] PASSED [ 20%]
+tests/env/test_effects.py::test_one_effect_changes_only_its_measurement[motor_strength] PASSED [ 25%]
+tests/env/test_effects.py::test_one_effect_changes_only_its_measurement[latency] PASSED [ 30%]
+tests/env/test_effects.py::test_preset_loads_and_stands[default] PASSED  [ 35%]
+tests/env/test_effects.py::test_preset_loads_and_stands[heavy_payload] PASSED [ 40%]
+tests/env/test_effects.py::test_preset_loads_and_stands[slippery_floor] PASSED [ 45%]
+tests/env/test_effects.py::test_preset_loads_and_stands[tired_motors] PASSED [ 50%]
+tests/env/test_effects.py::test_preset_loads_and_stands[downhill] PASSED [ 55%]
+tests/env/test_effects.py::test_hidden_values_never_reach_person_b PASSED [ 60%]
+tests/env/test_effects.py::test_dead_motors_fall_is_measured_not_raised PASSED [ 65%]
+tests/env/test_effects.py::test_hidden_values_go_to_the_sidecar_with_their_decimals PASSED [ 70%]
+tests/env/test_effects.py::test_seed_fixes_the_hidden_world_and_the_declared_payload PASSED [ 75%]
+tests/env/test_effects.py::test_declared_values_are_fixed_attributes_equal_to_every_observation_and_the_outcome PASSED [ 80%]
+tests/env/test_effects.py::test_latency_is_a_delay_line_whatever_the_step_lengths PASSED [ 85%]
+tests/env/test_effects.py::test_latency_jitter_is_drawn_per_attempt_and_repeats_with_the_attempt_seed PASSED [ 90%]
+tests/env/test_effects.py::test_command_active_lags_commands_received_by_the_latency PASSED [ 95%]
+tests/env/test_effects.py::test_on_a_slope_the_policy_senses_true_gravity PASSED [100%]
+
+======================== 20 passed in 64.07s (0:01:04) ========================

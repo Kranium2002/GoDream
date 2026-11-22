@@ -1,0 +1,66 @@
+retrieved_utc	name	http_code	final_url	size_bytes	content_type	requested_url	curl_rc
+2026-11-21T13:51:56Z	gtc_root.html	200	https://priorlabs.ai/general-terms-and-conditions	93071	text/html; charset=utf-8	https://priorlabs.ai/general-terms-and-conditions	curl_rc=0
+2026-11-21T13:51:56Z	gtc_www.html	200	https://priorlabs.ai/general-terms-and-conditions	93071	text/html; charset=utf-8	https://www.priorlabs.ai/general-terms-and-conditions	curl_rc=0
+2026-11-21T13:51:57Z	aup_www.html	200	https://priorlabs.ai/aup	73402	text/html; charset=utf-8	https://www.priorlabs.ai/aup	curl_rc=0
+2026-11-21T13:51:58Z	aup_root.html	200	https://priorlabs.ai/aup	73402	text/html; charset=utf-8	https://priorlabs.ai/aup	curl_rc=0
+2026-11-21T13:51:59Z	home_www.html	200	https://priorlabs.ai/	167921	text/html; charset=utf-8	https://www.priorlabs.ai/	curl_rc=0
+2026-11-21T13:51:59Z	docs_home.html	200	https://docs.priorlabs.ai/overview	225004	text/html; charset=utf-8	https://docs.priorlabs.ai/	curl_rc=0
+2026-11-21T13:52:15Z	privacy_policy.html	200	https://priorlabs.ai/privacy-policy	92120	text/html; charset=utf-8	https://priorlabs.ai/privacy-policy	curl_rc=0
+2026-11-21T13:52:16Z	imprint.html	200	https://priorlabs.ai/imprint	70016	text/html; charset=utf-8	https://priorlabs.ai/imprint	curl_rc=0
+2026-11-21T13:52:16Z	pricing.html	200	https://priorlabs.ai/pricing	89581	text/html; charset=utf-8	https://priorlabs.ai/pricing	curl_rc=0
+2026-11-21T13:52:17Z	contact.html	200	https://priorlabs.ai/contact	80179	text/html; charset=utf-8	https://priorlabs.ai/contact	curl_rc=0
+2026-11-21T13:52:17Z	docs_api_getting_started.html	200	https://docs.priorlabs.ai/api/rest-quickstart	332799	text/html; charset=utf-8	https://docs.priorlabs.ai/api-reference/getting-started	curl_rc=0
+2026-11-21T13:52:18Z	docs_llms.txt	200	https://docs.priorlabs.ai/llms.txt	29736	text/plain; charset=utf-8	https://docs.priorlabs.ai/llms.txt	curl_rc=0
+2026-11-21T13:52:18Z	docs_sitemap.xml	200	https://docs.priorlabs.ai/sitemap.xml	23586	text/xml	https://docs.priorlabs.ai/sitemap.xml	curl_rc=0
+2026-11-21T13:52:19Z	home_sitemap.xml	200	https://priorlabs.ai/sitemap.xml	8692	application/rss+xml; charset=utf-8	https://priorlabs.ai/sitemap.xml	curl_rc=0
+2026-11-21T13:52:30Z	docs_faq.md	200	https://docs.priorlabs.ai/faq.md	6870	text/markdown; charset=utf-8	https://docs.priorlabs.ai/faq.md	curl_rc=0
+2026-11-21T13:52:31Z	docs_capabilities_distillation.md	200	https://docs.priorlabs.ai/capabilities/distillation.md	2954	text/markdown; charset=utf-8	https://docs.priorlabs.ai/capabilities/distillation.md	curl_rc=0
+2026-11-21T13:52:32Z	docs_api_metering.md	200	https://docs.priorlabs.ai/api/metering.md	7339	text/markdown; charset=utf-8	https://docs.priorlabs.ai/api/metering.md	curl_rc=0
+2026-11-21T13:52:32Z	docs_api_rate-limits.md	200	https://docs.priorlabs.ai/api/rate-limits.md	5859	text/markdown; charset=utf-8	https://docs.priorlabs.ai/api/rate-limits.md	curl_rc=0
+2026-11-21T13:52:33Z	docs_api_security.md	200	https://docs.priorlabs.ai/api/security.md	3400	text/markdown; charset=utf-8	https://docs.priorlabs.ai/api/security.md	curl_rc=0
+2026-11-21T13:52:34Z	docs_changelog_november-2026.md	200	https://docs.priorlabs.ai/changelog/november-2026.md	7140	text/markdown; charset=utf-8	https://docs.priorlabs.ai/changelog/november-2026.md	curl_rc=0
+2026-11-21T13:52:57Z	docs_models_accessing-model-weights.md	200	https://docs.priorlabs.ai/models/accessing-model-weights.md	4259	text/markdown; charset=utf-8	https://docs.priorlabs.ai/models/accessing-model-weights.md	curl_rc=0
+2026-11-21T13:55:09Z	docs_models.md	200	https://docs.priorlabs.ai/models.md	13425	text/markdown; charset=utf-8	https://docs.priorlabs.ai/models.md	curl_rc=0
+2026-11-21T13:55:17Z	docs_usage-and-costs.md	200	https://docs.priorlabs.ai/api-reference/python/tabpfn-client/usage-and-costs.md	5014	text/markdown; charset=utf-8	https://docs.priorlabs.ai/api-reference/python/tabpfn-client/usage-and-costs.md	curl_rc=0
+2026-11-21T13:55:30Z	hf_tabpfn_3_5_LICENSE.txt	200	https://huggingface.co/Prior-Labs/tabpfn_3_5/raw/main/LICENSE	16905	text/plain; charset=utf-8	https://huggingface.co/Prior-Labs/tabpfn_3_5/raw/main/LICENSE	curl_rc=0
+2026-11-21T13:55:31Z	hf_tabpfn_3_LICENSE.txt	200	https://huggingface.co/Prior-Labs/tabpfn_3/raw/main/LICENSE	16794	text/plain; charset=utf-8	https://huggingface.co/Prior-Labs/tabpfn_3/raw/main/LICENSE	curl_rc=0
+2026-11-21T13:55:32Z	hf_tabpfn_2_6_LICENSE.txt	200	https://huggingface.co/Prior-Labs/tabpfn_2_6/raw/main/LICENSE	16902	text/plain; charset=utf-8	https://huggingface.co/Prior-Labs/tabpfn_2_6/raw/main/LICENSE	curl_rc=0
+2026-11-21T13:55:33Z	hf_tabpfn_2_5_LICENSE.txt	200	https://huggingface.co/Prior-Labs/tabpfn_2_5/raw/main/LICENSE	16905	text/plain; charset=utf-8	https://huggingface.co/Prior-Labs/tabpfn_2_5/raw/main/LICENSE	curl_rc=0
+2026-11-21T13:55:33Z	hf_tabpfn_v2_clf_LICENSE.txt	200	https://huggingface.co/Prior-Labs/TabPFN-v2-clf/raw/main/LICENSE.txt	11483	text/plain; charset=utf-8	https://huggingface.co/Prior-Labs/TabPFN-v2-clf/raw/main/LICENSE.txt	curl_rc=0
+2026-11-21T13:55:34Z	gh_client_v0.10.1_LICENSE.txt	200	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/LICENSE	11350	text/plain; charset=utf-8	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/LICENSE	curl_rc=0
+2026-11-21T13:55:35Z	gh_client_v0.10.1_README.md	200	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/README.md	29611	text/plain; charset=utf-8	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/README.md	curl_rc=0
+2026-11-21T13:55:36Z	gh_client_tags.json	200	https://api.github.com/repos/PriorLabs/tabpfn-client/tags?per_page=50	6787	application/json; charset=utf-8	https://api.github.com/repos/PriorLabs/tabpfn-client/tags?per_page=50	curl_rc=0
+2026-11-21T13:56:26Z	site_technical-reports_tabpfn-2-5-model-report.html	200	https://priorlabs.ai/technical-reports/tabpfn-2-5-model-report	114955	text/html; charset=utf-8	https://priorlabs.ai/technical-reports/tabpfn-2-5-model-report	curl_rc=0
+2026-11-21T13:56:28Z	site_technical-reports_tabpfn-3.html	200	https://priorlabs.ai/technical-reports/tabpfn-3	116508	text/html; charset=utf-8	https://priorlabs.ai/technical-reports/tabpfn-3	curl_rc=0
+2026-11-21T13:56:29Z	site_technical-reports_tabpfn-3-5.html	200	https://priorlabs.ai/technical-reports/tabpfn-3-5	116217	text/html; charset=utf-8	https://priorlabs.ai/technical-reports/tabpfn-3-5	curl_rc=0
+2026-11-21T13:56:30Z	site_technical-reports_tabpfn-4-preview.html	200	https://priorlabs.ai/technical-reports/tabpfn-4-preview	293228	text/html; charset=utf-8	https://priorlabs.ai/technical-reports/tabpfn-4-preview	curl_rc=0
+2026-11-21T13:56:32Z	site_tabpfn-3-5.html	200	https://priorlabs.ai/tabpfn-3-5	130898	text/html; charset=utf-8	https://priorlabs.ai/tabpfn-3-5	curl_rc=0
+2026-11-21T13:56:34Z	site_tabpfn-2.html	200	https://priorlabs.ai/tabpfn-2	124285	text/html; charset=utf-8	https://priorlabs.ai/tabpfn-2	curl_rc=0
+2026-11-21T13:56:35Z	site_deployment.html	200	https://priorlabs.ai/deployment	143974	text/html; charset=utf-8	https://priorlabs.ai/deployment	curl_rc=0
+2026-11-21T13:56:36Z	site_capabilities.html	200	https://priorlabs.ai/capabilities	82137	text/html; charset=utf-8	https://priorlabs.ai/capabilities	curl_rc=0
+2026-11-21T13:56:38Z	site_api-preview-program-for-tabpfn-3-plus.html	200	https://priorlabs.ai/api-preview-program-for-tabpfn-3-plus	71458	text/html; charset=utf-8	https://priorlabs.ai/api-preview-program-for-tabpfn-3-plus	curl_rc=0
+2026-11-21T13:56:39Z	site_blog-posts_the-prior-changelog-thinking-edition.html	200	https://priorlabs.ai/blog-posts/the-prior-changelog-thinking-edition	86845	text/html; charset=utf-8	https://priorlabs.ai/blog-posts/the-prior-changelog-thinking-edition	curl_rc=0
+2026-11-21T13:56:41Z	site_blog-posts_the-prior-changelog-summer-edition.html	200	https://priorlabs.ai/blog-posts/the-prior-changelog-summer-edition	87317	text/html; charset=utf-8	https://priorlabs.ai/blog-posts/the-prior-changelog-summer-edition	curl_rc=0
+2026-11-21T13:56:43Z	site_research.html	200	https://priorlabs.ai/research	97234	text/html; charset=utf-8	https://priorlabs.ai/research	curl_rc=0
+2026-11-21T13:57:03Z	arxiv_2511.08667_abs.html	200	https://arxiv.org/abs/2511.08667	46581	text/html; charset=utf-8	https://arxiv.org/abs/2511.08667	curl_rc=0
+2026-11-21T13:57:04Z	arxiv_2511.08667v2.html	200	https://arxiv.org/html/2511.08667v2	407729	text/html; charset=utf-8	https://arxiv.org/html/2511.08667v2	curl_rc=0
+2026-11-21T13:57:16Z	event_luma_1857f2wa.html	200	https://luma.com/1857f2wa	176529	text/html; charset=utf-8	https://luma.com/1857f2wa	curl_rc=0
+2026-11-21T13:57:18Z	event_createwith_hacklab_brisa.html	200	https://createwith.com/event/berlin-berlin-robotics-ai-hackathon-hacklab-x-brisa-nov-2026	151626	text/html; charset=utf-8	https://createwith.com/event/berlin-berlin-robotics-ai-hackathon-hacklab-x-brisa-nov-2026	curl_rc=0
+2026-11-21T13:57:20Z	event_createwith_hacklab.html	200	https://createwith.com/event/berlin-robotics-x-ai-hackathon-hacklab-nov-2026	154390	text/html; charset=utf-8	https://www.createwith.com/event/berlin-robotics-x-ai-hackathon-hacklab-nov-2026	curl_rc=0
+2026-11-21T13:57:22Z	event_luma_hack_tabpfn.html	200	https://luma.com/hack_tabpfn	182718	text/html; charset=utf-8	https://luma.com/hack_tabpfn	curl_rc=0
+2026-11-21T13:57:39Z	event_eventbrite_hacklab_brisa.html	200	https://www.eventbrite.com/e/berlin-robotics-ai-hackathon-hacklab-x-brisa-tickets-2001276879018	200984	text/html; charset=utf-8	https://www.eventbrite.com/e/berlin-robotics-ai-hackathon-hacklab-x-brisa-tickets-2001276879018	curl_rc=0
+2026-11-21T13:58:06Z	event_hacklabrobotics_home.html	200	https://hacklabrobotics.com/	15035	text/html; charset=utf-8	https://hacklabrobotics.com/	curl_rc=0
+2026-11-21T13:58:13Z	event_hacklab_edition2.html	200	https://hacklabrobotics.com/articles/hacklab-edition-2-november-2026	17799	text/html; charset=utf-8	https://hacklabrobotics.com/articles/hacklab-edition-2-november-2026	curl_rc=0
+2026-11-21T13:58:14Z	event_hacklab_llms.txt	200	https://hacklabrobotics.com/llms.txt	22448	text/plain; charset=utf-8	https://hacklabrobotics.com/llms.txt	curl_rc=0
+2026-11-21T13:58:15Z	event_hacklab_facts.html	200	https://hacklabrobotics.com/facts	14451	text/html; charset=utf-8	https://hacklabrobotics.com/facts	curl_rc=0
+2026-11-21T13:58:16Z	event_hacklab_sitemap.xml	200	https://hacklabrobotics.com/sitemap.xml	11385	application/xml	https://hacklabrobotics.com/sitemap.xml	curl_rc=0
+2026-11-21T13:58:30Z	event_hacklab_hacklab-edition-2-tracks-explained.html	200	https://hacklabrobotics.com/articles/hacklab-edition-2-tracks-explained	19677	text/html; charset=utf-8	https://hacklabrobotics.com/articles/hacklab-edition-2-tracks-explained	curl_rc=0
+2026-11-21T13:58:31Z	event_hacklab_hacklab-partners-and-sponsors.html	200	https://hacklabrobotics.com/articles/hacklab-partners-and-sponsors	19974	text/html; charset=utf-8	https://hacklabrobotics.com/articles/hacklab-partners-and-sponsors	curl_rc=0
+2026-11-21T13:58:33Z	event_hacklab_hacklab-faq-for-companies.html	200	https://hacklabrobotics.com/articles/hacklab-faq-for-companies	17880	text/html; charset=utf-8	https://hacklabrobotics.com/articles/hacklab-faq-for-companies	curl_rc=0
+2026-11-21T13:58:58Z	wayback_cdx_gtc.json	200	https://web.archive.org/cdx/search/cdx?url=priorlabs.ai/general-terms-and-conditions&output=json&fl=timestamp,statuscode,digest&collapse=digest	1014	application/json	https://web.archive.org/cdx/search/cdx?url=priorlabs.ai/general-terms-and-conditions&output=json&fl=timestamp,statuscode,digest&collapse=digest	curl_rc=0
+2026-11-21T13:59:06Z	wayback_gtc_20260519.html	200	https://web.archive.org/web/20260519031531id_/https://priorlabs.ai/general-terms-and-conditions	90158	text/html; charset=utf-8	https://web.archive.org/web/20260519031531id_/https://priorlabs.ai/general-terms-and-conditions	curl_rc=0
+2026-11-21T13:59:08Z	wayback_gtc_20251106.html	200	https://web.archive.org/web/20251106200637id_/https://priorlabs.ai/general-terms-and-conditions	111243	text/html	https://web.archive.org/web/20251106200637id_/https://priorlabs.ai/general-terms-and-conditions	curl_rc=0
+2026-11-21T13:59:33Z	docs_authentication.md	200	https://docs.priorlabs.ai/api-reference/python/tabpfn-client/authentication.md	6441	text/markdown; charset=utf-8	https://docs.priorlabs.ai/api-reference/python/tabpfn-client/authentication.md	curl_rc=0
+2026-11-21T14:00:49Z	gh_client_v0.10.1_prompt_agent.py.txt	404	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/tabpfn_client/prompt_agent.py	14	text/plain; charset=utf-8	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/tabpfn_client/prompt_agent.py	curl_rc=0
+2026-11-21T14:00:50Z	gh_client_v0.10.1_constants.py.txt	404	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/tabpfn_client/constants.py	14	text/plain; charset=utf-8	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/tabpfn_client/constants.py	curl_rc=0
+2026-11-21T14:00:58Z	gh_client_v0.10.1_prompt_agent.py.txt	200	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/src/tabpfn_client/prompt_agent.py	15800	text/plain; charset=utf-8	https://raw.githubusercontent.com/PriorLabs/tabpfn-client/v0.10.1/src/tabpfn_client/prompt_agent.py	curl_rc=0

@@ -1,0 +1,32 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+OK   evaluate_actions refuses action outside the declared bounds: ValueError: actions: rows [0, 1, 2] are outside the bounds of skill 'fixture'
+OK   evaluate_actions refuses attempt seeds of the wrong shape: ValueError: attempt_seeds must be an integer array of shape (3,); got int64 (2,)
+OK   evaluate_actions refuses float attempt seeds: ValueError: attempt_seeds must be an integer array of shape (3,); got float64 (3,)
+OK   evaluate_actions refuses repeated attempt seeds: ValueError: attempt_seeds repeat [4]: within one run every episode needs its own attempt seed, since (run id, attempt seed) names one attempt
+OK   evaluate_actions refuses negative attempt seeds: ValueError: attempt_seeds must be non-negative
+OK   evaluate_actions refuses a negative world seed: ValueError: world_seed must be an integer >= 0; got -1
+OK   evaluate_actions refuses a float world seed: ValueError: world_seed must be an integer >= 0; got 11.0
+OK   evaluate_actions refuses actions of the wrong width: ValueError: actions must have shape (3, 2); got (3, 1)
+OK   evaluate_actions refuses an unknown split: ValueError: split must be one of ('dev', 'test', 'shift', 'context'); got 'validation'
+OK   evaluate_actions refuses a config digest that is not sha256 hex: ValueError: config_digest must be a lowercase sha256 hex digest (learned_judgment.config.config_digest); got 'abc'
+OK   evaluate_actions refuses a negative base seed: ValueError: base_seed must be an integer >= 0; got -1
+OK   evaluate_actions refuses a clock without a UTC offset: ValueError: clock() must be an ISO 8601 string with a zero UTC offset; got '2026-11-21T12:00:00'
+OK   evaluate_actions refuses an attempt file that is not .jsonl: ValueError: the attempt file must be a .jsonl file; got 'rows.csv'
+OK   evaluate_actions refuses a command schema without the spec's command field (G1): SkillSpecError: action 'side_speed' uses command field 'fixture_vy', which is not in the verified schema ['fixture_vx']
+OK   evaluate_actions refuses a command schema narrower than the spec's action range (G1): SkillSpecError: action 'side_speed' range [-0.5, 0.5] exceeds the verified range [-0.2, 0.2] of 'fixture_vy'
+OK   evaluate_actions refuses a command schema with another unit (G1): SkillSpecError: action 'side_speed' unit 'm/s' differs from the verified unit 'rad/s'
+OK   evaluate_actions refuses a command schema that is not a CommandSchema (G1): TypeError: command_schema must be the verified CommandSchema (CommandSchema.from_config); got dict
+OK   compare_methods validates every method's actions before the first world is built: actions of method 'bad': rows [0, 1, 2] are outside the bounds of skill 'fixture'
+OK   compare_methods refuses a command schema without the spec's command field (G1) before asking any policy: SkillSpecError: action 'side_speed' uses command field 'fixture_vy', which is not in the verified schema ['fixture_vx']
+OK   compare_methods refuses a command schema narrower than the spec's action range (G1) before asking any policy: SkillSpecError: action 'side_speed' range [-0.5, 0.5] exceeds the verified range [-0.2, 0.2] of 'fixture_vy'
+OK   compare_methods refuses an attempt seed used twice in the (n, R) matrix before asking any policy: ValueError: attempt_seeds repeat [0]: within one run every episode needs its own attempt seed, since (run id, attempt seed) names on
+OK   compare_methods refuses attempt seeds of shape (n,) instead of (n, R) before asking any policy: ValueError: attempt_seeds must have shape (3, R >= 1); got (3,)
+OK   compare_methods refuses a negative world seed before asking any policy: ValueError: world_seed must be an integer >= 0; got -1
+OK   compare_methods refuses a clock without a UTC offset before asking any policy: ValueError: clock() must be an ISO 8601 string with a zero UTC offset; got '2026-11-21T12:00:00'
+OK   no world was built and no world was touched
+OK   no episode was reached
+OK   no attempt file and no manifest was written
+OK   latency record keys ['cpu_count', 'median_s', 'n_decisions', 'n_inputs', 'p95_s', 'platform', 'processor', 'timer']
+OK   p95 >= median >= 0, n_decisions recorded
+
+CHECK RESULT: 29 assertions held, 0 failed 

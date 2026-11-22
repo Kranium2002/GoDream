@@ -1,0 +1,629 @@
+{
+ "request": "A hill lies somewhere ahead. It can be gentle or steep. Using only what the dog can feel in its body and legs, teach it to reach the spot straight ahead: a gentle hill it should walk straight over, up and down; a hill too steep to climb it should feel and walk around on the side, then come back to its line.",
+ "calls": [
+  {
+   "utc": "2026-11-22T04:12:41.169163+00:00",
+   "repair": false,
+   "lesson": {
+    "title": "Feel the slope: climb gentle mounds, skirt steep ones, hold the line",
+    "senses": [
+     "tilt",
+     "turn_rates",
+     "heading",
+     "last_command"
+    ],
+    "sense": {
+     "history_s": 0.8,
+     "sample_every_s": 0.1
+    },
+    "decide_every_s": 0.3,
+    "horizon_s": 1.5,
+    "time_limit_s": 20.0,
+    "start": "trotting",
+    "nominal_speed_m_s": 0.6,
+    "steer": {
+     "yaw_rate": [
+      -0.6,
+      0,
+      0.6
+     ],
+     "vel_x": [
+      0.4,
+      0.6
+     ]
+    },
+    "goal": {
+     "forward_m": 6.0,
+     "tolerance_m": 0.6,
+     "weights": {
+      "progress": 10,
+      "offset": 4,
+      "tilt": 0.5,
+      "fall": 50,
+      "spread": 2
+     }
+    },
+    "practice_world": {
+     "flat_share": 0.2,
+     "radius_m": {
+      "min": 0.6,
+      "max": 1.6
+     },
+     "height_m": {
+      "min": 0.15,
+      "max": 0.55
+     },
+     "centre_ahead_m": {
+      "min": 2.2,
+      "max": 3.5
+     },
+     "centre_side_m": {
+      "min": -0.5,
+      "max": 0.5
+     }
+    }
+   },
+   "problems": [],
+   "model": "claude-opus-5-5",
+   "usage": {
+    "input_tokens": 6141,
+    "output_tokens": 358
+   },
+   "raw_answer": "{\"title\":\"Feel the slope: climb gentle mounds, skirt steep ones, hold the line\",\"senses\":[\"tilt\",\"turn_rates\",\"heading\",\"last_command\"],\"sense\":{\"history_s\":0.8,\"sample_every_s\":0.1},\"decide_every_s\":0.3,\"horizon_s\":1.5,\"time_limit_s\":20.0,\"start\":\"trotting\",\"nominal_speed_m_s\":0.6,\"steer\":{\"yaw_rate\":[-0.6,0,0.6],\"vel_x\":[0.4,0.6]},\"goal\":{\"forward_m\":6.0,\"tolerance_m\":0.6,\"weights\":{\"progress\":10,\"offset\":4,\"tilt\":0.5,\"fall\":50,\"spread\":2}},\"practice_world\":{\"flat_share\":0.2,\"radius_m\":{\"min\":0.6,\"max\":1.6},\"height_m\":{\"min\":0.15,\"max\":0.55},\"centre_ahead_m\":{\"min\":2.2,\"max\":3.5},\"centre_side_m\":{\"min\":-0.5,\"max\":0.5}}}",
+   "stop_reason": "end_turn",
+   "request_id": "req_011ChHKCzJPW29UoVqeWVG28",
+   "messages_sent": 1,
+   "extra_context": "Measured mound facts (vel_x 0.6 m/s held, no steering, 14 s, MuJoCo Go2 with the frozen walking policy):\n- radius 1.0 m: the plain walk still gets over up to a 32 degree rim slope, but the mound throws it 0.8-3.8 m off its course.\n- radius 1.5 m at a 24 degree rim slope or steeper: the plain walk is stopped for good (never past it in 14 s).\n- a sidestep of about 1-2 m to either side clears those mounds.\n- the plain walk's heading drifts even on flat ground (mean sideways miss 3.64 m at a 6 m goal line).\nRim slope (degrees) by radius and height, from the cap geometry: radius 0.8: h 0.1 -> 14, 0.2 -> 28, 0.3 -> 41; radius 1.0: h 0.2 -> 23, 0.3 -> 33, 0.4 -> 44; radius 1.2: h 0.2 -> 19, 0.3 -> 28, 0.4 -> 37; radius 1.5: h 0.2 -> 15, 0.3 -> 23, 0.4 -> 30, 0.5 -> 37; radius 1.6: h 0.3 -> 21, 0.4 -> 28, 0.5 -> 35, 0.58 -> 40. Radius and height are drawn independently and uniformly within your ranges; a height above the 40 degree limit is lowered to it. The report calls a mound steep from 24 degrees.\nThe previous lesson (run reflex1) and its measured result on 30 unseen courses (25 with a mound):\n- lesson: feel tilt, turn rates, heading and the last command over 0.6 s (every 0.1 s); decide every 0.3 s; judge over 1.2 s; 6 commands (turn -0.6, 0, +0.6 rad/s x 0.4, 0.6 m/s); goal 6 m ahead within 0.6 m; weights progress 10, offset 4, tilt 0.5, fall 50, spread 2; practice mounds only 0.6-1.0 m radius, 0.15-0.4 m high, 80 in 100 courses.\n- plain walk 1 of 30 reached (mean miss 3.64 m); a rule of thumb that reads the TRUE position (not available to the dog) 30 of 30 (0.13 m); the spiking student from body sensors only 13 of 30 (mean miss 0.64 m; all 30 crossed the goal line; no falls).\n- weaknesses: every practice mound was small enough to walk over, so going around was never needed; the student only practised in situations the rule of thumb and random choices led to (the next run adds rounds where the student practises with its own choices).\n- the rule of thumb's guess of what a command does is a flat-ground point-mass model that knows nothing about hills; what a hill does to each command is learned only from the measured practice outcomes.\n"
+  },
+  {
+   "utc": "2026-11-22T04:22:00.523141+00:00",
+   "repair": false,
+   "lesson": {
+    "title": "Feel the slope: over gentle hills, around steep ones, back to the line",
+    "senses": [
+     "tilt",
+     "turn_rates",
+     "heading",
+     "last_command"
+    ],
+    "sense": {
+     "history_s": 0.8,
+     "sample_every_s": 0.1
+    },
+    "decide_every_s": 0.3,
+    "horizon_s": 1.5,
+    "time_limit_s": 22.0,
+    "start": "trotting",
+    "nominal_speed_m_s": 0.6,
+    "steer": {
+     "yaw_rate": [
+      -0.7,
+      0.0,
+      0.7
+     ],
+     "vel_x": [
+      0.4,
+      0.6
+     ]
+    },
+    "goal": {
+     "forward_m": 6.0,
+     "tolerance_m": 0.6,
+     "weights": {
+      "progress": 10.0,
+      "offset": 4.0,
+      "tilt": 0.6,
+      "fall": 60.0,
+      "spread": 2.0
+     }
+    },
+    "practice_world": {
+     "flat_share": 0.2,
+     "radius_m": {
+      "min": 0.8,
+      "max": 1.6
+     },
+     "height_m": {
+      "min": 0.12,
+      "max": 0.42
+     },
+     "centre_ahead_m": {
+      "min": 2.2,
+      "max": 3.4
+     },
+     "centre_side_m": {
+      "min": -0.5,
+      "max": 0.5
+     }
+    }
+   },
+   "problems": [],
+   "model": "claude-opus-5-5",
+   "usage": {
+    "input_tokens": 6582,
+    "output_tokens": 364
+   },
+   "raw_answer": "{\"title\":\"Feel the slope: over gentle hills, around steep ones, back to the line\",\"senses\":[\"tilt\",\"turn_rates\",\"heading\",\"last_command\"],\"sense\":{\"history_s\":0.8,\"sample_every_s\":0.1},\"decide_every_s\":0.3,\"horizon_s\":1.5,\"time_limit_s\":22.0,\"start\":\"trotting\",\"nominal_speed_m_s\":0.6,\"steer\":{\"yaw_rate\":[-0.7,0.0,0.7],\"vel_x\":[0.4,0.6]},\"goal\":{\"forward_m\":6.0,\"tolerance_m\":0.6,\"weights\":{\"progress\":10.0,\"offset\":4.0,\"tilt\":0.6,\"fall\":60.0,\"spread\":2.0}},\"practice_world\":{\"flat_share\":0.2,\"radius_m\":{\"min\":0.8,\"max\":1.6},\"height_m\":{\"min\":0.12,\"max\":0.42},\"centre_ahead_m\":{\"min\":2.2,\"max\":3.4},\"centre_side_m\":{\"min\":-0.5,\"max\":0.5}}}",
+   "stop_reason": "end_turn",
+   "request_id": "req_011ChHKvF8VvkQ6oSeFkRccS",
+   "messages_sent": 1,
+   "extra_context": "Measured mound facts (vel_x 0.6 m/s held, no steering, 14 s, MuJoCo Go2 with the frozen walking policy):\n- radius 1.0 m: the plain walk still gets over up to a 32 degree rim slope, but the mound throws it 0.8-3.8 m off its course.\n- radius 1.5 m at a 24 degree rim slope or steeper: the plain walk is stopped for good (never past it in 14 s).\n- a sidestep of about 1-2 m to either side clears those mounds.\n- the plain walk's heading drifts even on flat ground (mean sideways miss 3.64 m at a 6 m goal line).\nRim slope (degrees) by radius and height, from the cap geometry: radius 0.8: h 0.1 -> 14, 0.2 -> 28, 0.3 -> 41; radius 1.0: h 0.2 -> 23, 0.3 -> 33, 0.4 -> 44; radius 1.2: h 0.2 -> 19, 0.3 -> 28, 0.4 -> 37; radius 1.5: h 0.2 -> 15, 0.3 -> 23, 0.4 -> 30, 0.5 -> 37; radius 1.6: h 0.3 -> 21, 0.4 -> 28, 0.5 -> 35, 0.58 -> 40. Radius and height are drawn independently and uniformly within your ranges; a height above the 40 degree limit is lowered to it. The report calls a mound steep from 24 degrees.\nThe previous lesson (run reflex1) and its measured result on 30 unseen courses (25 with a mound):\n- lesson: feel tilt, turn rates, heading and the last command over 0.6 s (every 0.1 s); decide every 0.3 s; judge over 1.2 s; 6 commands (turn -0.6, 0, +0.6 rad/s x 0.4, 0.6 m/s); goal 6 m ahead within 0.6 m; weights progress 10, offset 4, tilt 0.5, fall 50, spread 2; practice mounds only 0.6-1.0 m radius, 0.15-0.4 m high, 80 in 100 courses.\n- plain walk 1 of 30 reached (mean miss 3.64 m); a rule of thumb that reads the TRUE position (not available to the dog) 30 of 30 (0.13 m); the spiking student from body sensors only 13 of 30 (mean miss 0.64 m; all 30 crossed the goal line; no falls).\n- weaknesses: every practice mound was small enough to walk over, so going around was never needed; the student only practised in situations the rule of thumb and random choices led to (the next run adds rounds where the student practises with its own choices).\n- the rule of thumb's guess of what a command does is a flat-ground point-mass model that knows nothing about hills; what a hill does to each command is learned only from the measured practice outcomes.\nYour first design for this request (radius 0.6-1.6 m, height 0.15-0.55 m, centre 2.2-3.5 m ahead and -0.5 to 0.5 m to the side, flat share 0.2, goal 6 m within 0.6 m, 20 s) was run in the simulator before any learning (measured):\n- its practice world, 4000 drawn courses: 20% flat, 17% gentle (rim slope below 24 degrees), 63% steep; median rim slope 35 degrees, a quarter of the mounds at the 40 degree cap. Its 30 test courses drew 5 flat, 2 gentle, 23 steep. Gentle hills are rare, so the dog seldom practises walking straight over one.\n- plain walk: 0 of 30 reached; steep mounds pushed it off sideways (mean final sideways 7.4 m; it crossed the goal line on 4 of 23 steep courses).\n- rule of thumb that reads the true position: 21 of 30 (flat 5 of 5, gentle 2 of 2 walked over, steep 14 of 23: pushed around the side by the slope, then steered back to the line).\n- 12 practice courses with the rule of thumb and half random choices: 9 mounds, 6 of them reached.\nDesign the lesson again for the same request; you may keep or change any part.\n"
+  }
+ ],
+ "lesson": {
+  "title": "Feel the slope: over gentle hills, around steep ones, back to the line",
+  "senses": [
+   "tilt",
+   "turn_rates",
+   "heading",
+   "last_command"
+  ],
+  "sense": {
+   "history_s": 0.8,
+   "sample_every_s": 0.1
+  },
+  "decide_every_s": 0.3,
+  "horizon_s": 1.5,
+  "time_limit_s": 22.0,
+  "start": "trotting",
+  "nominal_speed_m_s": 0.6,
+  "steer": {
+   "yaw_rate": [
+    -0.7,
+    0.0,
+    0.7
+   ],
+   "vel_x": [
+    0.4,
+    0.6
+   ]
+  },
+  "goal": {
+   "forward_m": 6.0,
+   "tolerance_m": 0.6,
+   "weights": {
+    "progress": 10.0,
+    "offset": 4.0,
+    "tilt": 0.6,
+    "fall": 60.0,
+    "spread": 2.0
+   }
+  },
+  "practice_world": {
+   "flat_share": 0.2,
+   "radius_m": {
+    "min": 0.8,
+    "max": 1.6
+   },
+   "height_m": {
+    "min": 0.12,
+    "max": 0.42
+   },
+   "centre_ahead_m": {
+    "min": 2.2,
+    "max": 3.4
+   },
+   "centre_side_m": {
+    "min": -0.5,
+    "max": 0.5
+   }
+  }
+ },
+ "summary": "The dog learns to walk to a spot 6 m straight ahead and to arrive within 0.6 m of it, in at most 22 s, starting at a trot at 0.6 m/s. It cannot see: it only feels how its body leans, how fast it is rotating, which way it faces compared with the start and the command it sent last, over the last 0.8 s. Every 0.3 s it picks one of 6 ways to walk on: go straight or turn at 0.7 rad/s to either side, at 0.4, 0.6 m/s. It practises on courses of which 80 in 100 have a smooth mound 0.8-1.6 m in radius and 0.12-0.42 m high, 2.2-3.4 m ahead; the rest are flat. Each pick is judged on the following 1.5 s: getting closer to the spot counts for it; drifting off the line, leaning, falling, uncertain progress count against it.",
+ "problems": [],
+ "schema": {
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+   "title",
+   "senses",
+   "sense",
+   "decide_every_s",
+   "horizon_s",
+   "time_limit_s",
+   "start",
+   "nominal_speed_m_s",
+   "steer",
+   "goal",
+   "practice_world"
+  ],
+  "properties": {
+   "title": {
+    "type": "string",
+    "description": "A short name for the lesson, at most 80 characters."
+   },
+   "senses": {
+    "type": "array",
+    "items": {
+     "type": "string",
+     "enum": [
+      "tilt",
+      "turn_rates",
+      "heading",
+      "joint_angles",
+      "joint_speeds",
+      "feet",
+      "last_command"
+     ]
+    },
+    "description": "The sense groups the dog may feel, at least one, each at most once. tilt: How the trunk leans: nose-up pitch and left-side-up roll, degrees (from the trunk orientation an IMU gives).; turn_rates: How fast the trunk rotates in its own frame: roll, pitch and yaw rates, rad/s (gyroscope).; heading: Which way the dog faces compared with when the lesson started, degrees, + to the left (integrated IMU heading).; joint_angles: The 12 leg joint angles minus the walking policy's default pose, rad (joint encoders).; joint_speeds: The 12 leg joint speeds, rad/s (joint encoders).; feet: Which of the four feet touch the ground (FL, FR, RL, RR), 0 or 1 (foot contact switches).; last_command: The steering command the dog itself sent last: forward speed (m/s), sideways speed (m/s), turn rate (rad/s).. Position, speed over the ground and anything about the hill are never available."
+   },
+   "sense": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "history_s",
+     "sample_every_s"
+    ],
+    "description": "How much recent feeling the dog keeps: samples every sample_every_s covering the last history_s, oldest first. At most 21 samples (history_s / sample_every_s + 1) and at most 600 numbers (samples x channels of the chosen groups).",
+    "properties": {
+     "history_s": {
+      "type": "number",
+      "description": "Seconds, from 0.02 to 2.0; a whole number of sample_every_s."
+     },
+     "sample_every_s": {
+      "type": "number",
+      "description": "Seconds, from 0.02 to 0.5; a whole number of 0.02 s control periods."
+     }
+    }
+   },
+   "decide_every_s": {
+    "type": "number",
+    "description": "Seconds between two decisions, from 0.1 to 1.0; whole control periods. The picked command is held until the next decision."
+   },
+   "horizon_s": {
+    "type": "number",
+    "description": "Seconds after a decision over which its result is measured in practice (progress, offset, lean, fall), from 0.2 to 3.0; whole control periods."
+   },
+   "time_limit_s": {
+    "type": "number",
+    "description": "Longest episode in seconds, from 8.0 to 30.0."
+   },
+   "start": {
+    "type": "string",
+    "enum": [
+     "standing",
+     "trotting"
+    ],
+    "description": "standing: the dog starts from a stand; trotting: it is already walking at the nominal speed when the lesson starts."
+   },
+   "nominal_speed_m_s": {
+    "type": "number",
+    "description": "Forward speed of the plain walk, m/s, from 0.3 to 1.0. It is sent until the first decision and is the 'straight' choice."
+   },
+   "steer": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "yaw_rate",
+     "vel_x"
+    ],
+    "description": "The commands the dog may pick: every combination of one turn rate and one forward speed (sideways speed is always 0), at most 12 combinations.",
+    "properties": {
+     "yaw_rate": {
+      "type": "array",
+      "items": {
+       "type": "number"
+      },
+      "description": "1 to 7 distinct turn rates, rad/s, from -1.0 to 1.0; + turns left, - right. Must include 0 (no turn)."
+     },
+     "vel_x": {
+      "type": "array",
+      "items": {
+       "type": "number"
+      },
+      "description": "1 to 7 distinct forward speeds, m/s, from 0.2 to 1.0. Must include nominal_speed_m_s."
+     }
+    }
+   },
+   "goal": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "forward_m",
+     "tolerance_m",
+     "weights"
+    ],
+    "description": "What reaching the spot means and how each decision is judged.",
+    "properties": {
+     "forward_m": {
+      "type": "number",
+      "description": "Distance to the spot straight ahead, m, from 2.0 to 10.0, along the direction the dog faces when the lesson starts."
+     },
+     "tolerance_m": {
+      "type": "number",
+      "description": "Largest sideways miss at the spot that still counts as reaching it, m, from 0.2 to 2.0."
+     },
+     "weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "progress",
+       "offset",
+       "tilt",
+       "fall",
+       "spread"
+      ],
+      "description": "How a decision is judged over its horizon, each weight from 0 to 100.0: + progress (per metre gained toward the spot), - offset (per metre away from the straight line to the spot), - tilt (per degree of mean trunk lean), - fall (per fall), - spread (per metre of uncertainty about the progress).",
+      "properties": {
+       "progress": {
+        "type": "number"
+       },
+       "offset": {
+        "type": "number"
+       },
+       "tilt": {
+        "type": "number"
+       },
+       "fall": {
+        "type": "number"
+       },
+       "spread": {
+        "type": "number"
+       }
+      }
+     }
+    }
+   },
+   "practice_world": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "flat_share",
+     "radius_m",
+     "height_m",
+     "centre_ahead_m",
+     "centre_side_m"
+    ],
+    "description": "The practice courses. A course is flat or has one smooth mound (a spherical cap: flat on top, steepest at its rim, the rim slope being asin(radius / sphere radius) with sphere radius = (radius^2 + height^2) / (2 height)). Its centre lies centre_ahead_m ahead of the dog at the start and centre_side_m to its left (- right). A drawn height whose rim slope would exceed 40.0 degrees is lowered to that slope. The rim must stay at least 0.4 m from the dog at the start: centre_ahead_m.min - radius_m.max >= 0.4.",
+    "properties": {
+     "flat_share": {
+      "type": "number",
+      "description": "Share of flat courses, from 0.0 to 0.6."
+     },
+     "radius_m": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "min",
+       "max"
+      ],
+      "description": "Mound footprint radius range, m, within from 0.6 to 1.6.",
+      "properties": {
+       "min": {
+        "type": "number"
+       },
+       "max": {
+        "type": "number"
+       }
+      }
+     },
+     "height_m": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "min",
+       "max"
+      ],
+      "description": "Mound top height range, m, within from 0.1 to 0.6.",
+      "properties": {
+       "min": {
+        "type": "number"
+       },
+       "max": {
+        "type": "number"
+       }
+      }
+     },
+     "centre_ahead_m": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "min",
+       "max"
+      ],
+      "description": "Distance ahead to the mound's centre, m, within from 1.4 to 4.0.",
+      "properties": {
+       "min": {
+        "type": "number"
+       },
+       "max": {
+        "type": "number"
+       }
+      }
+     },
+     "centre_side_m": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "min",
+       "max"
+      ],
+      "description": "Sideways offset of the mound's centre, m, + left, within from -1.0 to 1.0.",
+      "properties": {
+       "min": {
+        "type": "number"
+       },
+       "max": {
+        "type": "number"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "menu": {
+  "sense_groups": {
+   "tilt": {
+    "what": "How the trunk leans: nose-up pitch and left-side-up roll, degrees (from the trunk orientation an IMU gives).",
+    "channels": [
+     "pitch_deg",
+     "roll_deg"
+    ]
+   },
+   "turn_rates": {
+    "what": "How fast the trunk rotates in its own frame: roll, pitch and yaw rates, rad/s (gyroscope).",
+    "channels": [
+     "roll_rate_rad_s",
+     "pitch_rate_rad_s",
+     "yaw_rate_rad_s"
+    ]
+   },
+   "heading": {
+    "what": "Which way the dog faces compared with when the lesson started, degrees, + to the left (integrated IMU heading).",
+    "channels": [
+     "heading_deg"
+    ]
+   },
+   "joint_angles": {
+    "what": "The 12 leg joint angles minus the walking policy's default pose, rad (joint encoders).",
+    "channels": [
+     "FL_hip",
+     "FL_thigh",
+     "FL_calf",
+     "FR_hip",
+     "FR_thigh",
+     "FR_calf",
+     "RL_hip",
+     "RL_thigh",
+     "RL_calf",
+     "RR_hip",
+     "RR_thigh",
+     "RR_calf"
+    ]
+   },
+   "joint_speeds": {
+    "what": "The 12 leg joint speeds, rad/s (joint encoders).",
+    "channels": [
+     "FL_hip_speed",
+     "FL_thigh_speed",
+     "FL_calf_speed",
+     "FR_hip_speed",
+     "FR_thigh_speed",
+     "FR_calf_speed",
+     "RL_hip_speed",
+     "RL_thigh_speed",
+     "RL_calf_speed",
+     "RR_hip_speed",
+     "RR_thigh_speed",
+     "RR_calf_speed"
+    ]
+   },
+   "feet": {
+    "what": "Which of the four feet touch the ground (FL, FR, RL, RR), 0 or 1 (foot contact switches).",
+    "channels": [
+     "FL_contact",
+     "FR_contact",
+     "RL_contact",
+     "RR_contact"
+    ]
+   },
+   "last_command": {
+    "what": "The steering command the dog itself sent last: forward speed (m/s), sideways speed (m/s), turn rate (rad/s).",
+    "channels": [
+     "cmd_vel_x",
+     "cmd_vel_y",
+     "cmd_yaw_rate"
+    ]
+   }
+  },
+  "never_available": "position, speed over the ground, a camera, a map, or anything about where or how big the hill is",
+  "window": {
+   "sample_every_s": [
+    0.02,
+    0.5
+   ],
+   "history_s": [
+    0.02,
+    2.0
+   ],
+   "max_samples": 21,
+   "max_numbers": 600,
+   "note": "the window holds samples every sample_every_s over the last history_s, oldest first"
+  },
+  "timing": {
+   "decide_every_s": [
+    0.1,
+    1.0
+   ],
+   "horizon_s": [
+    0.2,
+    3.0
+   ],
+   "time_limit_s": [
+    8.0,
+    30.0
+   ],
+   "control_period_s": 0.02,
+   "note": "every time is a whole number of control periods"
+  },
+  "starts": [
+   "standing",
+   "trotting"
+  ],
+  "nominal_speed_m_s": [
+   0.3,
+   1.0
+  ],
+  "steer": {
+   "turn_rate_rad_s": [
+    -1.0,
+    1.0
+   ],
+   "forward_speed_m_s": [
+    0.2,
+    1.0
+   ],
+   "max_choices_per_field": 7,
+   "max_candidates": 12,
+   "sideways_speed": "always 0",
+   "verified_command_ranges": {
+    "vel_x": [
+     -1.0,
+     1.0
+    ],
+    "yaw_rate": [
+     -1.0,
+     1.0
+    ]
+   }
+  },
+  "goal": {
+   "forward_m": [
+    2.0,
+    10.0
+   ],
+   "tolerance_m": [
+    0.2,
+    2.0
+   ],
+   "weight_max": 100.0
+  },
+  "practice_world": {
+   "flat_share": [
+    0.0,
+    0.6
+   ],
+   "radius_m": [
+    0.6,
+    1.6
+   ],
+   "height_m": [
+    0.1,
+    0.6
+   ],
+   "centre_ahead_m": [
+    1.4,
+    4.0
+   ],
+   "centre_side_m": [
+    -1.0,
+    1.0
+   ],
+   "max_rim_slope_deg": 40.0,
+   "min_gap_rim_to_dog_m": 0.4
+  }
+ },
+ "accepted_call": 1
+}

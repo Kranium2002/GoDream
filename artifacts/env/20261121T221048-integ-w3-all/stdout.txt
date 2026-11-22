@@ -1,0 +1,121 @@
+.s.........................s............................................ [ 14%]
+........................................................................ [ 28%]
+........................................................................ [ 43%]
+...F..xF...FFF.......................................................... [ 57%]
+........................................................................ [ 72%]
+........................................................................ [ 86%]
+..................F..............................................        [100%]
+================================== FAILURES ===================================
+_______________ test_scenarios_have_valid_kinds_keys_and_ranges _______________
+
+    def test_scenarios_have_valid_kinds_keys_and_ranges() -> None:
+        assert set(require(CONFIG, f"{ROOT}.kind_weights")) == set(KINDS)
+        assert {s["kind"] for s in SAMPLE} == set(KINDS)
+>       assert {is_roll(s) for s in SAMPLE if s["kind"].startswith("incoming")} == {True, False}
+E       assert {False} == {False, True}
+E         
+E         Extra items in the right set:
+E         True
+E         Use -v to get more diff
+
+tests\b\test_dodge_vision.py:95: AssertionError
+_____________________________ test_physics_sanity _____________________________
+
+    def test_physics_sanity() -> None:
+        assert no_op_guess(first("incoming_center", roll=False))[1] > 0.5
+>       assert no_op_guess(first("off_path", roll=True))[1] < 0.5
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\b\test_dodge_vision.py:196: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+kind = 'off_path', roll = True
+
+    def first(kind: str, roll: bool | None = None) -> dict:
+>       return next(s for s in SAMPLE if s["kind"] == kind and (roll is None or is_roll(s) == roll))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests\b\test_dodge_vision.py:55: StopIteration
+_____________ test_observe_and_act_on_a_centre_roll_is_repeatable _____________
+
+world_and_view = (<learned_judgment.env.world.Go2World object at 0x000002D176ADA5D0>, <learned_judgment.skills.dodge_vision.HeadView object at 0x000002D176D0F0E0>)
+
+    def test_observe_and_act_on_a_centre_roll_is_repeatable(world_and_view) -> None:
+        world, view = world_and_view
+>       scenario = first("incoming_center", roll=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\b\test_dodge_vision.py:243: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+kind = 'incoming_center', roll = True
+
+    def first(kind: str, roll: bool | None = None) -> dict:
+>       return next(s for s in SAMPLE if s["kind"] == kind and (roll is None or is_roll(s) == roll))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests\b\test_dodge_vision.py:55: StopIteration
+____________________ test_frames_change_as_a_ball_rolls_in ____________________
+
+world_and_view = (<learned_judgment.env.world.Go2World object at 0x000002D176ADA5D0>, <learned_judgment.skills.dodge_vision.HeadView object at 0x000002D176D0F0E0>)
+
+    def test_frames_change_as_a_ball_rolls_in(world_and_view) -> None:
+        world, view = world_and_view
+>       windows = render_windows(world, view, first("incoming_center", roll=True), 0, [9, 24, 39], SETTINGS)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\b\test_dodge_vision.py:257: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+kind = 'incoming_center', roll = True
+
+    def first(kind: str, roll: bool | None = None) -> dict:
+>       return next(s for s in SAMPLE if s["kind"] == kind and (roll is None or is_roll(s) == roll))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests\b\test_dodge_vision.py:55: StopIteration
+________ test_closed_loop_on_the_zero_command_matches_observe_and_act _________
+
+world_and_view = (<learned_judgment.env.world.Go2World object at 0x000002D176ADA5D0>, <learned_judgment.skills.dodge_vision.HeadView object at 0x000002D176D0F0E0>)
+
+    def test_closed_loop_on_the_zero_command_matches_observe_and_act(world_and_view) -> None:
+        world, view = world_and_view
+>       scenario = first("incoming_left", roll=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\b\test_dodge_vision.py:266: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+kind = 'incoming_left', roll = True
+
+    def first(kind: str, roll: bool | None = None) -> dict:
+>       return next(s for s in SAMPLE if s["kind"] == kind and (roll is None or is_roll(s) == roll))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests\b\test_dodge_vision.py:55: StopIteration
+_______________________ test_trots_thirty_seconds[0.3] ________________________
+
+config = {'project': {'name': 'Learned Judgment', 'status': 'scaffold', 'primary_skill': 'dodge', 'no_substitute_robot_or_proje...0_3_0\\traces', 'save_traces': True, 'render': {'width': 640, 'height': 480, 'tracking_distance_m': 1.4394}, ...}, ...}
+vx = 0.3
+
+    @pytest.mark.parametrize("vx", [0.3, 0.6, 0.9])
+    def test_trots_thirty_seconds(config, vx):
+        r = run_locomotion(config, vx=vx, yaw_rate=0.0, duration_s=30, seed=config["runtime"]["seed"])
+        assert not r["fallen"]
+>       assert abs(r["mean_speed_m_s"] - vx) <= config["robot"]["acceptance"]["speed_tolerance_fraction"] * vx
+E       assert 0.07439528955513408 <= (0.2 * 0.3)
+E        +  where 0.07439528955513408 = abs((0.2256047104448659 - 0.3))
+
+tests\env\test_locomotion.py:12: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/b/test_dodge_vision.py::test_scenarios_have_valid_kinds_keys_and_ranges
+FAILED tests/b/test_dodge_vision.py::test_physics_sanity - StopIteration
+FAILED tests/b/test_dodge_vision.py::test_observe_and_act_on_a_centre_roll_is_repeatable
+FAILED tests/b/test_dodge_vision.py::test_frames_change_as_a_ball_rolls_in - ...
+FAILED tests/b/test_dodge_vision.py::test_closed_loop_on_the_zero_command_matches_observe_and_act
+FAILED tests/env/test_locomotion.py::test_trots_thirty_seconds[0.3] - assert ...
+6 failed, 488 passed, 2 skipped, 1 xfailed in 1251.65s (0:20:51)

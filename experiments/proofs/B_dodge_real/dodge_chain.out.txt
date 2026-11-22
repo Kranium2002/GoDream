@@ -1,0 +1,53 @@
+DEV RUN on the real Go2 simulator (Person A's Go2World with the simulated ball) - the DODGE learning chain; one world, one seed; not an evaluation result, not in any report or table
+config digest 6aef6cb771af | runtime.seed 20261121 | world seed 774610046 (stream 'dodge/dev/world/default') | preset default
+output directory experiments/proofs/B_dodge_real/out/chain_default_20261121T173315Z
+
+== 1. attempts: 40 real episodes with exploration actions ==
+  ran context/explore         40 episodes in   26.8 s (0.67 s per episode)
+  measured in the attempts: {'mean_min_separation_m': 0.18515705280681408, 'mean_collision': 0.275, 'mean_fall': 0.0, 'mean_recovery_time_s': 0.0, 'mean_lateral_command_m': 0.3275, 'mean_loss': 0.275, 'success_rate': 0.725, 'n': 40}
+  residual of min_separation_m (measured - formula): mean -0.0859, std 0.1087
+  residual of collision (measured - formula): mean +0.0898, std 0.2672
+  residual of fall (measured - formula): mean +0.0000, std 0.0000
+  residual of recovery_time_s (measured - formula): mean +0.0000, std 0.0000
+  residual of lateral_command_m (measured - formula): mean +0.0000, std 0.0000
+
+== 2. TabPFN: the residual teacher on those attempts (real requests) ==
+  account usage before: 100000 of 35000000 tokens; at most 10000 tokens per request; project budget 35000000
+  the teacher decided 100 dev throws x 108 candidates in 5.2 s; 69 of 100 decisions differ from the physics action
+
+== 3. dream: the teacher decides 2000 sampled throws ==
+  2000 dreams in 80.4 s; no confidence threshold is set for this skill in engine.confidence_thresholds_by_skill, so every dream is kept
+  in 1339 of 2000 kept dreams the teacher's choice differs from the physics choice
+  TabPFN in this run: 15 billed requests, 150000 tokens quoted, 0 cache hits; account usage now 250000 of 35000000
+
+== 4. SNN: a spiking network trained inside the 2000 dreams ==
+  trained in 18.7 s; network digest a6b8823cb416; hidden sizes [64], 10 time steps; training report: {'steps_run': 1500, 'best_step': 1500, 'stopped_early': False, 'initial_validation_loss': 1.0158239261543613, 'best_validation_loss': 0.48187073175406453, 'firing_rate_per_layer': [0.13771875]}
+
+== 5. measure: every method decides the same 100 dev throws; each decision is run on the simulator ==
+  the SNN decided 100 dev throws in 9.5 ms; 22 of 100 decisions equal the teacher's
+  ran dev/physics_only       100 episodes in   82.9 s (0.83 s per episode)
+  ran dev/teacher            100 episodes in   79.3 s (0.79 s per episode)
+  ran dev/snn_per_skill      100 episodes in   94.9 s (0.95 s per episode)
+
+DODGE on the real Go2World with the simulated ball. DEV RUN, preset default, world seed 774610046, 40 context attempts, 100 dev throws, 1 repeat; not an evaluation result.
+mean_loss is the mean of the skill's primary per-episode loss (PREREGISTRATION.md: a collision or a fall); binary outcomes are shown as rates.
+
+method                          mean_loss             success_rate    mean_min_separation_m           mean_collision                mean_fall     mean_recovery_time_s   mean_lateral_command_m
+physics_only                       0.0100                   0.9900                   0.3115                   0.0100                   0.0000                   0.0002                   0.4480
+teacher                            0.0100                   0.9900                   0.4119                   0.0100                   0.0000                   0.0002                   0.6260
+snn_per_skill                      0.0500                   0.9500                   0.5024                   0.0500                   0.0000                   0.0004                   0.8750
+
+Paired on the dev throws (same throw, same attempt seed), primary loss against physics only:
+  teacher          mean difference +0.0000; lower loss in 0, higher in 0, equal in 100 throws
+  snn_per_skill    mean difference +0.0400; lower loss in 0, higher in 4, equal in 96 throws
+
+== 6. watch: dev throw 0, where snn_per_skill lowered the loss by the most against physics only (by +0.0000) ==
+  throw: {'ball_rel_x_m': 2.636397832995313, 'ball_rel_y_m': 3.8804928987557834, 'ball_rel_z_m': 0.602348180120584, 'ball_vel_x_m_s': -2.0726316796896245, 'ball_vel_y_m_s': -3.70103152148314, 'ball_vel_z_m_s': 3.772862528880543, 'dog_forward_speed_m_s': 0.8408486253927803, 'declared_payload_kg': 0.0, 'declared_surface': 'default'}
+  physics_only     action {'side_velocity_m_s': -0.5, 'start_delay_s': 0.0, 'hold_duration_s': 0.6000000000000001} -> measured {'min_separation_m': 0.12179556239380547, 'collision': 0.0, 'fall': 0.0, 'recovery_time_s': 0.0, 'lateral_command_m': 0.30000000000000004}
+    python -m app.view_episode --seed 774610046 --preset default --situation D:\BerlinPrior\experiments\proofs\B_dodge_real\out\chain_default_20261121T173315Z\watch_situation.json --command 0.8408486253927803,-0.5,0.0,0.6000000000000001 --command 0.8408486253927803,0.0,0.0,2.4
+  snn_per_skill    action {'side_velocity_m_s': -1.0, 'start_delay_s': 0.0, 'hold_duration_s': 1.0} -> measured {'min_separation_m': 0.5602016289408991, 'collision': 0.0, 'fall': 0.0, 'recovery_time_s': 0.0, 'lateral_command_m': 1.0}
+    python -m app.view_episode --seed 774610046 --preset default --situation D:\BerlinPrior\experiments\proofs\B_dodge_real\out\chain_default_20261121T173315Z\watch_situation.json --command 0.8408486253927803,-1.0,0.0,1.0 --command 0.8408486253927803,0.0,0.0,2.0
+  (the window's episode is a separate run with the world's default attempt seed.)
+
+written: experiments/proofs/B_dodge_real/out/chain_default_20261121T173315Z/ (attempts.jsonl, dreams.npz, student, table.txt, manifest.json)
+exit 0

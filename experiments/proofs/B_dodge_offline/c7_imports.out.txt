@@ -1,0 +1,27 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+== imports ==
+  learned_judgment.skills: __all__ = ['available_skills', 'load_skill']
+PASS  learned_judgment.skills imports and exports every name in __all__
+  learned_judgment.skills.dodge: __all__ = ['BALL_DOG_KEYS', 'DECLARED_KEYS', 'DodgeObjectiveWeights', 'DodgePhysics', 'DodgeSpec', 'SPEC_CLASS', 'ThrowSampler', 'WORLD_OUTCOME_KEYS']
+PASS  learned_judgment.skills.dodge imports and exports every name in __all__
+
+== public signatures ==
+  load_skill(name: 'str', config: 'Mapping[str, Any]', **skill_arguments: 'Any') -> 'SkillSpec'
+  available_skills() -> 'tuple[str, ...]'
+  DodgeSpec.__init__(self, config: 'Mapping[str, Any]', command_schema: 'CommandSchema', *, throw_sampler: 'ThrowSampler | None' = None, declared_payload_kg: 'float | None' = None, declared_surface: 'str | None' = None) -> 'None'
+  DodgeSpec.sample_situations(self, rng: 'np.random.Generator', n: 'int') -> 'np.ndarray'
+  DodgeSpec.physics_guess(self, situations: 'np.ndarray', actions: 'np.ndarray') -> 'np.ndarray'
+  DodgeSpec.objective(self, predicted: 'OutcomeDistribution') -> 'np.ndarray'
+  DodgeSpec.episode(self, world: 'World', situation: 'Mapping[str, Any]', action: 'Mapping[str, Any]', attempt_seed: 'int') -> 'Mapping[str, float]'
+  DodgeSpec.loss(self, measured: 'np.ndarray') -> 'np.ndarray'
+  DodgeSpec.success(self, measured: 'np.ndarray') -> 'np.ndarray'
+PASS  DodgeSpec is the registered SPEC_CLASS
+PASS  DodgeSpec implements every abstract method
+
+== lane rules in the source ==
+PASS  learned_judgment.skills: no print call
+PASS  learned_judgment.skills.dodge: no print call
+PASS  the registry module names no skill
+
+7 passed, 0 failed

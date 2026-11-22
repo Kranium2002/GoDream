@@ -1,0 +1,40 @@
+== 4.0.0
+  mujoco-4.0.0-py3-none-any.whl 108599 >=3.11 yanked= False 2026-11-06T15:39:14.795113Z
+  mujoco-4.0.0.tar.gz 154838 >=3.11 yanked= False 2026-11-06T15:39:17.295166Z
+== 4.0.1
+  mujoco-4.0.1-py3-none-any.whl 108623 >=3.11 yanked= False 2026-11-11T16:25:28.431643Z
+  mujoco-4.0.1.tar.gz 154912 >=3.11 yanked= False 2026-11-11T16:25:30.149696Z
+== 3.17.0
+  mujoco-3.17.0-cp310-cp310-macosx_11_0_arm64.whl 24880444 >=3.10 yanked= False 2026-10-22T23:34:23.785472Z
+  mujoco-3.17.0-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl 25138531 >=3.10 yanked= False 2026-10-22T23:34:27.985245Z
+  mujoco-3.17.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 26454579 >=3.10 yanked= False 2026-10-22T23:34:31.405814Z
+  mujoco-3.17.0-cp310-cp310-win_amd64.whl 16131485 >=3.10 yanked= False 2026-10-22T23:34:34.783816Z
+  mujoco-3.17.0-cp311-cp311-macosx_11_0_arm64.whl 24906194 >=3.10 yanked= False 2026-10-22T23:34:38.010634Z
+  mujoco-3.17.0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl 25167791 >=3.10 yanked= False 2026-10-22T23:34:41.276373Z
+  mujoco-3.17.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 26482984 >=3.10 yanked= False 2026-10-22T23:34:44.568267Z
+  mujoco-3.17.0-cp311-cp311-win_amd64.whl 16172427 >=3.10 yanked= False 2026-10-22T23:34:47.637280Z
+  mujoco-3.17.0-cp312-cp312-macosx_11_0_arm64.whl 24955426 >=3.10 yanked= False 2026-10-22T23:34:50.567810Z
+  mujoco-3.17.0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl 25231702 >=3.10 yanked= False 2026-10-22T23:34:54.582256Z
+  mujoco-3.17.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 26654565 >=3.10 yanked= False 2026-10-22T23:34:57.762338Z
+  mujoco-3.17.0-cp312-cp312-win_amd64.whl 16311296 >=3.10 yanked= False 2026-10-22T23:57:32.433939Z
+  mujoco-3.17.0-cp313-cp313-macosx_11_0_arm64.whl 24955901 >=3.10 yanked= False 2026-10-22T23:57:35.806328Z
+  mujoco-3.17.0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl 25231820 >=3.10 yanked= False 2026-10-22T23:57:39.053239Z
+  mujoco-3.17.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 26654774 >=3.10 yanked= False 2026-10-22T23:57:42.981450Z
+  mujoco-3.17.0-cp313-cp313-win_amd64.whl 16312098 >=3.10 yanked= False 2026-10-22T23:57:46.199410Z
+  mujoco-3.17.0-cp314-cp314-macosx_11_0_arm64.whl 24971101 >=3.10 yanked= False 2026-10-22T23:57:49.296529Z
+  mujoco-3.17.0-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl 25253512 >=3.10 yanked= False 2026-10-22T23:57:56.281062Z
+  mujoco-3.17.0-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 26659095 >=3.10 yanked= False 2026-10-22T23:58:00.374014Z
+  mujoco-3.17.0-cp314-cp314t-macosx_11_0_arm64.whl 25316424 >=3.10 yanked= False 2026-10-22T23:58:04.278678Z
+  mujoco-3.17.0-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl 25603461 >=3.10 yanked= False 2026-10-22T23:58:07.324236Z
+  mujoco-3.17.0-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 26667292 >=3.10 yanked= False 2026-10-22T23:58:10.429438Z
+  mujoco-3.17.0-cp314-cp314t-win_amd64.whl 17443303 >=3.10 yanked= False 2026-10-22T23:58:13.459853Z
+  mujoco-3.17.0-cp314-cp314-win_amd64.whl 17074976 >=3.10 yanked= False 2026-10-22T23:58:16.562650Z
+  mujoco-3.17.0-cp315-cp315-macosx_11_0_arm64.whl 24971183 >=3.10 yanked= False 2026-10-22T23:58:19.431534Z
+  mujoco-3.17.0-cp315-cp315-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl 25253566 >=3.10 yanked= False 2026-10-22T23:58:27.121400Z
+  mujoco-3.17.0-cp315-cp315-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 26659091 >=3.10 yanked= False 2026-10-22T23:58:30.665010Z
+  mujoco-3.17.0-cp315-cp315t-macosx_11_0_arm64.whl 25315809 >=3.10 yanked= False 2026-10-22T23:58:33.676564Z
+  mujoco-3.17.0-cp315-cp315t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl 25602251 >=3.10 yanked= False 2026-10-22T23:58:37.366539Z
+  mujoco-3.17.0-cp315-cp315t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl 26665893 >=3.10 yanked= False 2026-10-22T23:58:40.824726Z
+  mujoco-3.17.0-cp315-cp315t-win_amd64.whl 17442205 >=3.10 yanked= False 2026-10-22T23:58:43.901874Z
+  mujoco-3.17.0-cp315-cp315-win_amd64.whl 17074961 >=3.10 yanked= False 2026-10-22T23:58:46.715077Z
+  mujoco-3.17.0.tar.gz 7145175 >=3.10 yanked= False 2026-10-22T23:58:49.331859Z

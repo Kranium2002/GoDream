@@ -1,0 +1,23 @@
+$ uv pip install --python C:/Users/vidhu/AppData/Local/Temp/claude/07d910646a9cb71e/82e647f3-13a8-4067-91a4-d0b43ab8dda2/scratchpad/snn_probe/venv_pypi/Scripts/python.exe --cache-dir D:/BerlinPrior/.uv-cache --link-mode=copy numpy==2.5.5 pandas==2.3.3 scikit-learn==1.9.0 scipy==1.18.1 torch snntorch
+Using Python 3.13.16 environment at: C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\snn_probe\venv_pypi
+Resolved 22 packages in 1.63s
+Downloading networkx (2.0MiB)
+Downloading sympy (6.0MiB)
+Downloading torch (120.9MiB)
+ Downloaded networkx
+ Downloaded sympy
+ Downloaded torch
+Prepared 10 packages in 4m 07s
+Installed 11 packages in 1m 40s
+ + filelock==4.2.12
+ + fsspec==2026.9.0
+ + jinja2==3.1.6
+ + markupsafe==3.0.4
+ + mpmath==1.3.0
+ + networkx==3.7
+ + setuptools==84.2.1
+ + snntorch==1.0.0
+ + sympy==1.14.0
+ + torch==2.15.0
+ + typing-extensions==4.16.0
+exit=0

@@ -1,0 +1,30 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+config: config.yaml plus skills.fixture_measure.candidate_points_per_dim=[7, 5]; students.snn.max_steps reduced to 400 (config.yaml value 1500)
+  trained: 900 optimiser rows and 100 early-stopping rows of the 1000-row training dream; 1000 training situation digests
+
+== student_record refuses every overlap and states its size ==
+  [ok] student_record, exact copy of the training dream -> HeldOutOverlapError: dreams_heldout: 1000 of 1000 dream rows (1000 of 1000 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out; pass dreams made from situations the 
+  [ok] student_record, subset: the first 150 training rows -> HeldOutOverlapError: dreams_heldout: 150 of 150 dream rows (150 of 150 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out; pass dreams made from situations the stud
+  [ok] student_record, only the optimiser's rows -> HeldOutOverlapError: dreams_heldout: 900 of 900 dream rows (900 of 900 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out; pass dreams made from situations the stud
+  [ok] student_record, only the early-stopping rows -> HeldOutOverlapError: dreams_heldout: 100 of 100 dream rows (100 of 100 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out; pass dreams made from situations the stud
+  [ok] student_record, superset: training dream + fresh rows -> HeldOutOverlapError: dreams_heldout: 1000 of 1500 dream rows (1000 of 1500 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out; pass dreams made from situations the 
+  [ok] student_record, fresh rows + one training row -> HeldOutOverlapError: dreams_heldout: 1 of 501 dream rows (1 of 501 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out; pass dreams made from situations the student 
+
+== agreement_with_dream refuses them unless allow_seen=True, and then labels the record ==
+  [ok] agreement_with_dream, exact copy of the training dream -> HeldOutOverlapError: 1000 of 1000 dream rows (1000 of 1000 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out. Pass dreams made from situations the student never sa
+  [ok] agreement_with_dream, subset: the first 150 training rows -> HeldOutOverlapError: 150 of 150 dream rows (150 of 150 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out. Pass dreams made from situations the student never saw, o
+  [ok] agreement_with_dream, only the optimiser's rows -> HeldOutOverlapError: 900 of 900 dream rows (900 of 900 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out. Pass dreams made from situations the student never saw, o
+  [ok] agreement_with_dream, only the early-stopping rows -> HeldOutOverlapError: 100 of 100 dream rows (100 of 100 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out. Pass dreams made from situations the student never saw, o
+  [ok] agreement_with_dream, superset: training dream + fresh rows -> HeldOutOverlapError: 1000 of 1500 dream rows (1000 of 1500 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out. Pass dreams made from situations the student never sa
+  [ok] agreement_with_dream, fresh rows + one training row -> HeldOutOverlapError: 1 of 501 dream rows (1 of 501 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out. Pass dreams made from situations the student never saw, or al
+  MECHANICS numbers: agreement with the dream's choice on 150 training rows 0.280 (labelled 'includes situations seen in training: 150 of 150 dream rows '...) vs on 500 fresh rows 0.340
+  [ok] allow_seen=True on the subset: label starts with 'includes situations seen in training', held_out False, 150 rows seen
+  [ok] fresh dreams from another stream: no overlap, labelled held out
+  [ok] allow_seen=True with no overlap: still labelled held out
+  [ok] allow_seen given as a string -> TypeError: allow_seen must be True or False; got 'yes'
+
+== fresh dreams are accepted by student_record ==
+  [ok] fresh dreams: the record states 0 of 500 rows seen in training and the number of training situations
+
+CHECK RESULT: 17 assertions held, 0 failed 

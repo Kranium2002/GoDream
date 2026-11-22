@@ -1,0 +1,42 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+base key: a4867d4bf286efdb0e544c23350b33f1d83f14861aa2523b36ed179871bd969a
+
+== identical across processes with different PYTHONHASHSEED ==
+  PYTHONHASHSEED=1: a4867d4bf286efdb0e544c23350b33f1d83f14861aa2523b36ed179871bd969a
+  PYTHONHASHSEED=2: a4867d4bf286efdb0e544c23350b33f1d83f14861aa2523b36ed179871bd969a
+  [ok] child processes agree with each other and with this process
+
+== must CHANGE the key ==
+  [ok] x_train one cell +1 ulp                    e281ab7f9b20a3cf
+  [ok] y_train one cell +1 ulp                    b23572f041ba96cb
+  [ok] x_query one cell +1 ulp                    e6e32e154407daab
+  [ok] setting n_estimators 8 -> 4                bbcbe21bd46e7434
+  [ok] setting random_state 0 -> 1                71f5211b33511197
+  [ok] setting model_path -> v3_default           12e990701c1b0880
+  [ok] setting client_version -> 0.10.0           a278cf3e72404e2f
+  [ok] quantile list (extra level 0.05)           66d1244b8c5e764a
+  [ok] quantile list (0.25/0.75 dropped)          9f810df42952b3e3
+  [ok] categorical indices (1,) -> ()             94e4e6ce9ca665ca
+  [ok] categorical indices (1,) -> (1, 2)         ef0685854b2803ce
+  [ok] column order swapped (arrays)              7c94ae0d42d143d3
+  [ok] base URL of another deployment             24dca48502729cd1
+  [ok] one query row dropped                      923dd5da6bd47736
+
+== must NOT change the key ==
+  [ok] config dict insertion order reversed (deep) a4867d4bf286efdb
+  [ok] cache_dir / call_log paths                 a4867d4bf286efdb
+  [ok] max_tokens_per_request / project budget    a4867d4bf286efdb
+  [ok] multi_outcome_mode / spread_levels         a4867d4bf286efdb
+  [ok] -0.0 instead of +0.0 in x_train[0, 0]      a4867d4bf286efdb
+  [ok] Fortran-order x_train copy                 a4867d4bf286efdb
+  [ok] big-endian x_query copy                    a4867d4bf286efdb
+  [ok] verified request limits / lock / row cap   a4867d4bf286efdb
+
+== rejected inputs ==
+  [ok] float32 x_train raises TypeError: x_train must be a float64 array; got dtype float32
+  [ok] unsorted categorical indices raises ValueError: categorical_indices must be strictly increasing inside [0, 4); got [2, 1]
+  [ok] categorical index out of range raises ValueError: categorical_indices must be strictly increasing inside [0, 4); got [4]
+  [ok] empty base URL raises ValueError: base_url must be a non-empty string; got ''
+  [ok] y_train length mismatch raises ValueError: y_train must have shape (6,); got (5,)
+
+RESULT: 0 failed check(s)

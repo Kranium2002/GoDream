@@ -1,0 +1,5 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+bias 0.25: firing rate 0.300; main 7225 pJ [7121, 7325] ratio to dense 0.629; with neuron updates 12843 pJ (no interval) ratio 1.119; dense 11482 pJ
+bias 0.35: firing rate 0.341; main 8050 pJ [7955, 8140] ratio to dense 0.701; with neuron updates 13691 pJ (no interval) ratio 1.192; dense 11482 pJ
+bias 0.45: firing rate 0.384; main 8926 pJ [8844, 9005] ratio to dense 0.777; with neuron updates 14593 pJ (no interval) ratio 1.271; dense 11482 pJ
+operations keys holding an interval: ['energy_main_pj_interval'] + spikes/synaptic-ops sub-intervals; energy_estimate keys: ['caveats', 'constants', 'dense_reference_macs', 'dense_reference_pj_per_decision', 'firing_rate_per_layer', 'first_layer_counted', 'first_layer_macs', 'label', 'layer_sizes', 'mean_spikes_per_layer', 'mean_synaptic_ops', 'n_decisions', 'neuron_updates', 'ratio_snn_main_to_dense', 'ratio_snn_with_neuron_updates_to_dense', 'snn_main_pj_each', 'snn_main_pj_per_decision', 'snn_with_neuron_updates_pj_per_decision', 'time_steps']

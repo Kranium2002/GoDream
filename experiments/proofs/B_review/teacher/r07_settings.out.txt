@@ -1,0 +1,15 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+== 1. tabpfn switches in config.yaml ==
+  config.yaml tabpfn.check_usage_before_uncached_request = True -> set to False
+  config.yaml tabpfn.estimate_cost_before_uncached_request = True -> set to False
+  config.yaml tabpfn.cache_requests_and_responses = True -> set to False
+  TeacherSettings identical after flipping them: True
+  modules under learned_judgment/ that mention any of them or verified_request_limit_*: []
+
+== 2. persistence.* checked only inside cache.put, after the billable call ==
+  raised: ConfigError config.yaml key 'persistence.replace_attempts' is null: it must be set before this step can run
+  billable predicts made before the error: 1 | events: ['dispatch', 'cache_write_failed']
+  cache files: (none)
+  note: fileio reads persistence.* from the global config.yaml, never from the mapping the teacher was built from
+exit=0
+

@@ -1,0 +1,5 @@
+warm_start fit(): optimizer object replaced=True  adam.t before=5 after=5  (new Adam => moments ms/vs reset)  n_iter_=5 len(loss_curve_)=10
+partial_fit():      optimizer object kept=True  adam.t=6  n_iter_=1 len(loss_curve_)=11
+MLPRegressor(solver='lbfgs') hasattr partial_fit: True | MLPClassifier(solver='lbfgs') hasattr partial_fit: False
+lbfgs partial_fit call1 n_iter_=50 call2 n_iter_=20 (a full L-BFGS run of up to max_iter each call, continuing from current weights; weights changed=True)
+exit=0

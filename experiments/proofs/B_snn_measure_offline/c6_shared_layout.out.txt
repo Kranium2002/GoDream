@@ -1,0 +1,22 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+config: config.yaml plus skills.fixture_measure.candidate_points_per_dim=[7, 5]; students.snn.max_steps reduced to 400 (config.yaml value 1500); shared_skill_slots=8 (config.yaml); FIXTURE feature width 6 (config.yaml shared_feature_width is None)
+  shared layout: width 14 = feature width 6 + 8 slots; skills ['fixture_measure'], free slots 7; view layers (14, 64, 35) vs per-skill (4, 64, 35)
+  [ok] one skill in slot 0, 7 slots empty; padding columns and empty slots are 0
+
+== student_record for the per-skill student and for the padded shared-layout view ==
+  MECHANICS per-skill: n_inputs 4, layers [4, 64, 35], agreement 0.250, mean spikes 151.82, first-layer MACs 256, main ESTIMATE 5959.9 pJ, with updates 11541.6 pJ, dense 11481.6 pJ, verdict 'inconclusive'; latency full path median 441.4 us
+  MECHANICS shared-layout view: n_inputs 14, layers [14, 64, 35], agreement 0.250, mean spikes 151.82, first-layer MACs 896, main ESTIMATE 8903.9 pJ, with updates 14485.6 pJ, dense 14425.6 pJ, verdict 'inconclusive'; latency full path median 592.8 us
+  [ok] the view's record states its input width, its kind and the shared layout from its meta (a read-only mapping)
+  [ok] both records state the skill's own situation encoding
+  [ok] the view decides exactly like the per-skill student on every held-out row
+  [ok] same spikes per decision and the same in-dream agreement and regret
+  [ok] the same regret-difference interval (same regrets, same seed stream)
+  [ok] the 10 extra input columns are counted in the first layer and in the dense reference (10 x 64 MACs each)
+  [ok] the view's latency was timed on its own (padded) network through the full path
+
+== the view is held to the same held-out rule ==
+  [ok] student_record for the view with the training dream as held out -> HeldOutOverlapError: dreams_heldout: 1000 of 1000 dream rows (1000 of 1000 distinct situations) have a situation this student saw in training (optimiser or early-stopping rows), so they are not held out; pass dreams made from situations the 
+  [ok] agreement_with_dream accepts the view on fresh dreams
+
+CHECK RESULT: 10 assertions held, 0 failed 

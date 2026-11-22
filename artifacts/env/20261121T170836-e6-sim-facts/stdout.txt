@@ -1,0 +1,40 @@
+mujoco 3.11.0
+1. hasattr(mujoco, 'mj_geomDistance'): True
+   ball centre 1.0 m ahead of the trunk origin: mj_geomDistance(ball, trunk box) = 0.718 | expected 0.718
+   ball centre 0.2 m ahead of the trunk origin: mj_geomDistance(ball, trunk box) = -0.082 | expected -0.082
+2. geoms by (group, contype, conaffinity): count and bodies
+   (0, 1, 1) 2 ['ball', 'world']
+   (2, 0, 0) 33 ['FL_calf', 'FL_hip', 'FL_thigh', 'FR_calf', 'FR_hip', 'FR_thigh', 'RL_calf', 'RL_hip', 'RL_thigh', 'RR_calf', 'RR_hip', 'RR_thigh', 'base_link']
+   (3, 1, 1) 23 ['FL_calf', 'FL_hip', 'FL_thigh', 'FR_calf', 'FR_hip', 'FR_thigh', 'RL_calf', 'RL_hip', 'RL_thigh', 'RR_calf', 'RR_hip', 'RR_thigh', 'base_link']
+3. trunk collision geom 6 mjGEOM_BOX size [0.1881, 0.04675, 0.057] pos [0.0, 0.0, 0.0]
+3. trunk collision geom 7 mjGEOM_CYLINDER size [0.05, 0.045, 0.0] pos [0.285, 0.0, 0.01]
+3. trunk collision geom 8 mjGEOM_SPHERE size [0.047, 0.0, 0.0] pos [0.293, 0.0, -0.06]
+   x extent of the trunk geoms: -0.1881 to 0.3400 m
+   capsule on the trunk x axis: radius 0.1070 m, segment half length 0.2930 m (reaches x = +-0.4000 m)
+4. artifacts/env/locomotion\trot_0.3.npz: mean trunk origin height after 5 s = 0.3118 m
+4. artifacts/env/locomotion\trot_0.6.npz: mean trunk origin height after 5 s = 0.3248 m
+4. artifacts/env/locomotion\trot_0.9.npz: mean trunk origin height after 5 s = 0.3335 m
+   mean of the three: 0.3234 m
+5. artifacts/env/locomotion\stand.npz: max tilt 2.157 deg, max tilt rate 0.5173 rad/s
+5. artifacts/env/locomotion\stop.npz: max tilt 4.332 deg, max tilt rate 2.4375 rad/s
+5. artifacts/env/locomotion\trot_0.3.npz: max tilt 2.986 deg, max tilt rate 0.7669 rad/s
+5. artifacts/env/locomotion\trot_0.6.npz: max tilt 4.332 deg, max tilt rate 2.4375 rad/s
+5. artifacts/env/locomotion\trot_0.9.npz: max tilt 4.704 deg, max tilt rate 2.2266 rad/s
+5. artifacts/env/locomotion\turn_left.npz: max tilt 4.402 deg, max tilt rate 1.4184 rad/s
+5. artifacts/env/locomotion\turn_right.npz: max tilt 5.071 deg, max tilt rate 0.8175 rad/s
+5. artifacts/env/commands\vel_x_max.npz: max tilt 4.412 deg, max tilt rate 2.3892 rad/s
+5. artifacts/env/commands\vel_x_min.npz: max tilt 7.438 deg, max tilt rate 2.5211 rad/s
+5. artifacts/env/commands\vel_y_max.npz: max tilt 8.076 deg, max tilt rate 2.6552 rad/s
+5. artifacts/env/commands\vel_y_min.npz: max tilt 5.149 deg, max tilt rate 1.9870 rad/s
+5. artifacts/env/commands\yaw_rate_max.npz: max tilt 8.859 deg, max tilt rate 1.8907 rad/s
+5. artifacts/env/commands\yaw_rate_min.npz: max tilt 5.171 deg, max tilt rate 1.6394 rad/s
+   largest: tilt 8.859 deg, tilt rate 2.6552 rad/s
+5. artifacts/env/locomotion\trot_0.3.npz: gait frequency 1.760 Hz, period 0.5682 s
+5. artifacts/env/locomotion\trot_0.6.npz: gait frequency 2.840 Hz, period 0.3521 s
+5. artifacts/env/locomotion\trot_0.9.npz: gait frequency 3.400 Hz, period 0.2941 s
+6. solref [0.02, ratio], rebound from 2.0 m: [(0.05, np.float64(0.686)), (0.06, np.float64(1.89)), (0.07, np.float64(1.553)), (0.08, np.float64(0.955)), (0.09, np.float64(0.99)), (0.1, np.float64(1.069)), (0.11, np.float64(0.941)), (0.12, np.float64(0.743)), (0.13, np.float64(0.819)), (0.14, np.float64(0.801)), (0.15, np.float64(0.724)), (0.16, np.float64(0.637)), (0.17, np.float64(0.652)), (0.18, np.float64(0.628)), (0.19, np.float64(0.58)), (0.2, np.float64(0.522))]
+6. solref [0.03, ratio], rebound from 2.0 m: [(0.05, np.float64(1.356)), (0.06, np.float64(1.354)), (0.07, np.float64(1.261)), (0.08, np.float64(1.092)), (0.09, np.float64(1.122)), (0.1, np.float64(0.934)), (0.11, np.float64(0.977)), (0.12, np.float64(0.897)), (0.13, np.float64(0.843)), (0.14, np.float64(0.816)), (0.15, np.float64(0.734)), (0.16, np.float64(0.725)), (0.17, np.float64(0.681)), (0.18, np.float64(0.636)), (0.19, np.float64(0.615)), (0.2, np.float64(0.574))]
+6. solref [0.04, ratio], rebound from 2.0 m: [(0.05, np.float64(1.512)), (0.06, np.float64(1.308)), (0.07, np.float64(1.225)), (0.08, np.float64(1.19)), (0.09, np.float64(1.053)), (0.1, np.float64(1.052)), (0.11, np.float64(0.942)), (0.12, np.float64(0.931)), (0.13, np.float64(0.857)), (0.14, np.float64(0.827)), (0.15, np.float64(0.772)), (0.16, np.float64(0.737)), (0.17, np.float64(0.693)), (0.18, np.float64(0.66)), (0.19, np.float64(0.623)), (0.2, np.float64(0.592))]
+6. solref [0.05, ratio], rebound from 2.0 m: [(0.05, np.float64(1.481)), (0.06, np.float64(1.294)), (0.07, np.float64(1.218)), (0.08, np.float64(1.195)), (0.09, np.float64(1.113)), (0.1, np.float64(1.015)), (0.11, np.float64(0.991)), (0.12, np.float64(0.936)), (0.13, np.float64(0.866)), (0.14, np.float64(0.834)), (0.15, np.float64(0.789)), (0.16, np.float64(0.735)), (0.17, np.float64(0.706)), (0.18, np.float64(0.667)), (0.19, np.float64(0.628)), (0.2, np.float64(0.6))]
+   solref [0.04, 0.1], coefficient of restitution sqrt(rebound / drop) for drops of 0.5, 1, 2, 4 m: [0.77, 0.743, 0.725, 0.798]
+   solref [0.04, 0.11], coefficient of restitution sqrt(rebound / drop) for drops of 0.5, 1, 2, 4 m: [0.758, 0.743, 0.686, 0.772]

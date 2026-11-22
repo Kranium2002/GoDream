@@ -1,0 +1,20 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+FIXTURE provider in use: usage, quote and the estimator are stand-ins (no network); outputs are not evidence
+  [ok] a request whose provider error text holds U+2028 / U+2029 / U+0085 raises RuntimeError: Fail to call predict: [HTTP 500] upstream said:\u2028retry later.\u2029next\x85end \xe9
+  [ok] the call log is pure ASCII
+  [ok] records split on '\n': 2, and str.splitlines() agrees
+  [ok] read() returns dispatch, provider_error
+  [ok] the error text round-trips exactly
+  [ok] the ledger is readable: 10,000 tokens
+  [ok] the next uncached request (another key) is sent and completes
+
+== a raw U+2028 inside an older line (written before the fix) ==
+  [ok] it is read as one record with its text intact
+  [ok] later requests still work
+
+== parse_log_text rules ==
+  [ok] '\n'-only split keeps U+2028 inside a record
+  [ok] an unterminated last line raises ValueError: <text>:2 is not terminated by a newline (an interrupted append?)
+  [ok] a blank line raises ValueError: <text>:2 is not a valid call-log line: Expecting value: line 1 column 1 (char 0)
+
+RESULT: 0 failed check(s)

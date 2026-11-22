@@ -1,0 +1,28 @@
+$ uv pip install --python C:/Users/vidhu/AppData/Local/Temp/claude/07d910646a9cb71e/82e647f3-13a8-4067-91a4-d0b43ab8dda2/scratchpad/snn_probe/venv_pypi/Scripts/python.exe --cache-dir D:/BerlinPrior/.uv-cache numpy==2.5.5 pandas==2.3.3 scikit-learn==1.9.0 scipy==1.18.1
+Using Python 3.13.16 environment at: C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\snn_probe\venv_pypi
+Resolved 11 packages in 357ms
+Downloading scikit-learn (7.8MiB)
+Downloading scipy (34.9MiB)
+Downloading pandas (10.5MiB)
+Downloading numpy (12.0MiB)
+ Downloaded numpy
+ Downloaded scikit-learn
+ Downloaded pandas
+ Downloaded scipy
+Prepared 11 packages in 1m 03s
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 11 packages in 11.22s
+ + cloudpickle==3.1.3
+ + joblib==1.6.0
+ + narwhals==2.29.0
+ + numpy==2.5.5
+ + pandas==2.3.3
+ + python-dateutil==4.0.0
+ + pytz==2026.6
+ + scikit-learn==1.9.0
+ + scipy==1.18.1
+ + threadpoolctl==3.8.0
+ + tzdata==2026.6
+exit=0

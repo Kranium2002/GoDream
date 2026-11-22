@@ -1,0 +1,5 @@
+mujoco 3.17.0 numpy 2.5.5 python 3.13.18 cpu_count 4
+timestep 0.002 integrator mjINT_EULER cone mjCONE_ELLIPTIC impratio 100.0 solver mjSOL_NEWTON iterations 100 ls_iterations 50 gravity [ 0.    0.   -9.81] nativeccd True
+python loop of mj_step(m, d): N=20000 steps/s runs=[11493, 10060, 10858, 10729, 9665] median=10729 min=9665 real-time factor (median*dt)=21.5x  cpu/wall=0.82
+mj_step(m, d, nstep=N) single call: N=20000 steps/s runs=[8879, 12343, 10076, 10333, 12219] median=10333 min=8879 real-time factor (median*dt)=20.7x  cpu/wall=0.89
+PD hold (kp=30, kd=0.5, python loop): steps/s runs=[11301, 11012, 9484] median=11012 RTF=22.0x  ncon 6 base z 0.2076

@@ -1,0 +1,20 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+heads {'fx_a': 35, 'fx_b': 15}; sampling {'fx_a': 0.7, 'fx_b': 0.3}; 360 training and 40 validation rows per head
+  steps_run 300 best_step 300; restored per head {'fx_a': 0.056001641615734524, 'fx_b': 0.05786403556830173}; constant prediction {'fx_a': 0.2739219577873663, 'fx_b': 0.32902236925989603}; firing rate (0.20611328125,)
+  [ok] the report names both heads and their batch shares
+  [ok] rows per head
+  [ok] the validation curve holds a loss per head at every evaluation
+  [ok] the restored total = sampling-weighted sum of the per-head losses
+  [ok] each head's restored loss is below its own constant prediction
+  rows per batch over 2000 draws: mean [44.8135 19.1865] (batch 64); min [44 19] max [45 20]
+  [ok] each batch has batch_size rows and the mean share per head follows the sampling
+  [ok] head fx_a: exported numpy network (35 outputs) passes parity on all 400 rows
+  [ok] head fx_b: exported numpy network (15 outputs) passes parity on all 400 rows
+  [ok] both heads' networks share the same trunk weights
+
+== a head that cannot learn is refused by name ==
+  [ok] fit where head fx_b sees no situation -> TrainingError: head 'fx_b': the restored validation loss 0.31174504168577316 is not below 0.3116345601062602, the loss of the best constant prediction (the head's mean training target): the network does no better than ignoring the situ
+  [ok] (the total improved and head fx_a learned: only the per-head rule refuses the fit)
+
+CHECK RESULT: 11 assertions held, 0 failed 

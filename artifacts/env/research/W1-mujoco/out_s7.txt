@@ -1,0 +1,8 @@
+mujoco 4.0.1
+geom ids: floor 0 feet {'FL': 20, 'FR': 32, 'RL': 44, 'RR': 56} unknown name -> -1
+t=0 (home keyframe): ncon 4 {'FL': (True, np.float64(29.23714940588054)), 'FR': (True, np.float64(29.23699111275486)), 'RL': (True, np.float64(27.747751155902947)), 'RR': (True, np.float64(27.747455868722515))}
+t=0.050 ncon 4 {'FL': (True, np.float64(13.35)), 'FR': (True, np.float64(13.35)), 'RL': (True, np.float64(8.32)), 'RR': (True, np.float64(8.32))}
+contact[0] fields: geom1 0 geom2 20 geom [ 0 20] dist -0.010145 pos [ 0.1913  0.1423 -0.0051] dim 6 exclude 0 efc_address 12
+names of contact[0]: floor / FL
+all contacts by body: [('world', 'FL_calf'), ('world', 'FR_calf'), ('world', 'RL_calf'), ('world', 'RR_calf')]
+t=3.050 after collapse (zero ctrl): ncon 7, base-body geoms touching floor: [6, 8]

@@ -1,0 +1,45 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+fixture dream: 1000 rows x 35 candidates, grid (7, 5), method 'physics_only', request_hashes []
+
+== score_spread ==
+  [ok] spread 0.172828 = median over rows of the row std
+  [ok] all rows flat -> ValueError: score spread is 0: 5 of 5 rows score all 4 candidates identically; the dream gives nothing to learn
+  [ok] 3 of 5 rows flat (median std 0) -> ValueError: score spread is 0: 3 of 5 rows score all 4 candidates identically; the dream gives nothing to learn
+  [ok] 2 flat rows of 5: spread > 0, accepted
+  [ok] non-finite scores -> ValueError: scores contain non-finite values
+  [ok] 1-D scores -> ValueError: scores must have shape (n >= 1, C >= 1); got (4,)
+
+== soft_targets ==
+  [ok] shape (1000, 35)
+  [ok] rows sum to 1 (max |sum - 1| = 4.44e-16) at config temperature 0.5
+  [ok] targets are non-negative
+  [ok] argmax of every row = the dream's choice (DreamSet.chosen)
+  [ok] argmax of every row = argmax of the scores
+  mechanics numbers (fixture): temperature -> mean max target probability, mean entropy (nats)
+      4.0 -> 0.0366, 3.5298
+      2.0 -> 0.0447, 3.4692
+      1.0 -> 0.0608, 3.3137
+      0.5 -> 0.0909, 3.0324
+     0.25 -> 0.1459, 2.6367
+      0.1 -> 0.2633, 1.9780
+  [ok] mean max probability rises strictly as the temperature falls
+  [ok] every row's max probability is non-decreasing as the temperature falls
+  [ok] mean entropy falls strictly as the temperature falls
+  [ok] temperature 0.0 -> ValueError: temperature must be finite and > 0; got 0.0
+  [ok] temperature -1.0 -> ValueError: temperature must be finite and > 0; got -1.0
+  [ok] temperature nan -> ValueError: temperature must be finite and > 0; got nan
+  [ok] temperature inf -> ValueError: temperature must be finite and > 0; got inf
+  [ok] spread 0 -> ValueError: spread must be finite and > 0; got 0.0
+  [ok] non-finite scores -> ValueError: scores contain non-finite values
+
+== dream_regret ==
+  [ok] regret of the dream's choice is exactly 0 for every row
+  [ok] for all 35 candidates: regret >= 0, = 0 exactly when the candidate is a best one, > 0 otherwise
+  mechanics numbers (fixture): 520 of 1000 rows have more than one best candidate (e.g. no side-step: every delay ties)
+  [ok] index out of range -> ValueError: chosen holds an index outside [0, 35)
+  [ok] float indices -> ValueError: chosen must hold integer indices; got dtype float64
+  [ok] wrong length -> ValueError: chosen must have shape (1000,); got (999,)
+  [ok] torch was not imported by targets or the engine dream step
+
+CHECK RESULT: 26 assertions held, 0 failed 

@@ -1,0 +1,44 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+OK   run-result file round trip: format 'learned_judgment.run_result/v1', method 'physics_only'
+OK   manifest stored relative to the result file: ../runs/fx_dev__physics_only.manifest.json
+  skill            method  status                                            blocker split world_preset run_id                                                                            source mean_loss     spearman
+fixture            oracle NOT RUN no saved run-result file for this skill and method                                                                                                               NOT RUN      NOT RUN
+fixture      physics_only     RUN                                                      dev      default fx_dev  C:\Users\vidhu\AppData\Local\Temp\tmp_fb2c2w6\results\fixture__physics_only.json       0.0    undefined
+fixture     constant_bias     RUN                                                      dev      default fx_dev C:\Users\vidhu\AppData\Local\Temp\tmp_fb2c2w6\results\fixture__constant_bias.json       0.0 not reported
+fixture  gaussian_process NOT RUN no saved run-result file for this skill and method                                                                                                               NOT RUN      NOT RUN
+fixture gradient_boosting NOT RUN no saved run-result file for this skill and method                                                                                                               NOT RUN      NOT RUN
+fixture   mlp_on_attempts NOT RUN no saved run-result file for this skill and method                                                                                                               NOT RUN      NOT RUN
+fixture     direct_tabpfn NOT RUN no saved run-result file for this skill and method                                                                                                               NOT RUN      NOT RUN
+fixture           teacher NOT RUN          fixture blocker: provider request NOT RUN                                                                                                               NOT RUN      NOT RUN
+fixture     snn_per_skill NOT RUN no saved run-result file for this skill and method                                                                                                               NOT RUN      NOT RUN
+fixture        snn_shared NOT RUN no saved run-result file for this skill and method                                                                                                               NOT RUN      NOT RUN
+OK   one row per config method, in config order (10 rows)
+OK   a RUN row names its run-result file as source
+OK   value copied unchanged from the file
+OK   metric absent from a file -> 'not reported'
+OK   method without a file -> NOT RUN row with a blocker
+OK   a caller blocker explains a NOT RUN row
+OK   no PASS cell anywhere
+OK   CSV round trip statuses
+OK   Markdown has header, divider and 10 rows
+
+| skill | method | status | blocker | split | world_preset | run_id | source | mean_loss | spearman |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| fixture | oracle | NOT RUN | no saved run-result file for this skill and method |  |  |  |  | NOT RUN | NOT RUN |
+| fixture | physics_only | RUN |  | dev | default | fx_dev | C:\Users\vidhu\AppData\Local\Temp\tmp_fb2c2w6\results\fixture__physics_only.json | 0.0 | undefined |
+| fixture | constant_bias | RUN |  | dev | default | fx_dev | C:\Users\vidhu\AppData\Local\Temp\tmp_fb2c2w6\results\fixture__constant_bias.json | 0.0 | not reported |
+| fixture | gaussian_process | NOT RUN | no saved run-result file for this skill and method |  |  |  |  | NOT RUN | NOT RUN |
+| fixture | gradient_boosting | NOT RUN | no saved run-result file for this skill and method |  |  |  |  | NOT RUN | NOT RUN |
+| fixture | mlp_on_attempts | NOT RUN | no saved run-result file for this skill and method |  |  |  |  | NOT RUN | NOT RUN |
+| fixture | direct_tabpfn | NOT RUN | no saved run-result file for this skill and method |  |  |  |  | NOT RUN | NOT RUN |
+| fixture | teacher | NOT RUN | fixture blocker: provider request NOT RUN |  |  |  |  | NOT RUN | NOT RUN |
+| fixture | snn_per_skill | NOT RUN | no saved run-result file for this skill and method |  |  |  |  | NOT RUN | NOT RUN |
+| fixture | snn_shared | NOT RUN | no saved run-result file for this skill and method |  |  |  |  | NOT RUN | NOT RUN |
+OK   rejects a PASS metric value: ValueError: write_run_result metric 'm': value must be a finite number or 'undefined'; got 'PASS'
+OK   rejects overwriting a run-result file: FileExistsError: C:\Users\vidhu\AppData\Local\Temp\tmp_fb2c2w6\results\fixture__physics_only.json already exists: a run-result file is never overwritten
+OK   rejects a duplicated skill x method: ValueError: C:\Users\vidhu\AppData\Local\Temp\tmp_fb2c2w6\results\fixture__physics_only.json: a second run-result file for (fixture, physics_only); first: C:\Users\vidhu\AppData\Local\Temp\tmp_fb2c2w6\results\fixture__physics_only.json
+OK   rejects a skill outside the table: ValueError: C:\Users\vidhu\AppData\Local\Temp\tmp_fb2c2w6\results\fixture__physics_only.json: skill 'fixture' / method 'physics_only' is not in the table's skills / config methods
+OK   rejects a blocker for a pair with a file: ValueError: blocker given for ('fixture', 'physics_only'), which has a run-result file
+OK   a refused run result writes no file
+
+CHECK RESULT: 17 assertions held, 0 failed 

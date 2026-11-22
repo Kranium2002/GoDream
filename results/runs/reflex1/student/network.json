@@ -1,0 +1,1 @@
+{"action_names":["yaw+0.00_vx0.60","yaw+0.00_vx0.40","yaw+0.60_vx0.60","yaw+0.60_vx0.40","yaw-0.60_vx0.60","yaw-0.60_vx0.40"],"format":"learned-judgment/spiking-network/v1","heads":{"action":[0,6]},"input":{"encoding":"(x - 0.5) * sqrt(12)","features":63},"layer_sizes":[63,64,6],"network_sha256":"f86ec4c33edc6c5ff1a0facec578b9a02b41f9186237f9bfa278dfdf2fa52db9","skill":"reflex"}

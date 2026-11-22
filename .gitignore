@@ -14,3 +14,15 @@ __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
 .pytest_cache/
+
+# Research proofs: scripts and their outputs are committed; copies of third-party pages and
+# sources, and binary arrays that the scripts regenerate, stay local.
+experiments/proofs/**/fetched/
+experiments/proofs/**/raw/
+experiments/proofs/E7_provider_terms/text/
+experiments/proofs/**/*.npz
+experiments/proofs/**/*.pt
+experiments/proofs/**/*.lock
+
+# MuJoCo writes this into the working directory when a simulation goes unstable.
+MUJOCO_LOG.TXT

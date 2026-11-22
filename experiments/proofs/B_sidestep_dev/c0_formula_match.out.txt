@@ -1,0 +1,38 @@
+PLUMBING CHECK - fixture values, pure functions only; no simulator, no model. Its numbers go into no report.
+
+spec sidestep_reach: situation ('dog_forward_speed_m_s', 'target_sideways_m', 'declared_payload_kg', 'declared_surface'), actions ('side_velocity_m_s', 'hold_duration_s'), outcomes ('sideways_error_m', 'fall', 'lateral_command_m')
+FIXTURE declared values for this plumbing spec: {'declared_payload_kg': 0.0, 'declared_surface': 'default'}
+  FIXTURE skills.dodge.episode_duration_s: None -> 1.8
+  FIXTURE skills.dodge.situation_ranges.ball_rel_x_m: None -> [-10000.0, 10000.0]
+  FIXTURE skills.dodge.situation_ranges.ball_rel_y_m: None -> [-10000.0, 10000.0]
+  FIXTURE skills.dodge.situation_ranges.ball_rel_z_m: None -> [-10000.0, 10000.0]
+  FIXTURE skills.dodge.situation_ranges.ball_vel_x_m_s: None -> [-10000.0, 10000.0]
+  FIXTURE skills.dodge.situation_ranges.ball_vel_y_m_s: None -> [-10000.0, 10000.0]
+  FIXTURE skills.dodge.situation_ranges.ball_vel_z_m_s: None -> [-10000.0, 10000.0]
+  FIXTURE skills.dodge.situation_ranges.dog_forward_speed_m_s: None -> [-1.0, 1.0]
+  FIXTURE skills.dodge.declared_surfaces: None -> ['default', 'fixture_level']
+  FIXTURE skills.dodge.physics.body_half_length_m: None -> 0.0
+  FIXTURE skills.dodge.physics.body_radius_m: None -> 0.001
+  FIXTURE skills.dodge.physics.base_height_m: None -> 1.0
+  FIXTURE skills.dodge.physics.gravity_m_s2: 9.81 -> 1e-200
+PASS  DodgeSpec builds from the fixture config; its time grid is every control period to the episode end  [91 grid times, last 1.8 s, step 0.02 s]
+PASS  both specs use the same formula constants  [assumed_latency_s 0.05, response_time_s 0.3]
+PASS  fixture geometry: the closest approach falls exactly at the queried grid time for every row  [5733 rows = 63 candidates x 91 times]
+PASS  fixture geometry: every clearance is positive, so it is not clipped at 0  [smallest clearance 2.117 m]
+
+clearances equal to the last bit: 5733 of 5733
+largest |travel(this spec) - travel(DodgeSpec, recovered)|: 2.220e-16 m (tolerance 1.0e-12 m)
+travel range on the grid: -0.7882 to 0.7882 m
+PASS  this spec's sideways travel equals DodgeSpec's on every candidate x control period  [bit-equal clearances 5733/5733, largest travel difference 2.220e-16 m]
+
+== spec functions (plumbing) ==
+PASS  quantile weights are positive and sum to 1  [[0.175, 0.2, 0.25, 0.19999999999999996, 0.17500000000000004]]
+PASS  objective of a point mass is -abs_error |error| - motion x commanded travel (fall 0, spread 0)  [63 candidates]
+PASS  physics guess: error = formula travel at the episode end - target; lateral = |side| x hold; fall 0
+PASS  loss is |sideways error|
+PASS  success needs |error| <= success_tolerance_m and no fall  [tolerance 0.05 m]
+PASS  schedule: hold then tail, whole control periods summing to the episode duration  [[({'vel_x': 0.5728823422851125, 'vel_y': 0.5, 'yaw_rate': 0.0}, 0.3), ({'vel_x': 0.5728823422851125, 'vel_y': 0.0, 'yaw_rate': 0.0}, 1.5)]]
+PASS  a hold that is not a whole number of control periods is refused before any world call  [0.31 s]
+PASS  sample_situations: row i does not depend on n; declared values appended
+
+13 passed, 0 failed

@@ -1,0 +1,27 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+
+workers: max_steps=150 (config 1500), torch_threads=1 (config); seeds 11, 11, 12
+  process seed=11 exit=0
+    after fx_alpha (slot 0): steps_run=150 best_step=150 best_validation_loss=0.04370006866125994 threads=1 digests(16)={'fx_alpha': '5371950dddf81eb1'}
+    after fx_beta (slot 1): steps_run=150 best_step=150 best_validation_loss=0.06501346827612874 threads=1 digests(16)={'fx_alpha': 'a44d6e9add42e2af', 'fx_beta': '1dce3ca7a26e4b20'}
+    after fx_gamma (slot 2): steps_run=150 best_step=150 best_validation_loss=0.033585442967892586 threads=1 digests(16)={'fx_alpha': 'f59ba047944f38e8', 'fx_beta': '1a408e213b3b11f3', 'fx_gamma': '2075e88116d1de05'}
+    split rows sha256(16): {'fx_alpha': '2ac3a156171f9e36', 'fx_beta': '5163a8e02111343f', 'fx_gamma': 'd34ffda4f9c66b8a'}
+  [ok] worker for seed 11 finished
+  process seed=11 exit=0
+    after fx_alpha (slot 0): steps_run=150 best_step=150 best_validation_loss=0.04370006866125994 threads=1 digests(16)={'fx_alpha': '5371950dddf81eb1'}
+    after fx_beta (slot 1): steps_run=150 best_step=150 best_validation_loss=0.06501346827612874 threads=1 digests(16)={'fx_alpha': 'a44d6e9add42e2af', 'fx_beta': '1dce3ca7a26e4b20'}
+    after fx_gamma (slot 2): steps_run=150 best_step=150 best_validation_loss=0.033585442967892586 threads=1 digests(16)={'fx_alpha': 'f59ba047944f38e8', 'fx_beta': '1a408e213b3b11f3', 'fx_gamma': '2075e88116d1de05'}
+    split rows sha256(16): {'fx_alpha': '2ac3a156171f9e36', 'fx_beta': '5163a8e02111343f', 'fx_gamma': 'd34ffda4f9c66b8a'}
+  [ok] worker for seed 11 finished
+  process seed=12 exit=0
+    after fx_alpha (slot 0): steps_run=150 best_step=150 best_validation_loss=0.04472839441986823 threads=1 digests(16)={'fx_alpha': 'e1a4a04760cd1fac'}
+    after fx_beta (slot 1): steps_run=150 best_step=150 best_validation_loss=0.062321435858814236 threads=1 digests(16)={'fx_alpha': 'a7b338d7d08694f1', 'fx_beta': '68869f2308e02ba0'}
+    after fx_gamma (slot 2): steps_run=150 best_step=150 best_validation_loss=0.033234333614427486 threads=1 digests(16)={'fx_alpha': '18cff87330a99663', 'fx_beta': 'b328bd83446d0303', 'fx_gamma': 'f55d25a912ecd95a'}
+    split rows sha256(16): {'fx_alpha': 'd32c009db3c9ed2e', 'fx_beta': '01aed18993e74cf9', 'fx_gamma': '4e2cb8949a254eb2'}
+  [ok] worker for seed 12 finished
+  [ok] same seed in two separate processes -> identical slots, digests of every view after every add and retention numbers
+  [ok] same seed -> identical digests of every stage kept and identical training / early-stopping / retention rows
+  [ok] the stages kept at the end are the views right after each add
+  [ok] different seed -> different digests for every skill and different splits
+
+CHECK RESULT: 7 assertions held, 0 failed 

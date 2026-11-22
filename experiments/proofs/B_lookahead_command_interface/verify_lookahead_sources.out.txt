@@ -1,0 +1,131 @@
+== [1] checkpoint git blob SHAs (identical blob SHA => identical bytes)
+rl_sar@376d42c9b128f963ab08579762d5a216a976ce39 policy/go2/robot_lab/policy.pt   1a4be7f7b56f22282acdbd728917416b69107399 size=769376
+rl_sar@87be546 (v2.3, 2025-03-13) models/go2/robot_lab/policy.pt 1a4be7f7b56f22282acdbd728917416b69107399 size=769376
+efferent@f51e1af953afe1016dae9ceeff2b5328fa51781d examples/go2_walk/policy.pt     1a4be7f7b56f22282acdbd728917416b69107399 size=769376
+rl_sar@376d42c9b128f963ab08579762d5a216a976ce39 policy/go2/himloco/himloco.pt   b3886b101602556411cfb953445137c9235f92ba size=991615
+rl_sar@f13aac0 (pre-v2.3) models/go2_isaacgym/himloco.pt b3886b101602556411cfb953445137c9235f92ba size=991615
+robot_lab v2.1 commit date: 2025-03-13T11:06:56Z v2.1 (#25)
+rl_sar v2.3 commit date:    2025-03-13T11:06:16Z v2.3 (#51)
+== [2] rl_sar_zoo@7dd30bdc7806898950b354260655d5a7f0ce844e go2 MJCF vs vendored unitree_mujoco@1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d
+go2.xml: IDENTICAL
+scene.xml: IDENTICAL
+== [3] quoted command-interface lines at pinned commits
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/rl_sar_376d42c9b128f963ab08579762d5a216a976ce39/policy_go2_robot_lab_config.yaml
+    6:  num_observations: 45
+    7:  observations: ["ang_vel", "gravity_vec", "commands", "dof_pos", "dof_vel", "actions"]
+    8:  observations_history: []  # 0 is the latest observation
+    10:  default_commands: [0.0, 0.0, 0.0]
+    46:  commands_scale: [1.0, 1.0, 1.0]
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/rl_sar_376d42c9b128f963ab08579762d5a216a976ce39/policy_go2_himloco_config.yaml
+    6:  num_observations: 45
+    7:  observations: ["commands", "ang_vel", "gravity_vec", "dof_pos", "dof_vel", "actions"]
+    8:  observations_history: [0, 1, 2, 3, 4, 5]  # 0 is the latest observation
+    10:  default_commands: [0.0, 0.0, 0.0]
+    46:  commands_scale: [2.0, 2.0, 0.25]
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/rl_sar_376d42c9b128f963ab08579762d5a216a976ce39/policy_go2_base.yaml
+    5:  dt: 0.005
+    6:  decimation: 4
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/rl_sar_376d42c9b128f963ab08579762d5a216a976ce39/src_rl_sar_library_core_rl_sdk_rl_sdk.cpp
+    29:        this->control.x += 0.1f;
+    33:        this->control.x -= 0.1f;
+    37:        this->control.y += 0.1f;
+    41:        this->control.y -= 0.1f;
+    45:        this->control.yaw += 0.1f;
+    49:        this->control.yaw -= 0.1f;
+    94:            obs_list.push_back(this->obs.commands * this->params.Get<std::vector<float>>("commands_scale"));
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/rl_sar_376d42c9b128f963ab08579762d5a216a976ce39/src_rl_sar_src_rl_sim_mujoco.cpp
+    308:    float ly = -float(this->sys_js_axis[1]) / float(this->sys_js_max_value);
+    309:    float lx = -float(this->sys_js_axis[0]) / float(this->sys_js_max_value);
+    310:    float rx = -float(this->sys_js_axis[3]) / float(this->sys_js_max_value);
+    316:        this->control.x = ly;
+    317:        this->control.y = lx;
+    318:        this->control.yaw = rx;
+    336:        this->obs.commands[0] = this->control.x;
+    337:        this->obs.commands[1] = this->control.y;
+    338:        this->obs.commands[2] = this->control.yaw;
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/rl_sar_376d42c9b128f963ab08579762d5a216a976ce39/src_rl_sar_src_rl_real_go2.cpp
+    144:    this->control.x = this->joystick.ly();
+    145:    this->control.y = -this->joystick.lx();
+    146:    this->control.yaw = -this->joystick.rx();
+    224:            this->obs.commands[0] = (float)this->cmd_vel.linear.x;
+    225:            this->obs.commands[1] = (float)this->cmd_vel.linear.y;
+    226:            this->obs.commands[2] = (float)this->cmd_vel.angular.z;
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/rl_sar_376d42c9b128f963ab08579762d5a216a976ce39/src_rl_sar_fsm_robot_fsm_go2.hpp
+    165:        rl.config_name = "himloco";
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/efferent_f51e1af953afe1016dae9ceeff2b5328fa51781d/examples_go2_walk_manifest.yaml
+    11:  rate_hz: 50.0
+    102:  - vel_x
+    103:  - vel_y
+    104:  - yaw_rate
+    130:  repo: imported-from-rl_sar
+    131:  commit: null
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/efferent_f51e1af953afe1016dae9ceeff2b5328fa51781d/src_efferent_types.py
+    50:    names: list[str] = field(default_factory=lambda: ["vel_x", "vel_y", "yaw_rate"])
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/efferent_f51e1af953afe1016dae9ceeff2b5328fa51781d/src_efferent_backends_mujoco_backend.py
+    44:        self.substeps = max(1, round(control_dt / self.model.opt.timestep))
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/robot_lab_8b447f2c9879e2051361064e70f999373fc59a47/velocity_env_cfg.py
+    109:        resampling_time_range=(10.0, 10.0),
+    110:        rel_standing_envs=0.02,
+    111:        rel_heading_envs=1.0,
+    112:        heading_command=True,
+    113:        heading_control_stiffness=0.5,
+    116:            lin_vel_x=(-1.0, 1.0), lin_vel_y=(-1.0, 1.0), ang_vel_z=(-1.0, 1.0), heading=(-math.pi, math.pi)
+    654:            "max_curriculum": 1.5,
+    683:        self.decimation = 4
+    686:        self.sim.dt = 0.005
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/robot_lab_8b447f2c9879e2051361064e70f999373fc59a47/velocity_mdp_commands.py
+    27:        self.vel_command_b[env_ids, :2] *= (torch.norm(self.vel_command_b[env_ids, :2], dim=1) > 0.2).unsqueeze(1)
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/robot_lab_8b447f2c9879e2051361064e70f999373fc59a47/velocity_mdp_curriculums.py
+    34:    delta_range = torch.tensor([-0.1, 0.1], device=env.device)
+    41:        base_velocity_ranges.lin_vel_x = torch.clamp(lin_vel_x + delta_range, -max_curriculum, max_curriculum).tolist()
+    42:        base_velocity_ranges.lin_vel_y = torch.clamp(lin_vel_y + delta_range, -max_curriculum, max_curriculum).tolist()
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/robot_lab_8b447f2c9879e2051361064e70f999373fc59a47/unitree_go2_rough_env_cfg.py
+    56:        self.actions.joint_pos.scale = {".*_hip_joint": 0.125, "^(?!.*_hip_joint).*": 0.25}
+    157:        # self.commands.base_velocity.ranges.lin_vel_x = (-1.5, 1.5)
+    158:        # self.commands.base_velocity.ranges.lin_vel_y = (-1.5, 1.5)
+    159:        # self.commands.base_velocity.ranges.ang_vel_z = (-1.5, 1.5)
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/isaaclab_v2.0.2/velocity_command.py
+    104:        """The desired base velocity command in the base frame. Shape is (num_envs, 3)."""
+    153:                self.cfg.heading_control_stiffness * heading_error,
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/himloco_ef289acaa62795009363b7b819c9186690630441/legged_gym_legged_gym_envs_base_legged_robot.py
+    247:        current_obs = torch.cat((   self.commands[:, :3] * self.commands_scale,
+    269:        current_obs = torch.cat((   self.commands[:, :3] * self.commands_scale,
+    292:        current_obs = torch.cat((   self.commands[:, :3] * self.commands_scale,
+    446:            self.commands[:, 2] = torch.clip(0.5*wrap_to_pi(self.commands[:, 3] - heading), -2., 2.)
+    477:        self.commands[env_ids, :2] *= (torch.norm(self.commands[env_ids, :2], dim=1) > 0.2).unsqueeze(1)
+    665:        self.commands_scale = torch.tensor([self.obs_scales.lin_vel, self.obs_scales.lin_vel, self.obs_scales.ang_vel], device=self.device, requires_grad=False,) # TODO change this
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/himloco_ef289acaa62795009363b7b819c9186690630441/legged_gym_legged_gym_envs_base_legged_robot_config.py
+    72:        max_curriculum = 3.0
+    77:            lin_vel_x = [-1.0, 1.0] # min max [m/s]
+    78:            lin_vel_y = [-1.0, 1.0]   # min max [m/s]
+    79:            ang_vel_yaw = [-3.14, 3.14]    # min max [rad/s]
+    99:        decimation = 4
+    217:        dt =  0.005
+--- HIMLoco envs/ dirs: legged_gym/legged_gym/envs/a1/a1_config.py legged_gym/legged_gym/envs/aliengo/aliengo_config.py legged_gym/legged_gym/envs/base/base_config.py legged_gym/legged_gym/envs/base/legged_robot_config.py legged_gym/legged_gym/envs/go1/go1_config.py
+--- HIMLoco LICENSE line 1: Attribution-NonCommercial-ShareAlike 4.0 International
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/pympc_5831ef2647bfaa3092a4d12ad3c4ff48989c3fb6/simulation_simulation.py
+    33:    ref_base_lin_vel=(0.0, 4.0),
+    34:    ref_base_ang_vel=(-0.4, 0.4),
+    36:    base_vel_command_type="human",
+    59:        ref_base_lin_vel=np.asarray(ref_base_lin_vel) * hip_height,  # pass a float for a fixed value
+    60:        ref_base_ang_vel=ref_base_ang_vel,  # pass a float for a fixed value
+    62:        base_vel_command_type=base_vel_command_type,  # "forward", "random", "forward+rotate", "human"
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/pympc_5831ef2647bfaa3092a4d12ad3c4ff48989c3fb6/quadruped_pympc_config.py
+    119:    'horizon':                                 12,
+    120:    'dt':                                      0.02,
+    125:    'frequency':                               200,
+    280:    'gait':                       'trot',  # 'trot', 'pace', 'crawl', 'bound', 'full_stance'
+    297:    'use_velocity_modulator':      True,
+    306:    'ref_z':                       hip_height,
+    312:    'dt':                          0.002,
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/gym_quadruped_097a8d649ae2232d3c0ed5eb83dc0e4f77483019/quadruped_env.py
+    498:    def target_base_vel(self, frame='world') -> tuple[np.ndarray, np.ndarray]:
+    504:        ref_base_ang_vel = np.array([0.0, 0.0, self._ref_base_ang_yaw_dot])
+    1355:        self._ref_base_ang_yaw_dot = np.clip(self._ref_base_ang_yaw_dot, -2 * np.pi, 2 * np.pi)
+    1357:            self._ref_base_lin_vel_H[0], -6 * self.robot_cfg.hip_height, 6 * self.robot_cfg.hip_height
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/gym_quadruped_097a8d649ae2232d3c0ed5eb83dc0e4f77483019/robot_cfgs.py
+    44:        cfg = RobotConfig(mjcf_filename='go2/go2.xml', hip_height=0.28)
+--- /d/BerlinPrior/experiments/proofs/B_lookahead_command_interface/fetched/gym_quadruped_097a8d649ae2232d3c0ed5eb83dc0e4f77483019/go2.xml
+    4:    <option cone="elliptic" impratio="100"/>
+    60:        <body name="base" pos="0 0 0.445" childclass="go2">
+exit=0

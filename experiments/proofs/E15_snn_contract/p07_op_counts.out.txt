@@ -1,0 +1,51 @@
+ONE decision (fixture input #0):
+{
+ "spikes_per_layer_per_step": [
+  [
+   22,
+   34,
+   28,
+   33,
+   27,
+   34,
+   28,
+   32,
+   28,
+   32
+  ],
+  [
+   29,
+   38,
+   39,
+   39,
+   39,
+   38,
+   40,
+   40,
+   38,
+   43
+  ]
+ ],
+ "spikes_per_layer": [
+  298,
+  383
+ ],
+ "total_spikes": 681,
+ "synops_per_layer": [
+  19072,
+  24512
+ ],
+ "synops_total": 43584,
+ "first_layer_macs_once": 512,
+ "first_layer_macs_if_recomputed_each_step": 5120,
+ "neuron_state_updates": 1920,
+ "mean_firing_rate_per_layer": [
+  0.465625,
+  0.5984375
+ ],
+ "dense_mlp_macs_reference": 8704
+}
+over 1000 fixture inputs: total_spikes mean 509.7 min 414 max 681
+over 1000 fixture inputs: synops_total mean 32619.2 min 26496 max 43584
+mean firing rate per layer over inputs: [0.3075, 0.4889]
+constants: first_layer_macs_once 512 | if recomputed per step 5120 | neuron_state_updates 1920 | dense MLP MACs reference 8704

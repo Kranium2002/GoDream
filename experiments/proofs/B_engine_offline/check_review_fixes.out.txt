@@ -1,0 +1,113 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+numpy 2.5.5 | python 3.13.16
+
+== G1 collect() checks the verified command schema before the world is stepped ==
+  [ok] collect refuses a schema without the spec's command field -> SkillSpecError: action 'fx_speed' uses command field 'fx_cmd', which is not in the verified schema ['other']
+  [ok] collect refuses a schema narrower than the spec's action range -> SkillSpecError: action 'fx_speed' range [0.0, 1.0] exceeds the verified range [-0.5, 0.5] of 'fx_cmd'
+  [ok] collect refuses a schema with another unit -> SkillSpecError: action 'fx_speed' unit 'm/s' differs from the verified unit 'rad/s'
+  [ok] no episode was reached and no attempt file was written
+
+== G-seed collect(): one world per run, one attempt seed per attempt, all inputs validated first ==
+  [ok] every attempt ran in the ONE world the caller built
+  [ok] attempt i got its own attempt seed, as a Python int
+  [ok] situation / action mappings handed to the episode are the decoded inputs
+  [ok] each row's seed is its attempt seed
+  [ok] the file holds exactly the returned rows
+  [ok] collect validates run_id '' before the first episode -> ValueError: run_id must be a non-empty string; got ''
+  [ok] collect validates world_preset '' before the first episode -> ValueError: world_preset must be a non-empty string; got ''
+  [ok] collect validates a clock without a UTC offset before the first episode -> ValueError: timestamp_utc '2026-11-21T12:00:00' must carry a zero UTC offset (e.g. '+00:00' or 'Z')
+  [ok] collect validates a negative attempt seed before the first episode -> ValueError: attempt seed [1] must be >= 0; got -1
+  [ok] collect validates a repeated attempt seed before the first episode -> ValueError: attempt seed [2] = 41 repeats attempt seed [0]: (run_id, seed) must name exactly one attempt
+  [ok] collect validates float attempt seeds before the first episode -> ValueError: attempt_seeds must be an integer array of shape (3,); got float64 (3,)
+  [ok] collect validates too few attempt seeds before the first episode -> ValueError: attempt_seeds must be an integer array of shape (3,); got int64 (2,)
+  [ok] collect validates a rerun into the same file with the same (run_id, seed) before the first episode -> ValueError: <tmp>\gseed\attempts.jsonl already holds the real attempts (run_id='fx-collect', seed=31): a (run
+  [ok] collect refuses an attempt file whose last line is incomplete, before the first episode -> ValueError: <tmp>\gseed\broken.jsonl ends with an incomplete line; repair it before appending
+  [ok] none of the refused calls reached an episode or changed the file
+
+== G2 the stored physics guess is re-checked against the current spec ==
+  [ok] unchanged physics: no stale row under either policy, identical arrays
+  [ok] read_rows(spec=changed physics) still reads the file (structural validation only)
+  [ok] StalePhysicsError is a ValueError
+  [ok] rows_to_arrays 'error' refuses rows written under another physics -> StalePhysicsError: rows[0] (run_id='fx-run', seed=100): stored physics_guess [-0.3, 0.25] differs from the current fixture_review.physics_guess [-0.8, 0.25]; its residua
+  [ok] 'recompute': physics is the current spec's physics, row by row (bitwise)
+  [ok] 'recompute': measured outcome is the stored one
+  [ok] 'recompute': residual == stored measured - current physics (exact)
+  [ok] 'recompute': residuals differ from the stored (old-physics) residuals
+  [ok] 'recompute' reports how many rows differed: stale_physics_rows == (0, 1, 2)
+  [ok] the attempt file is never rewritten
+  [ok] an unknown policy is refused -> ValueError: on_physics_mismatch must be one of ('error', 'recompute'); got 'ignore'
+  [ok] the policy is required -> TypeError: rows_to_arrays() missing 1 required keyword-only argument: 'on_physics_mismatch'
+  [ok] 'recompute' refuses a current physics that leaves the outcome bounds -> ValueError: rows[0] (run_id='fx-run', seed=100): the current physics_guess [-0.3, 1.5] is not finite or leaves the outcome bounds
+  [ok] fit_residual_model requires on_physics_mismatch -> TypeError: fit_residual_model() missing 1 required keyword-only argument: 'on_physics_mismatch'
+  [ok] fit_residual_model 'error' refuses stale rows -> StalePhysicsError: rows[0] (run_id='fx-run', seed=100): stored physics_guess [-0.3, 0.25] differs from the current fixture_review.physics_guess [-0.8, 0.25]; its residua
+  [ok] fit_residual_model 'recompute' trains on the recomputed residuals (constant mean == their mean)
+
+== G3 every provider request hash of every decision is recorded ==
+  [ok] request_groups lists every request of each decision: ((A0, A1), (B0,), (A1, C0))
+  [ok] request_group (n,) points every row at its group; -1 for no request
+  [ok] request_hashes stays the flat tuple of distinct hashes in first-use order
+  [ok] request_hashes_of(row) gives each decision's own keys
+  [ok] dream(): one predict call served by two requests records both for every row
+  [ok] save/load keeps request_groups, request_group and request_hashes; format v2
+  [ok] keep_confident keeps each kept row's request keys aligned
+  [ok] dream rows: teacher.request_hashes lists every request; request_hash is the last one (null for none)
+  [ok] dream rows round-trip through JSON Lines
+  [ok] build_dream_row records every request of the decision
+  [ok] a dream row whose request_hash is not the last of request_hashes is refused -> ValueError: teacher.request_hash 'A0' must be the last of teacher.request_hashes ('A1'; null when no request was made)
+  [ok] a decision naming a request_hash outside its request_hashes is refused -> ValueError: decisions[0]: decision.request_hash 'Z9' is not one of its request_hashes ['A0', 'A1']
+  [ok] an old v1 dream file is refused with its reason -> ValueError: <tmp>\g3\dreams.json is an old learned-judgment-dreamset-v1 file, which is no longer read: it rec
+
+== G5 exploration_actions: row i does not depend on n ==
+  [ok] fraction 0.5: exploration_actions(n=20) == first 20 rows of n=40 (20/20 rows equal)
+  [ok] fraction 1.0: exploration_actions(n=20) == first 20 rows of n=40 (20/20 rows equal)
+  [ok] one draw rng.random((n, 2)): column 0 = explore flag, column 1 = candidate pick
+  [ok] the stream position after the call is exactly n x 2 uniforms
+
+== G6 append_rows re-validates every row immediately before writing ==
+  [ok] append_rows refuses a row whose residual was changed after it was built -> ValueError: rows[1] fails validation immediately before writing: residual != measured_outcome - physics_guess for ['fx_error']
+  [ok] ... also when no spec is given (structural re-validation) -> ValueError: rows[0] fails validation immediately before writing: residual != measured_outcome - physics_guess for ['fx_error']
+  [ok] append_rows(spec=...) refuses a row whose situation gained a key after it was built -> ValueError: rows[0] fails validation immediately before writing: row keys do not match the schema; missing=[] extra=['payload_mass_kg']
+  [ok] append_rows refuses a row changed to hold NaN -> ValueError: rows[0] fails validation immediately before writing: Out of range float values are not JSON compliant: nan
+  [ok] nothing was written by any refused call (file bytes unchanged)
+  [ok] append_rows requires the spec argument (None for a mixed-skill file) -> TypeError: append_rows() missing 1 required keyword-only argument: 'spec'
+  [ok] a valid row is still appended and reads back
+
+== G7 (run_id, seed) names one real attempt ==
+  [ok] append_rows refuses a batch that repeats a (run_id, seed) pair -> ValueError: rows[1] repeats the attempt (run_id='fx-run', seed=101) of rows[0]
+  [ok] ... and writes nothing (the file was not created)
+  [ok] append_rows refuses a row whose (run_id, seed) is already in the file (rerun after a crash) -> ValueError: <tmp>\g7\attempts.jsonl already holds the real attempts (run_id='fx-run', seed=100): a (run_id, s
+  [ok] append_rows refuses re-appending the same rows -> ValueError: <tmp>\g7\attempts.jsonl already holds the real attempts (run_id='fx-run', seed=100), (run_id='fx-
+  [ok] nothing was appended by the refused calls
+  [ok] the same seed under another run_id is another attempt and is accepted
+  [ok] dream rows carry no attempt identity: one dream run writes many rows with one (run_id, seed)
+  [ok] rows_to_arrays refuses a repeated (run_id, seed) -> ValueError: rows[3] repeats the attempt (run_id='fx-run', seed=100) of rows[0]: one attempt would be counted twice
+  [ok] fit_residual_model refuses duplicated attempts (no double weighting) -> ValueError: rows[3] repeats the attempt (run_id='fx-run', seed=100) of rows[0]: one attempt would be counted twice
+  [ok] check_new_attempts refuses a seed already recorded under the run_id -> ValueError: <tmp>\g7\attempts.jsonl already holds the real attempts (run_id='fx-run', seed=102): a (run_id, s
+
+== G11 world-id layout through build_layout with required hidden value names ==
+  [ok] world_id_layout == build_layout(spec, extra=(world_id_variable(presets),), hidden_value_names=...)
+  [ok] the extra block is one categorical world_id column whose levels are the declared presets
+  [ok] include_physics=False gives the direct layout with the world_id column
+  [ok] hidden_value_names is required -> TypeError: world_id_layout() missing 1 required keyword-only argument: 'hidden_value_names'
+  [ok] include_physics is required -> TypeError: world_id_layout() missing 1 required keyword-only argument: 'include_physics'
+  [ok] a single string is refused (it would be read as characters) -> TypeError: hidden_value_names must be a collection of names, not one string
+  [ok] an empty list of hidden names is refused -> ValueError: hidden_value_names must list the hidden simulator values by name (keys of config.yaml world.hidden_effects); got ()
+  [ok] an extra feature named like a hidden simulator value is refused -> ValueError: extra features expose hidden simulator values: ['world_id']
+  hidden value names from config.yaml world.hidden_effects: ['payload_mass_kg', 'payload_off_center_range_m', 'declared_mass_error_fraction', 'surface_friction_by_type', 'friction_per_run_variation', 'slope_deg', 'motor_strength_fraction', 'command_latency_s', 'command_latency_jitter_s']
+
+== G13 recovery_attempts: first, sustained, threshold, zero pre-shift error ==
+  [ok] a one-off dip: first 5, sustained None, threshold 1.2 -> {'first': 5, 'sustained': None, 'threshold': 1.2, 'pre_shift_error_is_zero': False}
+  [ok] dip, relapse, then recovery (boundary 1.2 <= 1.2 counts): first 5, sustained 15 -> {'first': 5, 'sustained': 15, 'threshold': 1.2, 'pre_shift_error_is_zero': False}
+  [ok] keys in any order: first 10, sustained 10 -> {'first': 10, 'sustained': 10, 'threshold': 1.2, 'pre_shift_error_is_zero': False}
+  [ok] pre-shift error 0: flagged, so 'not reached' is not read as 'not recovered' -> {'first': None, 'sustained': None, 'threshold': 0.0, 'pre_shift_error_is_zero': True}
+  [ok] pre-shift error 0 and post-shift 0: first 5, sustained 5, flagged -> {'first': 5, 'sustained': 5, 'threshold': 0.0, 'pre_shift_error_is_zero': True}
+
+== G-index a situation index maps to the same situation at every n ==
+  [ok] split 'dev': situation i is the same for n=10 and n=100 (10/10 rows bitwise equal)
+  [ok] split 'shift': situation i is the same for n=10 and n=100 (10/10 rows bitwise equal)
+  [ok] split 'context': situation i is the same for n=10 and n=100 (10/10 rows bitwise equal)
+  [ok] ... and so is its per-episode seed
+  [ok] the 100-dream situations are the first 100 of the 1000-dream set
+
+checks: 87 run, 87 held, 0 failed
+NOT RUN: collect() and the harness with Person A's Go2World (it does not exist yet; never called with a stand-in world); any TabPFN request (none has been made)

@@ -1,0 +1,18 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+installed tabpfn_client 0.10.1
+constructor accepts every kwarg the provider passes: True
+fit signature: (self, X: 'pd.DataFrame | np.ndarray', y: 'pd.Series | np.ndarray', description: 'str | None' = None)
+predict signature: (self, X: 'pd.DataFrame | np.ndarray', output_type: 'RegressorOutputLiteral' = 'mean', quantiles: 'list[float] | None' = None) -> 'np.ndarray | list[np.ndarray] | dict[str, np.ndarray]'
+estimate_cost signature: (X_train: numpy.ndarray | pandas.core.frame.DataFrame, X_test: numpy.ndarray | pandas.core.frame.DataFrame | None = None, *, model_version: str | None = None, operation: Literal['predict', 'thinking_fit', 'thinking_predict', 'cache_predict'] = 'predict', n_estimators: int | None = None, thinking_effort: Optional[Literal['micro', 'mini', 'low', 'medium', 'high', 'xhigh', 'max']] = None) -> tabpfn_client.api_models.EstimateCostResponse
+ServiceClient.get_api_usage signature: (access_token: 'str')
+model_version_from_path signature: (model_path: str, server_versions: collections.abc.Iterable[tabpfn_client.api_models.ModelVersion | tabpfn_client.api_models.UnknownEnum]) -> tabpfn_client.api_models.ModelVersion | tabpfn_client.api_models.UnknownEnum
+has get_timings / get_access_token: True True
+outgoing tabpfn_config for categorical []: {'n_estimators': 8, 'categorical_features_indices': [], 'random_state': 0, 'ignore_pretraining_limits': False, 'model_path': 'v3.5_default'}
+outgoing tabpfn_config for categorical [1]: {'n_estimators': 8, 'categorical_features_indices': [1], 'random_state': 0, 'ignore_pretraining_limits': False, 'model_path': 'v3.5_default'}
+outgoing tabpfn_config for categorical [1, 5]: {'n_estimators': 8, 'categorical_features_indices': [1, 5], 'random_state': 0, 'ignore_pretraining_limits': False, 'model_path': 'v3.5_default'}
+predict_params the client would send: {'output_type': 'main', 'quantiles': [0.1, 0.25, 0.5, 0.75, 0.9]}
+keyed description: {'schema': 'learned-judgment/teacher-request-key/v1', 'client_version': '0.10.1', 'task': 'regression', 'tabpfn_config': {'categorical_features_indices': [1], 'ignore_pretraining_limits': False, 'model_path': 'v3.5_default', 'n_estimators': 8, 'random_state': 0}, 'request_flags': {'paper_version': False, 'text_handling': 'advanced', 'thinking_mode': False}, 'predict_params': {'output_type': 'main', 'quantiles': [0.1, 0.25, 0.5, 0.75, 0.9]}, 'column_names': ['a', 'b']}
+model version used for the quote: v3.5
+ServiceClient.base_url (not keyed): https://api.priorlabs.ai:443
+exit=0
+

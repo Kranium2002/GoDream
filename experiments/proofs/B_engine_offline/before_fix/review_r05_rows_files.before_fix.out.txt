@@ -1,0 +1,14 @@
+REVIEW REPRODUCTION - fixture, not evidence
+1. append_rows with a row whose residual was mutated after construction:
+   append_rows: OK -> written
+   read_rows (whole file): ValueError: C:\Users\vidhu\AppData\Local\Temp\tmptxn9yhi4\mut.jsonl:4: residual != measured_outcome - physics_guess for ['rv_sep']
+2. a hidden key added to a built row's situation dict:
+   append_rows: OK -> written
+   read_rows without spec: OK -> {'payload_mass_kg': 2.5, 'rv_dist': 0.1, 'rv_surface': 'b'}
+   rows_to_arrays: ValueError: rows[0]: row keys do not match the schema; missing=[] extra=['payload_mass_kg']
+3. duplicates: read_rows -> 6 rows, 4 distinct; fit used n_train = 6
+4. CRLF file:
+   read_rows: OK -> 4
+   append_rows after CRLF then read_rows: OK -> 5
+   BOM file read_rows: ValueError: C:\Users\vidhu\AppData\Local\Temp\tmptxn9yhi4\bom.jsonl:1: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)
+   5a. 1e999 in measured_outcome: ValueError: C:\Users\vidhu\AppData\Local\Temp\tmptxn9yhi4\inf.jsonl:1: measured_outcome['rv_sep'] must be finite; got inf

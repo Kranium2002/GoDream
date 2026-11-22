@@ -1,0 +1,9 @@
+mujoco 4.0.1
+DOC: mj_geomDistance(m: mujoco._structs.MjModel, d: mujoco._structs.MjData, geom1: typing.SupportsInt | typing.SupportsIndex, geom2: typing.SupportsInt | typing.SupportsIndex, distmax: typing.SupportsFloat | typing.SupportsIndex, fromto: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.writeable", "flags.c_contiguous"] | None) -> float
+
+Return smallest signed distance between two geoms and optionally segment from geom1 to geom2.
+nativeccd enabled: True
+centres 0.5 apart, radii 0.1+0.2 -> expected 0.2; got 0.2 float fromto [0.1 0.  1.  0.3 0.  1. ]
+distmax=0.1 (< true distance) -> 0.1 fromto [0. 0. 0. 0. 0. 0.]
+fromto=None -> 0.2
+centres 0.25 apart -> expected -0.05 (signed, penetration); got -0.05000000000000002 fromto [0.1  0.   1.   0.05 0.   1.  ]

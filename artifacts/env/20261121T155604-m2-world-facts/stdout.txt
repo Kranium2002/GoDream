@@ -1,0 +1,8 @@
+mujoco 3.11.0
+qvel[0:3] = [1, 0, 0]: base position change / dt in world = [1.0009e+00 1.0000e-03 0.0000e+00]
+qvel[3:6] = [0, 0, 1]: rotation rate from the quaternion change, world frame = [-2.000e-04 -1.000e+00  1.149e-01] body frame = [-2.000e-04  1.149e-01  1.000e+00] ; body z axis in world = [ 0. -1. -0.]
+qpos[0] = nan: after the next step warnings={'mjWARN_BADQPOS': 1, 'mjWARN_BADQVEL': 0, 'mjWARN_BADQACC': 0} time=0.002 finite=True base_z=0.4451; one more step warnings={'mjWARN_BADQPOS': 1, 'mjWARN_BADQVEL': 0, 'mjWARN_BADQACC': 0} time=0.004
+qvel[0] = nan: after the next step warnings={'mjWARN_BADQPOS': 0, 'mjWARN_BADQVEL': 1, 'mjWARN_BADQACC': 0} time=0.002 finite=True base_z=0.4451; one more step warnings={'mjWARN_BADQPOS': 0, 'mjWARN_BADQVEL': 1, 'mjWARN_BADQACC': 0} time=0.004
+qvel[0] = 1e11: after the next step warnings={'mjWARN_BADQPOS': 0, 'mjWARN_BADQVEL': 1, 'mjWARN_BADQACC': 0} time=0.002 finite=True base_z=0.4451; one more step warnings={'mjWARN_BADQPOS': 0, 'mjWARN_BADQVEL': 1, 'mjWARN_BADQACC': 0} time=0.004
+qfrc_applied[6] = inf: after the next step warnings={'mjWARN_BADQPOS': 0, 'mjWARN_BADQVEL': 0, 'mjWARN_BADQACC': 1} time=0.002 finite=True base_z=0.4451; one more step warnings={'mjWARN_BADQPOS': 0, 'mjWARN_BADQVEL': 0, 'mjWARN_BADQACC': 1} time=0.004
+after mj_resetData: warnings = {'mjWARN_BADQPOS': 0, 'mjWARN_BADQVEL': 0, 'mjWARN_BADQACC': 0}

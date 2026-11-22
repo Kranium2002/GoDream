@@ -1,0 +1,34 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- ~\projects\hackaton\GoDream\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: ~\projects\hackaton\GoDream
+configfile: pyproject.toml
+plugins: anyio-4.16.0, platformdirs-4.14.8
+collecting ... collected 7 items
+
+tests/env/test_locomotion.py::test_trots_thirty_seconds[0.3] FAILED      [ 14%]
+tests/env/test_locomotion.py::test_trots_thirty_seconds[0.6] PASSED      [ 28%]
+tests/env/test_locomotion.py::test_trots_thirty_seconds[0.9] PASSED      [ 42%]
+tests/env/test_locomotion.py::test_turns[1] PASSED                       [ 57%]
+tests/env/test_locomotion.py::test_turns[-1] PASSED                      [ 71%]
+tests/env/test_locomotion.py::test_stops_and_stands PASSED               [ 85%]
+tests/env/test_locomotion.py::test_stands_thirty_seconds PASSED          [100%]
+
+================================== FAILURES ===================================
+_______________________ test_trots_thirty_seconds[0.3] ________________________
+
+config = {'project': {'name': 'Learned Judgment', 'status': 'scaffold', 'primary_skill': 'dodge', 'no_substitute_robot_or_proje...s': {'payload_mass_kg': None, 'floor_type': None, 'slope_deg': None, 'motor_strength_fraction': None, ...}, ...}}, ...}
+vx = 0.3
+
+    @pytest.mark.parametrize("vx", [0.3, 0.6, 0.9])
+    def test_trots_thirty_seconds(config, vx):
+        r = run_locomotion(config, vx=vx, yaw_rate=0.0, duration_s=30, seed=config["runtime"]["seed"])
+        assert not r["fallen"]
+>       assert abs(r["mean_speed_m_s"] - vx) <= config["robot"]["acceptance"]["speed_tolerance_fraction"] * vx
+E       assert 0.07439528955513408 <= (0.2 * 0.3)
+E        +  where 0.07439528955513408 = abs((0.2256047104448659 - 0.3))
+
+tests\env\test_locomotion.py:12: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/env/test_locomotion.py::test_trots_thirty_seconds[0.3] - assert ...
+======================== 1 failed, 6 passed in 31.70s =========================

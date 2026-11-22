@@ -1,0 +1,44 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+== three active outcomes on very different scales (stacked) ==
+  requests: 1 | active outcomes: [np.int64(0), np.int64(1), np.int64(2)]
+  last request shape: (18, 7) | y mean/std sent: -0.0 1.0
+  max |median - residual|: 4.440892098500626e-16
+  max |mean - residual|:   4.440892098500626e-16
+  max |quantiles - expected (residual + (q-0.5)*std_k)|: 1.1368683772161603e-13
+  spread per outcome (row 0): [0.007138, 1.968482, 57.463705] | expected 0.4*unit: [0.007138, 1.968482, 57.463705]
+== constant outcome in the middle (stacked) ==
+  requests: 1 | active outcomes: [np.int64(0), np.int64(2)]
+  last request shape: (12, 7) | y mean/std sent: -0.0 1.0
+  max |median - residual|: 3.469446951953614e-18
+  max |mean - residual|:   3.469446951953614e-18
+  max |quantiles - expected (residual + (q-0.5)*std_k)|: 1.1368683772161603e-13
+  spread per outcome (row 0): [0.007138, 0.0, 57.463705] | expected 0.4*unit: [0.007138, 0.0, 57.463705]
+== one active outcome (stacked) ==
+  requests: 1 | active outcomes: [np.int64(1)]
+  last request shape: (6, 6) | y mean/std sent: 0.0 1.0
+  max |median - residual|: 4.440892098500626e-16
+  max |mean - residual|:   4.440892098500626e-16
+  max |quantiles - expected (residual + (q-0.5)*std_k)|: 3.552713678800501e-15
+  spread per outcome (row 0): [0.0, 1.968482, 0.0] | expected 0.4*unit: [0.0, 1.968482, 0.0]
+== all outcomes constant (stacked) ==
+  requests: 0 | active outcomes: []
+  max |median - residual|: 0.0
+  max |mean - residual|:   0.0
+  max |quantiles - expected (residual + (q-0.5)*std_k)|: 0.0
+  spread per outcome (row 0): [0.0, 0.0, 0.0] | expected 0.4*unit: [0.0, 0.0, 0.0]
+== binary-valued residuals (stacked) ==
+  requests: 1 | active outcomes: [np.int64(0), np.int64(1), np.int64(2)]
+  last request shape: (18, 7) | y mean/std sent: 0.0 1.0
+  max |median - residual|: 0.0
+  max |mean - residual|:   0.0
+  max |quantiles - expected (residual + (q-0.5)*std_k)|: 1.1102230246251565e-16
+  spread per outcome (row 0): [0.2, 0.188562, 0.188562] | expected 0.4*unit: [0.2, 0.188562, 0.188562]
+== three active outcomes (per_outcome) ==
+  requests: 3 | active outcomes: [np.int64(0), np.int64(1), np.int64(2)]
+  last request shape: (6, 6) | y mean/std sent: 884.54768276205 143.65926347008
+  max |median - residual|: 0.0
+  max |mean - residual|:   0.0
+  max |quantiles - expected (residual + (q-0.5)*std_k)|: 0.0
+  spread per outcome (row 0): [0.4, 0.4, 0.4] | expected 0.4*unit: [0.4, 0.4, 0.4]
+exit=0
+

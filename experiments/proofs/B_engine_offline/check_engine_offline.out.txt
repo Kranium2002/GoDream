@@ -1,0 +1,114 @@
+FIXTURE CHECK - mechanics only, not evidence about the robot, the simulator, TabPFN or any model
+numpy 2.5.5 | python 3.13.16
+config quantile_levels (0.1, 0.25, 0.5, 0.75, 0.9) spread_levels (0.1, 0.9) presets ('default', 'heavy_payload', 'slippery_floor', 'tired_motors', 'downhill')
+
+== 1. build_real_row: residual sign/order, strict keys, JSONL bitwise round trip, dream rows ==
+  physics [0.725, 0.45] | measured {'fx_fail': 1.0, 'fx_error': 0.9} | residual {'fx_error': 0.17500000000000004, 'fx_fail': 0.55}
+  [ok] physics_guess/residual keys are in the spec outcome order
+  [ok] residual == measured - physics, per outcome (exact)
+  [ok] residual sign: measured > physics gives a positive residual
+  [ok] situation stored with the categorical as its level string
+  [ok] extra key in measured outcome -> ValueError: row keys do not match the schema; missing=[] extra=['hidden_payload_kg']
+  [ok] missing key in measured outcome -> ValueError: row keys do not match the schema; missing=['fx_fail'] extra=[]
+  [ok] binary outcome not 0/1 -> ValueError: fx_fail=0.5 must be 0 or 1
+  [ok] action outside bounds -> ValueError: action [1.5, 0.0] is outside the declared bounds of skill 'fixture_toy'
+  [ok] timestamp without UTC offset -> ValueError: timestamp_utc '2026-11-21T12:00:00' must carry a zero UTC offset (e.g. '+00:00' or 'Z')
+  [ok] residual inconsistent with measured - physics -> ValueError: residual != measured_outcome - physics_guess for ['fx_error', 'fx_fail']
+  [ok] JSONL round trip returns equal rows
+  [ok] JSONL round trip is bitwise for every float
+  [ok] re-serialized rows reproduce the file bytes
+  first line: {"action":{"fx_delay":0.25,"fx_speed":0.5},"measured_outcome":{"fx_error":0.9,"fx_fail":1.0},"physics_guess":{"fx_error":0.725,"fx_fail":0.45},"residual":{"fx_e ...
+  [ok] read_rows rejects NaN -> ValueError: <tmp>\bad.jsonl:1: non-finite JSON constant NaN
+  [ok] read_rows rejects an incomplete last line -> ValueError: <tmp>\bad.jsonl: the last line is incomplete (no trailin
+  [ok] append_rows refuses to append after an incomplete line -> ValueError: <tmp>\bad.jsonl ends with an incomplete line; repair it 
+  [ok] read_rows(spec=...) rejects a row of another skill -> ValueError: <tmp>\attempts\fixture.jsonl:1: row belongs to skill 'fi
+  [ok] dream row: source 'dream', measured_outcome and residual are None
+  [ok] dream row: action is the decision's chosen action
+  [ok] dream row: physics_guess is the physics at the chosen candidate
+  [ok] dream row: teacher summary indices
+  [ok] a dream row with a measured outcome is rejected -> ValueError: a dream row is not a measurement: measured_outcome and residual must be None
+  [ok] a real row without a measured outcome is rejected -> ValueError: a real row needs measured_outcome and residual
+  [ok] dream row JSONL round trip
+
+== 2. rows_to_arrays: shapes, equality with inputs, refuses dream rows ==
+  [ok] shapes (6,2) (6,2) (6,2) (6,2) (6,2)
+  [ok] situations/actions/measured equal the inputs exactly
+  [ok] physics equals spec.physics_guess of the batch
+  [ok] residuals == measured - physics exactly
+  [ok] world_presets in row order
+  [ok] arrays identical after a JSONL round trip
+  [ok] zero rows give (0, width) arrays
+  [ok] rows_to_arrays refuses dream rows -> ValueError: rows[6] has source 'dream'; only real rows become arrays
+
+== 3. exploration_actions: reproducible, in bounds, fraction 0.0 = physics-only ==
+  [ok] same stream -> identical actions
+  [ok] actions shape (40, 2)
+  [ok] every action inside the spec bounds
+  [ok] every action is one of its situation's candidates
+  [ok] exploration_fraction 0.0 equals the physics-only choice
+  rows differing from physics-only at fraction 0.5: 19/40 (fixture observation, not a metric)
+  [ok] exploration_fraction 1.0 stays on the candidate grids
+  [ok] another stream index gives a different draw
+  [ok] exploration_fraction outside [0, 1] -> ValueError: exploration_fraction is a probability and must lie in [0, 1]; got 1.5
+
+== 4. dream(): physics-only path and DreamSet construction from decide_batch decisions ==
+  [ok] DreamSet shapes: situations (50,2), candidates (50,9,2), scores (50,9)
+  [ok] situations come from spec.sample_situations on the same stream
+  [ok] physics only: chosen == physics_choice and chosen_spread == 0
+  [ok] physics only: no request hash
+  [ok] dreams_from_decisions(decide_batch(...)) equals dream() on the same situations
+  [ok] chosen_physics equals spec.physics_guess at the chosen actions
+  [ok] dream() raises when candidate counts differ -> ValueError: candidate counts differ between situations: [4, 9]
+  [ok] dream_rows: 50 rows, all source 'dream' with no measurement
+  [ok] dream_rows actions are the chosen actions
+  [ok] dream rows JSONL round trip
+
+== 4b. fit_residual_model + model-backed dream() with the production ConstantBiasResidual (plumbing on fixture rows; not a performance result) ==
+  [ok] fit_residual_model returns the fitted model, trained on all 6 rows
+  [ok] targets were the stored residuals: constant mean == residuals.mean(axis=0) exactly
+  [ok] fit_residual_model refuses zero rows -> ValueError: no attempts to fit; zero attempts is the physics-only method
+  [ok] fit_residual_model refuses dream rows -> ValueError: rows[6] has source 'dream'; only real rows become arrays
+  [ok] fit_residual_model refuses a layout of another skill -> ValueError: layout skill 'fixture_other' != 'fixture_toy'
+  [ok] a layout without a physics block fits (direct baseline layout)
+  [ok] model-backed DreamSet shapes (30, 9, 2) and method label
+  [ok] chosen_spread is the model's primary-outcome spread
+  [ok] chosen_median == clip(chosen_physics + model median residual, outcome bounds)
+  [ok] a model without last_request_hash records no request
+  [ok] keep_confident at exactly the constant spread keeps every row; just below keeps none
+  fixture observation: constant spread of fx_error = np.float64(0.68984842520654); chosen != physics in 20/30 dreams (not a metric)
+  [ok] model given with the physics-only label -> ValueError: method 'physics_only' and model given disagree
+  [ok] world-id layout: fit with an extra column and dream with a declared world id
+  [ok] world-id layout without the extra block -> ValueError: the layout needs a extra block of shape (6, 1)
+
+== 5. DreamSet save/load, keep_confident, select_context, world id, recovery_attempts ==
+  [ok] save/load arrays are bitwise identical (bytes and dtype)
+  [ok] save/load names, provenance and meta
+  [ok] only the .npz and .json are left (no temp files)
+  [ok] load_dreams detects arrays that do not match the recorded sha256 -> ValueError: <tmp>\dreams\fixture.npz does not match the sha256 recor
+  [ok] save_dreams rejects non-finite meta -> ValueError: meta is not JSON-serializable with finite numbers: Out of range float values are not JSON compliant: nan
+  [ok] DreamSet is a DreamSet after replace
+  [ok] keep_confident(0.2) keeps exactly rows with spread <= threshold (boundary row kept)
+  [ok] keep_confident keeps C and every per-row array aligned
+  [ok] keep_confident(0.0) keeps only the single zero-spread row
+  [ok] keep_confident rejects a negative threshold -> ValueError: max_chosen_spread must be >= 0 (a spread is non-negative); got -0.1
+  [ok] an empty filtered set saves and loads
+  [ok] select_context 'all' -> every real row in order
+  [ok] select_context 'recent' 4 -> last 4 real rows
+  [ok] select_context 'recent' 10 -> all 6 real rows
+  [ok] 'recent' without a window -> ValueError: policy 'recent' needs recent_window as an int >= 1; got None
+  [ok] 'all' with a window -> ValueError: recent_window is used only by policy 'recent'; pass None with policy 'all'
+  [ok] unknown policy -> ValueError: unknown context policy 'world_id'; known policies: ('all', 'recent')
+  [ok] world_id levels are the declared presets in config order
+  [ok] world_id_column -> (6, 1) level indices
+  [ok] world_id_column accepts preset names
+  [ok] undeclared preset -> ValueError: item 0: world preset 'moon' is not one of ('default', 'heavy_payload', 'slippery_floor', 'tired_motors', 'down
+  [ok] layout with world_id: features (6, 7), world_id column categorical
+  [ok] recovery_attempts: threshold 1.0*(1+0.2) -> first 10, sustained 10
+  [ok] recovery_attempts: exact boundary counts (1.25 <= 1.0*(1+0.25))
+  [ok] recovery_attempts: not reached -> None, None
+  [ok] recovery_attempts: smallest count, not first key
+  [ok] recovery_attempts: negative count -> ValueError: attempt count -5 must be an int >= 0
+  [ok] recovery_attempts: empty -> ValueError: errors_by_new_attempts is empty
+
+checks: 92 run, 92 held, 0 failed
+NOT RUN: collect() (needs Person A's Go2World; never called with a stand-in world); dream() with the TabPFN teacher (no real TabPFN prediction has been made)

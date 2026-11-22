@@ -1,0 +1,12 @@
+﻿REVIEW REPRODUCTION - fixture, not evidence
+sizes (4, 64, 35): rows with logits not bitwise equal (batch vs single) = 2000 / 2000, max |diff| = 2.220e-15; first-layer current rows differing = 2000; spike-count cells differing = 0; decide_one vs decide differing = 0; batch 777 vs 2000 rows differing = 15
+sizes (4, 64, 64, 35): rows with logits not bitwise equal (batch vs single) = 1353 / 2000, max |diff| = 4.441e-16; first-layer current rows differing = 2000; spike-count cells differing = 0; decide_one vs decide differing = 0; batch 777 vs 2000 rows differing = 9
+sizes (16, 64, 35): rows with logits not bitwise equal (batch vs single) = 2000 / 2000, max |diff| = 2.220e-15; first-layer current rows differing = 2000; spike-count cells differing = 0; decide_one vs decide differing = 0; batch 777 vs 2000 rows differing = 15
+sizes (40, 128, 64, 35): rows with logits not bitwise equal (batch vs single) = 1279 / 2000, max |diff| = 4.441e-16; first-layer current rows differing = 2000; spike-count cells differing = 0; decide_one vs decide differing = 0; batch 777 vs 2000 rows differing = 5
+
+== encode_one vs encode (fixture spec: 2 floats + 1 categorical) ==
+  sampled: rows not bitwise equal = 0 / 20000
+  range ends: rows not bitwise equal = 0 / 4
+  outside range: rows not bitwise equal = 0 / 3
+  range ends encode to: [[-1.732051, -1.732051, 1.0, 0.0], [1.732051, 1.732051, 0.0, 1.0]]
+  out-of-range situations are encoded without refusal: [[-8.66, 22.517, 0.0, 1.0], [12.99, -5.196, 1.0, 0.0], [1732050.808, -3.464, 0.0, 1.0]]

@@ -1,0 +1,19 @@
+REVIEW REPRODUCTION - fixture, not evidence
+A. keys the model used for this ONE predict call: ['fixturekey_outcome0', 'fixturekey_outcome1']
+   DreamSet.request_hashes recorded              : ['fixturekey_outcome1']
+   dream row teacher.request_hash                : fixturekey_outcome1
+Traceback (most recent call last):
+  File "C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\engine_lane_snapshots\before_fix\experiments\proofs\B_review\engine\r03_dream_provenance.py", line 80, in <module>
+    ds_b = dream(spec, model_b, layout, n_dreams=5, rng=stream_rng(1, "rv/dreams"), points_per_dim=[3, 3],
+                 quantile_levels=LEVELS, spread_levels=(0.1, 0.9), method="constant_bias")
+  File "C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\engine_lane_snapshots\before_fix\learned_judgment\engine\dream.py", line 318, in dream
+    decisions = decide_batch(
+        spec,
+    ...<7 lines>...
+        extra=extra,
+    )
+  File "C:\Users\vidhu\AppData\Local\Temp\claude\07d910646a9cb71e\82e647f3-13a8-4067-91a4-d0b43ab8dda2\scratchpad\engine_lane_snapshots\before_fix\learned_judgment\engine\decide.py", line 112, in decide_batch
+    raise ValueError(
+    ...<2 lines>...
+    )
+ValueError: the residual model computed its spread from levels (0.25, 0.75), not the requested (0.1, 0.9)

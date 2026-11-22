@@ -1,0 +1,755 @@
+[loop 2026-11-22T04:22:17+00:00] loop reflex2: round 0 + 2 improvement round(s), 12 attempt episodes per round, config results/runs/reflex2/config.yaml (digest 17b175d60261), confirm_billing False
+[loop 2026-11-22T04:22:17+00:00] round 0 step attempts: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex attempts --out results/runs/reflex2/round_0/context --n 12 --first 0
+attempts: 12 context episodes, scenarios 0..11 (Counter({'mound': 9, 'flat': 3})), policy rule, window D 81, 6 candidates ['yaw+0.00_vx0.60', 'yaw+0.00_vx0.40', 'yaw+0.70_vx0.60', 'yaw+0.70_vx0.40', 'yaw-0.70_vx0.60', 'yaw-0.70_vx0.40'], exploration fraction 0.5
+attempts: 1/12
+attempts: 2/12
+attempts: 3/12
+attempts: 4/12
+attempts: 5/12
+attempts: 6/12
+attempts: 7/12
+attempts: 8/12
+attempts: 9/12
+attempts: 10/12
+attempts: 11/12
+attempts: 12/12
+attempts flat: 3 episodes, reached 3, crossed the goal line 3, falls 0, decisions per episode 38.0
+attempts mound: 9 episodes, reached 6, crossed the goal line 8, falls 0, decisions per episode 48.6
+wall 17.2 s for 12 episodes (pool start-up included); per episode in its worker mean 5.6 s, max 7.4 s
+rows 551 (every decision); by source {'rule': 289, 'explore': 262, 'student': 0}; D 81; wrote results\runs\reflex2\round_0\context\rows.npz and rows.json
+[loop 2026-11-22T04:22:36+00:00] round 0 step attempts: exit 0 after 18.885 s
+[loop 2026-11-22T04:22:36+00:00] round 0 step dream: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex dream --out results/runs/reflex2/round_0/dream --context results/runs/reflex2/round_0/context
+dream: 551 windows of 12 attempt episodes (results/runs/reflex2/round_0/context; by source {'rule': 289, 'explore': 262, 'student': 0}) + 20 rule-of-thumb episodes on dream scenarios (Counter({'mound': 16, 'flat': 4}))
+dream episodes: 2/20
+dream episodes: 4/20
+dream episodes: 6/20
+dream episodes: 8/20
+dream episodes: 10/20
+dream episodes: 12/20
+dream episodes: 14/20
+dream episodes: 16/20
+dream episodes: 18/20
+dream episodes: 20/20
+rule-of-thumb candidate counts over the dream: yaw+0.00_vx0.60 1053, yaw+0.70_vx0.60 78, yaw-0.70_vx0.60 254
+dream flat: 4 episodes, reached 4, crossed the goal line 4, falls 0, decisions per episode 34.0
+dream mound: 16 episodes, reached 11, crossed the goal line 16, falls 0, decisions per episode 43.6
+wall 22.8 s for 20 episodes (pool start-up included); per episode in its worker mean 5.0 s, max 7.3 s
+dream situations 1385 (551 from attempts, 834 extra) x 6 candidates; wrote results\runs\reflex2\round_0\dream\dream.npz and dream.json
+[loop 2026-11-22T04:23:01+00:00] round 0 step dream: exit 0 after 24.419 s
+[loop 2026-11-22T04:23:01+00:00] round 0 step quote: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.observed quote --run reflex2 --skill reflex --context results/runs/reflex2/round_0/context --dream results/runs/reflex2/round_0/dream
+quotes (free; nothing billed): {
+ "dream": {
+  "mode": "stacked",
+  "n_query_rows": 8310,
+  "n_train_rows": 551,
+  "n_features": 87,
+  "active_outcomes": [
+   "progress_m",
+   "offset_m",
+   "tilt_deg"
+  ],
+  "constant_outcomes": [
+   "fall"
+  ],
+  "max_query_rows_per_request": 32000,
+  "requests": [
+   {
+    "outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "chunk": 0,
+    "n_chunks": 1,
+    "n_train": 1653,
+    "n_query": 24930,
+    "n_features": 88,
+    "padded_rows": 0,
+    "quote_tokens": 10000,
+    "pricing_version": "quota_v3"
+   }
+  ],
+  "total_quoted_tokens": 10000,
+  "usage": {
+   "current_usage": 1414687,
+   "usage_limit": 35000000,
+   "reset_time": "2026-12-01 00:00:00 UTC",
+   "daily_tokens_used": 617965,
+   "daily_token_limit": 35000000,
+   "daily_usage": 617965,
+   "daily_limit": 35000000,
+   "daily_reset_time": "2026-11-23 00:00:00 UTC",
+   "monthly_tokens_used": 1414687,
+   "monthly_token_limit": 35000000,
+   "monthly_usage": 1414687,
+   "monthly_limit": 35000000,
+   "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+   "thinking_fit_count": 0,
+   "thinking_fit_limit": 0
+  },
+  "remaining_account_tokens": 33585313,
+  "tokens_quoted_for_billed_calls": 457652,
+  "project_token_budget": 35000000,
+  "max_tokens_per_request": 60000,
+  "gate_preview": {
+   "would_refuse": false,
+   "reasons": []
+  },
+  "calls": [
+   "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+   "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+   "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+   "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+  ],
+  "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+ }
+}
+quote: done; D:\BerlinPrior\results\runs\reflex2\result.json
+[loop 2026-11-22T04:23:09+00:00] round 0 step quote: exit 0 after 8.49 s
+[loop 2026-11-22T04:23:09+00:00] stopped before the first teach (no --confirm-billing): free quote of round 0's dream 10000 tokens; nothing billed. Rerun with --confirm-billing to go on.
+[loop 2026-11-22T04:29:41+00:00] loop reflex2: round 0 + 3 improvement round(s), 12 attempt episodes per round, config results/runs/reflex2/config.yaml (digest 17b175d60261), confirm_billing True
+[loop 2026-11-22T04:29:41+00:00] round 0 step attempts: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex attempts --out results/runs/reflex2/round_0/context --n 12 --first 0
+attempts: 12 context episodes, scenarios 0..11 (Counter({'mound': 9, 'flat': 3})), policy rule, window D 81, 6 candidates ['yaw+0.00_vx0.60', 'yaw+0.00_vx0.40', 'yaw+0.70_vx0.60', 'yaw+0.70_vx0.40', 'yaw-0.70_vx0.60', 'yaw-0.70_vx0.40'], exploration fraction 0.5
+attempts: 1/12
+attempts: 2/12
+attempts: 3/12
+attempts: 4/12
+attempts: 5/12
+attempts: 6/12
+attempts: 7/12
+attempts: 8/12
+attempts: 9/12
+attempts: 10/12
+attempts: 11/12
+attempts: 12/12
+attempts flat: 3 episodes, reached 3, crossed the goal line 3, falls 0, decisions per episode 38.0
+attempts mound: 9 episodes, reached 6, crossed the goal line 8, falls 0, decisions per episode 48.6
+wall 23.4 s for 12 episodes (pool start-up included); per episode in its worker mean 7.6 s, max 11.7 s
+rows 551 (every decision); by source {'rule': 289, 'explore': 262, 'student': 0}; D 81; wrote results\runs\reflex2\round_0\context\rows.npz and rows.json
+[loop 2026-11-22T04:30:06+00:00] round 0 step attempts: exit 0 after 25.182 s
+[loop 2026-11-22T04:30:06+00:00] round 0 step dream: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex dream --out results/runs/reflex2/round_0/dream --context results/runs/reflex2/round_0/context
+dream: 551 windows of 12 attempt episodes (results/runs/reflex2/round_0/context; by source {'rule': 289, 'explore': 262, 'student': 0}) + 20 rule-of-thumb episodes on dream scenarios (Counter({'mound': 16, 'flat': 4}))
+dream episodes: 2/20
+dream episodes: 4/20
+dream episodes: 6/20
+dream episodes: 8/20
+dream episodes: 10/20
+dream episodes: 12/20
+dream episodes: 14/20
+dream episodes: 16/20
+dream episodes: 18/20
+dream episodes: 20/20
+rule-of-thumb candidate counts over the dream: yaw+0.00_vx0.60 1053, yaw+0.70_vx0.60 78, yaw-0.70_vx0.60 254
+dream flat: 4 episodes, reached 4, crossed the goal line 4, falls 0, decisions per episode 34.0
+dream mound: 16 episodes, reached 11, crossed the goal line 16, falls 0, decisions per episode 43.6
+wall 21.9 s for 20 episodes (pool start-up included); per episode in its worker mean 4.9 s, max 7.2 s
+dream situations 1385 (551 from attempts, 834 extra) x 6 candidates; wrote results\runs\reflex2\round_0\dream\dream.npz and dream.json
+[loop 2026-11-22T04:30:30+00:00] round 0 step dream: exit 0 after 23.722 s
+[loop 2026-11-22T04:30:30+00:00] round 0 step teach: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.observed teach --run reflex2 --skill reflex --context results/runs/reflex2/round_0/context --dream results/runs/reflex2/round_0/dream --confirm-billing
+quotes (free; nothing billed): {
+ "dream": {
+  "mode": "stacked",
+  "n_query_rows": 8310,
+  "n_train_rows": 551,
+  "n_features": 87,
+  "active_outcomes": [
+   "progress_m",
+   "offset_m",
+   "tilt_deg"
+  ],
+  "constant_outcomes": [
+   "fall"
+  ],
+  "max_query_rows_per_request": 32000,
+  "requests": [
+   {
+    "outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "chunk": 0,
+    "n_chunks": 1,
+    "n_train": 1653,
+    "n_query": 24930,
+    "n_features": 88,
+    "padded_rows": 0,
+    "quote_tokens": 10000,
+    "pricing_version": "quota_v3"
+   }
+  ],
+  "total_quoted_tokens": 10000,
+  "usage": {
+   "current_usage": 1414687,
+   "usage_limit": 35000000,
+   "reset_time": "2026-12-01 00:00:00 UTC",
+   "daily_tokens_used": 617965,
+   "daily_token_limit": 35000000,
+   "daily_usage": 617965,
+   "daily_limit": 35000000,
+   "daily_reset_time": "2026-11-23 00:00:00 UTC",
+   "monthly_tokens_used": 1414687,
+   "monthly_token_limit": 35000000,
+   "monthly_usage": 1414687,
+   "monthly_limit": 35000000,
+   "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+   "thinking_fit_count": 0,
+   "thinking_fit_limit": 0
+  },
+  "remaining_account_tokens": 33585313,
+  "tokens_quoted_for_billed_calls": 457652,
+  "project_token_budget": 35000000,
+  "max_tokens_per_request": 60000,
+  "gate_preview": {
+   "would_refuse": false,
+   "reasons": []
+  },
+  "calls": [
+   "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+   "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+   "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+   "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+  ],
+  "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+ }
+}
+teach: done; D:\BerlinPrior\results\runs\reflex2\result.json
+[loop 2026-11-22T04:30:48+00:00] round 0 step teach: exit 0 after 18.09 s
+[loop 2026-11-22T04:30:48+00:00] round 0 step train: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.observed train --run reflex2 --skill reflex --dream results/runs/reflex2/round_0/dream --scores results/runs/reflex2/round_0/scores.npz
+train: {
+ "student": "D:/BerlinPrior/results/runs/reflex2/student",
+ "network_sha256": "22a69dba3aa1069ef979287349c694b717c3781c889ea5e16b4433eb241c5a95",
+ "split": {
+  "by": "group",
+  "validation_fraction": 0.1,
+  "n_train_rows": 1218,
+  "n_validation_rows": 167,
+  "n_groups": 32
+ },
+ "wall_s": 18.18292379999184
+}
+train: done; D:\BerlinPrior\results\runs\reflex2\result.json
+[loop 2026-11-22T04:31:09+00:00] round 0 step train: exit 0 after 20.934 s
+[loop 2026-11-22T04:31:09+00:00] round 0 step test: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex run --student results/runs/reflex2/round_0/student --split test --out results/runs/reflex2/round_0/test_run --methods snn
+run: split test, 30 scenarios (Counter({'mound': 25, 'flat': 5})) x ['snn']
+episodes: 3/30
+episodes: 6/30
+episodes: 9/30
+episodes: 12/30
+episodes: 15/30
+episodes: 18/30
+episodes: 21/30
+episodes: 24/30
+episodes: 27/30
+episodes: 30/30
+snn all: n 30, reached 9 (0.30, Wilson [0.17, 0.48]), crossed 30, falls 0, |offset| at the line 1.0336182287743152, time to goal 14.433333333333334, max tilt 12.2 deg, slip 6.51 m, final |sideways| 1.03 m
+snn flat: n 5, reached 0 (0.00, Wilson [0.00, 0.43]), crossed 5, falls 0, |offset| at the line 1.662582006101911, time to goal None, max tilt 6.2 deg, slip 3.53 m, final |sideways| 1.66 m
+snn mound: n 25, reached 9 (0.36, Wilson [0.20, 0.55]), crossed 25, falls 0, |offset| at the line 0.9078254733087959, time to goal 14.433333333333334, max tilt 13.4 deg, slip 7.11 m, final |sideways| 0.91 m
+by difficulty (steep = rim slope >= 24 deg; passage over = path within half the radius of the centre, around = farther out and came level with the centre, not_past = never came level):
+  snn          flat   n  5: reached  0, crossed  5, falls 0, mean miss at the line 1.66 m, final |sideways| 1.66 m
+  snn          gentle n 10: reached  3, crossed 10, falls 0, mean miss at the line 1.04 m, final |sideways| 1.04 m | over 4 (reached 1), around 6 (reached 2), not_past 0 (reached 0)
+  snn          steep  n 15: reached  6, crossed 15, falls 0, mean miss at the line 0.82 m, final |sideways| 0.82 m | over 0 (reached 0), around 15 (reached 6), not_past 0 (reached 0)
+wall 32.1 s; wrote results\runs\reflex2\round_0\test_run\run.json and 6 tracks under results\runs\reflex2\round_0\test_run\tracks
+[loop 2026-11-22T04:31:43+00:00] round 0 step test: exit 0 after 33.84 s
+[loop 2026-11-22T04:31:43+00:00] round 0 done: 551 real decisions, 1385 dream windows; student on the test split reached 9 of 30, mean miss at the line 1.0336182287743152; 122.059 s
+[loop 2026-11-22T04:31:43+00:00] round 1 step attempts: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex attempts --out results/runs/reflex2/round_1/context --n 12 --first 12 --policy student --student results/runs/reflex2/round_0/student
+attempts: 12 context episodes, scenarios 12..23 (Counter({'mound': 10, 'flat': 2})), policy student results/runs/reflex2/round_0/student, window D 81, 6 candidates ['yaw+0.00_vx0.60', 'yaw+0.00_vx0.40', 'yaw+0.70_vx0.60', 'yaw+0.70_vx0.40', 'yaw-0.70_vx0.60', 'yaw-0.70_vx0.40'], exploration fraction 0.3
+attempts: 1/12
+attempts: 2/12
+attempts: 3/12
+attempts: 4/12
+attempts: 5/12
+attempts: 6/12
+attempts: 7/12
+attempts: 8/12
+attempts: 9/12
+attempts: 10/12
+attempts: 11/12
+attempts: 12/12
+attempts flat: 2 episodes, reached 1, crossed the goal line 2, falls 0, decisions per episode 40.5
+attempts mound: 10 episodes, reached 2, crossed the goal line 10, falls 0, decisions per episode 45.6
+wall 17.3 s for 12 episodes (pool start-up included); per episode in its worker mean 6.0 s, max 7.7 s
+rows 537 (every decision); by source {'rule': 0, 'explore': 177, 'student': 360}; D 81; wrote results\runs\reflex2\round_1\context\rows.npz and rows.json
+[loop 2026-11-22T04:32:02+00:00] round 1 step attempts: exit 0 after 19.101 s
+[loop 2026-11-22T04:32:02+00:00] round 1 step merge: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex merge --inputs results/runs/reflex2/round_0/context results/runs/reflex2/round_1/context --out results/runs/reflex2/round_1/rows
+merge: 2 parts, 1088 rows (results/runs/reflex2/round_0/context 551, results/runs/reflex2/round_1/context 537), 24 scenarios, by source {'rule': 289, 'explore': 439, 'student': 360}; wrote results\runs\reflex2\round_1\rows\rows.npz
+[loop 2026-11-22T04:32:04+00:00] round 1 step merge: exit 0 after 1.757 s
+[loop 2026-11-22T04:32:04+00:00] round 1 step dream: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex dream --out results/runs/reflex2/round_1/dream --context results/runs/reflex2/round_0/context results/runs/reflex2/round_1/context
+dream: 1088 windows of 24 attempt episodes (results/runs/reflex2/round_0/context + results/runs/reflex2/round_1/context; by source {'rule': 289, 'explore': 439, 'student': 360}) + 20 rule-of-thumb episodes on dream scenarios (Counter({'mound': 16, 'flat': 4}))
+dream episodes: 2/20
+dream episodes: 4/20
+dream episodes: 6/20
+dream episodes: 8/20
+dream episodes: 10/20
+dream episodes: 12/20
+dream episodes: 14/20
+dream episodes: 16/20
+dream episodes: 18/20
+dream episodes: 20/20
+rule-of-thumb candidate counts over the dream: yaw+0.00_vx0.60 1249, yaw+0.70_vx0.60 332, yaw-0.70_vx0.60 341
+dream flat: 4 episodes, reached 4, crossed the goal line 4, falls 0, decisions per episode 34.0
+dream mound: 16 episodes, reached 11, crossed the goal line 16, falls 0, decisions per episode 43.6
+wall 24.0 s for 20 episodes (pool start-up included); per episode in its worker mean 5.3 s, max 8.4 s
+dream situations 1922 (1088 from attempts, 834 extra) x 6 candidates; wrote results\runs\reflex2\round_1\dream\dream.npz and dream.json
+[loop 2026-11-22T04:32:30+00:00] round 1 step dream: exit 0 after 25.718 s
+[loop 2026-11-22T04:32:30+00:00] round 1 step teach: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.observed teach --run reflex2 --skill reflex --context results/runs/reflex2/round_1/rows --dream results/runs/reflex2/round_1/dream --confirm-billing
+quotes (free; nothing billed): {
+ "dream": {
+  "mode": "stacked",
+  "n_query_rows": 11532,
+  "n_train_rows": 1088,
+  "n_features": 87,
+  "active_outcomes": [
+   "progress_m",
+   "offset_m",
+   "tilt_deg"
+  ],
+  "constant_outcomes": [
+   "fall"
+  ],
+  "max_query_rows_per_request": 32000,
+  "requests": [
+   {
+    "outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "chunk": 0,
+    "n_chunks": 2,
+    "n_train": 3264,
+    "n_query": 32000,
+    "n_features": 88,
+    "padded_rows": 0,
+    "quote_tokens": 11858,
+    "pricing_version": "quota_v3"
+   },
+   {
+    "outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "chunk": 1,
+    "n_chunks": 2,
+    "n_train": 3264,
+    "n_query": 2596,
+    "n_features": 88,
+    "padded_rows": 0,
+    "quote_tokens": 10000,
+    "pricing_version": "quota_v3"
+   }
+  ],
+  "total_quoted_tokens": 21858,
+  "usage": {
+   "current_usage": 1424687,
+   "usage_limit": 35000000,
+   "reset_time": "2026-12-01 00:00:00 UTC",
+   "daily_tokens_used": 627965,
+   "daily_token_limit": 35000000,
+   "daily_usage": 627965,
+   "daily_limit": 35000000,
+   "daily_reset_time": "2026-11-23 00:00:00 UTC",
+   "monthly_tokens_used": 1424687,
+   "monthly_token_limit": 35000000,
+   "monthly_usage": 1424687,
+   "monthly_limit": 35000000,
+   "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+   "thinking_fit_count": 0,
+   "thinking_fit_limit": 0
+  },
+  "remaining_account_tokens": 33575313,
+  "tokens_quoted_for_billed_calls": 467652,
+  "project_token_budget": 35000000,
+  "max_tokens_per_request": 60000,
+  "gate_preview": {
+   "would_refuse": false,
+   "reasons": []
+  },
+  "calls": [
+   "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+   "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+   "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+   "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+  ],
+  "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+ }
+}
+teach: done; D:\BerlinPrior\results\runs\reflex2\result.json
+[loop 2026-11-22T04:32:54+00:00] round 1 step teach: exit 0 after 23.86 s
+[loop 2026-11-22T04:32:54+00:00] round 1 step train: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.observed train --run reflex2 --skill reflex --dream results/runs/reflex2/round_1/dream --scores results/runs/reflex2/round_1/scores.npz
+train: {
+ "student": "D:/BerlinPrior/results/runs/reflex2/student",
+ "network_sha256": "dc97e9fdf32f6d31552bb2774a78ed4dd40a65aab05b92f690b37c94ba4a1022",
+ "split": {
+  "by": "group",
+  "validation_fraction": 0.1,
+  "n_train_rows": 1734,
+  "n_validation_rows": 188,
+  "n_groups": 44
+ },
+ "wall_s": 19.197615100012626
+}
+train: done; D:\BerlinPrior\results\runs\reflex2\result.json
+[loop 2026-11-22T04:33:16+00:00] round 1 step train: exit 0 after 22.45 s
+[loop 2026-11-22T04:33:16+00:00] round 1 step test: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex run --student results/runs/reflex2/round_1/student --split test --out results/runs/reflex2/round_1/test_run --methods snn
+run: split test, 30 scenarios (Counter({'mound': 25, 'flat': 5})) x ['snn']
+episodes: 3/30
+episodes: 6/30
+episodes: 9/30
+episodes: 12/30
+episodes: 15/30
+episodes: 18/30
+episodes: 21/30
+episodes: 24/30
+episodes: 27/30
+episodes: 30/30
+snn all: n 30, reached 8 (0.27, Wilson [0.14, 0.44]), crossed 29, falls 1, |offset| at the line 1.2841251009445516, time to goal 13.727500000000001, max tilt 11.8 deg, slip 5.08 m, final |sideways| 1.25 m
+snn flat: n 5, reached 2 (0.40, Wilson [0.12, 0.77]), crossed 5, falls 0, |offset| at the line 0.7057150135327849, time to goal 11.620000000000001, max tilt 5.4 deg, slip 3.18 m, final |sideways| 0.71 m
+snn mound: n 25, reached 6 (0.24, Wilson [0.11, 0.43]), crossed 24, falls 1, |offset| at the line 1.4046272024886697, time to goal 14.43, max tilt 13.1 deg, slip 5.46 m, final |sideways| 1.36 m
+by difficulty (steep = rim slope >= 24 deg; passage over = path within half the radius of the centre, around = farther out and came level with the centre, not_past = never came level):
+  snn          flat   n  5: reached  2, crossed  5, falls 0, mean miss at the line 0.71 m, final |sideways| 0.71 m
+  snn          gentle n 10: reached  1, crossed 10, falls 0, mean miss at the line 1.30 m, final |sideways| 1.30 m | over 3 (reached 1), around 7 (reached 0), not_past 0 (reached 0)
+  snn          steep  n 15: reached  5, crossed 14, falls 1, mean miss at the line 1.48 m, final |sideways| 1.39 m | over 1 (reached 1), around 13 (reached 4), not_past 1 (reached 0)
+wall 34.1 s; wrote results\runs\reflex2\round_1\test_run\run.json and 6 tracks under results\runs\reflex2\round_1\test_run\tracks
+[loop 2026-11-22T04:33:52+00:00] round 1 step test: exit 0 after 36.332 s
+[loop 2026-11-22T04:33:52+00:00] round 1 done: 1088 real decisions, 1922 dream windows; student on the test split reached 8 of 30, mean miss at the line 1.2841251009445516; 129.326 s
+[loop 2026-11-22T04:33:52+00:00] round 2 step attempts: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex attempts --out results/runs/reflex2/round_2/context --n 12 --first 24 --policy student --student results/runs/reflex2/round_1/student
+attempts: 12 context episodes, scenarios 24..35 (Counter({'mound': 10, 'flat': 2})), policy student results/runs/reflex2/round_1/student, window D 81, 6 candidates ['yaw+0.00_vx0.60', 'yaw+0.00_vx0.40', 'yaw+0.70_vx0.60', 'yaw+0.70_vx0.40', 'yaw-0.70_vx0.60', 'yaw-0.70_vx0.40'], exploration fraction 0.3
+attempts: 1/12
+attempts: 2/12
+attempts: 3/12
+attempts: 4/12
+attempts: 5/12
+attempts: 6/12
+attempts: 7/12
+attempts: 8/12
+attempts: 9/12
+attempts: 10/12
+attempts: 11/12
+attempts: 12/12
+attempts flat: 2 episodes, reached 1, crossed the goal line 2, falls 0, decisions per episode 39.0
+attempts mound: 10 episodes, reached 3, crossed the goal line 10, falls 0, decisions per episode 41.5
+wall 18.5 s for 12 episodes (pool start-up included); per episode in its worker mean 6.5 s, max 8.0 s
+rows 493 (every decision); by source {'rule': 0, 'explore': 159, 'student': 334}; D 81; wrote results\runs\reflex2\round_2\context\rows.npz and rows.json
+[loop 2026-11-22T04:34:13+00:00] round 2 step attempts: exit 0 after 20.179 s
+[loop 2026-11-22T04:34:13+00:00] round 2 step merge: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex merge --inputs results/runs/reflex2/round_0/context results/runs/reflex2/round_1/context results/runs/reflex2/round_2/context --out results/runs/reflex2/round_2/rows
+merge: 3 parts, 1581 rows (results/runs/reflex2/round_0/context 551, results/runs/reflex2/round_1/context 537, results/runs/reflex2/round_2/context 493), 36 scenarios, by source {'rule': 289, 'explore': 598, 'student': 694}; wrote results\runs\reflex2\round_2\rows\rows.npz
+[loop 2026-11-22T04:34:14+00:00] round 2 step merge: exit 0 after 1.71 s
+[loop 2026-11-22T04:34:14+00:00] round 2 step dream: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex dream --out results/runs/reflex2/round_2/dream --context results/runs/reflex2/round_0/context results/runs/reflex2/round_1/context results/runs/reflex2/round_2/context
+dream: 1581 windows of 36 attempt episodes (results/runs/reflex2/round_0/context + results/runs/reflex2/round_1/context + results/runs/reflex2/round_2/context; by source {'rule': 289, 'explore': 598, 'student': 694}) + 20 rule-of-thumb episodes on dream scenarios (Counter({'mound': 16, 'flat': 4}))
+dream episodes: 2/20
+dream episodes: 4/20
+dream episodes: 6/20
+dream episodes: 8/20
+dream episodes: 10/20
+dream episodes: 12/20
+dream episodes: 14/20
+dream episodes: 16/20
+dream episodes: 18/20
+dream episodes: 20/20
+rule-of-thumb candidate counts over the dream: yaw+0.00_vx0.60 1435, yaw+0.70_vx0.60 356, yaw-0.70_vx0.60 624
+dream flat: 4 episodes, reached 4, crossed the goal line 4, falls 0, decisions per episode 34.0
+dream mound: 16 episodes, reached 11, crossed the goal line 16, falls 0, decisions per episode 43.6
+wall 24.6 s for 20 episodes (pool start-up included); per episode in its worker mean 5.5 s, max 8.1 s
+dream situations 2415 (1581 from attempts, 834 extra) x 6 candidates; wrote results\runs\reflex2\round_2\dream\dream.npz and dream.json
+[loop 2026-11-22T04:34:41+00:00] round 2 step dream: exit 0 after 26.432 s
+[loop 2026-11-22T04:34:41+00:00] round 2 step teach: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.observed teach --run reflex2 --skill reflex --context results/runs/reflex2/round_2/rows --dream results/runs/reflex2/round_2/dream --confirm-billing
+quotes (free; nothing billed): {
+ "dream": {
+  "mode": "stacked",
+  "n_query_rows": 14490,
+  "n_train_rows": 1581,
+  "n_features": 87,
+  "active_outcomes": [
+   "progress_m",
+   "offset_m",
+   "tilt_deg"
+  ],
+  "constant_outcomes": [
+   "fall"
+  ],
+  "max_query_rows_per_request": 32000,
+  "requests": [
+   {
+    "outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "chunk": 0,
+    "n_chunks": 2,
+    "n_train": 4743,
+    "n_query": 32000,
+    "n_features": 88,
+    "padded_rows": 0,
+    "quote_tokens": 12234,
+    "pricing_version": "quota_v3"
+   },
+   {
+    "outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "chunk": 1,
+    "n_chunks": 2,
+    "n_train": 4743,
+    "n_query": 11470,
+    "n_features": 88,
+    "padded_rows": 0,
+    "quote_tokens": 10000,
+    "pricing_version": "quota_v3"
+   }
+  ],
+  "total_quoted_tokens": 22234,
+  "usage": {
+   "current_usage": 1446545,
+   "usage_limit": 35000000,
+   "reset_time": "2026-12-01 00:00:00 UTC",
+   "daily_tokens_used": 649823,
+   "daily_token_limit": 35000000,
+   "daily_usage": 649823,
+   "daily_limit": 35000000,
+   "daily_reset_time": "2026-11-23 00:00:00 UTC",
+   "monthly_tokens_used": 1446545,
+   "monthly_token_limit": 35000000,
+   "monthly_usage": 1446545,
+   "monthly_limit": 35000000,
+   "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+   "thinking_fit_count": 0,
+   "thinking_fit_limit": 0
+  },
+  "remaining_account_tokens": 33553455,
+  "tokens_quoted_for_billed_calls": 489510,
+  "project_token_budget": 35000000,
+  "max_tokens_per_request": 60000,
+  "gate_preview": {
+   "would_refuse": false,
+   "reasons": []
+  },
+  "calls": [
+   "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+   "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+   "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+   "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+  ],
+  "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+ }
+}
+teach: done; D:\BerlinPrior\results\runs\reflex2\result.json
+[loop 2026-11-22T04:35:08+00:00] round 2 step teach: exit 0 after 27.653 s
+[loop 2026-11-22T04:35:08+00:00] round 2 step train: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.observed train --run reflex2 --skill reflex --dream results/runs/reflex2/round_2/dream --scores results/runs/reflex2/round_2/scores.npz
+train: {
+ "student": "D:/BerlinPrior/results/runs/reflex2/student",
+ "network_sha256": "e9aa2ee10e23fe157cf406ae6786e1ecbe1f43ce90ad7321f36ddcbb91665515",
+ "split": {
+  "by": "group",
+  "validation_fraction": 0.1,
+  "n_train_rows": 2140,
+  "n_validation_rows": 275,
+  "n_groups": 56
+ },
+ "wall_s": 23.673779700009618
+}
+train: done; D:\BerlinPrior\results\runs\reflex2\result.json
+[loop 2026-11-22T04:35:35+00:00] round 2 step train: exit 0 after 26.553 s
+[loop 2026-11-22T04:35:35+00:00] round 2 step test: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex run --student results/runs/reflex2/round_2/student --split test --out results/runs/reflex2/round_2/test_run --methods snn
+run: split test, 30 scenarios (Counter({'mound': 25, 'flat': 5})) x ['snn']
+episodes: 3/30
+episodes: 6/30
+episodes: 9/30
+episodes: 12/30
+episodes: 15/30
+episodes: 18/30
+episodes: 21/30
+episodes: 24/30
+episodes: 27/30
+episodes: 30/30
+snn all: n 30, reached 15 (0.50, Wilson [0.33, 0.67]), crossed 29, falls 0, |offset| at the line 0.7142708365552035, time to goal 12.277333333333333, max tilt 11.9 deg, slip 6.80 m, final |sideways| 0.73 m
+snn flat: n 5, reached 5 (1.00, Wilson [0.57, 1.00]), crossed 5, falls 0, |offset| at the line 0.24630246776303824, time to goal 11.588, max tilt 4.9 deg, slip 2.93 m, final |sideways| 0.25 m
+snn mound: n 25, reached 10 (0.40, Wilson [0.23, 0.59]), crossed 24, falls 0, |offset| at the line 0.8117642467202378, time to goal 12.622, max tilt 13.3 deg, slip 7.58 m, final |sideways| 0.82 m
+by difficulty (steep = rim slope >= 24 deg; passage over = path within half the radius of the centre, around = farther out and came level with the centre, not_past = never came level):
+  snn          flat   n  5: reached  5, crossed  5, falls 0, mean miss at the line 0.25 m, final |sideways| 0.25 m
+  snn          gentle n 10: reached  6, crossed 10, falls 0, mean miss at the line 0.63 m, final |sideways| 0.63 m | over 3 (reached 2), around 7 (reached 4), not_past 0 (reached 0)
+  snn          steep  n 15: reached  4, crossed 14, falls 0, mean miss at the line 0.94 m, final |sideways| 0.95 m | over 0 (reached 0), around 15 (reached 4), not_past 0 (reached 0)
+wall 43.2 s; wrote results\runs\reflex2\round_2\test_run\run.json and 6 tracks under results\runs\reflex2\round_2\test_run\tracks
+[loop 2026-11-22T04:36:20+00:00] round 2 step test: exit 0 after 45.31 s
+[loop 2026-11-22T04:36:20+00:00] round 2 done: 1581 real decisions, 2415 dream windows; student on the test split reached 15 of 30, mean miss at the line 0.7142708365552035; 147.96 s
+[loop 2026-11-22T04:36:20+00:00] round 3 step attempts: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex attempts --out results/runs/reflex2/round_3/context --n 12 --first 36 --policy student --student results/runs/reflex2/round_2/student
+attempts: 12 context episodes, scenarios 36..47 (Counter({'mound': 10, 'flat': 2})), policy student results/runs/reflex2/round_2/student, window D 81, 6 candidates ['yaw+0.00_vx0.60', 'yaw+0.00_vx0.40', 'yaw+0.70_vx0.60', 'yaw+0.70_vx0.40', 'yaw-0.70_vx0.60', 'yaw-0.70_vx0.40'], exploration fraction 0.3
+attempts: 1/12
+attempts: 2/12
+attempts: 3/12
+attempts: 4/12
+attempts: 5/12
+attempts: 6/12
+attempts: 7/12
+attempts: 8/12
+attempts: 9/12
+attempts: 10/12
+attempts: 11/12
+attempts: 12/12
+attempts flat: 2 episodes, reached 1, crossed the goal line 2, falls 0, decisions per episode 37.5
+attempts mound: 10 episodes, reached 6, crossed the goal line 10, falls 0, decisions per episode 46.6
+wall 22.6 s for 12 episodes (pool start-up included); per episode in its worker mean 8.6 s, max 12.3 s
+rows 541 (every decision); by source {'rule': 0, 'explore': 163, 'student': 378}; D 81; wrote results\runs\reflex2\round_3\context\rows.npz and rows.json
+[loop 2026-11-22T04:36:45+00:00] round 3 step attempts: exit 0 after 24.749 s
+[loop 2026-11-22T04:36:45+00:00] round 3 step merge: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex merge --inputs results/runs/reflex2/round_0/context results/runs/reflex2/round_1/context results/runs/reflex2/round_2/context results/runs/reflex2/round_3/context --out results/runs/reflex2/round_3/rows
+merge: 4 parts, 2122 rows (results/runs/reflex2/round_0/context 551, results/runs/reflex2/round_1/context 537, results/runs/reflex2/round_2/context 493, results/runs/reflex2/round_3/context 541), 48 scenarios, by source {'rule': 289, 'explore': 761, 'student': 1072}; wrote results\runs\reflex2\round_3\rows\rows.npz
+[loop 2026-11-22T04:36:48+00:00] round 3 step merge: exit 0 after 2.39 s
+[loop 2026-11-22T04:36:48+00:00] round 3 step dream: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex dream --out results/runs/reflex2/round_3/dream --context results/runs/reflex2/round_0/context results/runs/reflex2/round_1/context results/runs/reflex2/round_2/context results/runs/reflex2/round_3/context
+dream: 2122 windows of 48 attempt episodes (results/runs/reflex2/round_0/context + results/runs/reflex2/round_1/context + results/runs/reflex2/round_2/context + results/runs/reflex2/round_3/context; by source {'rule': 289, 'explore': 761, 'student': 1072}) + 20 rule-of-thumb episodes on dream scenarios (Counter({'mound': 16, 'flat': 4}))
+dream episodes: 2/20
+dream episodes: 4/20
+dream episodes: 6/20
+dream episodes: 8/20
+dream episodes: 10/20
+dream episodes: 12/20
+dream episodes: 14/20
+dream episodes: 16/20
+dream episodes: 18/20
+dream episodes: 20/20
+rule-of-thumb candidate counts over the dream: yaw+0.00_vx0.60 1720, yaw+0.70_vx0.60 542, yaw-0.70_vx0.60 694
+dream flat: 4 episodes, reached 4, crossed the goal line 4, falls 0, decisions per episode 34.0
+dream mound: 16 episodes, reached 11, crossed the goal line 16, falls 0, decisions per episode 43.6
+wall 30.5 s for 20 episodes (pool start-up included); per episode in its worker mean 6.6 s, max 9.6 s
+dream situations 2956 (2122 from attempts, 834 extra) x 6 candidates; wrote results\runs\reflex2\round_3\dream\dream.npz and dream.json
+[loop 2026-11-22T04:37:21+00:00] round 3 step dream: exit 0 after 33.104 s
+[loop 2026-11-22T04:37:21+00:00] round 3 step teach: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.observed teach --run reflex2 --skill reflex --context results/runs/reflex2/round_3/rows --dream results/runs/reflex2/round_3/dream --confirm-billing
+quotes (free; nothing billed): {
+ "dream": {
+  "mode": "stacked",
+  "n_query_rows": 17736,
+  "n_train_rows": 2122,
+  "n_features": 87,
+  "active_outcomes": [
+   "progress_m",
+   "offset_m",
+   "tilt_deg"
+  ],
+  "constant_outcomes": [
+   "fall"
+  ],
+  "max_query_rows_per_request": 32000,
+  "requests": [
+   {
+    "outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "chunk": 0,
+    "n_chunks": 2,
+    "n_train": 6366,
+    "n_query": 32000,
+    "n_features": 88,
+    "padded_rows": 0,
+    "quote_tokens": 12656,
+    "pricing_version": "quota_v3"
+   },
+   {
+    "outcomes": [
+     "progress_m",
+     "offset_m",
+     "tilt_deg"
+    ],
+    "chunk": 1,
+    "n_chunks": 2,
+    "n_train": 6366,
+    "n_query": 21208,
+    "n_features": 88,
+    "padded_rows": 0,
+    "quote_tokens": 10041,
+    "pricing_version": "quota_v3"
+   }
+  ],
+  "total_quoted_tokens": 22697,
+  "usage": {
+   "current_usage": 1468779,
+   "usage_limit": 35000000,
+   "reset_time": "2026-12-01 00:00:00 UTC",
+   "daily_tokens_used": 672057,
+   "daily_token_limit": 35000000,
+   "daily_usage": 672057,
+   "daily_limit": 35000000,
+   "daily_reset_time": "2026-11-23 00:00:00 UTC",
+   "monthly_tokens_used": 1468779,
+   "monthly_token_limit": 35000000,
+   "monthly_usage": 1468779,
+   "monthly_limit": 35000000,
+   "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+   "thinking_fit_count": 0,
+   "thinking_fit_limit": 0
+  },
+  "remaining_account_tokens": 33531221,
+  "tokens_quoted_for_billed_calls": 511744,
+  "project_token_budget": 35000000,
+  "max_tokens_per_request": 60000,
+  "gate_preview": {
+   "would_refuse": false,
+   "reasons": []
+  },
+  "calls": [
+   "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+   "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+   "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+   "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+  ],
+  "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+ }
+}
+teach: done; D:\BerlinPrior\results\runs\reflex2\result.json
+[loop 2026-11-22T04:37:50+00:00] round 3 step teach: exit 0 after 29.0 s
+[loop 2026-11-22T04:37:50+00:00] round 3 step train: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.observed train --run reflex2 --skill reflex --dream results/runs/reflex2/round_3/dream --scores results/runs/reflex2/round_3/scores.npz
+train: {
+ "student": "D:/BerlinPrior/results/runs/reflex2/student",
+ "network_sha256": "68073d3f6afa7fb53cca1f7499985abb34b129e7a1c4cfecc9a77786c42c40dc",
+ "split": {
+  "by": "group",
+  "validation_fraction": 0.1,
+  "n_train_rows": 2649,
+  "n_validation_rows": 307,
+  "n_groups": 68
+ },
+ "wall_s": 17.711361900001066
+}
+train: done; D:\BerlinPrior\results\runs\reflex2\result.json
+[loop 2026-11-22T04:38:10+00:00] round 3 step train: exit 0 after 20.352 s
+[loop 2026-11-22T04:38:10+00:00] round 3 step test: -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex run --student results/runs/reflex2/student --split test --out results/runs/reflex2/test_run --run reflex2
+run: split test, 30 scenarios (Counter({'mound': 25, 'flat': 5})) x ['no_op', 'physics_only', 'snn']
+episodes: 9/90
+episodes: 18/90
+episodes: 27/90
+episodes: 36/90
+episodes: 45/90
+episodes: 54/90
+episodes: 63/90
+episodes: 72/90
+episodes: 81/90
+episodes: 90/90
+no_op all: n 30, reached 0 (0.00, Wilson [0.00, 0.11]), crossed 12, falls 0, |offset| at the line 4.105044024439477, time to goal None, max tilt 9.1 deg, slip 5.67 m, final |sideways| 7.12 m
+no_op flat: n 5, reached 0 (0.00, Wilson [0.00, 0.43]), crossed 5, falls 0, |offset| at the line 3.1838478165552404, time to goal None, max tilt 4.0 deg, slip 3.31 m, final |sideways| 3.18 m
+no_op mound: n 25, reached 0 (0.00, Wilson [0.00, 0.13]), crossed 7, falls 0, |offset| at the line 4.76304131578536, time to goal None, max tilt 10.2 deg, slip 6.14 m, final |sideways| 7.91 m
+physics_only all: n 30, reached 23 (0.77, Wilson [0.59, 0.88]), crossed 29, falls 0, |offset| at the line 0.41741199089569747, time to goal 11.74521739130435, max tilt 11.3 deg, slip 5.23 m, final |sideways| 0.41 m
+physics_only flat: n 5, reached 5 (1.00, Wilson [0.57, 1.00]), crossed 5, falls 0, |offset| at the line 0.2401835414545496, time to goal 10.92, max tilt 4.5 deg, slip 2.66 m, final |sideways| 0.24 m
+physics_only mound: n 25, reached 18 (0.72, Wilson [0.52, 0.86]), crossed 24, falls 0, |offset| at the line 0.4543345845292699, time to goal 11.974444444444444, max tilt 12.7 deg, slip 5.75 m, final |sideways| 0.44 m
+snn all: n 30, reached 11 (0.37, Wilson [0.22, 0.54]), crossed 28, falls 2, |offset| at the line 0.6775102051918089, time to goal 11.978181818181817, max tilt 12.2 deg, slip 6.30 m, final |sideways| 0.65 m
+snn flat: n 5, reached 2 (0.40, Wilson [0.12, 0.77]), crossed 5, falls 0, |offset| at the line 0.608766445978407, time to goal 11.040000000000001, max tilt 5.4 deg, slip 3.00 m, final |sideways| 0.61 m
+snn mound: n 25, reached 9 (0.36, Wilson [0.20, 0.55]), crossed 23, falls 2, |offset| at the line 0.6924545006729833, time to goal 12.18666666666667, max tilt 13.6 deg, slip 6.96 m, final |sideways| 0.66 m
+by difficulty (steep = rim slope >= 24 deg; passage over = path within half the radius of the centre, around = farther out and came level with the centre, not_past = never came level):
+  no_op        flat   n  5: reached  0, crossed  5, falls 0, mean miss at the line 3.18 m, final |sideways| 3.18 m
+  no_op        gentle n 10: reached  0, crossed  5, falls 0, mean miss at the line 4.89 m, final |sideways| 7.03 m | over 1 (reached 0), around 9 (reached 0), not_past 0 (reached 0)
+  no_op        steep  n 15: reached  0, crossed  2, falls 0, mean miss at the line 4.43 m, final |sideways| 8.50 m | over 0 (reached 0), around 15 (reached 0), not_past 0 (reached 0)
+  physics_only flat   n  5: reached  5, crossed  5, falls 0, mean miss at the line 0.24 m, final |sideways| 0.24 m
+  physics_only gentle n 10: reached  8, crossed 10, falls 0, mean miss at the line 0.44 m, final |sideways| 0.44 m | over 5 (reached 5), around 5 (reached 3), not_past 0 (reached 0)
+  physics_only steep  n 15: reached 10, crossed 14, falls 0, mean miss at the line 0.47 m, final |sideways| 0.45 m | over 1 (reached 1), around 14 (reached 9), not_past 0 (reached 0)
+  snn          flat   n  5: reached  2, crossed  5, falls 0, mean miss at the line 0.61 m, final |sideways| 0.61 m
+  snn          gentle n 10: reached  5, crossed 10, falls 0, mean miss at the line 0.49 m, final |sideways| 0.49 m | over 6 (reached 4), around 4 (reached 1), not_past 0 (reached 0)
+  snn          steep  n 15: reached  4, crossed 13, falls 2, mean miss at the line 0.85 m, final |sideways| 0.77 m | over 0 (reached 0), around 13 (reached 4), not_past 2 (reached 0)
+paired reached (snn - no_op): 0.36666666666666664 [0.2, 0.5333333333333333]
+paired reached (physics_only - no_op): 0.7666666666666667 [0.6, 0.9]
+wall 80.6 s; wrote results\runs\reflex2\test_run\run.json and 18 tracks under results\runs\reflex2\test_run\tracks
+[loop 2026-11-22T04:39:33+00:00] round 3 step test: exit 0 after 82.443 s
+[loop 2026-11-22T04:39:33+00:00] round 3 done: 2122 real decisions, 2956 dream windows; student on the test split reached 11 of 30, mean miss at the line 0.6775102051918089; 192.218 s
+[loop 2026-11-22T04:39:33+00:00] loop done in 591.7 s: reached per round 0: 9/30, 1: 8/30, 2: 15/30, 3: 11/30

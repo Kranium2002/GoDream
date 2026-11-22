@@ -1,0 +1,6 @@
+vel_x at_min: {"commanded": -1.0, "measured": -0.8879788609276741, "fallen": false, "proven": true, "trace_path": "artifacts/env/commands/vel_x_min.npz"}
+vel_x at_max: {"commanded": 1.0, "measured": 0.9242877962911193, "fallen": false, "proven": true, "trace_path": "artifacts/env/commands/vel_x_max.npz"}
+vel_y at_min: {"commanded": -1.0, "measured": -1.0349134248019654, "fallen": false, "proven": true, "trace_path": "artifacts/env/commands/vel_y_min.npz"}
+vel_y at_max: {"commanded": 1.0, "measured": 0.8939120984378057, "fallen": false, "proven": true, "trace_path": "artifacts/env/commands/vel_y_max.npz"}
+yaw_rate at_min: {"commanded": -1.0, "measured": -0.9554630113300637, "fallen": false, "proven": true, "trace_path": "artifacts/env/commands/yaw_rate_min.npz"}
+yaw_rate at_max: {"commanded": 1.0, "measured": 0.9687434860713279, "fallen": false, "proven": true, "trace_path": "artifacts/env/commands/yaw_rate_max.npz"}

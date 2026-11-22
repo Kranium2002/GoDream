@@ -1,0 +1,5 @@
+inside limits: [('openblas', 1), ('openmp', 22), ('openblas', 1)]
+lbfgs (64, 64): weights_sha256=d06a52f1dbf54d62
+adam (64, 64): weights_sha256=cfa20f9f73d597e9
+after context: [('openblas', 22), ('openmp', 22), ('openblas', 22)]
+exit=0
