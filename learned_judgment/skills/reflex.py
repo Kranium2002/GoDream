@@ -1,0 +1,1082 @@
+"""REFLEX (Person B): a blind closed-loop steering reflex from RAW body sensors, built entirely from a lesson declaration.
+
+The simulated Go2 walks toward a spot straight ahead with its frozen, borrowed walking policy; a smooth mound may lie
+in the way (Go2World's mound keys). Every few tenths of a second a small spiking network reads only a short raw history
+of body sensors and picks one steering command. Everything about the lesson (senses, timing, steering options, goal,
+practice world) comes from config.yaml skills.reflex.declaration, a lesson a language model designed as data from
+skills.reflex.menu (learned_judgment/reflex_lesson.py), checked against the menu here before anything runs; this module
+hard-codes none of it. Hidden simulator truth (position, the mound) shapes the scenarios and is read by the scorer and
+the physics guess only, never by a policy that the student imitates.
+
+Lane contract (Person B, reflex)
+--------------------------------
+    TIME        whole control periods (robot.walking_policy.command_schema.update_period_s, 0.02 s) from t_s 0 of
+                Go2World.reset (start "trotting": after world.settle_s at the nominal speed; "standing": after
+                skills.reflex.standing_settle_s on the zero command). The nominal command (vel_x = nominal_speed_m_s,
+                vel_y 0, yaw_rate 0) is sent from t_s 0.
+    WINDOW      the policy's ONLY input: K = history_s / sample_every_s + 1 samples at t, t - sample_every_s, ...,
+                t - history_s, flattened sample-major OLDEST FIRST; each sample holds the channels of the lesson's sense
+                groups in menu order (skills.reflex.menu.sense_groups), each scaled to [0, 1] with its fixed [low,
+                high] of the menu and clipped. D = K x channels. Channels, from the observation of that control period:
+                  tilt          pitch_deg = degrees(asin(2 (x z - w y))) nose up +, roll_deg = degrees(asin(2 (y z +
+                                w x))) left side up +, of base_quat_wxyz (w, x, y, z)
+                  turn_rates    base_ang_vel_rad_s turned into the trunk frame (R^T w): roll, pitch, yaw rate
+                  heading       yaw(base_quat_wxyz) - yaw at t_s 0, wrapped to (-180, 180], degrees, + left
+                  joint_angles  joint_pos_rad (FL, FR, RL, RR x hip, thigh, calf) - the policy's default pose
+                  joint_speeds  joint_vel_rad_s
+                  feet          foot_contact as 0 / 1
+                  last_command  command_active vel_x, vel_y, yaw_rate (what the dog itself sent last)
+                Never an input: base_pos_m, base_lin_vel_m_s, anything about the mound.
+    DECISIONS   first at t = history_s (the window is full), then every decide_every_s; the picked candidate is held
+                until the next decision. CANDIDATES = steer.yaw_rate x steer.vel_x of the lesson, vel_y 0, each
+                checked against the verified command schema; ORDER: straight (yaw 0, vel_x = nominal) first, then by
+                |yaw_rate|, left (+) before right (-), then by |vel_x - nominal|, faster first. action_features (C, 2)
+                = (vel_x, yaw_rate). no_op_index None.
+    EPISODE     ends when the trunk's progress along the heading at t_s 0 reaches goal.forward_m ("goal"), at
+                time_limit_s ("time") or at a fall ("fall"). reached = "goal" and |sideways offset| <= goal.tolerance_m
+                at that moment. For the teacher's rows (attempts) the episode then goes on for horizon_s more under the
+                same closed loop (scoring tail: the last decisions' horizons are measured, not cut; tail decisions are
+                no rows, the outcome stays the end moment's); the evaluation (run) has no tail.
+    OUTCOMES    K = 4 short-horizon outcomes per decision at t, measured from the scorer's per-period track over
+                [t, t + horizon_s] (truncated at a fall), OUTCOME_NAMES order:
+                  progress_m  regression  gain along the heading at t_s 0
+                  offset_m    regression  |sideways offset from the line to the spot| at the end of the horizon
+                  tilt_deg    regression  mean trunk tilt (from upright) over the horizon's control periods
+                  fall        binary      a fall within the horizon
+                bounds skills.reflex.outcome_bounds (fall [0, 1]). Later decisions inside the horizon act too: it is
+                the closed loop's result after this pick.
+    PHYSICS     (scorer side: uses the true state at the decision; a teacher column, never a policy input) a unicycle
+                over horizon_s H from the true heading error e (rad, heading - heading at t_s 0) and offset y0 (m, +
+                left): v = track.forward x vel_x, w = track.turn x yaw_rate (skills.move.physics.track);
+                  w != 0: progress = v / w (sin(e + w H) - sin e), offset = |y0 + v / w (cos e - cos(e + w H))|
+                  w == 0: progress = v H cos e,                     offset = |y0 + v H sin e|
+                tilt_deg = the tilt at the decision (persistence); fall = 0. Clipped to the outcome bounds.
+    OBJECTIVE   goal.weights w: + w.progress x mean progress_m - w.offset x mean offset_m - w.tilt x mean tilt_deg -
+                w.fall x mean fall - w.spread x spread of progress_m.
+    RULE        "physics_only" / the rule of thumb: argmax over the candidates of the objective of the physics guess
+                (point mass), ties to the first in candidate order. It reads the true state: a reference, not a blind
+                policy.
+    SCENARIOS   per split np.random.default_rng(np.random.SeedSequence([runtime.seed, SPLIT_CODES[split]])), per
+                scenario u = rng.random(6): u0 < practice_world.flat_share -> flat (no mound keys); else radius, height,
+                centre ahead, centre side uniform in the lesson's ranges (u1..u4); the height lowered to the
+                world.mound.max_rim_slope_deg height of that radius when above it; the centre moved ahead to radius +
+                world.mound.min_gap_m when closer. attempt_seed = scenario_id.
+
+Files of the command line (the observed.py array contract; "frames": null, D window features in [0, 1]):
+
+    rows.npz    scenario_index, decision_time_s, action, features (n, D) float32, physics (n, 4), measured (n, 4); and,
+                outside the contract, state (n, 4) [forward_m, sideways_m, heading_error_rad, tilt_deg] at the decision
+                (scorer truth), horizon_s (n,) measured horizon, source (n,) 0 rule of thumb / 1 exploration
+    rows.json   skill, split, action_names, outcome_names/kinds/bounds, feature_names, frames null, window, lesson,
+                seeds, episodes (per scenario: kind, mound, outcome, decisions), wall times
+    dream.npz   scenario_index (m,) = dream episode index, decision_time_s, features (m, D), physics (m, C, 4); state
+                (m, 4), source (m,) 0 attempts / 1 extra rule-of-thumb episode
+    dream.json  the meta plus "sampling": the dream situations are REAL sensor windows (see dream)
+    run.json    records per scenario and method, summary per method (all, flat, mound), paired differences
+    OUT/tracks/<method>_s<scenario>.npz  t_s (N,), qpos (N, 19) per control period, for the first
+                observed.reflex.tracks_per_method scenarios of each method; OUT/tracks/index.json describes them (mound
+                in the world frame, outcome)
+
+    python -m learned_judgment.skills.reflex attempts --out DIR [--n N]
+    python -m learned_judgment.skills.reflex dream --out DIR [--n N] [--context DIR]
+    python -m learned_judgment.skills.reflex run (--student DIR | --no-student) --split {dev|test} --out DIR [--n N]
+        [--run RUN]
+
+attempts: N (default observed.reflex.attempt_episodes) episodes on context scenarios; at decision j of scenario i, u =
+np.random.default_rng(np.random.SeedSequence([runtime.seed, SPLIT_CODES["context"], i, j])).random(2): u[0] <
+engine.attempt_exploration_fraction -> candidate min(floor(u[1] C), C - 1), else the rule of thumb. EVERY decision is a
+row. dream: raw sensor histories cannot be invented, so the dream situations are all windows of the attempts' episodes
+(read from --context, default the "context" directory beside --out) plus the windows of N (default
+observed.reflex.dream_episodes) further unbilled rule-of-thumb episodes on dream scenarios; each with the physics guess
+of EVERY candidate from the true state its episode recorded. run: full closed-loop episodes on the same scenarios and
+attempt seeds for "no_op" (always the straight nominal command: the walking policy by itself), "physics_only" (the rule
+of thumb; it reads the truth, a reference) and "snn" (the trained student, observed.student_readout argmax of the
+action head, from the window only); --no-student skips "snn". With --run RUN it merges the UI keys into
+<observed.runs_dir>/RUN/result.json and appends "evaluate" events to its events.jsonl.
+
+This module defines no SPEC_CLASS, so the SkillSpec registry (learned_judgment.skills) does not load it.
+"""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import io
+import json
+import math
+import multiprocessing
+import statistics
+import time
+from collections import Counter
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Callable, Iterator, Mapping, Sequence
+
+import numpy as np
+
+from learned_judgment.config import ConfigError, config_digest, load_config, optional, require
+from learned_judgment.engine.types import OutcomeDistribution
+from learned_judgment.fileio import atomic_write_bytes, atomic_write_text
+from learned_judgment.skills.ramp import _count, _jsonable, _write
+
+__all__ = [
+    "ACTION_FEATURE_NAMES",
+    "OUTCOME_KINDS",
+    "OUTCOME_NAMES",
+    "SKILL",
+    "SPLIT_CODES",
+    "ReflexSpec",
+    "build_observed_spec",
+    "collect_attempts",
+    "collect_dream",
+    "lesson_from_config",
+    "main",
+    "objective",
+    "physics_choice",
+    "physics_guess",
+    "run_episode",
+    "run_methods",
+    "sample_reflex_scenarios",
+    "sense_channels",
+]
+
+SKILL = "reflex"
+OUTCOME_NAMES = ("progress_m", "offset_m", "tilt_deg", "fall")
+OUTCOME_KINDS = ("regression", "regression", "regression", "binary")
+ACTION_FEATURE_NAMES = ("vel_x", "yaw_rate")
+STATE_NAMES = ("forward_m", "sideways_m", "heading_error_rad", "tilt_deg")
+SPLIT_CODES = {"context": 1, "dev": 2, "test": 3, "dream": 4}
+KINDS = ("flat", "mound")
+METHODS = ("no_op", "physics_only", "snn")
+_FIELDS = ("vel_x", "vel_y", "yaw_rate")
+_ROOT = "skills.reflex"
+_OBSERVED = "observed.reflex"
+_LEGS = ("FL", "FR", "RL", "RR")
+_PARTS = ("hip", "thigh", "calf")
+_WHERE = "simulation (MuJoCo Go2World, frozen walking policy) on this computer's CPU"
+
+
+# ----- the lesson ------------------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Lesson:
+    """The checked declaration, in control periods."""
+
+    declaration: Mapping[str, Any]
+    period_s: float
+    groups: tuple[str, ...]
+    channels: tuple[tuple[str, float, float], ...]  # (name, low, high) per channel, window order
+    samples: int  # K
+    sample_n: int  # control periods between samples
+    history_n: int  # (K - 1) * sample_n
+    decide_n: int
+    horizon_n: int
+    limit_n: int
+    start: str
+    nominal: float
+    names: tuple[str, ...]
+    commands: tuple[dict[str, float], ...]
+    features: np.ndarray  # (C, 2) vel_x, yaw_rate
+    forward_m: float
+    tolerance_m: float
+    weights: Mapping[str, float]
+    world: Mapping[str, Any]
+
+    @property
+    def width(self) -> int:
+        return self.samples * len(self.channels)
+
+    def feature_names(self) -> tuple[str, ...]:
+        return tuple(f"s{k}_{name}" for k in range(self.samples) for name, _, _ in self.channels)
+
+    def sample_times_s(self) -> list[float]:
+        """Offsets of the window's samples from the decision, oldest first (s, <= 0)."""
+        return [-(self.samples - 1 - k) * self.sample_n * self.period_s for k in range(self.samples)]
+
+
+def _order(yaw: float, vx: float, nominal: float) -> tuple:
+    straight = yaw == 0.0 and vx == nominal
+    return (not straight, abs(yaw), 0 if yaw >= 0 else 1, abs(vx - nominal), -vx)
+
+
+def lesson_from_config(config: Mapping[str, Any]) -> Lesson:
+    """The lesson of skills.reflex.declaration, checked against skills.reflex.menu. ConfigError without one or with a
+    problem (the problems listed)."""
+    from learned_judgment.reflex_lesson import check_lesson
+
+    declaration = optional(config, f"{_ROOT}.declaration")
+    if declaration is None:
+        raise ConfigError(f"config.yaml has no {_ROOT}.declaration: a reflex run needs a lesson designed with "
+                          f"learned_judgment.reflex_lesson (design, then config) in its run config")
+    problems = check_lesson(declaration, config)
+    if problems:
+        raise ConfigError(f"{_ROOT}.declaration breaks the menu: " + " ".join(p["message"] for p in problems))
+    menu = require(config, f"{_ROOT}.menu")
+    period = float(require(config, "robot.walking_policy.command_schema.update_period_s"))
+    d = declaration
+    groups = tuple(g for g in menu["sense_groups"] if g in d["senses"])
+    channels = tuple((str(c[0]), float(c[1]), float(c[2])) for g in groups for c in menu["sense_groups"][g]["channels"])
+    every, history = float(d["sense"]["sample_every_s"]), float(d["sense"]["history_s"])
+    sample_n = round(every / period)
+    samples = round(history / every) + 1
+    nominal = float(d["nominal_speed_m_s"])
+    pairs = sorted(((float(w), float(v)) for w in d["steer"]["yaw_rate"] for v in d["steer"]["vel_x"]),
+                   key=lambda p: _order(p[0], p[1], nominal))
+    commands = tuple({"vel_x": v, "vel_y": 0.0, "yaw_rate": w} for w, v in pairs)
+    names = tuple(f"yaw{w:+.2f}_vx{v:.2f}" for w, v in pairs)
+    if len(set(names)) != len(names):
+        raise ConfigError(f"the lesson's candidates collide at 2 decimals: {names}")
+    features = np.array([[v, w] for w, v in pairs], dtype=np.float64)
+    features.setflags(write=False)
+    w = d["practice_world"]
+    return Lesson(
+        declaration=d, period_s=period, groups=groups, channels=channels, samples=samples, sample_n=sample_n,
+        history_n=(samples - 1) * sample_n, decide_n=round(float(d["decide_every_s"]) / period),
+        horizon_n=round(float(d["horizon_s"]) / period), limit_n=round(float(d["time_limit_s"]) / period),
+        start=str(d["start"]), nominal=nominal, names=names, commands=commands, features=features,
+        forward_m=float(d["goal"]["forward_m"]), tolerance_m=float(d["goal"]["tolerance_m"]),
+        weights={k: float(v) for k, v in d["goal"]["weights"].items()},
+        world={"flat_share": float(w["flat_share"]),
+               **{k: (float(w[k]["min"]), float(w[k]["max"])) if isinstance(w[k], Mapping) else
+                  (float(w[k][0]), float(w[k][1])) for k in ("radius_m", "height_m", "centre_ahead_m", "centre_side_m")}},
+    )
+
+
+def _outcome_bounds(config: Mapping[str, Any]) -> np.ndarray:
+    from learned_judgment.skills.ramp import _pair
+
+    key = f"{_ROOT}.outcome_bounds"
+    bounds = np.array([_pair(config, f"{key}.progress_m", strict=True),
+                       _pair(config, f"{key}.offset_m", minimum=0.0, strict=True),
+                       _pair(config, f"{key}.tilt_deg", minimum=0.0, strict=True), (0.0, 1.0)], dtype=np.float64)
+    bounds.setflags(write=False)
+    return bounds
+
+
+def _track_factors(config: Mapping[str, Any]) -> tuple[float, float]:
+    """(forward, turn) of skills.move.physics.track: response per unit command."""
+    from learned_judgment.skills.ramp import _positive
+
+    return _positive(config, "skills.move.physics.track.forward"), _positive(config, "skills.move.physics.track.turn")
+
+
+# ----- senses ----------------------------------------------------------------------------------------------------
+
+
+def _yaw(q: Sequence[float]) -> float:
+    w, x, y, z = (float(v) for v in q)
+    return math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
+
+
+def _tilt_deg(q: Sequence[float]) -> float:
+    _, x, y, _ = (float(v) for v in q)
+    return math.degrees(math.acos(max(-1.0, min(1.0, 1.0 - 2.0 * (x * x + y * y)))))
+
+
+def _wrap(angle: float) -> float:
+    return (angle + math.pi) % (2.0 * math.pi) - math.pi
+
+
+def _default_pose(config: Mapping[str, Any]) -> np.ndarray:
+    """The policy's default joint angles in the model's joint order (FL, FR, RL, RR x hip, thigh, calf)."""
+    action = require(config, "robot.walking_policy.action_schema")
+    by_name = dict(zip(action["joint_order"], action["default_pose"]))
+    return np.array([float(by_name[f"{leg}_{part}_joint"]) for leg in _LEGS for part in _PARTS])
+
+
+def sense_channels(obs: Mapping[str, Any], groups: Sequence[str], yaw0: float, default_pose: np.ndarray) -> np.ndarray:
+    """The raw channel values (unscaled) of one observation, groups in the given order (see the module docstring)."""
+    q = np.asarray(obs["base_quat_wxyz"], dtype=np.float64)
+    w, x, y, z = q
+    out: list[float] = []
+    for group in groups:
+        if group == "tilt":
+            out += [math.degrees(math.asin(max(-1.0, min(1.0, 2.0 * (x * z - w * y))))),
+                    math.degrees(math.asin(max(-1.0, min(1.0, 2.0 * (y * z + w * x)))))]
+        elif group == "turn_rates":
+            r = np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)],
+                          [2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)],
+                          [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)]])
+            out += (r.T @ np.asarray(obs["base_ang_vel_rad_s"], dtype=np.float64)).tolist()
+        elif group == "heading":
+            out.append(math.degrees(_wrap(_yaw(q) - yaw0)))
+        elif group == "joint_angles":
+            out += (np.asarray(obs["joint_pos_rad"], dtype=np.float64) - default_pose).tolist()
+        elif group == "joint_speeds":
+            out += np.asarray(obs["joint_vel_rad_s"], dtype=np.float64).tolist()
+        elif group == "feet":
+            out += [float(bool(c)) for c in obs["foot_contact"]]
+        elif group == "last_command":
+            out += [float(obs["command_active"][f]) for f in _FIELDS]
+        else:
+            raise ValueError(f"unknown sense group {group!r}")
+    return np.array(out, dtype=np.float64)
+
+
+def _scaler(lesson: Lesson) -> tuple[np.ndarray, np.ndarray]:
+    low = np.array([c[1] for c in lesson.channels])
+    return low, np.array([c[2] for c in lesson.channels]) - low
+
+
+# ----- physics guess, objective, rule of thumb -------------------------------------------------------------------
+
+
+def _guess(lesson: Lesson, bounds: np.ndarray, factors: tuple[float, float], states: np.ndarray,
+           actions: np.ndarray) -> np.ndarray:
+    states, actions = np.asarray(states, dtype=np.float64).reshape(-1, 4), np.asarray(actions)
+    n = states.shape[0]
+    if actions.shape != (n,):
+        raise ValueError(f"states (n, 4) and actions (n,) must agree; got {states.shape}, {actions.shape}")
+    if n and (actions.dtype.kind not in "iu" or actions.min() < 0 or actions.max() >= len(lesson.names)):
+        raise ValueError(f"actions must be ints in [0, {len(lesson.names)})")
+    h = lesson.horizon_n * lesson.period_s
+    command = lesson.features[actions.astype(np.int64)] if n else np.zeros((0, 2))
+    v, w = factors[0] * command[:, 0], factors[1] * command[:, 1]
+    e, y0 = states[:, 2], states[:, 1]
+    turning = np.abs(w) > 1e-12
+    safe = np.where(turning, w, 1.0)
+    progress = np.where(turning, v / safe * (np.sin(e + w * h) - np.sin(e)), v * h * np.cos(e))
+    dy = np.where(turning, v / safe * (np.cos(e) - np.cos(e + w * h)), v * h * np.sin(e))
+    guess = np.column_stack([progress, np.abs(y0 + dy), states[:, 3], np.zeros(n)])
+    return np.clip(guess, bounds[:, 0], bounds[:, 1])
+
+
+def physics_guess(config: Mapping[str, Any], states: np.ndarray, actions: Sequence[int] | np.ndarray) -> np.ndarray:
+    """(n, 4) outcome guess in OUTCOME_NAMES order from the true states (n, 4) [forward_m, sideways_m,
+    heading_error_rad, tilt_deg] at the decisions and candidate indices (n,) (formulas: the module docstring)."""
+    return _guess(lesson_from_config(config), _outcome_bounds(config), _track_factors(config), states, np.asarray(actions))
+
+
+def _objective(weights: Mapping[str, float], predicted: OutcomeDistribution) -> np.ndarray:
+    if not isinstance(predicted, OutcomeDistribution):
+        raise TypeError(f"predicted must be an OutcomeDistribution; got {type(predicted).__name__}")
+    if tuple(predicted.names) != OUTCOME_NAMES:
+        raise ValueError(f"predicted outcomes {predicted.names} are not {OUTCOME_NAMES}")
+    return (weights["progress"] * predicted.mean_of("progress_m") - weights["offset"] * predicted.mean_of("offset_m")
+            - weights["tilt"] * predicted.mean_of("tilt_deg") - weights["fall"] * predicted.mean_of("fall")
+            - weights["spread"] * predicted.spread_of("progress_m"))
+
+
+def objective(config: Mapping[str, Any], predicted: OutcomeDistribution) -> np.ndarray:
+    """(n,) utility, higher is better, with the lesson's goal.weights (the module docstring)."""
+    return _objective(lesson_from_config(config).weights, predicted)
+
+
+class _Rule:
+    """The rule of thumb on one lesson: argmax of the objective of the physics guess, first in candidate order."""
+
+    def __init__(self, config: Mapping[str, Any], lesson: Lesson) -> None:
+        self.lesson, self.bounds, self.factors = lesson, _outcome_bounds(config), _track_factors(config)
+        self.levels = np.asarray(require(config, "engine.quantile_levels"), dtype=np.float64)
+
+    def choose(self, states: np.ndarray) -> np.ndarray:
+        states = np.asarray(states, dtype=np.float64).reshape(-1, 4)
+        n, c = states.shape[0], len(self.lesson.names)
+        physics = _guess(self.lesson, self.bounds, self.factors, np.repeat(states, c, axis=0), np.tile(np.arange(c), n))
+        scores = _objective(self.lesson.weights, OutcomeDistribution.point(OUTCOME_NAMES, physics, self.levels))
+        return np.argmax(scores.reshape(n, c), axis=1)
+
+
+def physics_choice(config: Mapping[str, Any], states: np.ndarray) -> np.ndarray:
+    """(n,) the rule of thumb's candidate for true states (n, 4)."""
+    return _Rule(config, lesson_from_config(config)).choose(states)
+
+
+@dataclass(frozen=True)
+class ReflexSpec:
+    """What learners and scorers need of reflex (not a SkillSpec; the registry does not load it)."""
+
+    name: str
+    action_names: tuple[str, ...]
+    action_features: np.ndarray
+    action_feature_names: tuple[str, ...]
+    no_op_index: None
+    outcome_names: tuple[str, ...]
+    outcome_kinds: tuple[str, ...]
+    outcome_bounds: np.ndarray
+    feature_names: tuple[str, ...]
+    weights: Mapping[str, float] = field(repr=False, compare=False)
+
+    def objective(self, predicted: OutcomeDistribution) -> np.ndarray:
+        return _objective(self.weights, predicted)
+
+
+def build_observed_spec(config: Mapping[str, Any]) -> ReflexSpec:
+    """The ReflexSpec of the config's lesson. ConfigError without a declaration or with a problem."""
+    lesson = lesson_from_config(config)
+    _track_factors(config)
+    return ReflexSpec(name=SKILL, action_names=lesson.names, action_features=lesson.features,
+                      action_feature_names=ACTION_FEATURE_NAMES, no_op_index=None, outcome_names=OUTCOME_NAMES,
+                      outcome_kinds=OUTCOME_KINDS, outcome_bounds=_outcome_bounds(config),
+                      feature_names=lesson.feature_names(), weights=lesson.weights)
+
+
+# ----- scenarios -------------------------------------------------------------------------------------------------
+
+
+def sample_reflex_scenarios(config: Mapping[str, Any], rng: np.random.Generator, n: int) -> list[dict[str, Any]]:
+    """n scenarios from the lesson's practice world (module docstring); no world needed."""
+    from learned_judgment.env.mound import height_for_slope
+
+    if not isinstance(rng, np.random.Generator):
+        raise TypeError(f"rng must be a numpy Generator; got {type(rng).__name__}")
+    lesson = lesson_from_config(config)
+    mound = require(config, "world.mound")
+    w = lesson.world
+    if lesson.start == "trotting":
+        situation = {"dog_forward_speed_m_s": lesson.nominal}
+    else:
+        situation = {"dog_forward_speed_m_s": 0.0, "settle_s": float(require(config, f"{_ROOT}.standing_settle_s"))}
+    out = []
+    for index in range(int(n)):
+        u = rng.random(6)
+        scenario: dict[str, Any] = {"scenario_id": index, "kind": "flat", "mound": None, "situation": dict(situation)}
+        if u[0] >= w["flat_share"]:
+            radius = w["radius_m"][0] + u[1] * (w["radius_m"][1] - w["radius_m"][0])
+            height = w["height_m"][0] + u[2] * (w["height_m"][1] - w["height_m"][0])
+            height = min(height, height_for_slope(radius, float(mound["max_rim_slope_deg"])) - 1e-9)
+            ahead = w["centre_ahead_m"][0] + u[3] * (w["centre_ahead_m"][1] - w["centre_ahead_m"][0])
+            ahead = max(ahead, radius + float(mound["min_gap_m"]) + 1e-6)
+            side = w["centre_side_m"][0] + u[4] * (w["centre_side_m"][1] - w["centre_side_m"][0])
+            keys = {"mound_x_m": float(ahead), "mound_y_m": float(side), "mound_radius_m": float(radius),
+                    "mound_height_m": float(height)}
+            scenario.update(kind="mound", mound=keys)
+            scenario["situation"].update(keys)
+        out.append(scenario)
+    return out
+
+
+def _split_plan(config: Mapping[str, Any], split: str, n: int) -> list[dict[str, Any]]:
+    seed = require(config, "runtime.seed")
+    return sample_reflex_scenarios(config, np.random.default_rng(np.random.SeedSequence([seed, SPLIT_CODES[split]])), n)
+
+
+# ----- episodes --------------------------------------------------------------------------------------------------
+
+
+def run_episode(world: Any, scenario: Mapping[str, Any], attempt_seed: int,
+                policy: Callable[[np.ndarray, Mapping[str, float]], int], *, score_tail: bool = True,
+                keep_qpos: bool = False) -> dict[str, Any]:
+    """One closed-loop episode on the real world (module docstring). ``policy(window, state)`` returns a candidate
+    index; ``window`` is the (D,) float32 window in [0, 1] (the ONLY thing a blind policy may read) and ``state`` the
+    scorer's truth at the decision (used by the rule of thumb only). Returns {"scenario_id", "kind", "mound",
+    "decisions": [{"t_s", "action", "window", "state", "measured", "horizon_s"}], "track": {"t_s", "forward_m",
+    "sideways_m", "tilt_deg", "fallen"} (+ "qpos" (N, 19) with keep_qpos), "outcome": {...}, "start", "wall_s"}."""
+    config = world.config
+    lesson = lesson_from_config(config)
+    dt = lesson.period_s
+    if abs(world.policy.control_dt - dt) > 1e-12:
+        raise ValueError(f"the world's control period {world.policy.control_dt} s is not update_period_s {dt} s")
+    low, span = _scaler(lesson)
+    default = _default_pose(config)
+    c = len(lesson.names)
+    clock = time.perf_counter()
+    obs = world.reset(dict(scenario["situation"]), attempt_seed=int(attempt_seed))
+    p0, yaw0 = np.asarray(obs["base_pos_m"][:2], dtype=np.float64), _yaw(obs["base_quat_wxyz"])
+    ahead, left = np.array([math.cos(yaw0), math.sin(yaw0)]), np.array([-math.sin(yaw0), math.cos(yaw0)])
+    keep = lesson.history_n + 1
+    ring: list[np.ndarray] = []
+    track = {"t_s": [], "forward_m": [], "sideways_m": [], "heading_rad": [], "tilt_deg": [], "fallen": []}
+    qpos: list[np.ndarray] = []
+
+    def observe(o: Mapping[str, Any]) -> None:
+        scaled = np.clip((sense_channels(o, lesson.groups, yaw0, default) - low) / span, 0.0, 1.0)
+        ring.append(scaled)
+        if len(ring) > keep:
+            del ring[0]
+        d = np.asarray(o["base_pos_m"][:2], dtype=np.float64) - p0
+        track["t_s"].append(float(o["t_s"]))
+        track["forward_m"].append(float(d @ ahead))
+        track["sideways_m"].append(float(d @ left))
+        track["heading_rad"].append(_wrap(_yaw(o["base_quat_wxyz"]) - yaw0))
+        track["tilt_deg"].append(_tilt_deg(o["base_quat_wxyz"]))
+        track["fallen"].append(bool(o["fallen"]))
+        if keep_qpos:
+            qpos.append(np.concatenate([o["base_pos_m"], o["base_quat_wxyz"], o["joint_pos_rad"]]).astype(np.float64))
+
+    observe(obs)
+    command = dict(lesson.commands[0])  # the nominal command (candidate 0, straight)
+    decisions: list[dict[str, Any]] = []
+    p, next_decision, end, reason = 0, lesson.history_n, None, None
+    while True:
+        if end is None:
+            if track["fallen"][p]:
+                end, reason = p, "fall"
+            elif track["forward_m"][p] >= lesson.forward_m:
+                end, reason = p, "goal"
+            elif p >= lesson.limit_n:
+                end, reason = p, "time"
+        if end is not None and (reason == "fall" or not score_tail or p >= end + lesson.horizon_n):
+            break
+        if p == next_decision:
+            window = np.concatenate([ring[len(ring) - 1 - (lesson.samples - 1 - k) * lesson.sample_n]
+                                     for k in range(lesson.samples)]).astype(np.float32)
+            state = {"forward_m": track["forward_m"][p], "sideways_m": track["sideways_m"][p],
+                     "heading_error_rad": track["heading_rad"][p], "tilt_deg": track["tilt_deg"][p]}
+            action = policy(window.copy(), dict(state))
+            if isinstance(action, bool) or not isinstance(action, (int, np.integer)) or not 0 <= action < c:
+                raise ValueError(f"policy must return a candidate index in [0, {c}); got {action!r}")
+            command = dict(lesson.commands[int(action)])
+            if end is None:
+                decisions.append({"t_s": p * dt, "period": p, "action": int(action), "window": window,
+                                  "state": [state[k] for k in STATE_NAMES]})
+            next_decision += lesson.decide_n
+        world.step(command, dt, on_period=observe)
+        p += 1
+    outcome_world = world.finish_episode()
+    if outcome_world["sim_unstable"]:
+        raise RuntimeError("MuJoCo flagged a bad state in this episode (sim_unstable 1); its outcome is no measurement")
+    last = len(track["t_s"]) - 1
+    f, s, tilt, fallen = (np.array(track[k]) for k in ("forward_m", "sideways_m", "tilt_deg", "fallen"))
+    for d in decisions:
+        a, b = d["period"], min(d["period"] + lesson.horizon_n, last)
+        d["measured"] = [float(f[b] - f[a]), float(abs(s[b])), float(tilt[a + 1:b + 1].mean() if b > a else tilt[a]),
+                         float(fallen[b])]
+        d["horizon_s"] = (b - a) * dt
+    outcome = {
+        "end_reason": reason, "reached": int(reason == "goal" and abs(s[end]) <= lesson.tolerance_m),
+        "crossed_goal_line": int(reason == "goal"), "time_to_goal_s": end * dt if reason == "goal" else None,
+        "end_s": end * dt, "final_forward_m": float(f[end]), "final_sideways_m": float(s[end]),
+        "offset_at_goal_line_m": float(abs(s[end])) if reason == "goal" else None,
+        "max_tilt_deg": float(tilt[:end + 1].max()), "fall": int(bool(fallen[:end + 1].any())),
+        "foot_slip_m": float(outcome_world["foot_slip_m"]),
+        "foot_slip_note": "over the whole stepped episode" + (", scoring tail included" if score_tail else ""),
+        "n_decisions": len(decisions),
+    }
+    result = {
+        "scenario_id": scenario.get("scenario_id"), "kind": scenario.get("kind"), "mound": scenario.get("mound"),
+        "decisions": decisions, "outcome": outcome,
+        "track": {k: np.array(v) for k, v in track.items()},
+        "start": {"base_pos_m": np.asarray(obs["base_pos_m"], dtype=np.float64).tolist(), "yaw_rad": yaw0},
+        "wall_s": time.perf_counter() - clock,
+    }
+    if keep_qpos:
+        result["track"]["qpos"] = np.stack(qpos)
+    return result
+
+
+# ----- policies and workers --------------------------------------------------------------------------------------
+
+
+class _StudentPolicy:
+    """The exported reflex student (observed.save_student, frames None): argmax of the action head, window only."""
+
+    def __init__(self, directory: str | Path, config: Mapping[str, Any]) -> None:
+        from learned_judgment.observed import INPUT_ENCODING, STUDENT_FORMAT, student_readout
+        from learned_judgment.students.snn_core import load_network
+
+        folder = Path(directory)
+        student = json.loads((folder / "student.json").read_text(encoding="utf-8"))
+        spec = build_observed_spec(config)
+        c, d = len(spec.action_names), len(spec.feature_names)
+        expected = {"format": STUDENT_FORMAT, "skill": SKILL, "action_names": list(spec.action_names),
+                    "heads": {"action": [0, c]}, "input": {"features": d, "encoding": INPUT_ENCODING}}
+        for key, value in expected.items():
+            if student.get(key) != value:
+                raise ValueError(f"{folder / 'student.json'} {key} is {student.get(key)!r}; the lesson needs {value!r}")
+        self.network, _ = load_network(folder / "network")
+        if self.network.n_inputs != d or self.network.n_outputs != c:
+            raise ValueError(f"the network is {self.network.layer_sizes}; the reflex student needs {d} inputs, {c} outputs")
+        self.heads, self.digest = expected["heads"], student.get("network", {}).get("sha256")
+        self._readout = student_readout
+
+    def __call__(self, window: np.ndarray, _state: Mapping[str, float] | None = None) -> int:
+        _, scores = self._readout(self.network, np.asarray(window)[None, :], self.heads)
+        return int(np.argmax(scores[0]))
+
+
+_WORKER: dict[str, Any] = {}
+
+
+def _worker_init(config: Mapping[str, Any], student_dir: str | None) -> None:
+    """Per process: its own Go2World (observed.world_seed, observed.world_preset; no trace files) and the student."""
+    from learned_judgment.env import Go2World
+
+    config = copy.deepcopy(dict(config))
+    config["world"]["save_traces"] = False
+    _WORKER["config"] = config
+    _WORKER["world"] = Go2World(config, require(config, "observed.world_seed"), require(config, "observed.world_preset"))
+    _WORKER["rule"] = _Rule(config, lesson_from_config(config))
+    _WORKER["student"] = None if student_dir is None else _StudentPolicy(student_dir, config)
+
+
+def _episode_task(task: tuple) -> dict[str, Any]:
+    """(scenario, mode, score_tail, keep_qpos): mode attempt | rule | no_op | physics_only | snn."""
+    scenario, mode, score_tail, keep_qpos = task
+    config, rule = _WORKER["config"], _WORKER["rule"]
+    sources: list[int] = []
+
+    def rule_policy(_window: np.ndarray, state: Mapping[str, float]) -> int:
+        return int(rule.choose(np.array([[state[k] for k in STATE_NAMES]]))[0])
+
+    if mode in ("rule", "physics_only"):
+        policy = rule_policy
+    elif mode == "no_op":
+        def policy(_window, _state):
+            return 0
+    elif mode == "snn":
+        student = _WORKER["student"]
+
+        def policy(window, _state):
+            return student(window)  # the window only: the student never sees the scorer's state
+    elif mode == "attempt":
+        seed, fraction = int(require(config, "runtime.seed")), _exploration_fraction(config)
+        c = len(rule.lesson.names)
+
+        def policy(window, state):
+            u = np.random.default_rng(np.random.SeedSequence(
+                [seed, SPLIT_CODES["context"], int(scenario["scenario_id"]), len(sources)])).random(2)
+            explore = bool(u[0] < fraction)
+            sources.append(int(explore))
+            return min(int(math.floor(u[1] * c)), c - 1) if explore else rule_policy(window, state)
+    else:
+        raise ValueError(f"unknown mode {mode!r}")
+    result = run_episode(_WORKER["world"], scenario, int(scenario["scenario_id"]), policy, score_tail=score_tail,
+                         keep_qpos=keep_qpos)
+    result["policy"] = mode
+    if mode == "attempt":
+        for decision, source in zip(result["decisions"], sources):
+            decision["source"] = source
+    else:
+        for decision in result["decisions"]:
+            decision["source"] = 0
+    return result
+
+
+@contextmanager
+def _pool(config: Mapping[str, Any], student_dir: str | None = None) -> Iterator[Any]:
+    workers = require(config, "observed.workers")
+    if isinstance(workers, bool) or not isinstance(workers, int) or workers < 1:
+        raise ConfigError(f"config.yaml key 'observed.workers' must be an int >= 1; got {workers!r}")
+    with multiprocessing.get_context("spawn").Pool(workers, initializer=_worker_init,
+                                                   initargs=(config, student_dir)) as pool:
+        yield pool
+
+
+def _map(pool: Any, tasks: list[tuple], label: str, on_result: Callable[[int], None] | None = None) -> list[dict]:
+    every = max(1, len(tasks) // 10)
+    results = []
+    for result in pool.imap(_episode_task, tasks):
+        results.append(result)
+        if len(results) % every == 0 or len(results) == len(tasks):
+            print(f"{label} {len(results)}/{len(tasks)}", flush=True)
+            if on_result is not None:
+                on_result(len(results))
+    return results
+
+
+def _exploration_fraction(config: Mapping[str, Any]) -> float:
+    from learned_judgment.skills.ramp import _value
+
+    fraction = _value(config, "engine.attempt_exploration_fraction")
+    if not 0.0 <= fraction <= 1.0:
+        raise ConfigError(f"engine.attempt_exploration_fraction must lie in [0, 1]; got {fraction}")
+    return fraction
+
+
+# ----- files -----------------------------------------------------------------------------------------------------
+
+
+def _seeds(config: Mapping[str, Any], split: str) -> dict[str, Any]:
+    return {"runtime_seed": require(config, "runtime.seed"), "split": split, "split_code": SPLIT_CODES[split],
+            "scenarios": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), rng.random(6) "
+                         "per scenario", "attempt_seed": "scenario_id",
+            "world_seed": require(config, "observed.world_seed"), "world_preset": require(config, "observed.world_preset")}
+
+
+def _meta(config: Mapping[str, Any], split: str, n_situations: int) -> dict[str, Any]:
+    lesson = lesson_from_config(config)
+    spec = build_observed_spec(config)
+    return {
+        "skill": SKILL, "split": split, "action_names": list(spec.action_names),
+        "action_feature_names": list(ACTION_FEATURE_NAMES), "action_features": spec.action_features.tolist(),
+        "outcome_names": list(OUTCOME_NAMES), "outcome_kinds": list(OUTCOME_KINDS),
+        "outcome_bounds": spec.outcome_bounds.tolist(), "feature_names": list(spec.feature_names), "frames": None,
+        "window": {"groups": list(lesson.groups), "channels": [list(c) for c in lesson.channels],
+                   "samples": lesson.samples, "sample_every_s": lesson.sample_n * lesson.period_s,
+                   "sample_times_s": lesson.sample_times_s(), "width": lesson.width,
+                   "layout": "sample-major, oldest sample first; each channel (value - low) / (high - low) clipped to [0, 1]"},
+        "state_names": list(STATE_NAMES),
+        "state_note": "scorer truth at the decision (physics guess and evaluation only), never a policy input",
+        "lesson": dict(lesson.declaration), "n_situations": n_situations, "seeds": _seeds(config, split),
+        "world_seed": require(config, "observed.world_seed"), "world_preset": require(config, "observed.world_preset"),
+        "config_digest": config_digest(config), "where": _WHERE,
+    }
+
+
+def _episode_record(result: Mapping[str, Any]) -> dict[str, Any]:
+    actions = Counter(d["action"] for d in result["decisions"])
+    return {"scenario_id": result["scenario_id"], "kind": result["kind"], "mound": result["mound"],
+            "policy": result["policy"], "outcome": result["outcome"], "wall_s": result["wall_s"],
+            "decisions": len(result["decisions"]), "explored": sum(d.get("source", 0) for d in result["decisions"]),
+            "action_counts": dict(sorted(actions.items()))}
+
+
+def _row_arrays(results: Sequence[Mapping[str, Any]], width: int, k: int, index_of: Callable[[Mapping], int]) -> dict:
+    decisions = [(index_of(r), d) for r in results for d in r["decisions"]]
+    return {
+        "scenario_index": np.array([i for i, _ in decisions], dtype=np.int64),
+        "decision_time_s": np.array([d["t_s"] for _, d in decisions], dtype=np.float64),
+        "action": np.array([d["action"] for _, d in decisions], dtype=np.int64),
+        "features": np.array([d["window"] for _, d in decisions], dtype=np.float32).reshape(-1, width),
+        "measured": np.array([d.get("measured", [0.0] * k) for _, d in decisions], dtype=np.float64).reshape(-1, k),
+        "state": np.array([d["state"] for _, d in decisions], dtype=np.float64).reshape(-1, len(STATE_NAMES)),
+        "horizon_s": np.array([d.get("horizon_s", 0.0) for _, d in decisions], dtype=np.float64),
+        "source": np.array([d.get("source", 0) for _, d in decisions], dtype=np.int64),
+    }
+
+
+def _print_episodes(label: str, results: Sequence[Mapping[str, Any]], wall_s: float) -> None:
+    for kind in KINDS:
+        own = [r for r in results if r["kind"] == kind]
+        if own:
+            print(f"{label} {kind}: {len(own)} episodes, reached {sum(r['outcome']['reached'] for r in own)}, crossed "
+                  f"the goal line {sum(r['outcome']['crossed_goal_line'] for r in own)}, falls "
+                  f"{sum(r['outcome']['fall'] for r in own)}, decisions per episode "
+                  f"{np.mean([r['outcome']['n_decisions'] for r in own]):.1f}", flush=True)
+    episode_walls = [r["wall_s"] for r in results]
+    print(f"wall {wall_s:.1f} s for {len(results)} episodes (pool start-up included); per episode in its worker "
+          f"mean {np.mean(episode_walls):.1f} s, max {np.max(episode_walls):.1f} s", flush=True)
+
+
+def collect_attempts(config: Mapping[str, Any], out_dir: str | Path, n: int | None = None) -> dict[str, Any]:
+    """N exploration episodes on context scenarios; every decision a row (module docstring). Writes rows.npz/json."""
+    n = _count("n", require(config, f"{_OBSERVED}.attempt_episodes") if n is None else n)
+    spec, lesson = build_observed_spec(config), lesson_from_config(config)
+    fraction = _exploration_fraction(config)
+    scenarios = _split_plan(config, "context", n)
+    print(f"attempts: {n} context episodes ({Counter(s['kind'] for s in scenarios)}), window D {lesson.width}, "
+          f"{len(spec.action_names)} candidates {list(spec.action_names)}, exploration fraction {fraction}", flush=True)
+    start = time.perf_counter()
+    with _pool(config) as pool:
+        results = _map(pool, [(s, "attempt", True, False) for s in scenarios], "attempts:")
+    wall_s = time.perf_counter() - start
+    results = sorted(results, key=lambda r: r["scenario_id"])
+    arrays = _row_arrays(results, lesson.width, len(OUTCOME_NAMES), lambda r: r["scenario_id"])
+    arrays["physics"] = _guess(lesson, spec.outcome_bounds, _track_factors(config), arrays["state"], arrays["action"])
+    arrays["measured"] = np.clip(arrays["measured"], spec.outcome_bounds[:, 0], spec.outcome_bounds[:, 1])
+    meta = _meta(config, "context", len(results))
+    meta.update(collection="attempts", n_attempts=n, n_scenarios=n, exploration_fraction=fraction, wall_s=wall_s,
+                kind_counts=dict(Counter(s["kind"] for s in scenarios)), scenarios=scenarios,
+                episodes=[_episode_record(r) for r in results],
+                attempt_sources={"explore": int(arrays["source"].sum()),
+                                 "physics": int((arrays["source"] == 0).sum())})
+    meta["seeds"]["attempt_choice"] = ("np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code, "
+                                       "scenario_id, decision_index])).random(2): u[0] < exploration_fraction -> "
+                                       "candidate min(floor(u[1] * C), C - 1), else the rule of thumb")
+    meta["measured_note"] = ("each row's outcomes over the next horizon_s of the closed loop (later decisions inside the "
+                             "horizon act too); clipped to outcome_bounds; horizon_s per row in rows.npz")
+    _write(Path(out_dir), "rows", meta, **arrays)
+    _print_episodes("attempts", results, wall_s)
+    print(f"rows {arrays['action'].shape[0]} (every decision); explored {meta['attempt_sources']['explore']}; D "
+          f"{lesson.width}; wrote {Path(out_dir) / 'rows.npz'} and rows.json", flush=True)
+    return meta
+
+
+def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None = None,
+                  context_dir: str | Path | None = None) -> dict[str, Any]:
+    """The dream: every window of the attempts' episodes plus the windows of N further rule-of-thumb episodes on dream
+    scenarios, each with the physics guess of EVERY candidate from its recorded true state. Writes dream.npz/json."""
+    from learned_judgment.observed import load_rows
+
+    n = _count("n", require(config, f"{_OBSERVED}.dream_episodes") if n is None else n)
+    spec, lesson = build_observed_spec(config), lesson_from_config(config)
+    context_dir = Path(out_dir).parent / "context" if context_dir is None else Path(context_dir)
+    rows = load_rows(context_dir)
+    if rows["meta"].get("skill") != SKILL or rows["meta"].get("action_names") != list(spec.action_names) \
+            or rows["features"].shape[1] != lesson.width:
+        raise ValueError(f"{context_dir} is not an attempts file of this lesson (skill, candidates or window width differ)")
+    with np.load(context_dir / "rows.npz") as archive:
+        attempt_state = np.array(archive["state"])
+    scenarios = _split_plan(config, "dream", n)
+    print(f"dream: {rows['action'].shape[0]} windows of {len(rows['meta']['episodes'])} attempt episodes + {n} "
+          f"rule-of-thumb episodes on dream scenarios ({Counter(s['kind'] for s in scenarios)})", flush=True)
+    start = time.perf_counter()
+    with _pool(config) as pool:
+        results = _map(pool, [(s, "rule", False, False) for s in scenarios], "dream episodes:")
+    wall_s = time.perf_counter() - start
+    results = sorted(results, key=lambda r: r["scenario_id"])
+    attempt_ids = sorted({int(i) for i in rows["scenario_index"]})
+    n_attempts = len(attempt_ids)
+    extra = _row_arrays(results, lesson.width, len(OUTCOME_NAMES), lambda r: n_attempts + r["scenario_id"])
+    features = np.concatenate([np.asarray(rows["features"], dtype=np.float32), extra["features"]])
+    state = np.concatenate([attempt_state, extra["state"]])
+    episode = np.concatenate([np.searchsorted(attempt_ids, rows["scenario_index"]).astype(np.int64),
+                              extra["scenario_index"]])
+    times = np.concatenate([rows["decision_time_s"], extra["decision_time_s"]])
+    source = np.concatenate([np.zeros(rows["action"].shape[0], dtype=np.int64), np.ones(extra["action"].shape[0], dtype=np.int64)])
+    m, c = features.shape[0], len(spec.action_names)
+    physics = _guess(lesson, spec.outcome_bounds, _track_factors(config), np.repeat(state, c, axis=0),
+                     np.tile(np.arange(c), m)).reshape(m, c, len(OUTCOME_NAMES))
+    meta = _meta(config, "dream", m)
+    meta.update(
+        wall_s=wall_s, context=context_dir.as_posix(), n_scenarios=n, scenarios=scenarios,
+        episodes=[{"index": i, "source": "attempts", "split": "context", "scenario_id": sid} for i, sid in enumerate(attempt_ids)]
+        + [{"index": n_attempts + r["scenario_id"], "source": "rule_of_thumb", "split": "dream", **_episode_record(r)}
+           for r in results],
+        sampling={
+            "simulator": "real MuJoCo Go2World episodes: raw sensor histories cannot be invented, so every dream situation "
+                         "is a sensor window the real simulator produced",
+            "situations": f"all {rows['action'].shape[0]} windows of the attempts' episodes ({context_dir.as_posix()}) and "
+                          f"the {extra['action'].shape[0]} windows of {n} further unbilled episodes walked with the rule of "
+                          "thumb on dream-split scenarios",
+            "physics": "the physics guess of EVERY candidate from the true state the episode recorded at that window "
+                       "(scorer side; never a student input)",
+            "scenario_index": "the dream episode index (attempt episodes first, in scenario order, then the extra ones)",
+        })
+    _write(Path(out_dir), "dream", meta, scenario_index=episode, decision_time_s=times, features=features,
+           physics=physics, state=state, source=source)
+    rule = _Rule(config, lesson).choose(state)
+    counts = Counter(spec.action_names[i] for i in rule)
+    print("rule-of-thumb candidate counts over the dream: " + ", ".join(f"{k} {v}" for k, v in counts.items()), flush=True)
+    _print_episodes("dream", results, wall_s)
+    print(f"dream situations {m} ({rows['action'].shape[0]} from attempts, {extra['action'].shape[0]} extra) x {c} "
+          f"candidates; wrote {Path(out_dir) / 'dream.npz'} and dream.json", flush=True)
+    return meta
+
+
+# ----- evaluation ------------------------------------------------------------------------------------------------
+
+
+def _wilson(k: int, n: int, level: float) -> tuple[float | None, float | None]:
+    if n == 0:
+        return None, None
+    z = statistics.NormalDist().inv_cdf(0.5 + level / 2.0)
+    p = k / n
+    denominator = 1.0 + z * z / n
+    centre = (p + z * z / (2.0 * n)) / denominator
+    half = z * math.sqrt(p * (1.0 - p) / n + z * z / (4.0 * n * n)) / denominator
+    return max(0.0, centre - half), min(1.0, centre + half)
+
+
+def _paired_bootstrap(differences: Sequence[float], resamples: int, level: float, rng: np.random.Generator) -> dict:
+    d = np.asarray(differences, dtype=np.float64)
+    if d.size == 0:
+        return {"diff": None, "ci_low": None, "ci_high": None, "n": 0}
+    means = np.empty(resamples, dtype=np.float64)
+    for start in range(0, resamples, 1000):
+        stop = min(start + 1000, resamples)
+        means[start:stop] = d[rng.integers(0, d.size, size=(stop - start, d.size))].mean(axis=1)
+    low, high = np.quantile(means, [(1.0 - level) / 2.0, (1.0 + level) / 2.0])
+    return {"diff": float(d.mean()), "ci_low": float(low), "ci_high": float(high), "n": int(d.size)}
+
+
+def _mean(values: Sequence[float | None]) -> float | None:
+    kept = [v for v in values if v is not None]
+    return float(np.mean(kept)) if kept else None
+
+
+def _summary(outcomes: Sequence[Mapping[str, Any]], level: float) -> dict[str, Any]:
+    n = len(outcomes)
+    reached = sum(o["reached"] for o in outcomes)
+    low, high = _wilson(reached, n, level)
+    return {
+        "n": n, "reached": reached, "reached_rate": reached / n if n else None, "reached_ci": [low, high],
+        "falls": sum(o["fall"] for o in outcomes),
+        "crossed_goal_line": sum(o["crossed_goal_line"] for o in outcomes),
+        "mean_offset_at_goal_line_m": _mean([o["offset_at_goal_line_m"] for o in outcomes]),
+        "mean_time_to_goal_s": _mean([o["time_to_goal_s"] for o in outcomes if o["reached"]]),
+        "mean_max_tilt_deg": _mean([o["max_tilt_deg"] for o in outcomes]),
+        "mean_foot_slip_m": _mean([o["foot_slip_m"] for o in outcomes]),
+        "mean_final_abs_sideways_m": _mean([abs(o["final_sideways_m"]) for o in outcomes]),
+    }
+
+
+def _merge_result(run_dir: Path, run_id: str, updates: Mapping[str, Any]) -> Path:
+    from learned_judgment.observed import _dumps, _utc_now
+
+    path = run_dir / "result.json"
+    result = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"run_id": run_id, "skill": SKILL}
+    if result.get("run_id") != run_id or result.get("skill") != SKILL:
+        raise ValueError(f"{path} belongs to run {result.get('run_id')!r} of skill {result.get('skill')!r}")
+    result.update(_jsonable(dict(updates)))
+    result["updated_utc"] = _utc_now().isoformat()
+    atomic_write_text(path, _dumps(result, indent=1) + "\n")
+    return path
+
+
+def _save_tracks(folder: Path, results: Sequence[Mapping[str, Any]], scenarios: Mapping[int, Mapping[str, Any]],
+                 config: Mapping[str, Any]) -> list[dict[str, Any]]:
+    from learned_judgment.env.mound import rim_slope_deg, sphere_radius
+
+    folder.mkdir(parents=True, exist_ok=True)
+    index = []
+    for r in results:
+        if "qpos" not in r["track"]:
+            continue
+        name = f"{r['policy']}_s{r['scenario_id']}.npz"
+        buffer = io.BytesIO()
+        np.savez_compressed(buffer, t_s=r["track"]["t_s"], qpos=r["track"]["qpos"])
+        atomic_write_bytes(folder / name, buffer.getvalue())
+        mound = None
+        if r["mound"] is not None:
+            m, yaw, xy = r["mound"], r["start"]["yaw_rad"], np.array(r["start"]["base_pos_m"][:2])
+            centre = xy + m["mound_x_m"] * np.array([math.cos(yaw), math.sin(yaw)]) + m["mound_y_m"] * np.array(
+                [-math.sin(yaw), math.cos(yaw)])
+            big_r = sphere_radius(m["mound_radius_m"], m["mound_height_m"])
+            mound = {**m, "centre_xy_m": centre.tolist(), "sphere_radius_m": big_r,
+                     "sphere_centre_z_m": m["mound_height_m"] - big_r,
+                     "rim_slope_deg": rim_slope_deg(m["mound_radius_m"], m["mound_height_m"]),
+                     "rgba": require(config, "world.mound.rgba")}
+        index.append({"file": name, "method": r["policy"], "scenario_id": r["scenario_id"], "kind": r["kind"],
+                      "mound_world": mound, "start": r["start"], "outcome": r["outcome"],
+                      "qpos_layout": "base_pos_m (3), base_quat_wxyz (4), joint_pos_rad (12, FL FR RL RR x hip thigh "
+                                     "calf): the world's qpos, one row per control period from t_s 0"})
+    atomic_write_text(folder / "index.json", json.dumps(_jsonable(index), indent=1) + "\n")
+    return index
+
+
+def run_methods(config: Mapping[str, Any], student_dir: str | Path | None, split: str, out_dir: str | Path,
+                n: int | None = None, run_id: str | None = None) -> dict[str, Any]:
+    """Closed-loop episodes of a split for no_op, physics_only and (with a student) snn, same scenarios and attempt
+    seeds; writes <out_dir>/run.json and tracks; with run_id also the result.json UI keys and "evaluate" events."""
+    from learned_judgment.engine.streams import stream_rng
+    from learned_judgment.observed import EventLog, _run_dir
+
+    if split not in ("context", "dev", "test"):
+        raise ValueError(f"split must be context, dev or test; got {split!r}")
+    n = _count("n", require(config, f"{_OBSERVED}.{split}_scenarios") if n is None else n)
+    spec, lesson = build_observed_spec(config), lesson_from_config(config)
+    student = None if student_dir is None else _StudentPolicy(student_dir, config)  # checked before any worker
+    methods = [m for m in METHODS if m != "snn" or student is not None]
+    level = float(require(config, "evaluation.bootstrap_confidence_level"))
+    resamples = _count("evaluation.bootstrap_resamples", require(config, "evaluation.bootstrap_resamples"))
+    seed = int(require(config, "runtime.seed"))
+    tracks = int(require(config, f"{_OBSERVED}.tracks_per_method"))
+    scenarios = _split_plan(config, split, n)
+    run_dir = None if run_id is None else _run_dir(config, run_id)
+    events = None if run_dir is None else EventLog(run_dir / "events.jsonl", run_id, SKILL)
+    section = f"closed_loop_{split}"
+    common = {"student": None if student_dir is None else Path(student_dir).resolve().as_posix(),
+              "network_sha256": None if student is None else student.digest, "split": split, "n": n, "methods": methods}
+    total = len(methods) * n
+    if events is not None:
+        _merge_result(run_dir, run_id, {section: {"state": "running", **common}})
+        events.emit("evaluate", "running", done=0, total=total, data={"split": split, "methods": methods})
+    print(f"run: split {split}, {n} scenarios ({Counter(s['kind'] for s in scenarios)}) x {methods}", flush=True)
+    folder = Path(out_dir)
+    try:
+        start = time.perf_counter()
+        tasks = [(s, m, False, s["scenario_id"] < tracks) for s in scenarios for m in methods]
+        with _pool(config, None if student_dir is None else str(student_dir)) as pool:
+            progress = None if events is None else (lambda done: events.emit("evaluate", "running", done=done, total=total))
+            results = _map(pool, tasks, "episodes:", progress)
+        wall_s = time.perf_counter() - start
+        by = {(r["scenario_id"], r["policy"]): r for r in results}
+        records = []
+        for s in scenarios:
+            record = {"scenario_id": s["scenario_id"], "kind": s["kind"], "mound": s["mound"]}
+            for m in methods:
+                r = by[(s["scenario_id"], m)]
+                record[m] = {"outcome": r["outcome"], "wall_s": r["wall_s"],
+                             "action_counts": {spec.action_names[a]: c for a, c in
+                                               sorted(Counter(d["action"] for d in r["decisions"]).items())}}
+            records.append(record)
+        summary = {m: {"all": _summary([r[m]["outcome"] for r in records], level),
+                       **{kind: _summary([r[m]["outcome"] for r in records if r["kind"] == kind], level) for kind in KINDS}}
+                   for m in methods}
+        paired = []
+        for a in [m for m in ("snn", "physics_only") if m in methods]:
+            stream = f"{SKILL}/run/{split}/paired_bootstrap/{a}"
+            d = [r[a]["outcome"]["reached"] - r["no_op"]["outcome"]["reached"] for r in records]
+            paired.append({"name": "reached", "a": a, "b": "no_op",
+                           **_paired_bootstrap(d, resamples, level, stream_rng(seed, stream, 0)),
+                           "method": "percentile bootstrap over scenarios", "resamples": resamples, "level": level,
+                           "stream": f"{stream}[0]"})
+        index = _save_tracks(folder / "tracks", results, {s["scenario_id"]: s for s in scenarios}, config)
+        seeds = _seeds(config, split)
+        out = {
+            "skill": SKILL, **common, "seeds": seeds, "config_digest": config_digest(config),
+            "lesson": dict(lesson.declaration), "action_names": list(spec.action_names),
+            "methods_described": {
+                "no_op": "the nominal command, never steering: what the walking policy does by itself",
+                "physics_only": "the rule of thumb (argmax of the objective of the physics guess); it reads the true "
+                                "position and heading, so it is a reference, not a blind policy",
+                "snn": "the trained spiking student's argmax candidate from the raw sensor window only"},
+            "where": "simulation (MuJoCo Go2World); student inference on this computer's CPU (numpy)",
+            "records": records, "summary": summary, "paired_reached": paired, "tracks": index, "wall_s": wall_s,
+            "episode_wall_s": {m: _mean([by[(s["scenario_id"], m)]["wall_s"] for s in scenarios]) for m in methods},
+        }
+        atomic_write_text(folder / "run.json", json.dumps(_jsonable(out), indent=1, allow_nan=False) + "\n")
+        if events is not None:
+            metrics = []
+            for name, unit, better, getter in (
+                    ("reached_rate", "fraction", True, lambda s: (s["reached_rate"], *s["reached_ci"])),
+                    ("fall_rate", "fraction", False, lambda s: (s["falls"] / s["n"] if s["n"] else None,
+                                                                *_wilson(s["falls"], s["n"], level))),
+                    ("mean_offset_m", "m", False, lambda s: (s["mean_offset_at_goal_line_m"], None, None)),
+                    ("mean_time_to_goal_s", "s", False, lambda s: (s["mean_time_to_goal_s"], None, None))):
+                values = {}
+                for m in methods:
+                    value, low, high = getter(summary[m]["all"])
+                    values[m] = {"value": value, "ci_low": low, "ci_high": high, "n": summary[m]["all"]["n"]}
+                metrics.append({"name": name, "unit": unit, "higher_is_better": better, "values": values})
+            _merge_result(run_dir, run_id, {
+                section: {"state": "done", **common, "records": (folder / "run.json").as_posix(), "summary": summary,
+                          "paired_reached": paired, "wall_s": wall_s, "seeds": seeds, "where": out["where"],
+                          "tracks": (folder / "tracks" / "index.json").as_posix()},
+                "seeds": seeds, "scenario_ids": [s["scenario_id"] for s in scenarios], "metrics": metrics,
+                "paired": [{k: p[k] for k in ("name", "a", "b", "diff", "ci_low", "ci_high", "n")} for p in paired]})
+            events.emit("evaluate", "done", done=total, total=total, data={
+                "split": split, "summary": {m: summary[m]["all"] for m in methods}, "paired_reached": paired,
+                "records": (folder / "run.json").as_posix()})
+    except Exception as error:
+        if events is not None:
+            events.emit("evaluate", "failed", data={"type": type(error).__name__, "message": str(error)})
+            _merge_result(run_dir, run_id, {section: {"state": "failed", **common,
+                                                      "error": {"type": type(error).__name__, "message": str(error)}}})
+        raise
+    for m in methods:
+        for kind in ("all", *KINDS):
+            s = summary[m][kind]
+            if s["n"]:
+                print(f"{m} {kind}: n {s['n']}, reached {s['reached']} ({s['reached_rate']:.2f}, Wilson "
+                      f"[{s['reached_ci'][0]:.2f}, {s['reached_ci'][1]:.2f}]), crossed {s['crossed_goal_line']}, falls "
+                      f"{s['falls']}, |offset| at the line {s['mean_offset_at_goal_line_m']}, time to goal "
+                      f"{s['mean_time_to_goal_s']}, max tilt {s['mean_max_tilt_deg']:.1f} deg, slip "
+                      f"{s['mean_foot_slip_m']:.2f} m, final |sideways| {s['mean_final_abs_sideways_m']:.2f} m")
+    for p in paired:
+        print(f"paired reached ({p['a']} - no_op): {p['diff']} [{p['ci_low']}, {p['ci_high']}]")
+    print(f"wall {wall_s:.1f} s; wrote {folder / 'run.json'} and {len(index)} tracks under {folder / 'tracks'}", flush=True)
+    return out
+
+
+# ----- command line ----------------------------------------------------------------------------------------------
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="python -m learned_judgment.skills.reflex", description=__doc__.split("\n")[0])
+    commands = parser.add_subparsers(dest="command", required=True)
+    attempts = commands.add_parser("attempts", help="exploration episodes on context scenarios; every decision a row")
+    attempts.add_argument("--out", required=True)
+    attempts.add_argument("--n", type=int, help="episodes (default observed.reflex.attempt_episodes)")
+    dream = commands.add_parser("dream", help="real sensor windows of the attempts plus extra rule-of-thumb episodes")
+    dream.add_argument("--out", required=True)
+    dream.add_argument("--n", type=int, help="extra episodes (default observed.reflex.dream_episodes)")
+    dream.add_argument("--context", help="the attempts' rows directory (default: 'context' beside --out)")
+    run = commands.add_parser("run", help="closed-loop episodes: no_op, physics_only and the student")
+    who = run.add_mutually_exclusive_group(required=True)
+    who.add_argument("--student", help="exported student directory (observed train)")
+    who.add_argument("--no-student", action="store_true", help="run only no_op and physics_only (no student yet)")
+    run.add_argument("--split", required=True, choices=("context", "dev", "test"))
+    run.add_argument("--out", required=True)
+    run.add_argument("--n", type=int, help="scenarios (default observed.reflex.<split>_scenarios)")
+    run.add_argument("--run", help="run id: also merge the UI keys into <observed.runs_dir>/RUN/result.json")
+    args = parser.parse_args(argv)
+    config = load_config()
+    if args.command == "attempts":
+        collect_attempts(config, args.out, args.n)
+    elif args.command == "dream":
+        collect_dream(config, args.out, args.n, args.context)
+    else:
+        run_methods(config, None if args.no_student else args.student, args.split, args.out, args.n, args.run)
+    return 0
+
+
+if __name__ == "__main__":
+    # Through the importable module, so spawned workers find _worker_init and the tasks by their module name.
+    from learned_judgment.skills import reflex as _module
+
+    raise SystemExit(_module.main())
