@@ -121,7 +121,7 @@ export function capProfile(slopeDeg, { cx, ground, a }) {
 const NUMBER_UNIT = { seconds: "s", metres: "m", count: "" };
 
 // One lane's outcome -> {text, detail, tone}: text is the labels of the flags that are true, in the declared order
-// ("Reached", "Got hit"); detail is each number field as "<label> <value> <unit>" ("Time 9.2 s, side offset 0.1 m").
+// ("Reached", "Got hit"); detail is each remaining number field as "<label> <value> <unit>".
 // With no true flag the numbers are the text. tone: "bad" when a true flag is declared bad, "good" when one is
 // declared good, else "neutral". null when the outcome holds none of the declared fields.
 export function outcomeLine(fields, outcome) {
