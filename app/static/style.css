@@ -124,6 +124,7 @@ body[data-layout="camera"] .lane--single { grid-column: 2; grid-row: 1; }
   font-size: 13.5px; font-weight: 640; font-stretch: 82%; letter-spacing: 0.01em;
   color: var(--bone-2);
 }
+.lane__tally { position: absolute; top: 36px; left: var(--gut); z-index: 2; margin: 0; font-size: 15px; font-weight: 600; color: var(--bone-2); text-shadow: 0 1px 10px rgba(14, 19, 32, 0.9); }
 .lane--before .lane__name { color: var(--slate); }
 .lane--after .lane__name { color: var(--ember); }
 .lane__status { position: absolute; top: 14px; right: var(--gut); z-index: 2; margin: 0; font-size: 12.5px; font-stretch: 85%; color: var(--slate); max-width: 46ch; text-align: right; }

@@ -124,8 +124,8 @@ def _dodge_handles(config):
     declaration = ((config.get("skills") or {}).get("dodge_vision") or {})
     ranges = declaration.get("scenarios") or {}
     result = []
-    for key, label, unit, source in (("distance_m", "Threat distance", "m", ranges.get("distance_m")),
-                                     ("speed_m_s", "Threat speed", "m/s",
+    for key, label, unit, source in (("distance_m", "Punch starts", "m", ranges.get("distance_m")),
+                                     ("speed_m_s", "Punch speed", "m/s",
                                       (declaration.get("punch") or {}).get("speed_m_s"))):
         value = source
         if isinstance(value, (list, tuple)) and len(value) == 2:
@@ -174,7 +174,9 @@ def _demo(config, demo):
                     {"name": "recovery_time_s", "kind": "seconds", "label": "Recovery time"}]
         run_config = _read_yaml(folder / "config.yaml") if folder else config
         handles = _dodge_handles(run_config or config)
-        title, tagline = "Visual dodge", "A saved vision student reacts to a sampled threat scenario."
+        title, tagline = "Visual dodge", "The same punch comes at both dogs. Only the right one learned to dodge by eye."
+        if student_folder is not None and student_folder.parent != folder:
+            headline = None  # those test numbers belong to another run's student than the one in the lane
     reasons = []
     if root is None:
         reasons.extend(missing)

@@ -6,6 +6,7 @@ import { outcomeLine } from "./demos.js";
 import { $, el, setText } from "./dom.js";
 
 const COUNT_STEP_MS = 520; // one beat of the count-in before both lanes start
+const RESULT_TONE = { Hit: "bad", Fell: "bad", Dodged: "good" };
 
 export function initStageView({ api, notes }) {
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -63,7 +64,9 @@ export function initStageView({ api, notes }) {
     const p = $(`outcome-${side}`);
     // Nothing while the lane runs: the dog and its strip show that. One line once the server says the lane is done.
     if (!lane || lane.status !== "done") { p.hidden = true; return; }
-    const line = outcomeLine(fields, lane.outcome);
+    // A lane whose outcome carries the server's result word (the dodge duel) shows that word alone.
+    const word = typeof lane.outcome?.result === "string" ? lane.outcome.result : null;
+    const line = word ? { text: word, detail: null, tone: RESULT_TONE[word] ?? "neutral" } : outcomeLine(fields, lane.outcome);
     p.hidden = false; p.dataset.pending = "false";
     p.dataset.tone = line?.tone ?? "neutral";
     const text = line ? line.text : "Finished. The server sent no outcome this page can put into words.";
@@ -103,6 +106,7 @@ export function initStageView({ api, notes }) {
     place,
     setOutcome,
     countIn,
+    setTally(side, text) { const p = $(`tally-${side}`); p.hidden = !text; setText(p, text ? `So far: ${text}` : ""); },
     clearLanes() { lanes.before.clear(); lanes.after.clear(); },
     onPose: (d) => views.onPose(d),
     onScene: (d) => views.onScene(d),
