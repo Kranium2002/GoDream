@@ -58,7 +58,7 @@ Files of the command line, one directory per call (the observed.py array contrac
 
 dream (no simulator), by skills.ramp.dream_sampling: uniform draws each feature independently over its range;
 recorded draws the measured feature vectors of the context rows in --from-rows (one per scenario, with its decision
-time) plus skills.ramp.dream_noise (recorded_situations).
+time) plus noise with the measured vectors' covariance times skills.ramp.dream_noise squared (recorded_situations).
 
 attempts (the fast run's context, MISSION.md's 10-40 attempts) runs ONE episode per context scenario, N default
 observed.ramp.fast_attempts: with probability engine.attempt_exploration_fraction a uniform candidate, else the physics
@@ -1107,8 +1107,11 @@ def recorded_situations(
     """n dream situations drawn from measured ones: (n, D) float32 features in [0, 1] and (n,) float64 decision times.
 
     One feature vector and decision time per scenario (its first row; a full rows run repeats them once per
-    candidate), scenarios picked uniformly with replacement (rng.integers), then rng.normal(0, noise) per feature,
-    clipped to [0, 1]. Each situation keeps its scenario's decision time.
+    candidate), scenarios picked uniformly with replacement (rng.integers), then a smoothed bootstrap: noise drawn from
+    a normal with mean 0 and covariance noise^2 x cov(V) of the per-scenario vectors V (rng.multivariate_normal,
+    method eigh, which tolerates a singular covariance), so features that move together stay together and a feature
+    constant across the scenarios gets none; no noise with fewer than two scenarios or noise 0. Clipped to [0, 1].
+    Each situation keeps its scenario's decision time.
     """
     features = np.asarray(features, dtype=np.float32)
     times = np.asarray(decision_time_s, dtype=np.float64)
@@ -1122,8 +1125,14 @@ def recorded_situations(
         raise ValueError(f"noise must be finite and >= 0; got {noise!r}")
     _, first = np.unique(index, return_index=True)
     rows = first[rng.integers(first.size, size=n)]
-    drawn = np.clip(features[rows] + rng.normal(0.0, noise, size=(n, features.shape[1])), 0.0, 1.0)
-    return drawn.astype(np.float32), times[rows]
+    drawn = features[rows].astype(np.float64)
+    if first.size >= 2 and noise > 0.0:
+        vectors = features[first]
+        offsets = rng.multivariate_normal(np.zeros(vectors.shape[1]), noise**2 * np.cov(vectors, rowvar=False),
+                                          size=n, method="eigh")
+        offsets[:, np.ptp(vectors, axis=0) == 0.0] = 0.0  # exactly none, not eigh's rounding residue
+        drawn += offsets
+    return np.clip(drawn, 0.0, 1.0).astype(np.float32), times[rows]
 
 
 def collect_dream(
@@ -1175,11 +1184,14 @@ def collect_dream(
             "mode": "recorded",
             "rows": folder.as_posix(),
             "n_scenarios_drawn_from": int(np.unique(index).size),
-            "noise": noise,
+            "dream_noise": noise,
+            "noise": f"noise covariance = dream_noise squared x covariance of the measured vectors (dream_noise {noise})",
             "features": "the measured feature vector of a context scenario (its first row), scenarios drawn uniformly "
-                        "with replacement, plus normal noise per feature, clipped to [0, 1]",
+                        "with replacement, plus that normal noise (none for a feature constant across the scenarios, "
+                        "none with fewer than two scenarios), clipped to [0, 1]",
             "decision_time_s": "the drawn scenario's measured decision time",
-            "draw_order": "rng.integers(scenarios, n) then rng.normal(0, noise, (n, D))",
+            "draw_order": "rng.integers(scenarios, n) then rng.multivariate_normal(0, dream_noise^2 cov(V), n, "
+                          "method='eigh')",
         }
     physics = physics_guess(config, np.repeat(features, c, axis=0), np.tile(np.arange(c), n),
                             np.repeat(duration - decision_time_s, c)).reshape(n, c, k)
