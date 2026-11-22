@@ -1,0 +1,45 @@
+module D:\BerlinPrior-eval\learned_judgment\skills\dodge_vision.py
+stand recorded in 3.3 s at 200 control periods
+exactness: kinematic vs physics render, no augmentation
+  scenario   1 incoming_center   person True    15 Hz frames [14, 16, 18] t [0.46, 0.54, 0.6] limit 0.640 s: max |diff| 0.000000
+  scenario   1 incoming_center   person True    20 Hz frames [11, 15, 18] t [0.36, 0.5, 0.6] limit 0.640 s: max |diff| 0.000000
+  scenario   1 incoming_center   person True    30 Hz frames [9, 14, 18] t [0.3, 0.46, 0.6] limit 0.640 s: max |diff| 0.000000
+  scenario   0 incoming_left     person True    15 Hz frames [14, 16, 18] t [0.46, 0.54, 0.6] limit 0.640 s: max |diff| 0.000000
+  scenario   0 incoming_left     person True    20 Hz frames [11, 15, 18] t [0.36, 0.5, 0.6] limit 0.640 s: max |diff| 0.000000
+  scenario   0 incoming_left     person True    30 Hz frames [9, 14, 18] t [0.3, 0.46, 0.6] limit 0.640 s: max |diff| 0.000000
+  scenario   3 incoming_right    person True    15 Hz frames [14, 16, 18] t [0.46, 0.54, 0.6] limit 0.600 s: max |diff| 0.000000
+  scenario   3 incoming_right    person True    20 Hz frames [11, 15, 18] t [0.36, 0.5, 0.6] limit 0.600 s: max |diff| 0.000000
+  scenario   3 incoming_right    person True    30 Hz frames [9, 14, 18] t [0.3, 0.46, 0.6] limit 0.600 s: max |diff| 0.000000
+  scenario  14 ambiguous         person True    15 Hz frames [14, 26, 38] t [0.46, 0.86, 1.26] limit inf s: max |diff| 0.000000
+  scenario  14 ambiguous         person True    20 Hz frames [11, 25, 38] t [0.36, 0.84, 1.26] limit inf s: max |diff| 0.000000
+  scenario  14 ambiguous         person True    30 Hz frames [9, 24, 38] t [0.3, 0.8, 1.26] limit inf s: max |diff| 0.000000
+  scenario   9 static            person True    15 Hz frames [14, 52, 90] t [0.46, 1.74, 3.0] limit inf s: max |diff| 0.000000
+  scenario   9 static            person True    20 Hz frames [11, 51, 90] t [0.36, 1.7, 3.0] limit inf s: max |diff| 0.000000
+  scenario   9 static            person True    30 Hz frames [9, 50, 90] t [0.3, 1.66, 3.0] limit inf s: max |diff| 0.000000
+  scenario  13 background_motion person False   15 Hz frames [14, 52, 90] t [0.46, 1.74, 3.0] limit inf s: max |diff| 0.000000
+  scenario  13 background_motion person False   20 Hz frames [11, 51, 90] t [0.36, 1.7, 3.0] limit inf s: max |diff| 0.000000
+  scenario  13 background_motion person False   30 Hz frames [9, 50, 90] t [0.3, 1.66, 3.0] limit inf s: max |diff| 0.000000
+  scenario   7 empty             person False   15 Hz frames [14, 52, 90] t [0.46, 1.74, 3.0] limit inf s: max |diff| 0.000000
+  scenario   7 empty             person False   20 Hz frames [11, 51, 90] t [0.36, 1.7, 3.0] limit inf s: max |diff| 0.000000
+  scenario   7 empty             person False   30 Hz frames [9, 50, 90] t [0.3, 1.66, 3.0] limit inf s: max |diff| 0.000000
+exactness at 15 Hz: max |difference| over the 6 punch scenarios x 3 frames: 0.000000
+exactness at 20 Hz: max |difference| over the 6 punch scenarios x 3 frames: 0.000000
+exactness at 30 Hz: max |difference| over the 6 punch scenarios x 3 frames: 0.000000
+exactness overall: 0.000000
+strip choice: incoming scenes passed over because the punch had left the view by the newest frame pair of the latest pre-contact window: 1 (no person, 15 Hz), 0 (person, 30 Hz)
+strip results\runs\_v5_smoke\strip_incoming_patchy_15hz.png: scenario 34 incoming_center object_grey 0.87 background_mean 0.41 person False rate 15 Hz decision frame 16 (t 0.54 s) window periods [3, 7, 10, 13, 17, 20, 23, 27]; event cells per pair [3, 3, 5, 13, 17, 26, 42]
+strip results\runs\_v5_smoke\strip_incoming_person_30hz.png: scenario 1 incoming_center object_grey 0.77 background_mean 0.55 person True rate 30 Hz decision frame 18 (t 0.60 s) window periods [18, 20, 22, 23, 25, 27, 28, 30]; event cells per pair [11, 16, 13, 15, 17, 11, 12]
+strip results\runs\_v5_smoke\strip_static_30hz.png: scenario 10 static object_grey 0.64 background_mean 0.48 person True rate 30 Hz decision frame 90 (t 3.00 s) window periods [138, 140, 142, 143, 145, 147, 148, 150]; event cells per pair [0, 0, 0, 0, 0, 0, 0]
+strip results\runs\_v5_smoke\strip_empty_30hz.png: scenario 26 empty object_grey 0.91 background_mean 0.44 person False rate 30 Hz decision frame 90 (t 3.00 s) window periods [138, 140, 142, 143, 145, 147, 148, 150]; event cells per pair [0, 0, 0, 0, 0, 0, 0]
+empty   15 Hz, no augmentation: 5 scenes, 295 frame pairs: event cells per pair median 0, max 0, pairs with any event 0; largest |change| 0.0000
+empty   20 Hz, no augmentation: 5 scenes, 395 frame pairs: event cells per pair median 0, max 0, pairs with any event 0; largest |change| 0.0000
+empty   30 Hz, no augmentation: 5 scenes, 595 frame pairs: event cells per pair median 0, max 0, pairs with any event 0; largest |change| 0.0000
+static   15 Hz, no augmentation: 5 scenes, 295 frame pairs: event cells per pair median 0, max 13, pairs with any event 129; largest |change| 0.7911
+static   20 Hz, no augmentation: 5 scenes, 395 frame pairs: event cells per pair median 0, max 13, pairs with any event 151; largest |change| 0.6569
+static   30 Hz, no augmentation: 5 scenes, 595 frame pairs: event cells per pair median 0, max 13, pairs with any event 163; largest |change| 0.6569
+empty   15 Hz, with closed-loop episode augmentation (incl. drift): 5 scenes, 295 frame pairs: event cells per pair median 0, max 7, pairs with any event 18; largest |change| 0.0552
+empty   20 Hz, with closed-loop episode augmentation (incl. drift): 5 scenes, 395 frame pairs: event cells per pair median 0, max 6, pairs with any event 26; largest |change| 0.0552
+empty   30 Hz, with closed-loop episode augmentation (incl. drift): 5 scenes, 595 frame pairs: event cells per pair median 0, max 7, pairs with any event 33; largest |change| 0.0552
+static   15 Hz, with closed-loop episode augmentation (incl. drift): 5 scenes, 295 frame pairs: event cells per pair median 0, max 16, pairs with any event 121; largest |change| 0.8095
+static   20 Hz, with closed-loop episode augmentation (incl. drift): 5 scenes, 395 frame pairs: event cells per pair median 0, max 13, pairs with any event 145; largest |change| 0.7328
+static   30 Hz, with closed-loop episode augmentation (incl. drift): 5 scenes, 595 frame pairs: event cells per pair median 0, max 13, pairs with any event 166; largest |change| 0.7238

@@ -1,0 +1,1 @@
+$ D:\BerlinPrior\.venv\Scripts\python.exe -m learned_judgment.dodge_sweep _exec --config D:\BerlinPrior-eval\results\runs\v6\sweep\f6_raw_h128\config.yaml learned_judgment.observed train --run f6_raw_h128 --skill dodge_vision --dream D:\BerlinPrior-eval\results\runs\v5\dream --scores D:\BerlinPrior-eval\results\runs\v5\scores.npz --frames 6 --hidden 128 --steps 1500

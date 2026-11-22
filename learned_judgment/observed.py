@@ -30,7 +30,10 @@ The run, with nothing skill-specific in this module (the spec object carries the
                      ONLY billable call here, and only with allow_billing=True
     dream_scores     spec.objective of every dream candidate, (m, C), one batched prediction
     dream_targets    soft action targets (students.targets.soft_targets) and threat targets
-                     [1 - p, p], p = logistic((best active score - NO_OP score) / scale)
+                     [1 - p, p]: p = logistic((best active score - NO_OP score) / scale), or by
+                     skills.<name>.threat_target (threat_target_settings): the dream's predicted
+                     NO_OP collision (collision_course) or its predicted NO_OP separation below a
+                     set distance (near_approach)
     train_student    a spiking trunk with two readout heads (threat 2 | action C) trained on
                      the dream targets; exported as ONE numpy SpikingNetwork whose outputs are
                      [threat (2) | action (C)], parity-checked against the torch model
@@ -85,7 +88,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
-from learned_judgment.config import CONFIG_PATH, ConfigError, config_digest, load_config, require
+from learned_judgment.config import CONFIG_PATH, ConfigError, config_digest, load_config, optional, require
 from learned_judgment.engine.features import FeatureLayout
 from learned_judgment.engine.types import OutcomeDistribution
 from learned_judgment.fileio import atomic_write_bytes, atomic_write_text
@@ -131,6 +134,7 @@ __all__ = [
     "save_student",
     "student_readout",
     "teacher_matrix",
+    "threat_target_settings",
     "train_student",
     "window_encoding_from_config",
 ]
@@ -141,8 +145,9 @@ FEATURE_BLOCKS = ("window", "action", "physics")  # the only order a FeatureLayo
 OUTCOME_KINDS = ("regression", "binary")
 STUDENT_FORMAT = "learned-judgment/observed-student/v1"
 INPUT_ENCODING = "(x - 0.5) * sqrt(12)"
-WINDOW_ENCODINGS = ("raw", "abs_diff", "signed_diff")  # values of config.yaml vision.encoding and student.json input.window_encoding
+WINDOW_ENCODINGS = ("raw", "abs_diff", "signed_diff", "signed_diff_first", "events")  # values of config.yaml vision.encoding and student.json input.window_encoding
 THREAT, ACTION = "threat", "action"
+THREAT_MODES = ("collision_course", "near_approach")  # values of skills.<name>.threat_target (threat_target_settings)
 EXIT_REFUSED = 3
 
 _SKILLS_PACKAGE = "learned_judgment.skills"
@@ -766,6 +771,9 @@ def dream_scores(
     if layout.names != teacher.layout.names:
         raise ValueError("the teacher was fitted on other columns than this feature_set builds")
     predicted = predict_outcomes(teacher, spec, x, flat_physics, allow_billing=allow_billing)
+    # The dream world's predicted outcome means (m, C, K), kept for the threat target "collision_course".
+    dream_scores.last_predicted_mean = np.asarray(predicted.mean, dtype=np.float64).reshape(
+        physics.shape[0], physics.shape[1], physics.shape[2])
     return _objective(spec, predicted).reshape(physics.shape[0], physics.shape[1])
 
 
@@ -774,13 +782,52 @@ def dream_scores(
 # --------------------------------------------------------------------------------------
 
 
-def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any]) -> dict[str, np.ndarray]:
+def threat_target_settings(config: Mapping[str, Any], skill: str) -> dict[str, Any] | None:
+    """skills.<skill>.threat_target, checked: what the student's threat head is taught and what the scorer counts
+    as a true threat.
+
+      absent                                     None: the score-margin target (skills.<skill>.threat_target_scale)
+      collision_course, or {mode: collision_course}
+                                                 {"mode": "collision_course", "outcome": skills.<skill>.threat_outcome}:
+                                                 doing nothing ends in that binary outcome (a collision)
+      {mode: near_approach, separation_m: d, outcome: name}
+                                                 {"mode": "near_approach", "separation_m": d, "outcome": name}: under
+                                                 doing nothing, the outcome ``name`` (the closest object-to-body
+                                                 separation, m) is below d (d > 0)
+
+    Raises ConfigError for any other value.
+    """
+    key = f"skills.{skill}.threat_target"
+    value = optional(config, key)
+    if value is None:
+        return None
+    block = {"mode": value} if isinstance(value, str) else value
+    if not isinstance(block, Mapping) or block.get("mode") not in THREAT_MODES:
+        raise ConfigError(f"config.yaml key {key!r} must be one of {THREAT_MODES} or a mapping with such a 'mode'; got {value!r}")
+    if block["mode"] == "collision_course":
+        if set(block) - {"mode"}:
+            raise ConfigError(f"config.yaml key {key!r} (collision_course) takes no other keys; got {sorted(block)}")
+        return {"mode": "collision_course", "outcome": str(require(config, f"skills.{skill}.threat_outcome"))}
+    if set(block) != {"mode", "separation_m", "outcome"}:
+        raise ConfigError(f"config.yaml key {key!r} (near_approach) needs exactly mode, separation_m, outcome; got {sorted(block)}")
+    distance, outcome = block["separation_m"], block["outcome"]
+    if isinstance(distance, bool) or not isinstance(distance, (int, float)) or not (math.isfinite(distance) and distance > 0):
+        raise ConfigError(f"config.yaml key '{key}.separation_m' must be a finite number > 0; got {distance!r}")
+    if not isinstance(outcome, str) or not outcome:
+        raise ConfigError(f"config.yaml key '{key}.outcome' must be an outcome name; got {outcome!r}")
+    return {"mode": "near_approach", "separation_m": float(distance), "outcome": outcome}
+
+
+def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any], predicted_mean: np.ndarray | None = None) -> dict[str, np.ndarray]:
     """Training targets of the student from the dream scores (m, C).
 
     "action": students.targets.soft_targets with students.snn.target_temperature and
     students.snn.target_spread (spread = score_spread of these rows for "global_median").
-    "threat" (only when spec.no_op_index is not None): (m, 2) = [1 - p, p] with
-    p = 1 / (1 + exp(-(max over active candidates of score - score[no_op]) / skills.<name>.threat_target_scale)).
+    "threat" (only when spec.no_op_index is not None): (m, 2) = [1 - p, p] with, by threat_target_settings:
+    collision_course: p = the dream's predicted mean of the threat outcome under NO_OP, clipped to [0, 1];
+    near_approach: p = 1 when the dream's predicted mean of the separation outcome under NO_OP is below
+    separation_m, else 0; absent: p = 1 / (1 + exp(-(max over active candidates of score - score[no_op]) /
+    skills.<name>.threat_target_scale)). predicted_mean (m, C, K) is needed by the first two.
     """
     checked = _check_spec(spec)
     scores = _matrix("scores", scores, width=checked.n_actions)
@@ -788,7 +835,42 @@ def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any]) -> d
     mode = require(config, "students.snn.target_spread")
     spread = score_spread(scores) if mode == "global_median" else None
     targets = {ACTION: soft_targets(scores, temperature=temperature, target_spread=mode, spread=spread)}
-    if checked.no_op_index is not None:
+    decision = optional(config, f"skills.{checked.name}.action_target")
+    if decision is not None and decision.get("mode") == "decision":
+        # The dream's DECISION as the target: the first action, in readout order, whose dream score is within
+        # tie_tolerance of the best one, with label smoothing. Two actions that the dream scores alike (stepping
+        # left or right from a punch at the centre) then give one consistent answer instead of a 50/50 target,
+        # which a command gate asking for one clear action can never pass; NO_OP comes first in the order, so a
+        # tie between acting and not acting stays NO_OP.
+        tolerance, smoothing = float(decision["tie_tolerance"]), float(decision["smoothing"])
+        if not (tolerance >= 0.0 and 0.0 <= smoothing < 1.0):
+            raise ConfigError(f"skills.{checked.name}.action_target needs tie_tolerance >= 0 and 0 <= smoothing < 1")
+        tied = scores >= scores.max(axis=1, keepdims=True) - tolerance
+        choice = tied.argmax(axis=1)
+        hard = np.full(scores.shape, smoothing / (scores.shape[1] - 1), dtype=np.float64)
+        hard[np.arange(scores.shape[0]), choice] = 1.0 - smoothing
+        targets[ACTION] = hard
+    target = threat_target_settings(config, checked.name)
+    if checked.no_op_index is not None and target is not None:
+        # collision_course: the dream world (physics guess corrected by the teacher) says doing nothing ends in the
+        # outcome named by skills.<name>.threat_outcome (a binary outcome: its predicted mean under NO_OP, clipped to
+        # [0, 1]); talkhere.md: "threat means an object approaching on a collision course". near_approach: the dream
+        # world says doing nothing lets the object come closer than separation_m (a hit or a near miss at the head).
+        # Only the simulation scorer labels it.
+        if predicted_mean is None:
+            raise ValueError(f"threat_target {target['mode']} needs predicted_mean (scores.npz of a teach run that saved it)")
+        if target["outcome"] not in checked.outcome_names:
+            raise ConfigError(f"threat_target outcome {target['outcome']!r} is not an outcome of {checked.outcome_names}")
+        mean = np.asarray(predicted_mean, dtype=np.float64)
+        if mean.shape != (scores.shape[0], checked.n_actions, checked.n_outcomes):
+            raise ValueError(f"predicted_mean must have shape {(scores.shape[0], checked.n_actions, checked.n_outcomes)}; got {mean.shape}")
+        predicted = mean[:, checked.no_op_index, list(checked.outcome_names).index(target["outcome"])]
+        if target["mode"] == "near_approach":
+            threat = (predicted < target["separation_m"]).astype(np.float64)
+        else:
+            threat = np.clip(predicted, 0.0, 1.0)
+        targets[THREAT] = np.column_stack([1.0 - threat, threat])
+    elif checked.no_op_index is not None:
         key = f"skills.{checked.name}.threat_target_scale"
         scale = require(config, key)
         if isinstance(scale, bool) or not isinstance(scale, (int, float)) or not (math.isfinite(scale) and scale > 0):
@@ -798,6 +880,12 @@ def dream_targets(scores: np.ndarray, spec: Any, config: Mapping[str, Any]) -> d
         threat = np.exp(-np.logaddexp(0.0, -z))  # logistic(z) without overflow
         targets[THREAT] = np.column_stack([np.exp(-np.logaddexp(0.0, z)), threat])
     return targets
+
+
+def _predicted_mean(scores_path: Any) -> np.ndarray | None:
+    """predicted_mean (m, C, K) of a scores.npz, or None for a file written before it was saved."""
+    with np.load(scores_path) as data:
+        return np.array(data["predicted_mean"]) if "predicted_mean" in data.files else None
 
 
 def encode_inputs(features: np.ndarray) -> np.ndarray:
@@ -836,7 +924,9 @@ def encoded_width(frames: int, frame_size: int, encoding: str) -> int:
 
 def window_encoding_from_config(config: Mapping[str, Any]) -> tuple[str, float]:
     """(vision.encoding, vision.diff_floor) of config.yaml; ConfigError for a missing or invalid value."""
-    encoding, floor = require(config, "vision.encoding"), require(config, "vision.diff_floor")
+    encoding = require(config, "vision.encoding")
+    # "events" takes its event threshold in the place of the divisor floor (one parameter per encoding).
+    floor = require(config, "vision.event_threshold" if encoding == "events" else "vision.diff_floor")
     if encoding not in WINDOW_ENCODINGS:
         raise ConfigError(f"config.yaml key 'vision.encoding' must be one of {WINDOW_ENCODINGS}; got {encoding!r}")
     try:
@@ -876,7 +966,22 @@ def encode_window_features(windows: np.ndarray, encoding: str, diff_floor: float
         return np.array(array.reshape(n, -1), dtype=np.float32, copy=True)
     floor = np.float32(_diff_floor(diff_floor))
     encoded_width(array.shape[1], array.shape[2], encoding)  # F >= 2
-    change = (array[:, 1:] - array[:, :-1]).reshape(n, -1)
+    if encoding == "events":
+        # Event-camera style: each pixel of each adjacent frame pair gives an ON event (1.0) when it got brighter by
+        # more than the threshold, an OFF event (0.0) when it got darker by more than it, and 0.5 (no event, zero
+        # input current) otherwise. For this encoding the ``diff_floor`` argument IS the event threshold
+        # (config vision.event_threshold; stored in student.json input.diff_floor).
+        change = array[:, 1:] - array[:, :-1]
+        events = np.full(change.shape, 0.5, dtype=np.float32)
+        events[change > floor] = 1.0
+        events[change < -floor] = 0.0
+        return events.reshape(n, -1)
+    if encoding == "signed_diff_first":
+        # Change of every later frame against the OLDEST frame of the window: a slow approach adds up over the
+        # window (7 frames = 233 ms) instead of showing only one frame step; a still scene is still 0.5 everywhere.
+        change = (array[:, 1:] - array[:, :1]).reshape(n, -1)
+    else:
+        change = (array[:, 1:] - array[:, :-1]).reshape(n, -1)
     scale = np.maximum(np.abs(change).max(axis=1), floor)
     if encoding == "abs_diff":
         return np.abs(change) / scale[:, None]
@@ -1452,7 +1557,7 @@ def _teach_command(args: argparse.Namespace, config: Mapping[str, Any], spec: An
         keys = list(teacher.last_request_hashes)
         buffer = io.BytesIO()
         np.savez(buffer, scores=scores, scenario_index=dream["scenario_index"], decision_time_s=dream["decision_time_s"],
-                 request_keys=np.array(keys, dtype=str))
+                 request_keys=np.array(keys, dtype=str), predicted_mean=dream_scores.last_predicted_mean)
         path = result.path.parent / "scores.npz"
         atomic_write_bytes(path, buffer.getvalue())
         record = {"path": path, "sha256": _sha256(path), "shape": list(scores.shape), "request_keys": keys}
@@ -1510,7 +1615,7 @@ def _train_command(args: argparse.Namespace, config: Mapping[str, Any], spec: An
     hidden = list(args.hidden) if args.hidden else list(require(config, f"observed.{checked.name}.snn_hidden_sizes"))
     steps = int(args.steps) if args.steps is not None else int(require(config, f"observed.{checked.name}.snn_max_steps"))
     seed = int(require(config, "runtime.seed"))
-    targets = dream_targets(scores, spec, config)
+    targets = dream_targets(scores, spec, config, predicted_mean=_predicted_mean(args.scores))
 
     def progress(info: dict[str, Any]) -> None:
         events.emit("train", "running", done=int(info["step"]), total=int(info["max_steps"]), data={
@@ -1518,7 +1623,8 @@ def _train_command(args: argparse.Namespace, config: Mapping[str, Any], spec: An
         })
 
     settings = {"dream": dream["path"], "scores": scores_path, "frames": frames, "window_encoding": window_encoding,
-                "diff_floor": diff_floor, "hidden_sizes": hidden, "max_steps": steps}
+                "diff_floor": diff_floor, "hidden_sizes": hidden, "max_steps": steps,
+                "threat_target": threat_target_settings(config, checked.name)}
     result.merge(settings)
     events.emit("train", "running", done=0, total=steps, data={**settings, "rows": int(features.shape[0])})
     try:

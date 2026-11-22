@@ -1,0 +1,16 @@
+rows: split context, 80 scenarios x 4 actions = 320 episodes
+32/320
+64/320
+96/320
+128/320
+160/320
+192/320
+224/320
+256/320
+288/320
+320/320
+kind counts: empty 8, static 10, receding 3, off_path 3, background_motion 7, ambiguous 9, incoming_left 11, incoming_center 15, incoming_right 14
+collisions under NO_OP: empty 0/8, static 0/10, receding 0/3, off_path 0/3, background_motion 0/7, ambiguous 4/9, incoming_left 10/11, incoming_center 14/15, incoming_right 12/14
+scenarios per camera rate (Hz): 15 22, 20 29, 30 29
+wall time 142.1 s for 320 episodes: 0.444 s per episode
+wrote results\runs\v5\context\rows.npz and rows.json

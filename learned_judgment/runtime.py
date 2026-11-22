@@ -4,7 +4,7 @@ Lane contract (Person B, DODGE from the head camera)
 ----------------------------------------------------
 :class:`DodgeRuntime` loads an exported student directory and turns each image window into the
 command to send now. It runs on this computer only: it makes no network call, writes nothing and
-keeps no frames or features (the gate keeps only its vote window of action names).
+keeps no frames or features (the gate keeps only its vote window: the voted groups and their scores).
 
 Student directory (written by the observed run's export):
 

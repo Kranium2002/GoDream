@@ -132,6 +132,29 @@ def test_dream_targets_without_no_op_has_no_threat() -> None:
     assert set(targets) == {"action"}
 
 
+def test_dream_targets_threat_target_modes() -> None:
+    # predicted NO_OP (separation, collision) per row: a hit, a near miss at 0.05 m, a pass at 0.3 m, exactly 0.08 m
+    mean = np.zeros((4, 4, 5))
+    mean[:, 0, 0] = [0.0, 0.05, 0.3, 0.08]
+    mean[:, 0, 1] = [0.9, 0.2, 0.0, 1.5]
+    scores = np.tile([0.0, -0.3, -0.3, -0.6], (4, 1))
+    config = copy.deepcopy(FAKE_CONFIG)
+    block = config["skills"][SPEC.name]
+    block["threat_target"] = {"mode": "near_approach", "separation_m": 0.08, "outcome": "min_separation_m"}
+    assert np.array_equal(dream_targets(scores, SPEC, config, predicted_mean=mean)["threat"][:, 1], [1.0, 1.0, 0.0, 0.0])
+    with pytest.raises(ValueError):
+        dream_targets(scores, SPEC, config)  # needs predicted_mean
+    block["threat_target"], block["threat_outcome"] = "collision_course", "collision"
+    assert np.allclose(dream_targets(scores, SPEC, config, predicted_mean=mean)["threat"][:, 1], [0.9, 0.2, 0.0, 1.0])
+    block["threat_target"] = {"mode": "collision_course"}
+    assert np.allclose(dream_targets(scores, SPEC, config, predicted_mean=mean)["threat"][:, 1], [0.9, 0.2, 0.0, 1.0])
+    for bad in ("nearby", {"mode": "near_approach", "separation_m": 0.0, "outcome": "min_separation_m"},
+                {"mode": "near_approach", "separation_m": 0.08}):
+        block["threat_target"] = bad
+        with pytest.raises(Exception, match="threat_target"):
+            dream_targets(scores, SPEC, config, predicted_mean=mean)
+
+
 def test_encode_inputs() -> None:
     encoded = encode_inputs(np.array([[0.0, 0.5, 1.0]], dtype=np.float32))
     assert encoded.dtype == np.float64

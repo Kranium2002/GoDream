@@ -1,0 +1,17 @@
+sweep v5: 6 variants, 6 at once; dream D:\BerlinPrior-eval\results\runs\v5\dream, scores D:\BerlinPrior-eval\results\runs\v5\scores.npz, trace D:\BerlinPrior-eval\results\runs\v5\trace_dev.npz
+[1/6] f6_events_h128: done precision 1.0 recall 0.0 emitted 1 (70 s)
+[2/6] f8_events_h128: done precision 0.8571428571428571 recall 0.04504504504504504 emitted 7 (74 s)
+[3/6] f6_signed_diff_h128: done precision 0.8214285714285714 recall 0.36936936936936937 emitted 56 (81 s)
+[4/6] f4_events_h128: done precision 1.0 recall 0.009009009009009009 emitted 1 (86 s)
+[5/6] f8_signed_diff_h128: done precision 0.875 recall 0.0990990990990991 emitted 16 (87 s)
+[6/6] f4_signed_diff_h128: done precision 1.0 recall 0.06306306306306306 emitted 8 (93 s)
+rank  variant              status  Q  thr val/const  act val/const  thresholds t/a/m  gate  emit  prec   Wilson      recall  FA  r@.95  r@.90  train s  cal s
+1     f4_signed_diff_h128  done       0.255/0.460    0.616/0.841    0.95/0.50/0.10    yes   8     1.000  0.68..1.00  0.063   0   0.063  0.063  56       37   
+2     f4_events_h128       done       0.255/0.460    0.647/0.841    0.95/0.90/0.70    yes   1     1.000  0.21..1.00  0.009   0   0.009  0.009  50       36   
+3     f6_events_h128       done       0.255/0.460    0.652/0.841    0.95/0.90/0.70    yes   1     1.000  0.21..1.00  0.000   0   0.000  0.000  45       25   
+4     f6_signed_diff_h128  done       0.265/0.460    0.645/0.841    0.90/0.50/0.10    no    56    0.821  0.70..0.90  0.369   10  -      -      44       36   
+5     f8_signed_diff_h128  done       0.257/0.460    0.650/0.841    0.95/0.50/0.20    no    16    0.875  0.64..0.97  0.099   2   -      -      46       41   
+6     f8_events_h128       done       0.252/0.460    0.643/0.841    0.95/0.70/0.50    no    7     0.857  0.49..0.97  0.045   1   -      -      46       28   
+rule: qualifies: offline dev calibration's chosen triple has precision >= inference.gate.precision_target and emitted >= observed.dodge_vision.sweep.min_emitted; among qualifying: highest dev recall, ties -> fewer frames, then smaller hidden size (total units, then layers, then sizes in order), then encoding order as listed; none qualifying: no winner, nothing relaxed
+NO WINNER: no variant reached precision_target 0.99 with >= 20 issued commands on dev; the gate target was not met and nothing was relaxed; D:\BerlinPrior-eval\results\runs\v5\sweep.json; 94 s
+--freeze-best: nothing frozen (no winner)

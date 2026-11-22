@@ -1,0 +1,144 @@
+quotes (free; nothing billed): {
+ "dream": {
+  "mode": "stacked",
+  "n_query_rows": 60000,
+  "n_train_rows": 320,
+  "n_features": 1160,
+  "active_outcomes": [
+   "min_separation_m",
+   "collision",
+   "recovery_time_s"
+  ],
+  "constant_outcomes": [
+   "fall",
+   "command_travel_m"
+  ],
+  "max_query_rows_per_request": 32000,
+  "requests": [
+   {
+    "outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "chunk": 0,
+    "n_chunks": 6,
+    "n_train": 960,
+    "n_query": 32000,
+    "n_features": 1161,
+    "padded_rows": 0,
+    "quote_tokens": 40336,
+    "pricing_version": "quota_v3"
+   },
+   {
+    "outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "chunk": 1,
+    "n_chunks": 6,
+    "n_train": 960,
+    "n_query": 32000,
+    "n_features": 1161,
+    "padded_rows": 0,
+    "quote_tokens": 40336,
+    "pricing_version": "quota_v3"
+   },
+   {
+    "outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "chunk": 2,
+    "n_chunks": 6,
+    "n_train": 960,
+    "n_query": 32000,
+    "n_features": 1161,
+    "padded_rows": 0,
+    "quote_tokens": 40336,
+    "pricing_version": "quota_v3"
+   },
+   {
+    "outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "chunk": 3,
+    "n_chunks": 6,
+    "n_train": 960,
+    "n_query": 32000,
+    "n_features": 1161,
+    "padded_rows": 0,
+    "quote_tokens": 40336,
+    "pricing_version": "quota_v3"
+   },
+   {
+    "outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "chunk": 4,
+    "n_chunks": 6,
+    "n_train": 960,
+    "n_query": 32000,
+    "n_features": 1161,
+    "padded_rows": 0,
+    "quote_tokens": 40336,
+    "pricing_version": "quota_v3"
+   },
+   {
+    "outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "chunk": 5,
+    "n_chunks": 6,
+    "n_train": 960,
+    "n_query": 20000,
+    "n_features": 1161,
+    "padded_rows": 0,
+    "quote_tokens": 27135,
+    "pricing_version": "quota_v3"
+   }
+  ],
+  "total_quoted_tokens": 228815,
+  "usage": {
+   "current_usage": 1481435,
+   "usage_limit": 35000000,
+   "reset_time": "2026-12-01 00:00:00 UTC",
+   "daily_tokens_used": 684713,
+   "daily_token_limit": 35000000,
+   "daily_usage": 684713,
+   "daily_limit": 35000000,
+   "daily_reset_time": "2026-11-23 00:00:00 UTC",
+   "monthly_tokens_used": 1481435,
+   "monthly_token_limit": 35000000,
+   "monthly_usage": 1481435,
+   "monthly_limit": 35000000,
+   "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+   "thinking_fit_count": 0,
+   "thinking_fit_limit": 0
+  },
+  "remaining_account_tokens": 33518565,
+  "tokens_quoted_for_billed_calls": 1284687,
+  "project_token_budget": 35000000,
+  "max_tokens_per_request": 60000,
+  "gate_preview": {
+   "would_refuse": false,
+   "reasons": []
+  },
+  "calls": [
+   "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+   "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+   "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+   "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+  ],
+  "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+ }
+}
+teach: done; D:\BerlinPrior-eval\results\runs\v5\result.json

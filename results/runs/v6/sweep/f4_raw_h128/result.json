@@ -1,0 +1,248 @@
+{
+ "run_id": "f4_raw_h128",
+ "skill": "dodge_vision",
+ "train": {
+  "state": "failed",
+  "started_utc": "2026-11-22T05:13:27.581443+00:00",
+  "argv": [
+   "train",
+   "--run",
+   "f4_raw_h128",
+   "--skill",
+   "dodge_vision",
+   "--dream",
+   "D:\\BerlinPrior-eval\\results\\runs\\v5\\dream",
+   "--scores",
+   "D:\\BerlinPrior-eval\\results\\runs\\v5\\scores.npz",
+   "--frames",
+   "4",
+   "--hidden",
+   "128",
+   "--steps",
+   "1500"
+  ],
+  "config_digest": "8bd2673f12713199e66106c20c4fb1aaf10b17bb5b10907293a534af9b6aece3",
+  "dream": "D:/BerlinPrior-eval/results/runs/v5/dream",
+  "scores": "D:/BerlinPrior-eval/results/runs/v5/scores.npz",
+  "frames": 4,
+  "window_encoding": "raw",
+  "diff_floor": 0.1,
+  "hidden_sizes": [
+   128
+  ],
+  "max_steps": 1500,
+  "threat_target": {
+   "mode": "near_approach",
+   "separation_m": 0.08,
+   "outcome": "min_separation_m"
+  },
+  "error": {
+   "type": "TrainingError",
+   "message": "head 'threat': the restored validation loss 0.6879602361764494 is not below 0.6777335463951766, the loss of the best constant prediction (the head's mean training target): the network does no better than ignoring the situation; head 'action': the restored validation loss 0.8946076611390463 is not below 0.8410387198765866, the loss of the best constant prediction (the head's mean training target): the network does no better than ignoring the situation"
+  },
+  "report": {
+   "loss": "per head KL(target || softmax(logits)) averaged over that head's rows, weighted by the head's share of the batch, plus spike_rate_penalty x mean hidden firing rate; early stopping on the sampling-weighted validation KL",
+   "acceptance": "the restored weights must have a total validation KL below initialisation, a validation KL per head below that of the head's mean training target (the best constant prediction), and spikes in every hidden layer on the validation rows; otherwise fit raises TrainingError",
+   "heads": [
+    "threat",
+    "action"
+   ],
+   "sampling": {
+    "threat": 0.5,
+    "action": 0.5
+   },
+   "n_train_rows": {
+    "threat": 13500,
+    "action": 13500
+   },
+   "n_validation_rows": {
+    "threat": 1500,
+    "action": 1500
+   },
+   "steps_run": 800,
+   "best_step": 300,
+   "stopped_early": true,
+   "initial_validation_loss": 1.0372761965174104,
+   "best_validation_loss": 0.7912839486577479,
+   "best_validation_loss_per_head": {
+    "threat": 0.6879602361764494,
+    "action": 0.8946076611390463
+   },
+   "constant_predictor_validation_loss": {
+    "threat": 0.6777335463951766,
+    "action": 0.8410387198765866
+   },
+   "constant_predictor_validation_loss_null_means": "infinite",
+   "train_loss_curve": [
+    [
+     100,
+     0.873202009647081
+    ],
+    [
+     200,
+     0.8061389320338185
+    ],
+    [
+     300,
+     0.7863229691835799
+    ],
+    [
+     400,
+     0.7686931671665563
+    ],
+    [
+     500,
+     0.765610007501718
+    ],
+    [
+     600,
+     0.751495269549666
+    ],
+    [
+     700,
+     0.7497405750922304
+    ],
+    [
+     800,
+     0.7516358586123926
+    ]
+   ],
+   "validation_loss_curve": [
+    [
+     0,
+     {
+      "threat": 0.750088904665441,
+      "action": 1.3244634883693798
+     }
+    ],
+    [
+     100,
+     {
+      "threat": 0.7313729796776783,
+      "action": 0.9969088333261055
+     }
+    ],
+    [
+     200,
+     {
+      "threat": 0.7039405939957486,
+      "action": 0.891473690059111
+     }
+    ],
+    [
+     300,
+     {
+      "threat": 0.6879602361764494,
+      "action": 0.8946076611390463
+     }
+    ],
+    [
+     400,
+     {
+      "threat": 0.724447939146597,
+      "action": 0.9002667005866759
+     }
+    ],
+    [
+     500,
+     {
+      "threat": 0.7926993938279362,
+      "action": 0.9600962116461482
+     }
+    ],
+    [
+     600,
+     {
+      "threat": 0.7308978965784354,
+      "action": 0.935869305118964
+     }
+    ],
+    [
+     700,
+     {
+      "threat": 0.7351846514938898,
+      "action": 0.9040170228373908
+     }
+    ],
+    [
+     800,
+     {
+      "threat": 0.7316987740083637,
+      "action": 0.9169340336291857
+     }
+    ]
+   ],
+   "validation_total_curve": [
+    [
+     0,
+     1.0372761965174104
+    ],
+    [
+     100,
+     0.8641409065018919
+    ],
+    [
+     200,
+     0.7977071420274298
+    ],
+    [
+     300,
+     0.7912839486577479
+    ],
+    [
+     400,
+     0.8123573198666365
+    ],
+    [
+     500,
+     0.8763978027370423
+    ],
+    [
+     600,
+     0.8333836008486997
+    ],
+    [
+     700,
+     0.8196008371656403
+    ],
+    [
+     800,
+     0.8243164038187747
+    ]
+   ],
+   "initial_firing_rate_per_layer": [
+    0.133203125
+   ],
+   "firing_rate_per_layer": [
+    0.40206145833333334
+   ],
+   "dead_fraction_per_layer": [
+    0.0
+   ],
+   "saturated_fraction_per_layer": [
+    0.0
+   ],
+   "silent_layers": [],
+   "wall_seconds": 21.905586100008804,
+   "seed": 549658744,
+   "torch_threads": 1,
+   "versions": {
+    "torch": "2.15.0+cpu",
+    "snntorch": "1.0.0",
+    "numpy": "2.5.5",
+    "python": "3.13.16"
+   },
+   "optimizer": {
+    "name": "Adam",
+    "lr": 0.002,
+    "betas": [
+     0.9,
+     0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0
+   }
+  }
+ },
+ "updated_utc": "2026-11-22T05:13:52.908113+00:00"
+}

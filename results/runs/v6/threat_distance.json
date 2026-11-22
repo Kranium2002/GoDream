@@ -1,0 +1,248 @@
+{
+ "rule": "H (comes at the head)          = incoming_center, incoming_left, incoming_right\n  W (passes wide / not approaching) = off_path, static, receding, background_motion\n  ambiguous is the near-miss band that the distance splits; it does not set the distance. empty has no object.\n  Pool the measured NO_OP min_separation_m of the context NO_OP rows and of the dev trace's NO_OP episodes.\n  a = max over H, b = min over W. If a < b: separation_m = round((a + b) / 2, 2). Else: stop, no distance.",
+ "run_dir": "D:\\BerlinPrior-eval\\results\\runs\\v5",
+ "sources": {
+  "context": "results\\runs\\v5\\context\\rows.npz",
+  "dev_trace": "results\\runs\\v5\\trace_dev.json",
+  "dream_scores": "results\\runs\\v5\\scores.npz"
+ },
+ "H_max_m": 0.022036196728566312,
+ "W_min_m": 0.1419213023437743,
+ "separation_m": 0.08,
+ "table": {
+  "incoming_center": {
+   "measured_no_op": {
+    "n": 48,
+    "min": 0.0,
+    "p10": 0.0,
+    "median": 0.0,
+    "p90": 0.0,
+    "max": 0.009596365775593148,
+    "collisions": 46
+   },
+   "sources": {
+    "context": 15,
+    "dev": 33
+   },
+   "predicted_no_op_dream_windows": {
+    "n": 2412,
+    "min": 0.007050762359507391,
+    "p10": 0.007984390010833725,
+    "median": 0.008664778198295559,
+    "p90": 0.009376417861585535,
+    "max": 0.010651835289411497,
+    "collisions": 0
+   },
+   "measured_below_distance": 48,
+   "dream_windows_below_distance": 2412
+  },
+  "incoming_left": {
+   "measured_no_op": {
+    "n": 41,
+    "min": 0.0,
+    "p10": 0.0,
+    "median": 0.0,
+    "p90": 0.0,
+    "max": 0.0068760680122258305,
+    "collisions": 39
+   },
+   "sources": {
+    "context": 11,
+    "dev": 30
+   },
+   "predicted_no_op_dream_windows": {
+    "n": 2184,
+    "min": 0.007076555390543141,
+    "p10": 0.008266124509353698,
+    "median": 0.008868134141757484,
+    "p90": 0.009678995894264448,
+    "max": 0.012710531048078653,
+    "collisions": 0
+   },
+   "measured_below_distance": 41,
+   "dream_windows_below_distance": 2184
+  },
+  "incoming_right": {
+   "measured_no_op": {
+    "n": 56,
+    "min": 0.0,
+    "p10": 0.0,
+    "median": 0.0,
+    "p90": 0.007498420707025732,
+    "max": 0.022036196728566312,
+    "collisions": 47
+   },
+   "sources": {
+    "context": 14,
+    "dev": 42
+   },
+   "predicted_no_op_dream_windows": {
+    "n": 2460,
+    "min": 0.006739344993166207,
+    "p10": 0.008187966584801214,
+    "median": 0.008831616336733837,
+    "p90": 0.009577955763596898,
+    "max": 0.012834438407333476,
+    "collisions": 0
+   },
+   "measured_below_distance": 56,
+   "dream_windows_below_distance": 2460
+  },
+  "ambiguous": {
+   "measured_no_op": {
+    "n": 44,
+    "min": 0.0,
+    "p10": 0.0,
+    "median": 0.028643242689325506,
+    "p90": 0.09322930959045359,
+    "max": 0.13380059643830405,
+    "collisions": 19
+   },
+   "sources": {
+    "context": 9,
+    "dev": 35
+   },
+   "predicted_no_op_dream_windows": {
+    "n": 1746,
+    "min": 0.007289210362558824,
+    "p10": 0.009079847257698496,
+    "median": 0.02526134254217856,
+    "p90": 0.11922731419246063,
+    "max": 0.1589754312397333,
+    "collisions": 0
+   },
+   "measured_below_distance": 38,
+   "dream_windows_below_distance": 1325
+  },
+  "off_path": {
+   "measured_no_op": {
+    "n": 31,
+    "min": 0.2987108286944032,
+    "p10": 0.3315651114559367,
+    "median": 0.5112839186735062,
+    "p90": 0.6650146123648653,
+    "max": 0.7198949270588656,
+    "collisions": 0
+   },
+   "sources": {
+    "context": 3,
+    "dev": 28
+   },
+   "predicted_no_op_dream_windows": {
+    "n": 1680,
+    "min": 0.1980921276774802,
+    "p10": 0.2733261194419101,
+    "median": 0.4126802642212698,
+    "p90": 0.6284952136697936,
+    "max": 0.771176511865505,
+    "collisions": 0
+   },
+   "measured_below_distance": 0,
+   "dream_windows_below_distance": 0
+  },
+  "static": {
+   "measured_no_op": {
+    "n": 29,
+    "min": 0.23640928173661868,
+    "p10": 0.35725241436244937,
+    "median": 0.6415588543155275,
+    "p90": 0.912011014843191,
+    "max": 0.9677593149712801,
+    "collisions": 0
+   },
+   "sources": {
+    "context": 10,
+    "dev": 19
+   },
+   "predicted_no_op_dream_windows": {
+    "n": 1014,
+    "min": 0.18778902704725384,
+    "p10": 0.28628770497898176,
+    "median": 0.6331422788790557,
+    "p90": 0.898161367051062,
+    "max": 0.9756591650859796,
+    "collisions": 0
+   },
+   "measured_below_distance": 0,
+   "dream_windows_below_distance": 0
+  },
+  "receding": {
+   "measured_no_op": {
+    "n": 18,
+    "min": 0.1419213023437743,
+    "p10": 0.17224495543610988,
+    "median": 0.34218760418892336,
+    "p90": 0.5515278487475289,
+    "max": 0.5978935342100004,
+    "collisions": 0
+   },
+   "sources": {
+    "context": 3,
+    "dev": 15
+   },
+   "predicted_no_op_dream_windows": {
+    "n": 1212,
+    "min": 0.05082680726115775,
+    "p10": 0.13417121492887724,
+    "median": 0.30143433302470146,
+    "p90": 0.5366481547474378,
+    "max": 0.5845114854747071,
+    "collisions": 0
+   },
+   "measured_below_distance": 0,
+   "dream_windows_below_distance": 30
+  },
+  "background_motion": {
+   "measured_no_op": {
+    "n": 31,
+    "min": 0.32989894746161913,
+    "p10": 0.39491309075579645,
+    "median": 0.7325603239042177,
+    "p90": 0.9770753054348276,
+    "max": 0.9946388837404946,
+    "collisions": 0
+   },
+   "sources": {
+    "context": 7,
+    "dev": 24
+   },
+   "predicted_no_op_dream_windows": {
+    "n": 1038,
+    "min": 0.25616024466805354,
+    "p10": 0.3224668177747295,
+    "median": 0.6407001763499065,
+    "p90": 0.9285654642990652,
+    "max": 0.9753587507440126,
+    "collisions": 0
+   },
+   "measured_below_distance": 0,
+   "dream_windows_below_distance": 0
+  },
+  "empty": {
+   "measured_no_op": {
+    "n": 22,
+    "min": 2.0,
+    "p10": 2.0,
+    "median": 2.0,
+    "p90": 2.0,
+    "max": 2.0,
+    "collisions": 0
+   },
+   "sources": {
+    "context": 8,
+    "dev": 14
+   },
+   "predicted_no_op_dream_windows": {
+    "n": 1254,
+    "min": 2.0,
+    "p10": 2.0,
+    "median": 2.0,
+    "p90": 2.0,
+    "max": 2.0,
+    "collisions": 0
+   },
+   "measured_below_distance": 0,
+   "dream_windows_below_distance": 0
+  }
+ }
+}

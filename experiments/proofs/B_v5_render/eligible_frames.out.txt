@@ -1,0 +1,15 @@
+module D:\BerlinPrior-eval\learned_judgment\skills\dodge_vision.py
+15 Hz dev: first eligible frame 0.46 s; no pre-contact frame 29/500 (5.8 % of all, 8.4 % of 347 approaching) by kind {'incoming_left': 7, 'incoming_right': 10, 'incoming_center': 5, 'ambiguous': 7}
+15 Hz dream: first eligible frame 0.46 s; no pre-contact frame 27/500 (5.4 % of all, 7.9 % of 343 approaching) by kind {'incoming_center': 7, 'incoming_right': 9, 'incoming_left': 7, 'ambiguous': 4}
+30 Hz dev: first eligible frame 0.30 s; no pre-contact frame 8/500 (1.6 % of all, 2.3 % of 347 approaching) by kind {'incoming_right': 4, 'incoming_center': 2, 'ambiguous': 1, 'incoming_left': 1}
+30 Hz dream: first eligible frame 0.30 s; no pre-contact frame 2/500 (0.4 % of all, 0.6 % of 343 approaching) by kind {'incoming_left': 1, 'incoming_center': 1}
+arrival quantiles (s) 5/10/25/50: [0.557 0.644 0.806 1.066]
+  pre_contact_margin_s 0.15, distance_m [0.75, 1.4]: no pre-contact frame 29/500 (5.8 %)
+  pre_contact_margin_s 0.15, distance_m [0.85, 1.4]: no pre-contact frame 14/500 (2.8 %)
+  pre_contact_margin_s 0.15, distance_m [0.95, 1.4]: no pre-contact frame 6/500 (1.2 %)
+  pre_contact_margin_s 0.1, distance_m [0.75, 1.4]: no pre-contact frame 18/500 (3.6 %)
+  pre_contact_margin_s 0.1, distance_m [0.85, 1.4]: no pre-contact frame 9/500 (1.8 %)
+  pre_contact_margin_s 0.1, distance_m [0.95, 1.4]: no pre-contact frame 0/500 (0.0 %)
+  pre_contact_margin_s 0.05, distance_m [0.75, 1.4]: no pre-contact frame 13/500 (2.6 %)
+  pre_contact_margin_s 0.05, distance_m [0.85, 1.4]: no pre-contact frame 4/500 (0.8 %)
+  pre_contact_margin_s 0.05, distance_m [0.95, 1.4]: no pre-contact frame 0/500 (0.0 %)

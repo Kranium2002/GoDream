@@ -1,0 +1,6 @@
+sweep v6: 12 variants, 3 at once; dream D:\BerlinPrior-eval\results\runs\v5\dream, scores D:\BerlinPrior-eval\results\runs\v5\scores.npz, trace D:\BerlinPrior-eval\results\runs\v5\trace_dev.npz
+[1/12] f4_events_h128: done precision 1.0 recall 0.05223880597014925 emitted 7 (84 s)
+[2/12] f4_signed_diff_h128: done precision 0.9672131147540983 recall 0.41044776119402987 emitted 61 (86 s)
+[3/12] f4_signed_diff_first_h128: done precision 1.0 recall 0.11194029850746269 emitted 18 (86 s)
+[4/12] f4_raw_h128: failed in train: TrainingError (28 s)
+[5/12] f6_signed_diff_h128: done precision 0.9591836734693877 recall 0.3358208955223881 emitted 49 (98 s)

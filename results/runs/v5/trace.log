@@ -1,0 +1,12 @@
+trace: dev, 240 NO_OP episodes (window 8), camera rates (Hz) {'30': 80, '15': 80, '20': 80}
+24/240
+48/240
+72/240
+96/240
+120/240
+144/240
+168/240
+192/240
+216/240
+240/240
+trace: D:\BerlinPrior-eval\results\runs\v5\trace_dev.npz, frames [240, 120, 12, 12], 111 threats of 240, 19120 windows checked, 134.9 s

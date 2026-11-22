@@ -17,27 +17,45 @@ the scenario's truth, which never becomes a student input. Shared arrays:
                   recovery_time_s   regression, [0, episode_duration_s]
                   command_travel_m  regression, [0, max |command field| x hold_s]: |commanded speed| x hold_s
     FEATURES  D = frames x N x N float32 in [0, 1] (learned_judgment.vision.flatten_window, oldest frame first).
-    TIME      whole control periods of robot.walking_policy.command_schema.update_period_s from the launch. Frames
-              are taken at learned_judgment.vision.frame_control_periods for vision.frame_rate_hz, at periods
-              before the end of the episode; a decision frame is an index into frame_times(config).
+    TIME      whole control periods of robot.walking_policy.command_schema.update_period_s from the launch. A
+              decision frame k is an index into frame_times(config): the vision.frame_rate_hz grid (control period
+              nearest k / frame_rate_hz, learned_judgment.vision.frame_control_periods), before the episode's end.
+    CAMERA    (v5) a simulated camera rate R from vision.sim_camera_rates_hz. A one-shot or dream window of decision
+              frame k at rate R takes frame j back (j = F-1 .. 0, oldest first) at the control period nearest
+              k / frame_rate_hz - j / R (exact fractions, halves up; _window_periods); a window whose oldest frame
+              would lie before t = 0 is not eligible at that rate. At R = frame_rate_hz these are the frames
+              k-F+1 .. k of the grid. A closed-loop episode runs one rate R: frames at the control period nearest
+              k / R (frame_control_periods), the policy called at each.
 
 Files of the command line, one directory per call:
 
     rows.npz    scenario_index (n,) int64, decision_time_s (n,) float64, action (n,) int64,
-                features (n, D) float32, physics (n, K) float64, measured (n, K) float64
+                features (n, D) float32, physics (n, K) float64, measured (n, K) float64,
+                camera_rate_hz (n,) float64 (the window's simulated camera rate)
     rows.json   skill, split, action_names, outcome_names, outcome_kinds, outcome_bounds, frames, n_situations,
                 seeds, world_seed, world_preset, config_digest, kind_counts, punch_stand_in (a punch ran as the
                 ball with its weight cancelled), scenarios (index = scenario_index)
     dream.npz   scenario_index (m,) int64, decision_time_s (m,) float64, features (m, D) float32,
-                physics (m, C, K) float64
-    dream.json  the keys of rows.json plus n_episodes and windows_per_dream_episode
+                physics (m, C, K) float64, kinematic (m,) bool (the window was rendered by render_windows_kinematic),
+                camera_rate_hz (m,) float64
+    dream.json  the keys of rows.json plus n_episodes, windows_per_dream_episode and render {mode,
+                kinematic_windows, physics_windows}
+    stand.npz   (dream --render kinematic) the recorded zero-command stand of record_stand (every control period)
 
-    python -m learned_judgment.skills.dodge_vision rows --split {context|dev|test} --out DIR [--n N] [--frames F]
-    python -m learned_judgment.skills.dodge_vision dream --out DIR [--n N]
+    python -m learned_judgment.skills.dodge_vision rows --split {context|dev|test|test2} --out DIR [--n N] [--frames F]
+    python -m learned_judgment.skills.dodge_vision dream --out DIR [--n N] [--render {kinematic|physics}]
 
 Seeds. The scenarios of a split come from np.random.default_rng(np.random.SeedSequence([runtime.seed, code]))
-(code: SPLIT_CODES). Scenario i's decision frame(s) and image augmentation come from the two children of
-np.random.SeedSequence([runtime.seed, code], spawn_key=(i,)).spawn(2), and its episodes use attempt_seed i.
+(code: SPLIT_CODES). Scenario i's camera rate(s) and decision frame(s), and its image augmentation, come from the two
+children of np.random.SeedSequence([runtime.seed, code], spawn_key=(i,)).spawn(2), and its episodes use attempt_seed i.
+The first child's generator draws the rate first (rng.integers over vision.sim_camera_rates_hz), then the frame;
+dodge_eval's closed loop takes its episode rate from the same first draw (scenario_rate).
+Split "test2" (code 5) is a fresh held-out split (the "test" split was used once for an earlier student); its default
+size is observed.dodge_vision.test_scenarios (scenario_count_key).
+
+The look (Person B's stopgap paint, HeadView): every pixel that is not the thrown object shows one static,
+image-fixed patchy grey field per scenario (background_field, rebuilt from the scenario's visual "background_seed"),
+the same in every frame; the object keeps its own grey.
 
 This module defines no SPEC_CLASS, so the SkillSpec registry (learned_judgment.skills) does not load it.
 """
@@ -55,7 +73,9 @@ import numbers
 import time
 from collections import Counter
 from dataclasses import dataclass, field
+from fractions import Fraction
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Sequence
 
 import mujoco
@@ -79,10 +99,13 @@ __all__ = [
     "KINDS",
     "OUTCOME_KINDS",
     "OUTCOME_NAMES",
+    "ROW_SPLITS",
     "SKILL",
     "SPLIT_CODES",
     "DodgeVisionSpec",
     "HeadView",
+    "arrival_time_s",
+    "background_field",
     "build_observed_spec",
     "closed_loop",
     "collect_dream",
@@ -92,14 +115,21 @@ __all__ = [
     "objective",
     "observe_and_act",
     "physics_guess",
+    "record_stand",
     "render_windows",
+    "render_windows_kinematic",
     "sample_threat_scenarios",
+    "scenario_count_key",
+    "scenario_rate",
 ]
 
 SKILL = "dodge_vision"
 OUTCOME_NAMES = ("min_separation_m", "collision", "fall", "recovery_time_s", "command_travel_m")
 OUTCOME_KINDS = ("regression", "binary", "binary", "regression", "regression")
-SPLIT_CODES = {"context": 1, "dev": 2, "test": 3, "dream": 4}
+SPLIT_CODES = {"context": 1, "dev": 2, "test": 3, "dream": 4, "test2": 5}
+ROW_SPLITS = ("context", "dev", "test", "test2")  # splits of the rows command line
+# Splits whose default size is another split's observed.dodge_vision.<split>_scenarios key (scenario_count_key).
+_SIZE_OF = {"test2": "test"}
 
 # Kinds whose ball moves toward the dog: the config range of |aim_y| (the sideways offset where the path crosses the
 # plane x = 0) and its sign, 0.0 meaning a random sign.
@@ -122,12 +152,32 @@ _OBJECT_EMISSION = 0.5
 _MAX_GREY_DRAWS = 10_000  # object-grey redraws before a scenario's visual draw gives up (the config check makes it rare)
 _VISUAL_UNMAPPED = (
     "Go2World.reset accepts the situation key 'visual' (Person A's world draws the scene's look): the mapping of a "
-    "scenario's visual {object_grey, backdrop_grey} to Person A's keys is decided when their format is known, and the "
-    "stopgap paint of HeadView stays off for such a world"
+    "scenario's visual {object_grey, background_seed} to Person A's keys is decided when their format is known, and "
+    "the stopgap paint of HeadView stays off for such a world"
 )
+# Person-like blobs of background_field, in image units (0 .. 1, x to the right, y down; the square image): the body
+# ellipse in the lower centre, centre x 0.5 + U(_PERSON_BODY_DX), centre y U(_PERSON_BODY_Y), semi-axes U(_PERSON_BODY_A)
+# wide and U(_PERSON_BODY_B) tall; the head (the second blob) above it, its semi-axes the body's width times
+# U(_PERSON_HEAD_SCALE) (wide) and 1.25 times that (tall), touching the body's top, centre x shifted by U(_PERSON_HEAD_DX).
+# Fixed shape constants of the stopgap paint (a person in front of a laptop camera), not tuned on any data.
+_PERSON_BODY_DX = (-0.15, 0.15)
+_PERSON_BODY_Y = (0.8, 1.0)
+_PERSON_BODY_A = (0.2, 0.35)
+_PERSON_BODY_B = (0.25, 0.4)
+_PERSON_HEAD_SCALE = (0.35, 0.5)
+_PERSON_HEAD_DX = (-0.05, 0.05)
+_PERSON_FEATHER = 0.15  # width of a smooth blob's edge ramp, as a share of its normalised radius (hard edges: none)
 _PLANAR = ("vel_x", "vel_y")  # verified command fields of the dog's planar velocity (x ahead, y left)
 _ROOT = "skills.dodge_vision"
 _TOLERANCE = 1e-9  # s or m: times are sums of 0.02 s periods
+_DREAM_RENDERS = ("kinematic", "physics")  # values of skills.dodge_vision.dream_render and of dream --render
+# The stand's punch (record_stand), launch state in the situation frame: 50 m behind the dog, flying away at 1 m/s, so
+# the stand runs the punch scene (the robot's physics of a punch episode) with the object never near the dog or in view.
+_STAND_OBJECT = (-50.0, 0.0, 0.3, -1.0, 0.0, 0.0)
+# The standing dog steps in place (its feet move up to 0.05 m between two camera frames, world seed 0): a geom's surface
+# may come this many times its move between the poses of two frames (centre move + rbound x rotation angle) closer to
+# the punch between those frames (_kinematic_limit_s).
+_SWAY_FACTOR = 2.0
 
 
 # ----- config ----------------------------------------------------------------------------------------------------
@@ -140,7 +190,7 @@ def _number(key: str, value: Any) -> float:
 
 
 def _grey(visual: Any, key: str) -> float:
-    """visual[key] as a float in [0, 1] (a scenario's object_grey or backdrop_grey)."""
+    """visual[key] as a float in [0, 1] (a scenario's object_grey)."""
     value = visual.get(key) if isinstance(visual, Mapping) else None
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, numbers.Real) or not 0.0 <= value <= 1.0:
         raise ValueError(f"visual {key!r} must be a number in [0, 1]; got visual {visual!r}")
@@ -229,7 +279,7 @@ def _reset(world: Any, scenario: Mapping[str, Any], attempt_seed: int) -> None:
 
     The scenario's "visual" is drawn by HeadView's stopgap paint, never sent to the world. A Go2World whose
     SITUATION_KEYS holds "visual" (Person A's world draws the scene's look itself) would get the scenario's visual
-    passed through in the situation, but the mapping of {object_grey, backdrop_grey} to Person A's keys is decided
+    passed through in the situation, but the mapping of {object_grey, background_seed} to Person A's keys is decided
     when their format is known: until then such a world raises NotImplementedError naming the key, so the look can
     never be silently wrong.
     """
@@ -309,7 +359,27 @@ def _whole_periods(key: str, seconds: float, period_s: float) -> int:
 class _Timing:
     period_s: float  # control period
     n_periods: int  # control periods per episode after the launch
-    frame_periods: np.ndarray  # (n_frames,) int64, the control period of each frame, all < n_periods
+    frame_periods: np.ndarray  # (n_frames,) int64, the control period of each decision-grid frame, all < n_periods
+    rate_hz: float  # vision.frame_rate_hz: the decision grid's rate
+    camera_rates_hz: tuple[float, ...]  # vision.sim_camera_rates_hz
+
+
+def _rate_periods(rate_hz: float, period_s: float, n_periods: int, duration_s: float) -> np.ndarray:
+    """(n,) int64 control periods of a camera at rate_hz (frame k at the period nearest k / rate_hz), all < n_periods."""
+    periods = frame_control_periods(int(math.floor(duration_s * rate_hz)) + 2, rate_hz, period_s)
+    return periods[periods < n_periods]
+
+
+def _camera_rates(config: Mapping[str, Any], period_s: float) -> tuple[float, ...]:
+    """vision.sim_camera_rates_hz: a non-empty list of distinct rates > 0, none above the control rate."""
+    key = "vision.sim_camera_rates_hz"
+    rates = require(config, key)
+    if isinstance(rates, (str, bytes)) or not isinstance(rates, Sequence) or not rates:
+        raise ConfigError(f"config.yaml key {key!r} must be a non-empty list of rates in Hz; got {rates!r}")
+    out = tuple(_number(key, rate) for rate in rates)
+    if len(set(out)) != len(out) or any(rate <= 0.0 or rate * period_s > 1.0 + _TOLERANCE for rate in out):
+        raise ConfigError(f"config.yaml key {key!r} must hold distinct rates in (0, {1.0 / period_s:g}] Hz; got {list(rates)}")
+    return out
 
 
 def _timing(config: Mapping[str, Any]) -> _Timing:
@@ -317,8 +387,23 @@ def _timing(config: Mapping[str, Any]) -> _Timing:
     duration = _positive(config, f"{_ROOT}.episode_duration_s")
     n_periods = _whole_periods(f"{_ROOT}.episode_duration_s", duration, period_s)
     rate = _positive(config, "vision.frame_rate_hz")
-    periods = frame_control_periods(int(math.floor(duration * rate)) + 2, rate, period_s)
-    return _Timing(period_s, n_periods, periods[periods < n_periods])
+    periods = _rate_periods(rate, period_s, n_periods, duration)
+    return _Timing(period_s, n_periods, periods, rate, _camera_rates(config, period_s))
+
+
+def _window_periods(timing: _Timing, frame: int, rate_hz: float, frames: int) -> np.ndarray | None:
+    """(frames,) int64 ascending control periods of the window whose newest frame is decision frame ``frame`` (an
+    index into timing.frame_periods) at camera rate rate_hz: frame j back (j = frames - 1 .. 0) at the control period
+    nearest frame / timing.rate_hz - j / rate_hz (exact fractions of the decimal strings, halves up, as
+    frame_control_periods). None when the oldest frame's time frame / rate - (frames - 1) / rate_hz is below 0.
+    At rate_hz = timing.rate_hz the periods are timing.frame_periods[frame - frames + 1 .. frame]."""
+    base = Fraction(int(frame)) / Fraction(str(timing.rate_hz))
+    step = 1 / Fraction(str(float(rate_hz)))
+    period = Fraction(str(timing.period_s))
+    if base - (frames - 1) * step < 0:
+        return None
+    half = Fraction(1, 2)
+    return np.array([math.floor((base - j * step) / period + half) for j in range(frames - 1, -1, -1)], dtype=np.int64)
 
 
 @dataclass(frozen=True)
@@ -363,44 +448,152 @@ def _sign(rng: np.random.Generator) -> float:
     return 1.0 if rng.random() < 0.5 else -1.0
 
 
-def _visual_ranges(config: Mapping[str, Any]) -> tuple[tuple[float, float], tuple[float, float], float]:
-    """(object_grey, backdrop_grey, min_contrast) of skills.dodge_vision.visual: greys inside [0, 1], min_contrast
-    >= 0, and every backdrop grey of the range leaves an object grey of the range at least min_contrast away."""
+@dataclass(frozen=True)
+class _Background:
+    """skills.dodge_vision.visual.background and the render size it is built at."""
+
+    patches: tuple[int, int]  # inclusive range of n (an n x n grid of patches)
+    grey: tuple[float, float]  # grey of a patch or a person blob
+    smooth_share: float
+    person_probability: float
+    size: int  # vision.head_camera.render_size
+
+
+def _render_size(config: Mapping[str, Any]) -> int:
+    size = require(config, "vision.head_camera.render_size")
+    if isinstance(size, bool) or not isinstance(size, int) or size < 1:
+        raise ConfigError(f"config.yaml key 'vision.head_camera.render_size' must be an int >= 1; got {size!r}")
+    return size
+
+
+def _share(config: Mapping[str, Any], key: str) -> float:
+    value = _value(config, key)
+    if not 0.0 <= value <= 1.0:
+        raise ConfigError(f"config.yaml key {key!r} must lie in [0, 1]; got {value}")
+    return value
+
+
+def _background(config: Mapping[str, Any]) -> _Background:
+    b = f"{_ROOT}.visual.background"
+    patches = require(config, f"{b}.patches")
+    if (
+        isinstance(patches, (str, bytes))
+        or not isinstance(patches, Sequence)
+        or len(patches) != 2
+        or not all(isinstance(p, int) and not isinstance(p, bool) for p in patches)
+        or not 1 <= patches[0] <= patches[1]
+    ):
+        raise ConfigError(f"config.yaml key '{b}.patches' must be [low, high] ints with 1 <= low <= high; got {patches!r}")
+    grey = _pair(config, f"{b}.grey", minimum=0.0)
+    if grey[1] > 1.0:
+        raise ConfigError(f"config.yaml key '{b}.grey' must lie in [0, 1]; got {list(grey)}")
+    return _Background(
+        (int(patches[0]), int(patches[1])), grey, _share(config, f"{b}.smooth_share"),
+        _share(config, f"{b}.person_probability"), _render_size(config),
+    )
+
+
+def background_field(seed: int, background: _Background) -> np.ndarray:
+    """(S, S) float64 grey field in background.grey (S = background.size; row 0 the top of the image): the static,
+    image-fixed background of one scenario, from np.random.default_rng(seed) in this order:
+
+      n           rng.integers(low, high + 1) of patches: an n x n grid of patches
+      greys       rng.uniform(grey) of shape (n, n)
+      smooth      rng.random() < smooth_share: bilinear between patch centres (edge-clamped); else hard patch edges
+                  (pixel i in patch (i * n) // S)
+      person      rng.random() < person_probability; then the blob count rng.integers(1, 3) and the draws of the
+                  _PERSON_* constants: body centre x, centre y, width, height, grey, then (two blobs) the head's
+                  scale, x shift and grey. A blob covers its ellipse; with smooth edges its rim ramps over
+                  _PERSON_FEATHER of its normalised radius.
+    """
+    rng = np.random.default_rng(int(seed))
+    size, (g0, g1) = background.size, background.grey
+    n = int(rng.integers(background.patches[0], background.patches[1] + 1))
+    greys = rng.uniform(g0, g1, size=(n, n))
+    smooth = bool(rng.random() < background.smooth_share)
+    if smooth and n > 1:
+        u = np.clip((np.arange(size) + 0.5) * n / size - 0.5, 0.0, n - 1.0)
+        i0 = np.minimum(np.floor(u).astype(np.int64), n - 2)
+        w = u - i0
+        rows = greys[i0] * (1.0 - w)[:, None] + greys[i0 + 1] * w[:, None]  # (S, n)
+        field = rows[:, i0] * (1.0 - w)[None, :] + rows[:, i0 + 1] * w[None, :]
+    else:
+        index = (np.arange(size) * n) // size
+        field = greys[index][:, index]
+    if rng.random() < background.person_probability:
+        count = int(rng.integers(1, 3))
+        cx, cy = 0.5 + _uniform(rng, _PERSON_BODY_DX), _uniform(rng, _PERSON_BODY_Y)
+        a, b = _uniform(rng, _PERSON_BODY_A), _uniform(rng, _PERSON_BODY_B)
+        blobs = [(cx, cy, a, b, _uniform(rng, (g0, g1)))]
+        if count == 2:
+            ha = a * _uniform(rng, _PERSON_HEAD_SCALE)
+            hb = 1.25 * ha
+            blobs.append((cx + _uniform(rng, _PERSON_HEAD_DX), cy - b - hb, ha, hb, _uniform(rng, (g0, g1))))
+        centres = (np.arange(size) + 0.5) / size
+        for bx, by, ba, bb, grey in blobs:
+            radius = np.sqrt(((centres[None, :] - bx) / ba) ** 2 + ((centres[:, None] - by) / bb) ** 2)
+            alpha = np.clip((1.0 - radius) / _PERSON_FEATHER, 0.0, 1.0) if smooth else (radius <= 1.0).astype(np.float64)
+            field = (1.0 - alpha) * field + alpha * grey
+    return field
+
+
+@dataclass(frozen=True)
+class _VisualRanges:
+    object_grey: tuple[float, float]
+    background: _Background
+    min_contrast: float
+
+
+def _visual_ranges(config: Mapping[str, Any]) -> _VisualRanges:
+    """skills.dodge_vision.visual: object greys inside [0, 1], the background, min_contrast >= 0, and every background
+    grey of the range (so every background mean) leaves an object grey of the range at least min_contrast away."""
     v = f"{_ROOT}.visual"
-    obj, back = _pair(config, f"{v}.object_grey", minimum=0.0), _pair(config, f"{v}.backdrop_grey", minimum=0.0)
-    if obj[1] > 1.0 or back[1] > 1.0:
-        raise ConfigError(f"config.yaml keys '{v}.object_grey' and '{v}.backdrop_grey' must lie in [0, 1]; got {list(obj)}, {list(back)}")
+    obj = _pair(config, f"{v}.object_grey", minimum=0.0)
+    if obj[1] > 1.0:
+        raise ConfigError(f"config.yaml key '{v}.object_grey' must lie in [0, 1]; got {list(obj)}")
+    background = _background(config)
+    back = background.grey
     contrast = _value(config, f"{v}.min_contrast")
     if contrast < 0.0:
         raise ConfigError(f"config.yaml key '{v}.min_contrast' must be >= 0; got {contrast}")
-    low, high = obj[1] - contrast, obj[0] + contrast  # a backdrop grey strictly between these has no object grey
+    low, high = obj[1] - contrast, obj[0] + contrast  # a background mean strictly between these has no object grey
     if low < high and low < back[1] and back[0] < high:
         raise ConfigError(
-            f"config.yaml key '{v}.backdrop_grey' {list(back)} reaches ({low:g}, {high:g}), where no '{v}.object_grey' "
+            f"config.yaml key '{v}.background.grey' {list(back)} reaches ({low:g}, {high:g}), where no '{v}.object_grey' "
             f"{list(obj)} differs by '{v}.min_contrast' {contrast}"
         )
-    return obj, back, contrast
+    return _VisualRanges(obj, background, contrast)
 
 
-def _draw_visual(
-    rng: np.random.Generator, obj: tuple[float, float], back: tuple[float, float], contrast: float
-) -> dict[str, float]:
-    """{"object_grey", "backdrop_grey"}: the backdrop grey uniform, then the object grey uniform, redrawn until it
-    differs from the backdrop grey by at least ``contrast``."""
-    backdrop = _uniform(rng, back)
+def _draw_visual(rng: np.random.Generator, ranges: _VisualRanges) -> dict[str, Any]:
+    """{"object_grey", "background_seed", "background_mean"}: the background seed (rng.integers(2**32); the field is
+    background_field(seed)), then the object grey uniform, redrawn until it differs from the field's mean grey by at
+    least min_contrast. background_mean is that mean (information; the renderer rebuilds the field from the seed)."""
+    seed = int(rng.integers(2**32))
+    mean = float(background_field(seed, ranges.background).mean())
     for _ in range(_MAX_GREY_DRAWS):
-        grey = _uniform(rng, obj)
-        if abs(grey - backdrop) >= contrast:
-            return {"object_grey": grey, "backdrop_grey": backdrop}
-    raise RuntimeError(f"no object grey in {list(obj)} differed from backdrop grey {backdrop} by {contrast} in {_MAX_GREY_DRAWS} draws")
+        grey = _uniform(rng, ranges.object_grey)
+        if abs(grey - mean) >= ranges.min_contrast:
+            return {"object_grey": grey, "background_seed": seed, "background_mean": mean}
+    raise RuntimeError(
+        f"no object grey in {list(ranges.object_grey)} differed from background mean {mean} by {ranges.min_contrast} "
+        f"in {_MAX_GREY_DRAWS} draws"
+    )
+
+
+def _background_seed(visual: Any) -> int:
+    value = visual.get("background_seed") if isinstance(visual, Mapping) else None
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)) or value < 0:
+        raise ValueError(f"visual 'background_seed' must be an int >= 0; got visual {visual!r}")
+    return int(value)
 
 
 def sample_threat_scenarios(config: Mapping[str, Any], rng: np.random.Generator, n: int) -> list[dict[str, Any]]:
     """``n`` scenarios drawn from config.yaml skills.dodge_vision; no world needed.
 
     Each is {"scenario_id": i (0 .. n - 1), "kind": a key of kind_weights, "object_kind": a member of object_kinds,
-    "situation": a dict Go2World.reset accepts, "visual": {"object_grey", "backdrop_grey"}} (the look HeadView paints;
-    skills.dodge_vision.visual). The situation always has dog_forward_speed_m_s 0.0 and
+    "situation": a dict Go2World.reset accepts, "visual": {"object_grey", "background_seed", "background_mean"}} (the
+    look HeadView paints; skills.dodge_vision.visual). The situation always has dog_forward_speed_m_s 0.0 and
     settle_s = skills.dodge_vision.settle_s; kind "empty" has no ball key, every other kind all six BALL_KEYS (the
     object's launch state in Go2World's frame at the launch: origin at the trunk origin, x ahead, y left, z up;
     velocity over the ground), whatever the object kind (run it with _reset). Values are floats.
@@ -434,8 +627,8 @@ def sample_threat_scenarios(config: Mapping[str, Any], rng: np.random.Generator,
                            square view on that side, y0 = side x (x0 - camera x) x tan(fovy / 2), rolling sideways
                            across the view (pure y velocity, toward the other side)
       empty                nothing more
-    and last, for every scenario (empty ones too), the visual from skills.dodge_vision.visual: backdrop_grey, then
-    object_grey redrawn until |object_grey - backdrop_grey| >= min_contrast.
+    and last, for every scenario (empty ones too), the visual from skills.dodge_vision.visual (_draw_visual):
+    background_seed, then object_grey redrawn until |object_grey - mean of background_field(seed)| >= min_contrast.
 
     Raises TypeError for a non-Generator rng, ValueError for a bad n, ConfigError for a missing or invalid key.
     """
@@ -531,7 +724,7 @@ def sample_threat_scenarios(config: Mapping[str, Any], rng: np.random.Generator,
         situation: dict[str, float] = {} if ball is None else {k: float(v) for k, v in zip(ball_keys, ball)}
         situation["dog_forward_speed_m_s"] = 0.0
         situation["settle_s"] = settle_s
-        visual = _draw_visual(rng, *visual_ranges)  # last: the geometry draws above keep their order
+        visual = _draw_visual(rng, visual_ranges)  # last: the geometry draws above keep their order
         scenarios.append({"scenario_id": index, "kind": kind, "object_kind": obj, "situation": situation, "visual": visual})
     return scenarios
 
@@ -557,16 +750,16 @@ class HeadView:
     A scenario's visual (frame(world, visual), Person B's stopgap until Person A's world draws the look): the thrown
     object (the geoms named "ball" and, when the model has one, "punch") gets rgba (object_grey, object_grey,
     object_grey, 1) and emission _OBJECT_EMISSION, written into this renderer's scene (mjvScene geoms) after
-    update_scene, so model.geom_rgba, the physics and world.render_frame are untouched; and every sky pixel (no geom
-    at that pixel in a segmentation render of the same scene, not a test for black) becomes the backdrop grey.
+    update_scene, so model.geom_rgba, the physics and world.render_frame are untouched; and every pixel that is not
+    the object (sky, floor, any robot pixel: no object geom at that pixel in a segmentation render of the same scene)
+    shows the scenario's static, image-fixed background_field (v5; until v4 only the sky got a uniform backdrop grey).
     """
 
     def __init__(self, config: Mapping[str, Any]) -> None:
         self._eye, self._pitch_up_deg, self._fovy_deg = _camera(config)
-        size = require(config, "vision.head_camera.render_size")
-        if isinstance(size, bool) or not isinstance(size, int) or size < 1:
-            raise ConfigError(f"config.yaml key 'vision.head_camera.render_size' must be an int >= 1; got {size!r}")
-        self.size = size
+        self.size = _render_size(config)
+        self._background = _background(config)
+        self._field: tuple[int, np.ndarray] | None = None  # (seed, (S, S, 3) uint8) of the last background built
         self._object_geoms: frozenset[int] = frozenset()
         self._option = mujoco.MjvOption()
         self._option.geomgroup[2] = 0  # robot visual meshes
@@ -582,18 +775,19 @@ class HeadView:
         """(S, S, 3) uint8 RGB of ``world``'s current state, S = render_size. When world.render_frame accepts a
         ``camera`` argument, world.render_frame(camera="head") is returned instead.
 
-        visual: a scenario's "visual" {"object_grey", "backdrop_grey"} (numbers in [0, 1]); None or empty draws the
-        model's own colours on its black sky. Given, the object geoms are drawn in (g_o, g_o, g_o, 1) with emission
-        _OBJECT_EMISSION, a segmentation render of the same scene finds the sky (pixels without a geom: object id -1),
-        and those pixels become round(backdrop_grey * 255) in all three channels. Two renders instead of one.
+        visual: a scenario's "visual" {"object_grey" in [0, 1], "background_seed" int >= 0, ...}; None or empty draws
+        the model's own colours on its black sky. Given, the object geoms are drawn in (g_o, g_o, g_o, 1) with emission
+        _OBJECT_EMISSION, a segmentation render of the same scene finds the object's pixels (object type geom, id one
+        of the object geoms), and every other pixel becomes round(background_field(background_seed) * 255) in all
+        three channels. Two renders instead of one; none when the model has no object geom (the field alone).
 
-        Raises ValueError for a visual without both greys in [0, 1]; NotImplementedError for a visual when Go2World
-        takes a "visual" situation key (see _reset).
+        Raises ValueError for a visual without object_grey in [0, 1] or background_seed; NotImplementedError for a
+        visual when Go2World takes a "visual" situation key (see _reset).
         """
         if visual:
             if _world_takes_visual():
                 raise NotImplementedError(_VISUAL_UNMAPPED)
-            grey, backdrop = _grey(visual, "object_grey"), _grey(visual, "backdrop_grey")
+            grey, seed = _grey(visual, "object_grey"), _background_seed(visual)
         render_frame = getattr(world, "render_frame", None)
         if render_frame is not None and "camera" in inspect.signature(render_frame).parameters:
             return render_frame(camera="head")
@@ -606,6 +800,12 @@ class HeadView:
             ids = (mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, name) for name in _OBJECT_GEOMS)
             self._object_geoms = frozenset(i for i in ids if i >= 0)
             self._model = model
+        if visual:
+            if self._field is None or self._field[0] != seed:
+                field = np.round(background_field(seed, self._background) * 255.0).astype(np.uint8)
+                self._field = (seed, np.repeat(field[:, :, None], 3, axis=2))
+            if not self._object_geoms:
+                return self._field[1].copy()
         scratch = self._scratch
         scratch.qpos[:] = data.qpos
         mujoco.mj_kinematics(model, scratch)
@@ -645,14 +845,19 @@ class HeadView:
         finally:
             renderer.disable_segmentation_rendering()
         image = renderer.render()
-        image[segmentation[:, :, 0] < 0] = np.uint8(round(backdrop * 255.0))
-        return image
+        on_object = (segmentation[:, :, 1] == int(mujoco.mjtObj.mjOBJ_GEOM)) & np.isin(
+            segmentation[:, :, 0], np.fromiter(self._object_geoms, dtype=np.int64)
+        )
+        out = self._field[1].copy()
+        out[on_object] = image[on_object]
+        return out
 
     def close(self) -> None:
         """Release the renderer (its OpenGL context); the next frame builds a new one."""
         if self._renderer is not None:
             self._renderer.close()
         self._model = self._renderer = self._scratch = None
+        self._object_geoms = frozenset()
 
 
 # ----- episodes --------------------------------------------------------------------------------------------------
@@ -661,17 +866,70 @@ class HeadView:
 def frame_times(config: Mapping[str, Any]) -> np.ndarray:
     """(n_frames,) float64 frame times in s from the launch: frame k at the control period
     frame_control_periods gives for k / vision.frame_rate_hz, for every frame before the end of the episode
-    (skills.dodge_vision.episode_duration_s). 30 Hz, 0.02 s, 3.0 s: 90 frames, 0.0, 0.04, 0.06, 0.1, ... 2.96."""
+    (skills.dodge_vision.episode_duration_s): the decision grid. 30 Hz, 0.02 s, 4.0 s: 120 frames, 0.0, 0.04, 0.06,
+    0.1, ... 3.96. Windows at another camera rate are built backwards from a decision frame (_window_periods)."""
     timing = _timing(config)
     return timing.frame_periods * timing.period_s
+
+
+_DRIFT_KEYS = ("drift_probability", "drift_gain_step", "drift_bias_step")
+
+
+def _drift_ranges(augmentation: Mapping[str, Any]) -> tuple[float, tuple[float, float], tuple[float, float]] | None:
+    """(drift_probability, drift_gain_step, drift_bias_step) of vision.augmentation, or None when none of the three
+    keys is there (no drift). Raises ValueError when only some are there or a value is invalid."""
+    present = [key in augmentation for key in _DRIFT_KEYS]
+    if not any(present):
+        return None
+    if not all(present):
+        raise ValueError(f"augmentation needs all of {list(_DRIFT_KEYS)} or none; got {sorted(augmentation)}")
+    probability = augmentation["drift_probability"]
+    if isinstance(probability, bool) or not isinstance(probability, numbers.Real) or not 0.0 <= probability <= 1.0:
+        raise ValueError(f"augmentation 'drift_probability' must be a number in [0, 1]; got {probability!r}")
+    return float(probability), _range(augmentation, "drift_gain_step"), _range(augmentation, "drift_bias_step")
+
+
+def _drift_draw(rng: np.random.Generator, ranges: tuple[float, tuple[float, float], tuple[float, float]]) -> tuple[float, float]:
+    """(gain step, bias step): three draws always (rng.random() < drift_probability, then each step rng.uniform);
+    (0.0, 0.0) when the window or episode gets no drift."""
+    probability, gain, bias = ranges
+    on = rng.random() < probability
+    gain_step, bias_step = rng.uniform(*gain), rng.uniform(*bias)
+    return (float(gain_step), float(bias_step)) if on else (0.0, 0.0)
+
+
+def _drifted(frame: np.ndarray, steps: int, gain_step: float, bias_step: float) -> np.ndarray:
+    """(1 + steps x gain_step) x frame + steps x bias_step, clipped to [0, 1], float32 (float64 arithmetic)."""
+    x = frame.astype(np.float64)
+    return np.clip((1.0 + steps * gain_step) * x + steps * bias_step, 0.0, 1.0).astype(np.float32)
+
+
+def _augment(window: np.ndarray, rng: np.random.Generator, augmentation: Mapping[str, Any]) -> np.ndarray:
+    """vision.augment_window, then (when vision.augmentation has the drift keys) the exposure drift drawn from the same
+    rng after augment_window's draws (_drift_draw): frame k of the window (oldest k = 0) -> _drifted(frame, k, ...).
+    A window without drift is augment_window's output unchanged (bit for bit)."""
+    out = augment_window(window, rng, augmentation)
+    ranges = _drift_ranges(augmentation)
+    if ranges is None:
+        return out
+    gain_step, bias_step = _drift_draw(rng, ranges)
+    if gain_step == 0.0 and bias_step == 0.0:
+        return out
+    return np.stack([_drifted(frame, k, gain_step, bias_step) for k, frame in enumerate(out)])
 
 
 class _EpisodeAugmentation:
     """vision.augment_window's variation with one draw per episode instead of one per window: gain, bias,
     noise_std and blur drawn once (rng.uniform, in that order), then each frame gets the same arithmetic as
-    augment_window with fresh noise. augment_window cannot be reused frame by frame: it redraws the four values."""
+    augment_window with fresh noise. augment_window cannot be reused frame by frame: it redraws the four values.
 
-    def __init__(self, rng: np.random.Generator, augmentation: Mapping[str, Any]) -> None:
+    Exposure drift (vision.augmentation drift keys, when present): drawn from a jumped copy of the rng's bit generator
+    (np.random.Generator(rng.bit_generator.jumped()); the rng's own stream, so the noise, is unchanged): _drift_draw,
+    then the start frame rng.integers(n_frames). Frame j of the episode (j = 0, 1, ... in apply order) then gets
+    _drifted(frame, clip(j - start, 0, frames - 1), ...): the drift of one window (frames - 1 steps) from the start
+    frame on, then held. With the defaults frames = n_frames = 1 there is no drift."""
+
+    def __init__(self, rng: np.random.Generator, augmentation: Mapping[str, Any], frames: int = 1, n_frames: int = 1) -> None:
         if not isinstance(rng, np.random.Generator):
             raise TypeError(f"augment_rng must be a numpy Generator; got {type(rng).__name__}")
         ranges = {key: _range(augmentation, key) for key in ("exposure_gain", "exposure_bias", "noise_std", "blur_mix")}
@@ -682,6 +940,13 @@ class _EpisodeAugmentation:
         self.bias = rng.uniform(*ranges["exposure_bias"])
         self.noise_std = rng.uniform(*ranges["noise_std"])
         self.blur = rng.uniform(*ranges["blur_mix"])
+        self.gain_step = self.bias_step = 0.0
+        self.drift_start, self.drift_span, self._index = 0, max(int(frames) - 1, 0), 0
+        drift = _drift_ranges(augmentation)
+        if drift is not None:
+            side = np.random.Generator(rng.bit_generator.jumped())
+            self.gain_step, self.bias_step = _drift_draw(side, drift)
+            self.drift_start = int(side.integers(max(int(n_frames), 1)))
 
     def apply(self, frame: np.ndarray) -> np.ndarray:
         """(N, N) frame on the 0-1 scale -> (N, N) float32 in [0, 1]."""
@@ -689,7 +954,12 @@ class _EpisodeAugmentation:
         x = (1.0 - self.blur) * x + self.blur * _box_mean(x)
         x = self.gain * x + self.bias
         x = x + self._rng.normal(0.0, self.noise_std, size=x.shape)
-        return np.clip(x, 0.0, 1.0).astype(np.float32)
+        out = np.clip(x, 0.0, 1.0).astype(np.float32)
+        steps = min(max(self._index - self.drift_start, 0), self.drift_span)
+        self._index += 1
+        if steps and (self.gain_step or self.bias_step):
+            return _drifted(out, steps, self.gain_step, self.bias_step)
+        return out
 
 
 def _check_episode_args(world: Any, view: Any, scenario: Any, attempt_seed: Any, settings: Any, ep: _Episode) -> None:
@@ -708,16 +978,30 @@ def _check_episode_args(world: Any, view: Any, scenario: Any, attempt_seed: Any,
         )
 
 
-def _check_frame(name: str, frame: Any, settings: VisionSettings, ep: _Episode) -> int:
+def _check_rate(rate_hz: Any, ep: _Episode) -> float:
+    """rate_hz as a float; None gives the decision grid's rate (vision.frame_rate_hz)."""
+    if rate_hz is None:
+        return ep.timing.rate_hz
+    if isinstance(rate_hz, (bool, np.bool_)) or not isinstance(rate_hz, numbers.Real) or not math.isfinite(rate_hz):
+        raise TypeError(f"rate_hz must be a finite number; got {rate_hz!r}")
+    if not 0.0 < rate_hz * ep.timing.period_s <= 1.0 + _TOLERANCE:
+        raise ValueError(f"rate_hz must lie in (0, {1.0 / ep.timing.period_s:g}] Hz; got {rate_hz}")
+    return float(rate_hz)
+
+
+def _check_frame(name: str, frame: Any, settings: VisionSettings, ep: _Episode, rate_hz: Any = None) -> np.ndarray:
+    """The window's control periods (_window_periods) of decision frame ``frame`` at rate_hz (None: the grid's rate)."""
     n_frames = ep.timing.frame_periods.size
     if isinstance(frame, bool) or not isinstance(frame, (int, np.integer)):
         raise TypeError(f"{name} must be an int; got {frame!r}")
-    if not settings.frames - 1 <= frame < n_frames:
+    rate = _check_rate(rate_hz, ep)
+    periods = _window_periods(ep.timing, int(frame), rate, settings.frames) if 0 <= frame < n_frames else None
+    if periods is None:
         raise ValueError(
-            f"{name} must be in [{settings.frames - 1}, {n_frames}) so that its {settings.frames}-frame window is full "
-            f"and inside the episode; got {frame}"
+            f"{name} must be in [0, {n_frames}) with its {settings.frames}-frame window at {rate:g} Hz at or after "
+            f"t = 0; got {frame}"
         )
-    return int(frame)
+    return periods
 
 
 def _frames_at(
@@ -733,6 +1017,21 @@ def _frames_at(
             now = period
         frames.append(preprocess_frame(view.frame(world, visual), settings))
     return frames
+
+
+def _windows_of(
+    decision_frames: Any, settings: VisionSettings, ep: _Episode, augment_rngs: Any, rates_hz: Any
+) -> list[np.ndarray]:
+    """The control periods of each window (_check_frame), one rate per decision frame (rates_hz None: the grid's)."""
+    if isinstance(decision_frames, (str, bytes)) or not isinstance(decision_frames, Sequence) or not decision_frames:
+        raise ValueError(f"decision_frames must be a non-empty sequence of ints; got {decision_frames!r}")
+    count = len(decision_frames)
+    if augment_rngs is not None and len(augment_rngs) != count:
+        raise ValueError(f"augment_rngs must have one Generator per decision frame ({count}); got {len(augment_rngs)}")
+    if rates_hz is not None and (isinstance(rates_hz, (str, bytes)) or len(rates_hz) != count):
+        raise ValueError(f"rates_hz must have one rate per decision frame ({count}); got {rates_hz!r}")
+    rates = [None] * count if rates_hz is None else list(rates_hz)
+    return [_check_frame("decision frame", frame, settings, ep, rate) for frame, rate in zip(decision_frames, rates)]
 
 
 def _measured(outcome: Mapping[str, Any], clip: float, travel: float) -> dict[str, float]:
@@ -758,12 +1057,14 @@ def observe_and_act(
     action_index: int,
     settings: VisionSettings,
     augment_rng: np.random.Generator | None = None,
+    rate_hz: float | None = None,
 ) -> tuple[np.ndarray, dict[str, float]]:
     """One measured one-shot row on the real world.
 
     reset(scenario["situation"], attempt_seed) through _reset (a punch: Person A's punch body or the weightless
     ball); the zero command until the decision frame, rendering (``view``) and
-    preprocessing the frames of its window; then the action's command for hold_s and the zero command until
+    preprocessing the frames of its window (at camera rate rate_hz, None: vision.frame_rate_hz; _window_periods);
+    then the action's command for hold_s and the zero command until
     episode_duration_s; finish_episode(). Only the window's own frames are rendered: earlier frames would leave it.
     A hold that would end after episode_duration_s runs in full (frames in decision_time_range_s end in time).
 
@@ -772,10 +1073,11 @@ def observe_and_act(
         view:           a HeadView (anything with frame(world, visual) -> (H, W, 3) uint8).
         scenario:       from sample_threat_scenarios; its "visual" goes to every view.frame call.
         attempt_seed:   int >= 0, passed to world.reset.
-        decision_frame: index into frame_times(world.config), >= settings.frames - 1 (full window).
+        decision_frame: index into frame_times(world.config) whose window at rate_hz starts at or after t = 0.
         action_index:   candidate index into skills.dodge_vision.actions.
         settings:       the image-window contract (window length settings.frames).
-        augment_rng:    when given, the window is varied with vision.augment_window (one draw per window).
+        augment_rng:    when given, the window is varied with vision.augment_window (one draw per window) and the
+                        exposure drift (_augment).
 
     Returns:
         (features (D,) float32 in [0, 1], flatten_window order; measured {outcome name: float}):
@@ -787,16 +1089,15 @@ def observe_and_act(
     """
     ep = _episode(world.config)
     _check_episode_args(world, view, scenario, attempt_seed, settings, ep)
-    frame = _check_frame("decision_frame", decision_frame, settings, ep)
+    periods = _check_frame("decision_frame", decision_frame, settings, ep, rate_hz)
     if isinstance(action_index, bool) or not isinstance(action_index, (int, np.integer)):
         raise TypeError(f"action_index must be an int; got {action_index!r}")
     if not 0 <= action_index < len(ep.actions.names):
         raise ValueError(f"action_index must be in [0, {len(ep.actions.names)}); got {action_index}")
     _reset(world, scenario, attempt_seed)
-    periods = ep.timing.frame_periods[frame - settings.frames + 1 : frame + 1]
     window = np.stack(_frames_at(world, view, settings, periods.tolist(), ep, scenario.get("visual")))
     if augment_rng is not None:
-        window = augment_window(window, augment_rng, ep.augmentation)
+        window = _augment(window, augment_rng, ep.augmentation)
     rest = ep.timing.n_periods - int(periods[-1]) - ep.hold_periods
     world.step(ep.actions.commands[int(action_index)], ep.hold_s)
     if rest > 0:
@@ -813,27 +1114,305 @@ def render_windows(
     decision_frames: Sequence[int],
     settings: VisionSettings,
     augment_rngs: Sequence[np.random.Generator] | None = None,
+    rates_hz: Sequence[float] | None = None,
 ) -> np.ndarray:
     """(len(decision_frames), D) float32: the windows at several decision frames of one zero-command episode
     (dream situations: nothing is acted). The episode runs only to the last frame needed and is not finished; the
     next reset abandons it without a trace. augment_rngs, when given, has one Generator per decision frame and
-    varies that window with vision.augment_window. Arguments as in observe_and_act."""
+    varies that window with vision.augment_window and the exposure drift (_augment). rates_hz, when given, has one
+    camera rate per decision frame (None: vision.frame_rate_hz for all). Arguments as in observe_and_act."""
     ep = _episode(world.config)
     _check_episode_args(world, view, scenario, attempt_seed, settings, ep)
-    if isinstance(decision_frames, (str, bytes)) or not isinstance(decision_frames, Sequence) or not decision_frames:
-        raise ValueError(f"decision_frames must be a non-empty sequence of ints; got {decision_frames!r}")
-    frames = [_check_frame("decision frame", frame, settings, ep) for frame in decision_frames]
-    if augment_rngs is not None and len(augment_rngs) != len(frames):
-        raise ValueError(f"augment_rngs must have one Generator per decision frame ({len(frames)}); got {len(augment_rngs)}")
-    needed = sorted({k for frame in frames for k in range(frame - settings.frames + 1, frame + 1)})
+    windows = _windows_of(decision_frames, settings, ep, augment_rngs, rates_hz)
     _reset(world, scenario, attempt_seed)
-    periods = ep.timing.frame_periods[needed].tolist()
-    rendered = dict(zip(needed, _frames_at(world, view, settings, periods, ep, scenario.get("visual"))))
-    out = np.empty((len(frames), settings.n_features), dtype=np.float32)
-    for row, frame in enumerate(frames):
-        window = np.stack([rendered[k] for k in range(frame - settings.frames + 1, frame + 1)])
+    needed = sorted({int(p) for periods in windows for p in periods})
+    rendered = dict(zip(needed, _frames_at(world, view, settings, needed, ep, scenario.get("visual"))))
+    out = np.empty((len(windows), settings.n_features), dtype=np.float32)
+    for row, periods in enumerate(windows):
+        window = np.stack([rendered[int(p)] for p in periods])
         if augment_rngs is not None:
-            window = augment_window(window, augment_rngs[row], ep.augmentation)
+            window = _augment(window, augment_rngs[row], ep.augmentation)
+        out[row] = flatten_window(window)
+    return out
+
+
+# ----- kinematic dream frames ------------------------------------------------------------------------------------
+#
+# In a dream episode the dog only stands on the zero command and a punch flies a straight line at constant velocity
+# (gravcomp, no drag). Before the punch touches the dog nothing couples the two (the object is its own free body after
+# the robot: its own tree, no constraint rows), the simulator is deterministic and the zero command makes the latency
+# draw irrelevant, so the robot's qpos at each frame is the same in every zero-command episode of the punch scene.
+# A scene without an object runs Go2World's scene without the object body, whose standing dog differs (measured
+# 2026-11-21, world seed 0: up to 0.023 in qpos over the episode, already at the launch instant; up to 0.04 grey in a
+# window), so it gets a stand of its own. Both identities were checked against render_windows: 0.0 difference.
+# record_stand records both once; render_windows_kinematic puts the stand and the punch's line into a private MjData
+# and paints the frame through HeadView, with no physics episode.
+
+
+def _stand_scenario(config: Mapping[str, Any], empty: bool = False) -> dict[str, Any]:
+    """The punch stand (the punch _STAND_OBJECT) or, with empty, the scene without an object."""
+    situation: dict[str, Any] = {} if empty else {k: float(v) for k, v in zip(_ball_keys(), _STAND_OBJECT)}
+    situation.update(dog_forward_speed_m_s=0.0, settle_s=_value(config, f"{_ROOT}.settle_s"))
+    return {"scenario_id": -1, "kind": "empty" if empty else "stand", "object_kind": "punch", "situation": situation}
+
+
+def _stand_periods(ep: _Episode) -> np.ndarray:
+    """(n_periods,) int64 0 .. n_periods - 1: the stand is recorded at every control period (v5), so a window at any
+    camera rate finds its frames in it."""
+    return np.arange(ep.timing.n_periods, dtype=np.int64)
+
+
+def _stand_qpos(world: Any, ep: _Episode, q: int) -> np.ndarray:
+    """(n_periods, q) qpos[:q] at every control period of the episode just reset, stepping the zero command one
+    control period at a time (the same steps as _frames_at, which steps (period - now) x period_s at once)."""
+    periods = _stand_periods(ep)
+    rows = np.empty((periods.size, q), dtype=np.float64)
+    zero, now = ep.actions.commands[ep.actions.no_op], 0
+    for index, period in enumerate(periods.tolist()):
+        if period > now:
+            world.step(zero, (period - now) * ep.timing.period_s)
+            now = period
+        rows[index] = world.policy.data.qpos[:q]
+    return rows
+
+
+def record_stand(world: Any, config: Mapping[str, Any]) -> dict[str, Any]:
+    """Two zero-command episodes, recording at every control period the robot's part of qpos (all qpos before the
+    object's free joint: the trunk free joint and the 12 leg joints; HeadView reads qpos only): one in the punch scene
+    with the punch _STAND_OBJECT (50 m behind, flying away), with the trunk pose at the launch instant (the frame of a
+    situation's object coordinates), and one in the scene without an object. The last episode is left open (the next
+    reset abandons it).
+
+    Returns {"frame_periods" (n_periods,) int64 (0, 1, 2, ...: every control period), "robot_qpos" (n_periods, q)
+    float64 (punch scene), "empty_qpos" (n_periods, q) float64 (scene without an object), "launch_pos" (3,) float64,
+    "launch_yaw" float, "object_qposadr"
+    q, "world_seed", "world_preset", and in memory only "model" / "empty_model" (the two scenes' MjModels), "data" /
+    "empty_data" (a private MjData of each) and the "probe_*" keys of _contact_probe}.
+    """
+    from learned_judgment.env.world import _yaw  # on use: see _ball_keys; the yaw Go2World._throw turns the launch by
+
+    ep = _episode(config)
+    if abs(world.policy.control_dt - ep.timing.period_s) > 1e-12:
+        raise ValueError(f"the world's control period {world.policy.control_dt} s is not {ep.timing.period_s} s")
+    _reset(world, _stand_scenario(config), 0)
+    model, data = world.model, world.policy.data
+    q = int(model.jnt_qposadr[model.body("ball").jntadr[0]])
+    launch_pos, launch_yaw = data.qpos[0:3].copy(), float(_yaw(data.qpos[3:7]))
+    robot = _stand_qpos(world, ep, q)
+    _reset(world, _stand_scenario(config, empty=True), 0)
+    empty_model = world.model
+    if empty_model.nq != q:
+        raise RuntimeError(f"the scene without an object has nq {empty_model.nq}, not the robot's {q}")
+    empty = _stand_qpos(world, ep, q)
+    return {
+        "frame_periods": _stand_periods(ep),
+        "robot_qpos": robot,
+        "empty_qpos": empty,
+        "launch_pos": launch_pos,
+        "launch_yaw": launch_yaw,
+        "object_qposadr": q,
+        "world_seed": int(world.seed),
+        "world_preset": str(world.preset),
+        "model": model,
+        "data": mujoco.MjData(model),
+        "empty_model": empty_model,
+        "empty_data": mujoco.MjData(empty_model),
+    } | _contact_probe(model, robot, q)
+
+
+def _save_stand(stand: Mapping[str, Any], path: Path) -> None:
+    buffer = io.BytesIO()
+    np.savez_compressed(
+        buffer,
+        frame_periods=stand["frame_periods"],
+        robot_qpos=stand["robot_qpos"],
+        empty_qpos=stand["empty_qpos"],
+        launch_pos=stand["launch_pos"],
+        launch_yaw=np.float64(stand["launch_yaw"]),
+        object_qposadr=np.int64(stand["object_qposadr"]),
+        world_seed=np.int64(stand["world_seed"]),
+        world_preset=np.str_(stand["world_preset"]),
+    )
+    atomic_write_bytes(path, buffer.getvalue())
+
+
+def _load_stand(world: Any, config: Mapping[str, Any], path: Path) -> dict[str, Any]:
+    """stand.npz for this world: a reset of each stand scenario gives that scene's model, and its launch-instant qpos
+    must equal the file's bit for bit (else RuntimeError: the file belongs to another world or config)."""
+    with np.load(path) as file:
+        stand: dict[str, Any] = {key: file[key] for key in file.files}
+    stand["launch_yaw"] = float(stand["launch_yaw"])
+    stand["object_qposadr"] = q = int(stand["object_qposadr"])
+    stand["world_seed"], stand["world_preset"] = int(stand["world_seed"]), str(stand["world_preset"])
+    if stand["world_seed"] != world.seed or stand["world_preset"] != world.preset:
+        raise RuntimeError(f"{path} is the stand of world seed {stand['world_seed']} {stand['world_preset']!r}")
+    if not np.array_equal(stand["frame_periods"], _stand_periods(_episode(config))):
+        raise RuntimeError(f"{path} is not recorded at every control period of this config's episode; the file is stale")
+    for empty, key in ((False, ""), (True, "empty_")):
+        _reset(world, _stand_scenario(config, empty), 0)
+        qpos = world.policy.data.qpos
+        recorded = stand["empty_qpos" if empty else "robot_qpos"]
+        if stand["frame_periods"][0] != 0 or not np.array_equal(qpos[:q], recorded[0]) or (
+            not empty and not np.array_equal(qpos[0:3], stand["launch_pos"])
+        ):
+            raise RuntimeError(f"{path}: this world's stand differs at the launch instant; the file is stale")
+        stand[f"{key}model"], stand[f"{key}data"] = world.model, mujoco.MjData(world.model)
+    stand.update(_contact_probe(stand["model"], stand["robot_qpos"], q))
+    return stand
+
+
+def _contact_probe(model: Any, robot_qpos: np.ndarray, q: int) -> dict[str, Any]:
+    """In-memory keys of a stand for _kinematic_limit_s: every geom of the punch scene the object can touch (collision
+    masks set, not the object's: the robot's collision geoms and the floor) with its pose at each frame of the stand."""
+    data = mujoco.MjData(model)
+    body = model.body("ball").id
+    geoms = np.array([g for g in range(model.ngeom) if model.geom_bodyid[g] != body
+                      and (model.geom_contype[g] or model.geom_conaffinity[g])], dtype=np.int64)
+    plane = model.geom_type[geoms] == int(mujoco.mjtGeom.mjGEOM_PLANE)  # rbound 0: no bounding sphere
+    solid = geoms[~plane]
+    xpos = np.empty((robot_qpos.shape[0], solid.size, 3))
+    xmat = np.empty((robot_qpos.shape[0], solid.size, 9))
+    for k, row in enumerate(robot_qpos):
+        data.qpos[:q] = row
+        mujoco.mj_kinematics(model, data)
+        xpos[k], xmat[k] = data.geom_xpos[solid], data.geom_xmat[solid]
+    # Each geom's surface move from frame k to k + 1 (the last frame repeats the largest): centre move plus rbound
+    # times the rotation angle (trace(R_k^T R_k+1) = sum of the elementwise product).
+    turn = np.arccos(np.clip(((xmat[:-1] * xmat[1:]).sum(axis=2) - 1.0) / 2.0, -1.0, 1.0))
+    move = np.linalg.norm(np.diff(xpos, axis=0), axis=2) + model.geom_rbound[solid] * turn
+    move = np.vstack([move, move.max(axis=0)])
+    obj = model.geom("ball").id
+    return {"probe": data, "object_geom": obj, "probe_planes": geoms[plane], "probe_geoms": solid,
+            "probe_reach": model.geom_rbound[solid] + model.geom_rbound[obj], "probe_xpos": xpos, "probe_xmat": xmat,
+            "probe_move": move}
+
+
+def _launch_world(stand: Mapping[str, Any], situation: Mapping[str, Any]) -> tuple[np.ndarray, np.ndarray]:
+    """(position (3,), velocity (3,)) at the launch of a situation's object in the world frame, as Go2World._throw
+    turns them with the stand's launch-instant trunk pose."""
+    launch = [float(situation[key]) for key in _ball_keys()]
+    yaw = float(stand["launch_yaw"])
+    turn = np.array([[math.cos(yaw), -math.sin(yaw), 0.0], [math.sin(yaw), math.cos(yaw), 0.0], [0.0, 0.0, 1.0]])
+    return stand["launch_pos"] + turn @ launch[:3], turn @ launch[3:]
+
+
+def _kinematic_limit_s(config: Mapping[str, Any], scenario: Mapping[str, Any], stand: Mapping[str, Any]) -> float:
+    """Decision times below this are drawn exactly by render_windows_kinematic: inf for a scene without an object,
+    -inf for an object other than a punch, else the punch's predicted first contact minus
+    skills.dodge_vision.kinematic_contact_margin_s (inf when no contact is predicted in the stand's frames).
+
+    The contact, from the stand's real geometry: the first frame time t_k at which the punch on its straight line is
+    closer than |velocity| x (t_(k+1) - t_k) + _SWAY_FACTOR x (the geom's move from frame k to k + 1) to a geom it can
+    touch in the stand's pose of frame k (mj_geomDistance; the robot's collision geoms and the floor, which does not
+    move). No contact can happen between two earlier frames, so t_k is at or before the real first contact. (The
+    physics guess's trunk capsule missed real contacts with the legs and hips: 7 of 300 dream scenes, 2026-11-21.)"""
+    situation = scenario["situation"]
+    if not any(key in situation for key in _ball_keys()):
+        return math.inf
+    if scenario.get("object_kind", "ball") != "punch":
+        return -math.inf
+    margin = _value(config, f"{_ROOT}.kinematic_contact_margin_s")
+    if margin < 0.0:
+        raise ConfigError(f"config.yaml key '{_ROOT}.kinematic_contact_margin_s' must be >= 0; got {margin}")
+    start, velocity = _launch_world(stand, situation)
+    speed = float(np.linalg.norm(velocity))
+    period_s = _positive(config, "robot.walking_policy.command_schema.update_period_s")
+    times = stand["frame_periods"] * period_s
+    gaps = np.diff(times, append=times[-1] + np.diff(times).max())
+    model, data, obj = stand["model"], stand["probe"], stand["object_geom"]
+    geoms, planes, reach = stand["probe_geoms"], stand["probe_planes"], stand["probe_reach"]
+    data.geom_xmat[obj] = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+    for k, t in enumerate(times):
+        point = start + velocity * t
+        travel = speed * gaps[k]
+        thresholds = travel + _SWAY_FACTOR * stand["probe_move"][k]
+        near = np.flatnonzero(np.linalg.norm(stand["probe_xpos"][k] - point, axis=1) - reach < thresholds)
+        data.geom_xpos[geoms], data.geom_xmat[geoms] = stand["probe_xpos"][k], stand["probe_xmat"][k]
+        data.geom_xpos[obj] = point
+        pairs = [(int(geoms[i]), float(thresholds[i])) for i in near] + [(int(g), travel) for g in planes]
+        for g, threshold in pairs:
+            if mujoco.mj_geomDistance(model, data, obj, g, threshold, None) < threshold:
+                return float(t) - margin
+    return math.inf
+
+
+def render_windows_kinematic(
+    world: Any,
+    view: Any,
+    scenario: Mapping[str, Any],
+    decision_frames: Sequence[int],
+    settings: VisionSettings,
+    stand: Mapping[str, Any],
+    augment_rngs: Sequence[np.random.Generator] | None = None,
+    rates_hz: Sequence[float] | None = None,
+) -> np.ndarray:
+    """(len(decision_frames), D) float32: render_windows of the same arguments without a physics episode.
+
+    For each needed control period p (the windows' periods at their camera rates, _window_periods): a private MjData
+    (stand["data"], of the punch scene stand["model"]) gets the robot qpos the stand recorded at period p and the
+    object's pose launch position + velocity x t (t = p x period; the situation's launch state turned into the world
+    frame as Go2World._throw does, from the stand's launch-instant trunk pose; orientation identity), and view.frame
+    paints it (HeadView's kinematics pass, the scenario's visual). Preprocessing, windows, augmentation (one
+    augment_rngs Generator per decision frame) and rates_hz are those of render_windows.
+    A scene without an object is drawn from the stand of the scene without an object (stand["empty_*"]).
+
+    stand: from record_stand or _load_stand, for this world (seed, preset) and config (every control period).
+
+    Raises ValueError for what it cannot draw exactly (the caller renders those with render_windows): an object other
+    than a punch, any decision frame at or after _kinematic_limit_s (the predicted first contact, from the stand's
+    collision geoms and the floor, less the margin), a world that renders the head camera itself; and for a bad
+    argument or a stand of another world.
+    """
+    ep = _episode(world.config)
+    if not isinstance(settings, VisionSettings):
+        raise TypeError(f"settings must be VisionSettings; got {type(settings).__name__}")
+    if not callable(getattr(view, "frame", None)):
+        raise TypeError(f"view must have a frame(world) method; got {type(view).__name__}")
+    if not isinstance(scenario, Mapping) or not isinstance(scenario.get("situation"), Mapping):
+        raise ValueError(f"scenario must be a mapping with a 'situation' mapping; got {scenario!r}")
+    if not isinstance(stand, Mapping) or "model" not in stand:
+        raise ValueError("stand must come from record_stand or _load_stand")
+    if stand["world_seed"] != world.seed or stand["world_preset"] != world.preset:
+        raise ValueError(f"the stand is of world seed {stand['world_seed']} {stand['world_preset']!r}, not this world's")
+    if not np.array_equal(stand["frame_periods"], _stand_periods(ep)):
+        raise ValueError("the stand is not recorded at every control period of this config's episode")
+    render_frame = getattr(world, "render_frame", None)
+    if render_frame is not None and "camera" in inspect.signature(render_frame).parameters:
+        raise ValueError("the world renders the head camera itself; its frames are drawn by render_windows")
+    windows = _windows_of(decision_frames, settings, ep, augment_rngs, rates_hz)
+    frames = [int(frame) for frame in decision_frames]
+    situation = scenario["situation"]
+    keys = _ball_keys()
+    has_object = any(key in situation for key in keys)
+    if has_object and scenario.get("object_kind", "ball") != "punch":
+        raise ValueError(f"object_kind {scenario.get('object_kind', 'ball')!r} is not drawn kinematically (only a punch)")
+    limit = _kinematic_limit_s(world.config, scenario, stand)
+    times = ep.timing.frame_periods * ep.timing.period_s
+    late = [frame for frame in frames if times[frame] >= limit]
+    if late:
+        raise ValueError(f"decision frame(s) {late} lie at or after {limit:.3f} s, the punch's predicted contact less the margin")
+
+    q = int(stand["object_qposadr"])
+    if has_object:
+        start, velocity = _launch_world(stand, situation)
+        model, data, robot = stand["model"], stand["data"], stand["robot_qpos"]
+    else:
+        model, data, robot = stand["empty_model"], stand["empty_data"], stand["empty_qpos"]
+    proxy = SimpleNamespace(model=model, policy=SimpleNamespace(data=data))
+    visual = scenario.get("visual")
+    needed = sorted({int(p) for periods in windows for p in periods})
+    rendered = {}
+    for p in needed:
+        data.qpos[:q] = robot[p]
+        if has_object:
+            data.qpos[q : q + 3] = start + velocity * (p * ep.timing.period_s)
+            data.qpos[q + 3 : q + 7] = (1.0, 0.0, 0.0, 0.0)
+        rendered[p] = preprocess_frame(view.frame(proxy, visual), settings)
+    out = np.empty((len(windows), settings.n_features), dtype=np.float32)
+    for row, periods in enumerate(windows):
+        window = np.stack([rendered[int(p)] for p in periods])
+        if augment_rngs is not None:
+            window = _augment(window, augment_rngs[row], ep.augmentation)
         out[row] = flatten_window(window)
     return out
 
@@ -846,21 +1425,26 @@ def closed_loop(
     policy: Callable[[np.ndarray, float], Mapping[str, Any]],
     settings: VisionSettings,
     augment_rng: np.random.Generator | None = None,
+    rate_hz: float | None = None,
 ) -> dict[str, Any]:
     """One closed-loop episode: the zero command until the policy says otherwise.
 
-    The world is stepped one control period at a time. At every frame whose window is full,
+    The world is stepped one control period at a time. Camera frames are taken at camera rate rate_hz (None:
+    vision.frame_rate_hz): frame k at the control period nearest k / rate_hz. At every frame whose window is full,
     policy(window (frames, N, N) float32, t_s) must return a mapping with at least "command" (a mapping of the
     command fields, validated by the world) and "action" (str); that command is applied until the next frame.
 
     augment_rng, when given, makes one draw of vision.augmentation's four values for the whole episode and applies
-    them to every frame as it is taken, with fresh noise per frame.
+    them to every frame as it is taken, with fresh noise per frame, plus the episode's exposure drift
+    (_EpisodeAugmentation: with drift_probability, one window length of drift from a random frame on).
 
     Returns:
         {"measured": as observe_and_act, except command_travel_m = sum over control periods of
                      |(vel_x, vel_y)| x period,
          "trace":    per policy call {key: value of the returned mapping except numpy arrays, "t_s": t_s},
-         "issued":   [(t_s, action)] for the outputs whose "issued" is True}
+         "issued":   [(t_s, action)] for the outputs whose "issued" is True,
+         "camera_rate_hz": the rate used,
+         "frame_times_s": [t_s of every camera frame taken, the first F - 1 included]}
 
     Raises TypeError / ValueError for a bad argument or a policy output without "command" and "action", the world's
     CommandError for a command it does not accept, RuntimeError when MuJoCo flagged a bad state.
@@ -869,8 +1453,13 @@ def closed_loop(
     _check_episode_args(world, view, scenario, attempt_seed, settings, ep)
     if not callable(policy):
         raise TypeError(f"policy must be callable; got {type(policy).__name__}")
-    augment = None if augment_rng is None else _EpisodeAugmentation(augment_rng, ep.augmentation)
-    frame_periods = set(ep.timing.frame_periods.tolist())
+    rate = _check_rate(rate_hz, ep)
+    camera_periods = _rate_periods(rate, ep.timing.period_s, ep.timing.n_periods,
+                                   _positive(world.config, f"{_ROOT}.episode_duration_s"))
+    augment = None if augment_rng is None else _EpisodeAugmentation(
+        augment_rng, ep.augmentation, settings.frames, int(camera_periods.size)
+    )
+    frame_periods = set(camera_periods.tolist())
     period_s = ep.timing.period_s
     visual = scenario.get("visual")
     _reset(world, scenario, attempt_seed)
@@ -879,8 +1468,10 @@ def closed_loop(
     travel = 0.0
     trace: list[dict[str, Any]] = []
     issued: list[tuple[float, str]] = []
+    taken: list[float] = []
     for period in range(ep.timing.n_periods):
         if period in frame_periods:
+            taken.append(period * period_s)
             frame = preprocess_frame(view.frame(world, visual), settings)
             window.push(frame if augment is None else augment.apply(frame))
             if window.full:
@@ -897,7 +1488,8 @@ def closed_loop(
         world.step(command, period_s)
         travel += math.hypot(float(command[_PLANAR[0]]), float(command[_PLANAR[1]])) * period_s
     outcome = world.finish_episode()
-    return {"measured": _measured(outcome, ep.separation_clip_m, travel), "trace": trace, "issued": issued}
+    return {"measured": _measured(outcome, ep.separation_clip_m, travel), "trace": trace, "issued": issued,
+            "camera_rate_hz": rate, "frame_times_s": taken}
 
 
 # ----- physics guess and objective -------------------------------------------------------------------------------
@@ -1106,34 +1698,62 @@ def build_observed_spec(config: Mapping[str, Any]) -> DodgeVisionSpec:
 _WORKER: dict[str, Any] = {}
 
 
-def _worker_init(config: Mapping[str, Any], frames: int) -> None:
-    """Per process: its own Go2World (observed.world_seed, observed.world_preset; no trace files) and HeadView."""
+def _make_world(config: Mapping[str, Any]) -> Any:
+    """A Go2World of observed.world_seed and observed.world_preset that writes no trace files."""
     from learned_judgment.env import Go2World  # on use: see _ball_keys
 
     config = copy.deepcopy(dict(config))
     config["world"]["save_traces"] = False
-    world = Go2World(config, require(config, "observed.world_seed"), require(config, "observed.world_preset"))
+    return Go2World(config, require(config, "observed.world_seed"), require(config, "observed.world_preset"))
+
+
+def _worker_init(config: Mapping[str, Any], frames: int, stand_path: str | None = None) -> None:
+    """Per process: its own Go2World (_make_world), HeadView and, given stand_path, the stand (_load_stand)."""
+    world = _make_world(config)
     _WORKER.update(world=world, view=HeadView(config), settings=VisionSettings.from_config(config, frames))
+    _WORKER["stand"] = None if stand_path is None else _load_stand(world, world.config, Path(stand_path))
 
 
 def _row_task(task: tuple) -> tuple[int, int, np.ndarray, dict[str, float]]:
-    scenario, frame, action, augment = task
+    scenario, frame, action, augment, rate = task
     w = _WORKER
     features, measured = observe_and_act(
-        w["world"], w["view"], scenario, scenario["scenario_id"], frame, action, w["settings"], np.random.default_rng(augment)
+        w["world"], w["view"], scenario, scenario["scenario_id"], frame, action, w["settings"],
+        np.random.default_rng(augment), rate,
     )
     return scenario["scenario_id"], action, features, measured
 
 
-def _dream_task(task: tuple) -> tuple[int, np.ndarray]:
-    scenario, frames, augments = task
+def _dream_task(task: tuple) -> tuple[int, np.ndarray, np.ndarray]:
+    """(scenario_id, windows (len(frames), D), kinematic (len(frames),) bool). With a stand loaded, each decision frame
+    before _kinematic_limit_s is drawn by render_windows_kinematic and the rest by render_windows; each window keeps
+    its own augmentation Generator and camera rate either way."""
+    scenario, frames, augments, rates = task
     w = _WORKER
+    world, stand = w["world"], w["stand"]
     rngs = [np.random.default_rng(seed) for seed in augments]
-    windows = render_windows(w["world"], w["view"], scenario, scenario["scenario_id"], frames, w["settings"], rngs)
-    return scenario["scenario_id"], windows
+    kinematic = np.zeros(len(frames), dtype=bool)
+    if stand is not None:
+        limit = _kinematic_limit_s(world.config, scenario, stand)
+        kinematic[:] = frame_times(world.config)[frames] < limit
+    windows = np.empty((len(frames), w["settings"].n_features), dtype=np.float32)
+    for flag in (True, False):
+        rows = np.flatnonzero(kinematic == flag)
+        if rows.size == 0:
+            continue
+        chosen, chosen_rngs, chosen_rates = [frames[i] for i in rows], [rngs[i] for i in rows], [rates[i] for i in rows]
+        if flag:
+            windows[rows] = render_windows_kinematic(world, w["view"], scenario, chosen, w["settings"], stand, chosen_rngs,
+                                                     chosen_rates)
+        else:
+            windows[rows] = render_windows(world, w["view"], scenario, scenario["scenario_id"], chosen, w["settings"],
+                                           chosen_rngs, chosen_rates)
+    return scenario["scenario_id"], windows, kinematic
 
 
-def _run(config: Mapping[str, Any], frames: int, function: Callable[[tuple], Any], tasks: list[tuple]) -> list[Any]:
+def _run(
+    config: Mapping[str, Any], frames: int, function: Callable[[tuple], Any], tasks: list[tuple], stand_path: str | None = None
+) -> list[Any]:
     """function over tasks in observed.workers spawned processes, results in task order, sparse progress lines."""
     workers = require(config, "observed.workers")
     if isinstance(workers, bool) or not isinstance(workers, int) or workers < 1:
@@ -1141,12 +1761,19 @@ def _run(config: Mapping[str, Any], frames: int, function: Callable[[tuple], Any
     every = max(1, len(tasks) // 10)
     results = []
     context = multiprocessing.get_context("spawn")
-    with context.Pool(min(workers, len(tasks)), initializer=_worker_init, initargs=(config, frames)) as pool:
+    initargs = (config, frames, stand_path)
+    with context.Pool(min(workers, len(tasks)), initializer=_worker_init, initargs=initargs) as pool:
         for result in pool.imap(function, tasks):
             results.append(result)
             if len(results) % every == 0 or len(results) == len(tasks):
                 print(f"{len(results)}/{len(tasks)}", flush=True)
     return results
+
+
+def scenario_count_key(split: str) -> str:
+    """The config key of a split's default scenario count: observed.dodge_vision.<split>_scenarios, except "test2",
+    which takes observed.dodge_vision.test_scenarios."""
+    return f"observed.dodge_vision.{_SIZE_OF.get(split, split)}_scenarios"
 
 
 def _split_plan(config: Mapping[str, Any], split: str, n: int) -> tuple[list[dict[str, Any]], list[np.random.SeedSequence]]:
@@ -1158,15 +1785,60 @@ def _split_plan(config: Mapping[str, Any], split: str, n: int) -> tuple[list[dic
     return scenarios, seeds
 
 
-def _eligible_frames(config: Mapping[str, Any], frames: int) -> np.ndarray:
-    """Frame indices whose time lies in skills.dodge_vision.decision_time_range_s and whose window is full."""
+def _eligible_frames(config: Mapping[str, Any], frames: int, rate_hz: float | None = None) -> np.ndarray:
+    """Decision-grid frame indices whose time lies in skills.dodge_vision.decision_time_range_s and whose window at
+    camera rate rate_hz (None: vision.frame_rate_hz) starts at or after t = 0 (_window_periods)."""
     low, high = _pair(config, f"{_ROOT}.decision_time_range_s", minimum=0.0)
-    times = frame_times(config)
+    timing = _timing(config)
+    rate = timing.rate_hz if rate_hz is None else float(rate_hz)
+    times = timing.frame_periods * timing.period_s
     index = np.arange(times.size)
-    eligible = index[(times >= low - _TOLERANCE) & (times <= high + _TOLERANCE) & (index >= frames - 1)]
+    in_range = index[(times >= low - _TOLERANCE) & (times <= high + _TOLERANCE)]
+    eligible = np.array([k for k in in_range.tolist() if _window_periods(timing, k, rate, frames) is not None], dtype=np.int64)
     if eligible.size == 0:
-        raise ConfigError(f"no frame with a full {frames}-frame window lies in '{_ROOT}.decision_time_range_s'")
+        raise ConfigError(f"no frame with a full {frames}-frame window at {rate:g} Hz lies in '{_ROOT}.decision_time_range_s'")
     return eligible
+
+
+def scenario_rate(config: Mapping[str, Any], seed: np.random.SeedSequence) -> float:
+    """The camera rate of a scenario's closed-loop episodes (dodge_eval): the first draw of the generator of the
+    scenario's first child seed, seed.spawn(2)[0] (as collect_rows draws a row's rate), uniform over
+    vision.sim_camera_rates_hz. ``seed`` is the scenario's SeedSequence of _split_plan; spawn on a copy so the
+    caller's own spawn order is unchanged."""
+    rates = _timing(config).camera_rates_hz
+    first = np.random.SeedSequence(seed.entropy, spawn_key=(*seed.spawn_key, 0), pool_size=seed.pool_size)
+    return rates[int(np.random.default_rng(first).integers(len(rates)))]
+
+
+def arrival_time_s(config: Mapping[str, Any], scenario: Mapping[str, Any]) -> float | None:
+    """t_s at which the scenario's object, on its straight line from the launch state, reaches the plane
+    x = punch.aim_x_m (the head) of the dog's launch frame: (x0 - aim_x_m) / -vx; None for a scene without an
+    object or with one that does not approach (x velocity >= -1e-9). Scorer-side arithmetic, as
+    _frames_before_arrival; dodge_eval uses it as the deadline of a near approach that makes no contact."""
+    situation = scenario["situation"]
+    if "ball_vel_x_m_s" not in situation or float(situation["ball_vel_x_m_s"]) >= -1e-9:
+        return None
+    aim_x = float(require(config, f"{_ROOT}.punch.aim_x_m"))
+    return (float(situation["ball_rel_x_m"]) - aim_x) / -float(situation["ball_vel_x_m_s"])
+
+
+def _frames_before_arrival(config: Mapping[str, Any], scenario: Mapping[str, Any], eligible: np.ndarray) -> np.ndarray:
+    """The eligible decision frames of one scenario that lie before its object reaches the dog.
+
+    An object moving toward the dog (x velocity < 0 in the launch frame) reaches the plane x = punch.aim_x_m at
+    t = (x0 - aim_x_m) / -vx on its straight line (scorer-side arithmetic from the scenario's launch state; a ball
+    under gravity is treated the same way, as an upper bound on how long the approach lasts). Frames later than
+    that minus skills.dodge_vision.pre_contact_margin_s are dropped: after the object has hit or passed, the image
+    shows a bounce or nothing, and development run v2 had half of its incoming windows there. Scenarios without an
+    object, or with one that does not approach, keep every eligible frame. If nothing is left (an arrival before
+    the first full window), the earliest eligible frame is kept.
+    """
+    arrival = arrival_time_s(config, scenario)
+    if arrival is None:
+        return eligible
+    latest = arrival - float(require(config, f"{_ROOT}.pre_contact_margin_s"))
+    kept = eligible[frame_times(config)[eligible] <= latest + _TOLERANCE]
+    return kept if kept.size else eligible[:1]
 
 
 def _meta(config: Mapping[str, Any], split: str, frames: int, scenarios: list[dict[str, Any]], n_situations: int) -> dict[str, Any]:
@@ -1186,7 +1858,7 @@ def _meta(config: Mapping[str, Any], split: str, frames: int, scenarios: list[di
             "split_code": SPLIT_CODES[split],
             "scenarios": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code]))",
             "per_scenario": "np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2): "
-            "decision frame(s), augmentation",
+            "camera rate(s) then decision frame(s) (vision.sim_camera_rates_hz), augmentation",
             "attempt_seed": "scenario_id",
         },
         "world_seed": require(config, "observed.world_seed"),
@@ -1217,22 +1889,28 @@ def _count(name: str, value: Any) -> int:
 def collect_rows(config: Mapping[str, Any], split: str, out_dir: str | Path, n: int | None = None, frames: int | None = None) -> dict[str, Any]:
     """Measure the one-shot rows of a split and write <out_dir>/rows.npz and rows.json; returns the meta.
 
-    n scenarios (default observed.dodge_vision.<split>_scenarios) from the split's seed, one decision frame each
-    drawn uniformly among the eligible frames, every action run (attempt_seed = scenario_id) with one augmentation
-    draw per scenario shared by its C rows. Raises RuntimeError when the C windows of a scenario differ.
+    n scenarios (default scenario_count_key(split)) from the split's seed; per scenario one camera rate drawn
+    uniformly from vision.sim_camera_rates_hz, then one decision frame drawn uniformly among the frames eligible at
+    that rate (and before the object's arrival, _frames_before_arrival), both from the first child seed's generator;
+    every action run (attempt_seed = scenario_id) with one augmentation draw per scenario shared by its C rows.
+    Raises RuntimeError when the C windows of a scenario differ.
     """
-    if split not in ("context", "dev", "test"):
-        raise ValueError(f"split must be context, dev or test; got {split!r}")
-    n = _count("n", require(config, f"observed.dodge_vision.{split}_scenarios") if n is None else n)
+    if split not in ROW_SPLITS:
+        raise ValueError(f"split must be one of {list(ROW_SPLITS)}; got {split!r}")
+    n = _count("n", require(config, scenario_count_key(split)) if n is None else n)
     settings = VisionSettings.from_config(config, frames)
     ep = _episode(config)
-    eligible = _eligible_frames(config, settings.frames)
+    rates = ep.timing.camera_rates_hz
+    eligible = {rate: _eligible_frames(config, settings.frames, rate) for rate in rates}
     scenarios, seeds = _split_plan(config, split, n)
     tasks = []
     for scenario, seed in zip(scenarios, seeds):
         frame_seed, augment_seed = seed.spawn(2)
-        frame = int(eligible[np.random.default_rng(frame_seed).integers(eligible.size)])
-        tasks.extend((scenario, frame, action, augment_seed) for action in range(len(ep.actions.names)))
+        rng = np.random.default_rng(frame_seed)
+        rate = rates[int(rng.integers(len(rates)))]  # first draw: dodge_eval's scenario_rate repeats it
+        own = _frames_before_arrival(config, scenario, eligible[rate])
+        frame = int(own[rng.integers(own.size)])
+        tasks.extend((scenario, frame, action, augment_seed, rate) for action in range(len(ep.actions.names)))
     c = len(ep.actions.names)
     print(f"rows: split {split}, {n} scenarios x {c} actions = {len(tasks)} episodes", flush=True)
     start = time.perf_counter()
@@ -1245,6 +1923,7 @@ def collect_rows(config: Mapping[str, Any], split: str, out_dir: str | Path, n: 
     measured = np.array([[r[3][name] for name in OUTCOME_NAMES] for r in results], dtype=np.float64)
     decision_frame = np.array([task[1] for task in tasks], dtype=np.int64)
     decision_time_s = frame_times(config)[decision_frame]
+    camera_rate_hz = np.array([task[4] for task in tasks], dtype=np.float64)
     worst_spread = 0.0
     for sid in range(n):
         rows = np.flatnonzero(scenario_index == sid)
@@ -1262,57 +1941,95 @@ def collect_rows(config: Mapping[str, Any], split: str, out_dir: str | Path, n: 
             )
     physics = physics_guess(config, [scenarios[i] for i in scenario_index], decision_time_s, action)
     meta = _meta(config, split, settings.frames, scenarios, n)
+    no_op = action == ep.actions.no_op
+    meta["camera_rate_counts"] = {f"{rate:g}": int(np.sum(camera_rate_hz[no_op] == rate)) for rate in rates}
     _write(Path(out_dir), "rows", meta, scenario_index=scenario_index, decision_time_s=decision_time_s,
-           action=action, features=features, physics=physics, measured=measured)
+           action=action, features=features, physics=physics, measured=measured, camera_rate_hz=camera_rate_hz)
 
     kinds = [scenarios[i]["kind"] for i in scenario_index]
-    no_op = action == ep.actions.no_op
     print("kind counts: " + ", ".join(f"{k} {v}" for k, v in meta["kind_counts"].items()))
     print("collisions under NO_OP: " + ", ".join(
         f"{k} {int(sum(measured[r, 1] for r in np.flatnonzero(no_op) if kinds[r] == k))}/{v}"
         for k, v in meta["kind_counts"].items() if v))
+    print("scenarios per camera rate (Hz): " + ", ".join(f"{k} {v}" for k, v in meta["camera_rate_counts"].items()))
     print(f"wall time {wall_s:.1f} s for {len(tasks)} episodes: {wall_s / len(tasks):.3f} s per episode")
     print(f"wrote {Path(out_dir) / 'rows.npz'} and rows.json", flush=True)
     return meta
 
 
-def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None = None) -> dict[str, Any]:
+def collect_dream(
+    config: Mapping[str, Any], out_dir: str | Path, n: int | None = None, render: str | None = None
+) -> dict[str, Any]:
     """Render the dream situations and write <out_dir>/dream.npz and dream.json; returns the meta.
 
-    n zero-command episodes (default observed.dodge_vision.dream_episodes) from the dream seed, each giving
-    windows_per_dream_episode windows at distinct eligible decision frames (each window its own augmentation draw),
-    and the physics guess of every action for each window.
+    n zero-command scenes (default observed.dodge_vision.dream_episodes) from the dream seed, each giving
+    windows_per_dream_episode windows (each window its own augmentation draw), and the physics guess of every action
+    for each window. Window rates and frames, from the first child seed's generator: the camera rate of every window
+    (rng.integers over vision.sim_camera_rates_hz, size windows_per_dream_episode), then per rate in list order its
+    windows' decision frames, distinct where possible (rng.choice among the frames eligible at that rate and before
+    the object's arrival); windows sorted by (frame, rate).
+
+    render (default skills.dodge_vision.dream_render): "physics" runs a zero-command episode per scene
+    (render_windows); "kinematic" records the stand once (record_stand, written to <out_dir>/stand.npz and loaded by
+    every worker) and draws each window before _kinematic_limit_s with render_windows_kinematic, the rest with
+    render_windows. dream.json's render counts both.
     """
+    render = require(config, f"{_ROOT}.dream_render") if render is None else render
+    if render not in _DREAM_RENDERS:
+        raise ValueError(f"render must be one of {list(_DREAM_RENDERS)}; got {render!r}")
     n = _count("n", require(config, "observed.dodge_vision.dream_episodes") if n is None else n)
     per_episode = _count(f"{_ROOT}.windows_per_dream_episode", require(config, f"{_ROOT}.windows_per_dream_episode"))
     settings = VisionSettings.from_config(config)
     c = len(_actions(config).names)
-    eligible = _eligible_frames(config, settings.frames)
-    if per_episode > eligible.size:
-        raise ConfigError(f"'{_ROOT}.windows_per_dream_episode' {per_episode} exceeds the {eligible.size} eligible frames")
+    rates = _timing(config).camera_rates_hz
+    eligible = {rate: _eligible_frames(config, settings.frames, rate) for rate in rates}
+    fewest = min(e.size for e in eligible.values())
+    if per_episode > fewest:
+        raise ConfigError(f"'{_ROOT}.windows_per_dream_episode' {per_episode} exceeds the {fewest} eligible frames")
     scenarios, seeds = _split_plan(config, "dream", n)
     tasks = []
     for scenario, seed in zip(scenarios, seeds):
         frame_seed, augment_seed = seed.spawn(2)
-        chosen = np.sort(np.random.default_rng(frame_seed).choice(eligible, size=per_episode, replace=False))
-        tasks.append((scenario, [int(f) for f in chosen], augment_seed.spawn(per_episode)))
-    print(f"dream: {n} episodes x {per_episode} windows = {n * per_episode} situations", flush=True)
+        rng = np.random.default_rng(frame_seed)
+        drawn = rng.integers(len(rates), size=per_episode)
+        picks: list[tuple[int, float]] = []
+        for index, rate in enumerate(rates):
+            count = int(np.sum(drawn == index))
+            if count:
+                own = _frames_before_arrival(config, scenario, eligible[rate])
+                picks.extend((int(f), rate) for f in rng.choice(own, size=count, replace=bool(own.size < count)))
+        picks.sort()
+        tasks.append((scenario, [f for f, _ in picks], augment_seed.spawn(per_episode), [r for _, r in picks]))
+    print(f"dream: {n} episodes x {per_episode} windows = {n * per_episode} situations, render {render}", flush=True)
     start = time.perf_counter()
-    results = _run(config, settings.frames, _dream_task, tasks)
+    stand_path = None
+    if render == "kinematic":
+        stand_path = Path(out_dir) / "stand.npz"
+        _save_stand(record_stand(_make_world(config), config), stand_path)
+    results = _run(config, settings.frames, _dream_task, tasks, None if stand_path is None else str(stand_path))
     wall_s = time.perf_counter() - start
 
     scenario_index = np.repeat(np.array([r[0] for r in results], dtype=np.int64), per_episode)
     features = np.concatenate([r[1] for r in results]).astype(np.float32, copy=False)
+    kinematic = np.concatenate([r[2] for r in results])
     decision_frame = np.array([f for task in tasks for f in task[1]], dtype=np.int64)
     decision_time_s = frame_times(config)[decision_frame]
+    camera_rate_hz = np.array([r for task in tasks for r in task[3]], dtype=np.float64)
     m = scenario_index.size
     physics = physics_guess(
         config, [scenarios[i] for i in np.repeat(scenario_index, c)], np.repeat(decision_time_s, c), np.tile(np.arange(c), m)
     ).reshape(m, c, len(OUTCOME_NAMES))
     meta = _meta(config, "dream", settings.frames, scenarios, m)
     meta["n_episodes"], meta["windows_per_dream_episode"] = n, per_episode
+    meta["render"] = {
+        "mode": render,
+        "kinematic_windows": int(kinematic.sum()),
+        "physics_windows": int(m - kinematic.sum()),
+        "wall_s": round(wall_s, 3),
+    }
+    meta["camera_rate_counts"] = {f"{rate:g}": int(np.sum(camera_rate_hz == rate)) for rate in rates}
     _write(Path(out_dir), "dream", meta, scenario_index=scenario_index, decision_time_s=decision_time_s,
-           features=features, physics=physics)
+           features=features, physics=physics, kinematic=kinematic, camera_rate_hz=camera_rate_hz)
 
     no_op = build_observed_spec(config).no_op_index
     kinds = [scenarios[i]["kind"] for i in scenario_index]
@@ -1320,7 +2037,9 @@ def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None 
     print("physics-guess NO_OP collision p > 0.5 (windows): " + ", ".join(
         f"{k} {int(sum(physics[r, no_op, 1] > 0.5 for r in range(m) if kinds[r] == k))}/{v * per_episode}"
         for k, v in meta["kind_counts"].items() if v))
-    print(f"wall time {wall_s:.1f} s for {n} episodes: {wall_s / n:.3f} s per episode")
+    print(f"render {render}: {meta['render']['kinematic_windows']} kinematic, {meta['render']['physics_windows']} physics windows")
+    print("windows per camera rate (Hz): " + ", ".join(f"{k} {v}" for k, v in meta["camera_rate_counts"].items()))
+    print(f"wall time {wall_s:.1f} s for {n} scenes ({m} windows): {wall_s / n:.3f} s per scene, {m / wall_s:.1f} windows/s")
     print(f"wrote {Path(out_dir) / 'dream.npz'} and dream.json", flush=True)
     return meta
 
@@ -1330,19 +2049,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m learned_judgment.skills.dodge_vision", description=__doc__.split("\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
     rows = commands.add_parser("rows", help="measured one-shot rows of a split")
-    rows.add_argument("--split", required=True, choices=("context", "dev", "test"))
+    rows.add_argument("--split", required=True, choices=ROW_SPLITS)
     rows.add_argument("--out", required=True, help="output directory")
-    rows.add_argument("--n", type=int, help="scenarios (default observed.dodge_vision.<split>_scenarios)")
+    rows.add_argument("--n", type=int, help="scenarios (default observed.dodge_vision.<split>_scenarios; test2: test_scenarios)")
     rows.add_argument("--frames", type=int, help="window length (vision.frames or a vision.frame_variants member)")
     dream = commands.add_parser("dream", help="rendered dream situations")
     dream.add_argument("--out", required=True, help="output directory")
     dream.add_argument("--n", type=int, help="episodes (default observed.dodge_vision.dream_episodes)")
+    dream.add_argument("--render", choices=_DREAM_RENDERS, help="default skills.dodge_vision.dream_render")
     args = parser.parse_args(argv)
     config = load_config()
     if args.command == "rows":
         collect_rows(config, args.split, args.out, args.n, args.frames)
     else:
-        collect_dream(config, args.out, args.n)
+        collect_dream(config, args.out, args.n, args.render)
     return 0
 
 

@@ -478,39 +478,63 @@ skills:
     hold_s: 0.6
     settle_s: 1.0  # Seconds the dog stands on the zero command before the object is launched (t_s 0). Starting value; the stand is checked by the collection run.
     episode_duration_s: 4.0  # Simulated seconds per episode after the launch: slowest arrival (3.2 m at 1.0 m/s), then hold and recovery.
-    decision_time_range_s: [0.3, 2.5]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
-    windows_per_dream_episode: 4  # Decision instants taken from one rendered dream episode (the dog stays on the zero command, so one episode gives several windows).
+    decision_time_range_s: [0.3, 3.0]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s at 30 Hz, 0.367 s at 20 Hz, 0.467 s at 15 Hz: earlier frames are not eligible at that rate).
+    windows_per_dream_episode: 6  # Decision instants taken from one rendered dream episode (the dog stays on the zero command, so one episode gives several windows).
     teacher_features: [window, action, physics]  # Columns given to the residual teacher. Compared on dev with [action, physics]; the wider one is talkhere.md's plan.
     window_repeat_tolerance: 0.01  # Largest allowed grey difference (0-1 scale) between the windows the episodes of one situation saw before acting; the render repeats to within 0.002 (seen twice in about 700 situations).
+    dream_render: kinematic  # Dream windows before contact are rendered without stepping physics (recorded stand, object on its line); exact against the physics render (b-ramp-try 77bc403).
+    kinematic_contact_margin_s: 0.1
+    pre_contact_margin_s: 0.15  # (0.05 until v3b) Decision frames are drawn only up to this long before the object's straight-line arrival at the dog.
     separation_clip_m: 2.0  # min_separation_m is reported at most this (measured and guessed); a scene without an object reads this value.
+    action_target: {mode: decision, tie_tolerance: 0.1, smoothing: 0.05}  # Action target of the student: the dream's decision, ties (scores within tie_tolerance, in objective units) broken in readout order. Chosen on dev (sweep v3, soft targets): for a punch at the centre the soft target was half left, half right, so no student could give the gate one clear action.
+    # Threat target (scorer side; observed.threat_target_settings), also the true-threat definition of dodge_eval:
+    #   collision_course (until v5): the dream world's predicted collision under NO_OP (threat_outcome); true threat =
+    #   the NO_OP episode collides.
+    #   near_approach (v6, the lead's decision 2026-11-22: a flinch at an object that comes very close to the head is
+    #   correct): the dream world's predicted NO_OP min_separation_m below separation_m; true threat = the NO_OP
+    #   episode's measured min_separation_m below separation_m. Collisions are still reported (strict_collision).
+    # separation_m 0.08 by a rule fixed before any table or student result (experiments/proofs/B_v6_near_approach/
+    # threat_distance.py, results/runs/v6/threat_distance.json): midpoint of the gap between the largest measured NO_OP
+    # separation of incoming_center/left/right (0.022 m) and the smallest of off_path/static/receding/background_motion
+    # (0.142 m), rounded to 0.01 m; v5 context NO_OP rows and v5 dev trace pooled (ambiguous lies across it).
+    threat_target: {mode: near_approach, separation_m: 0.08, outcome: min_separation_m}
+    threat_outcome: collision  # The binary outcome of threat_target collision_course.
     threat_target_scale: 0.05  # Threat target = logistic((best active score - NO_OP score) / this). Small against the motion cost of an active command (0.3), so a scene where NO_OP is best gives about 0.
     # Scenario kinds (Person A's nine names, messages log 2026-11-21 20:29 UTC) and their sampling weights. The kind shapes the
     # draw only; whether a scene is a threat is measured by the simulator (a NO_OP episode that ends in a collision).
     kind_weights: {empty: 1.0, static: 1.0, receding: 1.0, off_path: 1.5, background_motion: 1.0, ambiguous: 1.5, incoming_left: 2.0, incoming_center: 2.0, incoming_right: 2.0}
     object_kinds: [punch]  # ball: the handball under gravity (rolls or is thrown). punch: a slow straight flight at head height.
     punch:  # The punch object. Until Go2World accepts object_kind (Person A's punch body), the stand-in is the existing handball with its weight cancelled by a constant upward force (straight flight, real contact); rows.json records which was used.
-      speed_m_s: [0.8, 2.5]  # Constant approach speed: the slow punch of the demo.
-      launch_height_m: [-0.1, 0.5]  # Launch height relative to the trunk origin.
+      speed_m_s: [0.4, 1.2]  # Constant approach speed: the slow punch of the demo.
+      launch_height_m: [-0.1, 0.2]  # Launch height relative to the trunk origin.
       aim_height_m: [-0.03, 0.12]  # Height of the aim point relative to the trunk origin (the head camera is at 0.017).
       aim_x_m: 0.3  # The aim point lies this far ahead of the trunk origin: the head.
     visual:  # Per-scenario visual draws for Person B's stopgap render (Person A's visual key replaces them).
       object_grey: [0.1, 1.0]  # Grey level of the thrown object.
-      backdrop_grey: [0.15, 0.85]  # Grey level painted over the model's black sky.
-      min_contrast: 0.15  # Redraw the object grey until it differs from the backdrop grey by at least this.
+      # v5: every pixel that is not the thrown object (sky, floor, any robot pixel) shows one static, image-fixed
+      # patchy grey field per scenario, the same in every frame: the demo camera is static and looks at a person in a
+      # room (wall, clothes, face), not at a uniform backdrop and floor. Replaces backdrop_grey ([0.3, 0.5], the
+      # sky only; the floor's horizon line moved with the dog's sway). The scenario stores the field's seed only.
+      background:
+        patches: [2, 6]  # The field is an n x n grid of patches, n drawn uniformly from these integers (inclusive).
+        grey: [0.05, 0.95]  # Grey of each patch (and of a person blob), uniform in this range.
+        smooth_share: 0.5  # Share of scenarios whose patches blend smoothly (bilinear); the others have hard edges.
+        person_probability: 0.6  # Share of scenarios with one or two person-like blobs (an ellipse in the lower centre, a smaller one above it).
+      min_contrast: 0.15  # Redraw the object grey until it differs from the mean grey of the background by at least this.
     scenarios:  # Ranges of the draws, in the dog's frame at the launch (x ahead, y left). Starting values; change only from dev runs, logged in DECISIONS.md.
       launch_modes: {roll: 1.0, throw: 0.0}  # roll: on the floor, no vertical speed. throw: ballistic, aimed at the head camera's height.
-      distance_m: [1.8, 3.2]  # Launch distance ahead of the trunk origin.
-      bearing_deg: [-12.0, 12.0]  # Bearing of the launch point; inside the 45 degree view.
+      distance_m: [0.75, 1.4]  # v3: the lead's description of the demo punch: it starts about half a metre from the camera (0.34 m ahead of the trunk origin) and ends almost covering it. Camera distance 0.4-1.05 m. Original comment:  # Launch distance ahead of the trunk origin.
+      bearing_deg: [-8.0, 8.0]  # Bearing of the launch point; inside the 45 degree view.
       roll_speed_m_s: [1.0, 2.5]  # Ground speed of a rolling ball.
       throw_speed_m_s: [4.0, 7.0]  # Horizontal speed of a thrown ball.
       throw_release_height_m: [0.0, 0.5]  # Release height above the trunk origin.
-      aim_center_m: [0.0, 0.08]  # |sideways offset| of the aim point at the dog, incoming_center.
-      aim_side_m: [0.08, 0.22]  # incoming_left (+y) and incoming_right (-y).
-      aim_ambiguous_m: [0.25, 0.45]  # Near misses and grazes.
-      aim_off_path_m: [0.6, 1.5]  # Clear misses.
-      static_distance_m: [1.0, 4.0]  # A ball at rest on the floor, in view.
-      receding_distance_m: [1.0, 2.5]  # Start of a ball rolling away at roll_speed_m_s.
-      background_distance_m: [3.0, 5.0]  # A ball crossing sideways at roll_speed_m_s, never approaching.
+      aim_center_m: [0.0, 0.04]  # v4: bands re-set for the 5 cm punch from measured NO_OP episodes of run v3 (131 approaches): |aim| under 0.08 m hit 26 of 26, 0.08-0.14 m 23 of 28, 0.14-0.18 m 10 of 18, 0.18-0.22 m 3 of 18, beyond 0.22 m 0 of 41. The earlier bands were set for the 9.4 cm handball. Was [0.0, 0.08].  # |sideways offset| of the aim point at the dog, incoming_center.
+      aim_side_m: [0.04, 0.08]  # was [0.08, 0.22]: a third of those 'incoming' punches brushed past, and a dodge of a 3 cm miss counted as a false activation.  # incoming_left (+y) and incoming_right (-y).
+      aim_ambiguous_m: [0.08, 0.3]  # was [0.25, 0.45]: the band now holds the real boundary between hit and miss.  # Near misses and grazes.
+      aim_off_path_m: [0.5, 1.5]  # Clear misses.
+      static_distance_m: [0.6, 1.4]  # A ball at rest on the floor, in view.
+      receding_distance_m: [0.5, 1.0]  # Start of a ball rolling away at roll_speed_m_s.
+      background_distance_m: [0.7, 1.4]  # A ball crossing sideways at roll_speed_m_s, never approaching.
     physics:  # Constants of the physics guess (ballistic or rolling ball, first-order dog response). The residual teacher absorbs the rest.
       gravity_m_s2: 9.81
       assumed_latency_s: 0.05  # As skills.dodge.physics.
@@ -748,8 +772,13 @@ declared:  # learned_judgment.declared (Person B): what a chat request may decla
 
 vision:  # learned_judgment.vision (Person B): the image-window contract, identical in MuJoCo and in the browser.
   frame_size: 12  # A frame is frame_size x frame_size grey pixels.
-  frame_rate_hz: 30.0  # Camera cadence: the laptop camera's native rate.
-  frames: 8  # Frames per window, oldest first: 8 x 12 x 12 = 1152 numbers, 233 ms from first to last. Frozen after the dev comparison of frame_variants.
+  frame_rate_hz: 30.0  # Camera cadence the page aims for (the laptop camera's nominal rate); simulated decision frames lie on this grid.
+  # v5: simulated windows are built at a camera rate drawn from this list, so the student copes with a camera that
+  # delivers fewer than 30 frames per second (the demo camera delivered about 17 in room light, 15-30 by light and load;
+  # live try 2026-11-22). One-shot rows and dream windows: one rate per window, frame j back from the decision frame k at
+  # the control period nearest k / frame_rate_hz - j / rate. Closed loop: one rate per episode, frames at k / rate.
+  sim_camera_rates_hz: [15.0, 20.0, 30.0]
+  frames: 8  # Frames per window, oldest first: 8 x 12 x 12 = 1152 numbers, 233 ms from first to last at 30 Hz (350 ms at 20 Hz, 467 ms at 15 Hz). Frozen after the dev comparison of frame_variants.
   frame_variants: [4, 6, 8]  # Window lengths compared on simulation dev data.
   luma_weights: [0.299, 0.587, 0.114]  # Grey = these weights x (R, G, B): ITU-R BT.601.
   pixel_scale: 255.0  # Grey levels are divided by this: float32 in [0, 1].
@@ -757,6 +786,7 @@ vision:  # learned_judgment.vision (Person B): the image-window contract, identi
   # runtime): abs_diff = |frame k - frame k-1| for the F-1 adjacent pairs, divided by max(largest of those values,
   # diff_floor). A still background gives 0; a darker and a brighter object give the same input. raw = the F frames as they are.
   encoding: signed_diff  # signed_diff: (frame k - frame k-1) over the same divisor, mapped to 0.5 + 0.5 x: keeps whether a pixel got brighter or darker. Chosen on v1 dream data (development): a plain MLP reached 0.70 validation accuracy with signed_diff, 0.71 raw, 0.58 abs_diff.
+  event_threshold: 0.04  # Encoding "events" (event-camera style): a pixel fires ON (OFF) when it got brighter (darker) than this between two frames (0-1 grey scale); below it, no event. Above the still-scene noise of adjacent frames (augmentation noise up to 0.01 per frame), below a low-contrast object's edge.
   diff_floor: 0.1  # Raised from 0.03 on development data: in still scenes the standing dog's own sway changes pixels by up to 0.06 (empty) and 0.13 (object at rest), which 0.03 stretched to full scale.
   # Smallest divisor of the change encoding (0-1 grey scale): keeps sensor noise in a still scene small instead of stretching it to 1.
   # Simulation frames are taken at the 0.02 s control period nearest each k / frame_rate_hz (at most 6.7 ms off) until
@@ -772,6 +802,13 @@ vision:  # learned_judgment.vision (Person B): the image-window contract, identi
     exposure_bias: [-0.1, 0.1]  # Added to the grey levels (0-1 scale).
     noise_std: [0.0, 0.01]  # Standard deviation of independent Gaussian noise per pixel and frame (0-1 scale).
     blur_mix: [0.0, 0.5]  # Share of a 3 x 3 box blur mixed into each frame.
+    # Exposure drift (v5; skills.dodge_vision's augmentation, on top of the four values above): a camera shifts its
+    # exposure when something fills the view. With this probability a window gets a gain step and a bias step per
+    # frame, accumulated over its frames (frame k of the window: x -> (1 + k x gain step) x + k x bias step, clipped);
+    # in a closed-loop episode the same drift runs over one window length of frames from a random frame on, then holds.
+    drift_probability: 0.3
+    drift_gain_step: [-0.04, 0.04]  # Gain change per frame.
+    drift_bias_step: [-0.03, 0.03]  # Bias change per frame (0-1 grey scale).
   test_vectors: artifacts/vision/preprocess_vectors.json  # Input images and expected 12 x 12 outputs, for the browser's parity test.
 
 inference:  # learned_judgment.runtime (Person B): the frozen student behind the gate, on this computer only.
@@ -780,6 +817,9 @@ inference:  # learned_judgment.runtime (Person B): the frozen student behind the
     of_last: 4  # ... of the last this many outputs (talkhere.md, "Threat gate").
     cooldown_s: 1.0  # Minimum time between two issued active commands.
     uncertain_floor: 0.5  # A threat score at or above this without a passed gate is shown as UNCERTAIN; below it as NO_OP. Both send the zero command.
+    # Groups of actions the gate counts as one decision (scores summed, votes pooled; the side issued is the member with the larger
+    # score summed over the group's votes). A punch straight at the camera splits the student's score between left and right.
+    interchangeable: [[DODGE_LEFT, DODGE_RIGHT]]
     precision_target: 0.99  # Preregistered: share of issued active commands on simulation dev trajectories that answer a true threat.
     # Thresholds tried on simulation dev trajectories; the frozen choice is saved with the exported student, not here.
     calibration_grid:
@@ -798,11 +838,18 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
     test_scenarios: 60
     dream_situations: 4000  # no simulator: sampled over feature_ranges
     snn_hidden_sizes: [32]  # 4 inputs, 4 outputs
-    snn_max_steps: 3000
+    snn_max_steps: 1500
   dodge_vision:
-    context_scenarios: 120  # Scenarios whose four actions are all run for the teacher's context: 480 measured rows.
-    dream_episodes: 1500  # Rendered zero-command episodes; x windows_per_dream_episode dream situations.
+    context_scenarios: 80  # Scenarios whose four actions are all run for the teacher's context: 480 measured rows.
+    dream_episodes: 4000  # Rendered zero-command episodes; x windows_per_dream_episode dream situations.
     dev_scenarios: 240  # Dev split: thresholds, frame count and settings are chosen here.
     test_scenarios: 240  # Held-out split: run once, after the freeze.
     snn_hidden_sizes: [128]  # Starting value; compare on dev.
     snn_max_steps: 6000  # The configured 1500 was reached without convergence on DODGE (dev check E11).
+    sweep:  # learned_judgment.dodge_sweep: students trained side by side on one dream, each calibrated offline on one saved dev trace; the rule in its docstring picks one.
+      frames: [4, 6, 8]  # Window lengths (each must be vision.frames or a vision.frame_variants member).
+      encodings: [signed_diff, signed_diff_first, events, raw]  # vision.encoding of each variant; this order is the last tie-break.
+      hidden_sizes: [[128]]  # Hidden layer sizes of each variant.
+      steps: 1500  # Max optimizer steps of every variant (early stopping as students.snn).
+      jobs: 6  # Variants trained at once (each training is single-threaded: students.snn.torch_threads 1).
+      min_emitted: 20  # A variant qualifies only with at least this many issued commands at its chosen dev thresholds.

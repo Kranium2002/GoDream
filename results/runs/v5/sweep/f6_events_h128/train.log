@@ -1,0 +1,14 @@
+$ D:\BerlinPrior\.venv\Scripts\python.exe -m learned_judgment.dodge_sweep _exec --config D:\BerlinPrior-eval\results\runs\v5\sweep\f6_events_h128\config.yaml learned_judgment.observed train --run f6_events_h128 --skill dodge_vision --dream D:\BerlinPrior-eval\results\runs\v5\dream --scores D:\BerlinPrior-eval\results\runs\v5\scores.npz --frames 6 --hidden 128 --steps 2000
+train: {
+ "student": "D:/BerlinPrior-eval/results/runs/v5/sweep/f6_events_h128/student",
+ "network_sha256": "6d8d0fdc6625a98d807efee42c85232fe0c027c6ae74fdfe8917107ad1564bf3",
+ "split": {
+  "by": "group",
+  "validation_fraction": 0.1,
+  "n_train_rows": 13500,
+  "n_validation_rows": 1500,
+  "n_groups": 2500
+ },
+ "wall_s": 41.25030840002
+}
+train: done; D:\BerlinPrior-eval\results\runs\v5\sweep\f6_events_h128\result.json
