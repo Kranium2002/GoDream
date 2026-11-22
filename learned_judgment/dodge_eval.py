@@ -27,11 +27,30 @@ augmentation child), so the episodes of a scenario see the same image variation 
                     --refreeze.
     evaluate        per scenario the NO_OP episode and the frozen DodgeRuntime episode (runtime.reset() first;
                     policy = runtime.infer(newest F frames, t_s)), same seeds. Metrics from the saved records only.
+    trace           the NO_OP episodes of a split exactly as calibrate runs them (same scenarios, seeds,
+                    augmentation), saving the RAW camera frames instead of one student's readouts: the episode is
+                    the same for every student (the dog does not move before the first issued command), so it is
+                    run once and reused. The policy callback sees full vision.frames windows: the first window
+                    gives frames 0 .. vision.frames - 1, every later window its newest frame; each window is checked
+                    to equal the stored frames (exact equality) while the episode runs.
+    calibrate --trace   offline calibration of one student on a saved trace: at every decision frame (the frames
+                    calibrate reads out: vision.frames - 1 of the trace onwards) the student's F-frame window is
+                    rebuilt from the stored frames, all readouts come from one batched observed.student_readout
+                    (student.json "heads" and "input"; checked against DodgeRuntime.readout on 50 random frames,
+                    seed runtime.seed, max |difference| <= 1e-9, else it fails), then the SAME gate replay, grid,
+                    choice rule and precision target as calibrate. Dev traces only. --no-freeze writes
+                    calibration_dev_offline.* and leaves student.json alone; otherwise calibration_dev.* and the
+                    freeze, as calibrate.
 
 Files under <observed.runs_dir>/<RUN>/:
 
     calibration_dev.json   grid table, chosen triple, per-scenario records (truth, NO_OP outcome, chosen issue)
     calibration_dev.npz    scenario_id (n,), t_s (T,), threat_confidence (n, T), action_scores (n, T, C)
+    trace_<split>.npz      frames (n, T, N, N) float32 (every camera frame of the episode, oldest first), t_s (T,)
+                           frame times, scenario_id (n,), threat (n,) bool (NO_OP collision), t_hit (n,) float (NaN:
+                           none), kind (n,) str, window_frames (vision.frames), first_decision_index (window_frames - 1)
+    trace_<split>.json     trace metadata (vision settings, seeds, config digest, rebuild check) and per-scenario
+                           records (truth, NO_OP outcome)
     closed_loop_<split>.json  per-scenario records: scenario_id, kind, threat, t_hit, outcomes {no_op, snn},
                            issues {no_op, snn} as [t_s, action], cooldown_conflicts, inference_ms
     result.json            sections "calibration_dev", "closed_loop_<split>", "runtime_evidence", and the UI keys
@@ -40,6 +59,8 @@ Files under <observed.runs_dir>/<RUN>/:
 Command line (repository root)::
 
     python -m learned_judgment.dodge_eval calibrate --run RUN --student DIR [--n N] [--refreeze]
+    python -m learned_judgment.dodge_eval calibrate --run RUN --student DIR --trace FILE [--no-freeze] [--refreeze]
+    python -m learned_judgment.dodge_eval trace --run RUN [--split dev] [--n N]
     python -m learned_judgment.dodge_eval evaluate --run RUN --student DIR [--split test] [--n N]
     python -m learned_judgment.dodge_eval evidence --run RUN --student DIR
 
@@ -51,6 +72,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import dataclasses
 import io
 import json
 import math
@@ -82,8 +104,10 @@ __all__ = [
     "evaluate",
     "latency_and_parity",
     "main",
+    "offline_calibration",
     "paired_bootstrap",
     "replay_first_issue",
+    "trace",
     "wilson_interval",
 ]
 
@@ -92,6 +116,11 @@ EXIT_GATE_FAILED = 4
 METHODS = ("no_op", "snn")
 _TOLERANCE = 1e-9  # s: issue times are sums of 0.02 s periods, hit times of 0.002 s physics steps
 _THRESHOLD_KEYS = ("threat", "action", "margin")
+_READOUT_CHECK_FRAMES = 50  # offline calibration: random frames whose batched readout is compared with DodgeRuntime.readout
+_READOUT_TOLERANCE = 1e-9
+_BATCH_ROWS = 4096  # rows per batched student_readout call (bounds memory, not the result)
+_INFO_PRECISIONS = (0.95, 0.90)  # reported for information only: best recall at these dev precisions
+_TRACE_ARRAYS = ("frames", "t_s", "scenario_id", "threat", "t_hit", "kind", "window_frames", "first_decision_index")
 
 
 class _Refused(Exception):
@@ -201,9 +230,10 @@ def _stats(values: Sequence[float]) -> dict[str, Any]:
 _WORKER: dict[str, Any] = {}
 
 
-def _worker_init(config: Mapping[str, Any], student_dir: str, thresholds: Mapping[str, float] | None) -> None:
+def _worker_init(config: Mapping[str, Any], student_dir: str | None, thresholds: Mapping[str, float] | None) -> None:
     """Per process: its own Go2World (observed.world_seed / world_preset, no trace files), HeadView, the
-    vision.frames window settings and DodgeRuntime; finish_episode is wrapped to keep the raw outcome."""
+    vision.frames window settings and DodgeRuntime (none for student_dir None: the trace runs no student);
+    finish_episode is wrapped to keep the raw outcome."""
     from learned_judgment.env import Go2World  # on use: loads the walking policy's runtime
 
     config = copy.deepcopy(dict(config))
@@ -217,9 +247,13 @@ def _worker_init(config: Mapping[str, Any], student_dir: str, thresholds: Mappin
         return outcome
 
     world.finish_episode = finish_and_keep
-    runtime = DodgeRuntime.load(student_dir, config, thresholds)
-    no_op = runtime.settings.no_op
-    zero = {key: float(value) for key, value in require(config, "skills.dodge_vision.actions")[no_op].items()}
+    if student_dir is None:
+        runtime = None
+        no_op = GateSettings.from_config(config, _grid(config)[0]).no_op  # the runtime's own source of NO_OP
+    else:
+        runtime = DodgeRuntime.load(student_dir, config, thresholds)
+        no_op = runtime.settings.no_op
+    zero ={key: float(value) for key, value in require(config, "skills.dodge_vision.actions")[no_op].items()}
     _WORKER.update(world=world, view=HeadView(config), settings=VisionSettings.from_config(config), runtime=runtime,
                    no_op=no_op, zero=zero, outcome=None)
 
@@ -287,7 +321,42 @@ def _evaluate_task(task: tuple) -> dict[str, Any]:
     }
 
 
-def _run(config: Mapping[str, Any], student_dir: Path, thresholds: Mapping[str, float] | None,
+def _trace_task(task: tuple) -> dict[str, Any]:
+    """The NO_OP episode of one scenario with its raw camera frames: the first full window gives frames
+    0 .. F - 1, every later window its newest frame; each window must equal the stored frames it overlaps."""
+    scenario, augment_seed = task
+    w = _WORKER
+    frames: list[np.ndarray] = []
+    last: list[np.ndarray] = []
+
+    def record_policy(window: np.ndarray, t_s: float) -> dict[str, Any]:
+        overlap = window.shape[0] - 1
+        if not frames:
+            frames.extend(np.array(frame, dtype=np.float32, copy=True) for frame in window)
+        else:
+            if overlap and not np.array_equal(window[:overlap], np.stack(frames[len(frames) - overlap:])):
+                raise RuntimeError(f"scenario {scenario['scenario_id']}: the window at t {t_s} is not the stored frames "
+                                   "plus one new frame; the trace cannot rebuild it")
+            frames.append(np.array(window[-1], dtype=np.float32, copy=True))
+        last[:] = [np.array(window, dtype=np.float32, copy=True)]
+        return {"command": w["zero"], "action": w["no_op"]}
+
+    out, hit = _episode(record_policy, scenario, augment_seed)
+    stacked = np.stack(frames)
+    rebuilt = stacked[stacked.shape[0] - last[0].shape[0]:]
+    if not np.array_equal(rebuilt, last[0]):  # one window rebuilt from the stored frames, compared exactly
+        raise RuntimeError(f"scenario {scenario['scenario_id']}: the last window differs from its rebuild")
+    return {
+        "scenario_id": scenario["scenario_id"],
+        "measured": out["measured"],
+        "first_collision_time_s": hit,
+        "t_s": [float(e["t_s"]) for e in out["trace"]],
+        "frames": stacked,
+        "windows_checked": len(out["trace"]),
+    }
+
+
+def _run(config: Mapping[str, Any], student_dir: Path | None, thresholds: Mapping[str, float] | None,
          function: Callable[[tuple], Any], tasks: list[tuple], on_result: Callable[[int], None] | None = None) -> list[Any]:
     """function over tasks in observed.workers spawned processes, results in task order, sparse progress lines."""
     workers = require(config, "observed.workers")
@@ -297,7 +366,8 @@ def _run(config: Mapping[str, Any], student_dir: Path, thresholds: Mapping[str, 
     results: list[Any] = []
     context = multiprocessing.get_context("spawn")
     with context.Pool(min(workers, len(tasks)), initializer=_worker_init,
-                      initargs=(config, str(student_dir), None if thresholds is None else dict(thresholds))) as pool:
+                      initargs=(config, None if student_dir is None else str(student_dir),
+                                None if thresholds is None else dict(thresholds))) as pool:
         for result in pool.imap(function, tasks):
             results.append(result)
             if on_result is not None:
@@ -367,6 +437,32 @@ def choose_triple(rows: Sequence[Mapping[str, Any]], target: float) -> tuple[Map
     return max(rows, key=thresholds), False, rule
 
 
+def _replay_grid(config: Mapping[str, Any], grid: Sequence[Mapping[str, float]], t_s: Sequence[float],
+                 traces: Sequence[tuple[Sequence[float], Sequence[Sequence[float]]]], threat: Sequence[bool],
+                 t_hit: Sequence[float | None]) -> tuple[list[dict[str, Any]], Mapping[str, Any], bool, str, list]:
+    """Every triple replayed over the NO_OP readout traces (threat_confidence, action_scores) per scenario:
+    (grid rows, chosen row, gate_passed, rule, the chosen triple's first issue per scenario). calibrate and the
+    offline calibration both run this."""
+    target = _fraction(config, "inference.gate.precision_target")
+    rows, issues_by_triple = [], {}
+    for triple in grid:
+        settings = GateSettings.from_config(config, triple)
+        issues = [replay_first_issue(settings, t_s, c, s) for c, s in traces]
+        rows.append(_grid_row(triple, issues, threat, t_hit))
+        issues_by_triple[tuple(triple[k] for k in _THRESHOLD_KEYS)] = issues
+    chosen, passed, rule = choose_triple(rows, target)
+    return rows, chosen, passed, rule, issues_by_triple[tuple(chosen[k] for k in _THRESHOLD_KEYS)]
+
+
+def _freeze(student_dir: Path, thresholds: Mapping[str, float], calibration: Mapping[str, Any], refreeze: bool) -> None:
+    """Write thresholds and calibration into student.json; refused if another process froze it meanwhile."""
+    student = _read_student(student_dir)  # re-read: refuse if another process froze meanwhile
+    if student.get("thresholds") is not None and not refreeze:
+        raise _Refused(f"{student_dir / 'student.json'} was frozen while calibrating; pass --refreeze")
+    student["thresholds"], student["calibration"] = dict(thresholds), dict(calibration)
+    _write_json(student_dir / "student.json", student)
+
+
 def _read_student(student_dir: Path) -> dict[str, Any]:
     student = json.loads((student_dir / "student.json").read_text(encoding="utf-8"))
     if not isinstance(student, dict):
@@ -428,14 +524,7 @@ def calibrate(config: Mapping[str, Any], run_id: str, student_dir: str | Path, n
         threat = [r["measured"]["collision"] == 1.0 for r in results]
         t_hit = [r["first_collision_time_s"] for r in results]
         traces = [(r["threat_confidence"], r["action_scores"]) for r in results]
-        rows, chosen_issues = [], {}
-        for triple in grid:
-            settings = GateSettings.from_config(config, triple)
-            issues = [replay_first_issue(settings, t_s, c, s) for c, s in traces]
-            rows.append(_grid_row(triple, issues, threat, t_hit))
-            chosen_issues[tuple(triple[k] for k in _THRESHOLD_KEYS)] = issues
-        chosen, passed, rule = choose_triple(rows, target)
-        issues = chosen_issues[tuple(chosen[k] for k in _THRESHOLD_KEYS)]
+        rows, chosen, passed, rule, issues = _replay_grid(config, grid, t_s, traces, threat, t_hit)
         thresholds = {key: chosen[key] for key in _THRESHOLD_KEYS}
         low, high = wilson_interval(chosen["correct"], chosen["emitted"], level)
 
@@ -470,11 +559,7 @@ def calibrate(config: Mapping[str, Any], run_id: str, student_dir: str | Path, n
         }
         _write_json(run_dir / f"{section}.json", {"skill": SKILL, "student": student_dir, "calibration": calibration,
                                                   "grid": rows, "records": records})
-        student = _read_student(student_dir)  # re-read: refuse if another process froze meanwhile
-        if student.get("thresholds") is not None and not refreeze:
-            raise _Refused(f"{student_dir / 'student.json'} was frozen while calibrating; pass --refreeze")
-        student["thresholds"], student["calibration"] = thresholds, calibration
-        _write_json(student_dir / "student.json", student)
+        _freeze(student_dir, thresholds, calibration, refreeze)
     except Exception as error:
         _merge_result(run_dir, run_id, {section: {"state": "failed", "error": {"type": type(error).__name__,
                                                                                  "message": str(error)}}})
@@ -489,6 +574,288 @@ def calibrate(config: Mapping[str, Any], run_id: str, student_dir: str | Path, n
               "The target was not lowered.", flush=True)
     print(f"froze {student_dir / 'student.json'}", flush=True)
     return calibration
+
+
+# ----- saved NO_OP trace and offline calibration -----------------------------------------------------------------
+
+
+def trace(config: Mapping[str, Any], run_id: str, split: str = "dev", n: int | None = None,
+          argv: Sequence[str] | None = None) -> dict[str, Any]:
+    """Run the NO_OP closed-loop episodes of ``split`` as calibrate does and save their raw frames to
+    <run>/trace_<split>.npz and .json (module docstring); returns the metadata written to the .json."""
+    from learned_judgment.observed import _run_dir, _utc_now
+
+    if split not in ("dev", "test"):
+        raise ValueError(f"split must be dev or test; got {split!r}")
+    n = _scenario_count(config, split, n)
+    settings = VisionSettings.from_config(config)
+    times = np.asarray(frame_times(config), dtype=np.float64)
+    first = settings.frames - 1
+    run_dir = _run_dir(config, run_id)
+    section = f"trace_{split}"
+    tasks = _plan(config, split, n)
+    kinds = {s["scenario_id"]: s["kind"] for s, _ in tasks}
+    _merge_result(run_dir, run_id, {section: {"state": "running", "argv": list(argv or [])}})
+    print(f"trace: {split}, {n} NO_OP episodes, {times.size} camera frames each (window {settings.frames})", flush=True)
+    try:
+        started = time.perf_counter()
+        results = _run(config, None, None, _trace_task, tasks)
+        wall_s = time.perf_counter() - started
+        shape = (times.size, settings.frame_size, settings.frame_size)
+        for r in results:
+            if r["frames"].shape != shape:
+                raise RuntimeError(f"scenario {r['scenario_id']}: {r['frames'].shape} frames stored, frame_times gives {shape}")
+            if r["t_s"] != times[first:].tolist():
+                raise RuntimeError(f"scenario {r['scenario_id']}: the policy's frame times differ from frame_times[{first}:]")
+        frames = np.stack([r["frames"] for r in results]).astype(np.float32, copy=False)
+        sid = np.array([r["scenario_id"] for r in results], dtype=np.int64)
+        threat = np.array([r["measured"]["collision"] == 1.0 for r in results], dtype=bool)
+        t_hit = np.array([np.nan if r["first_collision_time_s"] is None else r["first_collision_time_s"] for r in results],
+                         dtype=np.float64)
+        buffer = io.BytesIO()
+        np.savez_compressed(buffer, frames=frames, t_s=times, scenario_id=sid, threat=threat, t_hit=t_hit,
+                            kind=np.array([str(kinds[int(s)]) for s in sid]),
+                            window_frames=np.int64(settings.frames), first_decision_index=np.int64(first))
+        npz_path = run_dir / f"{section}.npz"
+        atomic_write_bytes(npz_path, buffer.getvalue())
+        records = [
+            {"scenario_id": r["scenario_id"], "kind": kinds[r["scenario_id"]], "threat": bool(is_threat),
+             "t_hit": r["first_collision_time_s"], "no_op": r["measured"], "n_frames": int(r["frames"].shape[0]),
+             "windows_checked": r["windows_checked"]}
+            for r, is_threat in zip(results, threat)
+        ]
+        meta = {
+            "skill": SKILL,
+            "run_id": run_id,
+            "split": split,
+            "n_scenarios": n,
+            "n_threats": int(threat.sum()),
+            "frames_shape": list(frames.shape),
+            "window_frames": settings.frames,
+            "first_decision_index": first,
+            "decision_frames": int(times.size - first),
+            "vision": dataclasses.asdict(settings),
+            "seeds": _seeds(config, split),
+            "t_hit": "Go2World.finish_episode first_collision_time_s of the NO_OP episode (NaN in the npz: none)",
+            "window_rebuild_check": {
+                "windows_checked": int(sum(r["windows_checked"] for r in results)),
+                "method": "every policy window equal (np.array_equal) to the stored frames it overlaps plus its newest "
+                          "frame; the last window of each episode rebuilt from the stored stack and compared exactly",
+                "passed": True,
+            },
+            "npz": npz_path,
+            "wall_s": wall_s,
+            "created_utc": _utc_now().isoformat(),
+            "config_digest": config_digest(config),
+        }
+        _write_json(run_dir / f"{section}.json", {**meta, "records": records})
+    except Exception as error:
+        _merge_result(run_dir, run_id, {section: {"state": "failed", "error": {"type": type(error).__name__,
+                                                                                 "message": str(error)}}})
+        raise
+    _merge_result(run_dir, run_id, {section: {"state": "done", "argv": list(argv or []), **meta}})
+    print(f"trace: {npz_path}, frames {list(frames.shape)}, {meta['n_threats']} threats of {n}, "
+          f"{meta['window_rebuild_check']['windows_checked']} windows checked, {wall_s:.1f} s", flush=True)
+    return meta
+
+
+def _load_trace(path: str | Path) -> dict[str, Any]:
+    """The arrays of trace_<split>.npz and the metadata of the .json beside it ("meta"), checked for shape."""
+    path = Path(path).resolve()
+    with np.load(path, allow_pickle=False) as archive:
+        missing = [name for name in _TRACE_ARRAYS if name not in archive.files]
+        if missing:
+            raise ValueError(f"{path} lacks {missing}: not a dodge_eval trace")
+        data: dict[str, Any] = {name: np.array(archive[name]) for name in _TRACE_ARRAYS}
+    meta_path = path.with_suffix(".json")
+    data["meta"] = json.loads(meta_path.read_text(encoding="utf-8"))
+    data["path"] = path
+    frames = data["frames"]
+    n = frames.shape[0]
+    if frames.ndim != 4 or frames.dtype != np.float32 or frames.shape[2] != frames.shape[3]:
+        raise ValueError(f"{path} frames must be float32 (n, T, N, N); got {frames.dtype} {frames.shape}")
+    if data["t_s"].shape != (frames.shape[1],) or any(data[k].shape != (n,) for k in ("scenario_id", "threat", "t_hit", "kind")):
+        raise ValueError(f"{path} arrays disagree in shape with frames {frames.shape}")
+    return data
+
+
+def offline_calibration(student_dir: str | Path, trace_path: str | Path, config: Mapping[str, Any]) -> dict[str, Any]:
+    """Calibrate one student on a saved dev trace without any episode (module docstring, "calibrate --trace").
+
+    Returns {"student", "network_sha256", "frames", "window_encoding", "thresholds", "emitted", "correct",
+    "precision", "precision_ci", "recalled", "recall", "false_activations", "gate_passed", "n_scenarios",
+    "n_threats", "precision_target", "best_recall_at_precision" {"0.95", "0.90"} (information only),
+    "readout_check", "wall_s", "calibration" (the block calibrate freezes, without run paths), "grid" (rows),
+    "records" (per scenario), "readouts" {"scenario_id", "t_s", "threat_confidence", "action_scores"} (arrays)}.
+    Writes nothing.
+
+    Raises ValueError for a trace that is not a dev trace or does not fit the student (frame size, camera settings,
+    window longer than the trace's); RuntimeError when the batched readouts differ from DodgeRuntime.readout by more
+    than 1e-9; whatever loading the student raises.
+    """
+    from learned_judgment.observed import student_readout
+    from learned_judgment.students.snn_core import load_network
+
+    started = time.perf_counter()
+    student_dir = Path(student_dir).resolve()
+    student = _read_student(student_dir)
+    grid = _grid(config)
+    target = _fraction(config, "inference.gate.precision_target")
+    level = _level(config)
+    runtime = DodgeRuntime.load(student_dir, config, grid[0])  # checks the student against config; readout ignores thresholds
+    data = _load_trace(trace_path)
+    meta = data["meta"]
+    if meta.get("split") != "dev":
+        raise ValueError(f"{data['path']} is a {meta.get('split')!r} trace; thresholds are chosen on dev only")
+    frames = data["frames"]
+    n, total, size = frames.shape[0], frames.shape[1], frames.shape[2]
+    f, first = runtime.frames, int(data["first_decision_index"])
+    if size != runtime.frame_size:
+        raise ValueError(f"the trace's frames are {size} x {size}; the student takes {runtime.frame_size}")
+    camera = {key: value for key, value in (student.get("vision") or {}).items() if key != "frames"}
+    traced = {key: value for key, value in meta["vision"].items() if key != "frames"}
+    if camera and camera != traced:
+        raise ValueError(f"the student's camera settings {camera} differ from the trace's {traced}")
+    if not 1 <= f <= first + 1:
+        raise ValueError(f"the student's window of {f} frames is longer than the trace's {first + 1}")
+
+    # (n, T - F + 1, N, N, F): window j = frames j .. j + F - 1; decision frame d ends window d - F + 1.
+    view = np.lib.stride_tricks.sliding_window_view(frames, f, axis=1)
+    windows = np.moveaxis(view, -1, 2)[:, first - f + 1:]  # (n, Td, F, N, N), oldest frame first
+    td = windows.shape[1]
+    network, _ = load_network(student_dir / "network")
+    threat = np.empty((n, td), dtype=np.float64)
+    scores = np.empty((n, td, len(runtime.action_names)), dtype=np.float64)
+    per_chunk = max(1, _BATCH_ROWS // td)
+    for start in range(0, n, per_chunk):
+        stop = min(n, start + per_chunk)
+        block = np.ascontiguousarray(windows[start:stop]).reshape((stop - start) * td, f * size * size)
+        t_block, s_block = student_readout(network, block, student["heads"], student["input"])
+        threat[start:stop] = t_block.reshape(stop - start, td)
+        scores[start:stop] = s_block.reshape(stop - start, td, -1)
+
+    seed = int(require(config, "runtime.seed"))
+    picks = np.random.default_rng(seed).choice(n * td, size=min(_READOUT_CHECK_FRAMES, n * td), replace=False)
+    largest = 0.0
+    for pick in picks:
+        i, j = divmod(int(pick), td)
+        one_threat, one_scores = runtime.readout(np.array(windows[i, j], dtype=np.float32))
+        largest = max(largest, abs(one_threat - threat[i, j]), float(np.max(np.abs(one_scores - scores[i, j]))))
+    check = {"n_frames": int(picks.size), "max_abs_difference": largest, "tolerance": _READOUT_TOLERANCE,
+             "passed": largest <= _READOUT_TOLERANCE, "seed": seed,
+             "method": "np.random.default_rng(runtime.seed).choice of (scenario, decision frame) without replacement; "
+                       "DodgeRuntime.readout of that window against the batched observed.student_readout"}
+    if not check["passed"]:
+        raise RuntimeError(f"batched readouts differ from DodgeRuntime.readout: {check}")
+
+    t_s = data["t_s"][first:].tolist()
+    truth = [bool(x) for x in data["threat"]]
+    t_hit = [None if math.isnan(float(h)) else float(h) for h in data["t_hit"]]
+    traces = [(threat[i].tolist(), scores[i].tolist()) for i in range(n)]
+    rows, chosen, passed, rule, issues = _replay_grid(config, grid, t_s, traces, truth, t_hit)
+    thresholds = {key: chosen[key] for key in _THRESHOLD_KEYS}
+    low, high = wilson_interval(chosen["correct"], chosen["emitted"], level)
+
+    def best_at(precision: float) -> dict[str, Any] | None:
+        rows_ok = [r for r in rows if r["emitted"] >= 1 and r["precision"] >= precision]
+        if not rows_ok:
+            return None
+        top = max(rows_ok, key=lambda r: (-1.0 if r["recall"] is None else r["recall"], -r["false_activations"],
+                                          *(r[k] for k in _THRESHOLD_KEYS)))
+        return {key: top[key] for key in (*_THRESHOLD_KEYS, "emitted", "precision", "recall", "false_activations")}
+
+    sid = data["scenario_id"]
+    kinds = [str(k) for k in data["kind"]]
+    outcomes = {r["scenario_id"]: r.get("no_op") for r in meta.get("records", [])}
+    records = [
+        {"scenario_id": int(s), "kind": kind, "threat": is_threat, "t_hit": hit, "no_op": outcomes.get(int(s)),
+         "n_readouts": td, "chosen_issue": None if issue is None else {"action": issue[0], "t_s": issue[1]}}
+        for s, kind, is_threat, hit, issue in zip(sid, kinds, truth, t_hit, issues)
+    ]
+    calibration = {
+        "split": "dev",
+        "n_scenarios": n,
+        "n_threats": int(sum(truth)),
+        "grid_size": len(grid),
+        "chosen": {**chosen, "precision_ci": [low, high], "ci_level": level, "ci_method": "Wilson"},
+        "precision_target": target,
+        "gate_passed": passed,
+        "rule": rule,
+        "seeds": meta["seeds"],
+        "t_hit": "Go2World.finish_episode first_collision_time_s of the NO_OP episode",
+        "source": "offline: the saved NO_OP trace (dodge_eval trace), windows rebuilt from its frames, readouts batched "
+                  "through observed.student_readout, the same gate replay as calibrate",
+        "trace": data["path"],
+        "trace_config_digest": meta.get("config_digest"),
+        "readout_check": check,
+        "config_digest": config_digest(config),
+    }
+    return {
+        "student": student_dir,
+        "network_sha256": student.get("network", {}).get("sha256"),
+        "frames": f,
+        "window_encoding": student["input"].get("window_encoding", "raw"),
+        "thresholds": thresholds,
+        **{key: chosen[key] for key in ("emitted", "correct", "precision", "recalled", "recall", "false_activations")},
+        "precision_ci": [low, high],
+        "gate_passed": passed,
+        "n_scenarios": n,
+        "n_threats": int(sum(truth)),
+        "precision_target": target,
+        "best_recall_at_precision": {f"{p:.2f}": best_at(p) for p in _INFO_PRECISIONS},
+        "readout_check": check,
+        "wall_s": time.perf_counter() - started,
+        "calibration": calibration,
+        "grid": rows,
+        "records": records,
+        "readouts": {"scenario_id": sid, "t_s": np.asarray(t_s, dtype=np.float64), "threat_confidence": threat,
+                     "action_scores": scores},
+    }
+
+
+def calibrate_from_trace(config: Mapping[str, Any], run_id: str, student_dir: str | Path, trace_path: str | Path,
+                         freeze: bool = True, refreeze: bool = False, argv: Sequence[str] | None = None) -> dict[str, Any]:
+    """offline_calibration plus its files: calibration_dev.* and the freeze (freeze True), or calibration_dev_offline.*
+    and student.json untouched (freeze False); the result.json section of the same name. Returns the report
+    without "grid", "records" and "readouts"."""
+    from learned_judgment.observed import _run_dir, _utc_now
+
+    student_dir = Path(student_dir).resolve()
+    if freeze and _read_student(student_dir).get("thresholds") is not None and not refreeze:
+        raise _Refused(f"{student_dir / 'student.json'} already holds frozen thresholds; pass --refreeze to replace them")
+    run_dir = _run_dir(config, run_id)
+    section = "calibration_dev" if freeze else "calibration_dev_offline"
+    _merge_result(run_dir, run_id, {section: {"state": "running", "argv": list(argv or []), "student": student_dir,
+                                              "trace": Path(trace_path).resolve(), "frozen": freeze}})
+    try:
+        report = offline_calibration(student_dir, trace_path, config)
+        readouts, rows, records = report.pop("readouts"), report.pop("grid"), report.pop("records")
+        report["calibration"] = {**report["calibration"], "run_id": run_id, "records": run_dir / f"{section}.json",
+                                 "traces": run_dir / f"{section}.npz",
+                                 "frozen_utc": _utc_now().isoformat() if freeze else None}
+        buffer = io.BytesIO()
+        np.savez_compressed(buffer, **readouts)
+        atomic_write_bytes(run_dir / f"{section}.npz", buffer.getvalue())
+        _write_json(run_dir / f"{section}.json", {"skill": SKILL, "student": student_dir, "calibration": report["calibration"],
+                                                  "grid": rows, "records": records})
+        if freeze:
+            _freeze(student_dir, report["thresholds"], report["calibration"], refreeze)
+    except Exception as error:
+        _merge_result(run_dir, run_id, {section: {"state": "failed", "error": {"type": type(error).__name__,
+                                                                                 "message": str(error)}}})
+        raise
+    _merge_result(run_dir, run_id, {section: {"state": "done", "argv": list(argv or []), "frozen": freeze, **report}})
+    ci = report["precision_ci"]
+    print(f"calibrate (trace): thresholds {report['thresholds']}: emitted {report['emitted']}, precision "
+          f"{report['precision']} (Wilson {ci[0]}..{ci[1]}), recall {report['recall']}, false activations "
+          f"{report['false_activations']}; {report['n_threats']} threats of {report['n_scenarios']}; best recall at "
+          f"precision {json.dumps(report['best_recall_at_precision'])}; readout check {report['readout_check']['max_abs_difference']}"
+          f" <= {_READOUT_TOLERANCE}; {report['wall_s']:.1f} s", flush=True)
+    if not report["gate_passed"]:
+        print(f"GATE NOT PASSED: no triple of the grid reaches precision_target {report['precision_target']} on dev. "
+              "The target was not lowered.", flush=True)
+    print(f"froze {student_dir / 'student.json'}" if freeze else "not frozen (--no-freeze)", flush=True)
+    return report
 
 
 # ----- evaluation ------------------------------------------------------------------------------------------------
@@ -772,6 +1139,12 @@ def _parser() -> argparse.ArgumentParser:
     common(cal)
     cal.add_argument("--n", type=int, help="dev scenarios (default observed.dodge_vision.dev_scenarios)")
     cal.add_argument("--refreeze", action="store_true", help="replace thresholds already frozen in student.json")
+    cal.add_argument("--trace", help="trace_dev.npz written by the trace command: calibrate offline on it (no episode)")
+    cal.add_argument("--no-freeze", action="store_true", help="with --trace: report only, student.json is not written")
+    tr = commands.add_parser("trace", help="run the NO_OP episodes of a split once and save their raw frames")
+    tr.add_argument("--run", required=True, help="run id: the directory under observed.runs_dir")
+    tr.add_argument("--split", default="dev", choices=("dev", "test"))
+    tr.add_argument("--n", type=int, help="scenarios (default observed.dodge_vision.<split>_scenarios)")
     ev = commands.add_parser("evaluate", help="closed-loop NO_OP vs frozen student on a split")
     common(ev)
     ev.add_argument("--split", default="test", choices=("dev", "test"))
@@ -787,9 +1160,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     words = list(sys.argv[1:] if argv is None else argv)
     config = load_config()
     try:
+        if args.command == "calibrate" and args.trace is not None:
+            if args.n is not None:
+                raise SystemExit("--n does not apply with --trace: the trace holds its scenarios")
+            report = calibrate_from_trace(config, args.run, args.student, args.trace, freeze=not args.no_freeze,
+                                          refreeze=args.refreeze, argv=words)
+            return 0 if report["gate_passed"] else EXIT_GATE_FAILED
         if args.command == "calibrate":
+            if args.no_freeze:
+                raise SystemExit("--no-freeze applies with --trace only")
             calibration = calibrate(config, args.run, args.student, n=args.n, refreeze=args.refreeze, argv=words)
             return 0 if calibration["gate_passed"] else EXIT_GATE_FAILED
+        if args.command == "trace":
+            trace(config, args.run, split=args.split, n=args.n, argv=words)
+            return 0
         if args.command == "evaluate":
             evaluate(config, args.run, args.student, split=args.split, n=args.n, argv=words)
             return 0

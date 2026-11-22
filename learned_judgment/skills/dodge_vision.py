@@ -29,11 +29,13 @@ Files of the command line, one directory per call:
                 seeds, world_seed, world_preset, config_digest, kind_counts, punch_stand_in (a punch ran as the
                 ball with its weight cancelled), scenarios (index = scenario_index)
     dream.npz   scenario_index (m,) int64, decision_time_s (m,) float64, features (m, D) float32,
-                physics (m, C, K) float64
-    dream.json  the keys of rows.json plus n_episodes and windows_per_dream_episode
+                physics (m, C, K) float64, kinematic (m,) bool (the window was rendered by render_windows_kinematic)
+    dream.json  the keys of rows.json plus n_episodes, windows_per_dream_episode and render {mode,
+                kinematic_windows, physics_windows}
+    stand.npz   (dream --render kinematic) the recorded zero-command stand of record_stand
 
     python -m learned_judgment.skills.dodge_vision rows --split {context|dev|test} --out DIR [--n N] [--frames F]
-    python -m learned_judgment.skills.dodge_vision dream --out DIR [--n N]
+    python -m learned_judgment.skills.dodge_vision dream --out DIR [--n N] [--render {kinematic|physics}]
 
 Seeds. The scenarios of a split come from np.random.default_rng(np.random.SeedSequence([runtime.seed, code]))
 (code: SPLIT_CODES). Scenario i's decision frame(s) and image augmentation come from the two children of
@@ -56,6 +58,7 @@ import time
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Sequence
 
 import mujoco
@@ -92,7 +95,9 @@ __all__ = [
     "objective",
     "observe_and_act",
     "physics_guess",
+    "record_stand",
     "render_windows",
+    "render_windows_kinematic",
     "sample_threat_scenarios",
 ]
 
@@ -128,6 +133,14 @@ _VISUAL_UNMAPPED = (
 _PLANAR = ("vel_x", "vel_y")  # verified command fields of the dog's planar velocity (x ahead, y left)
 _ROOT = "skills.dodge_vision"
 _TOLERANCE = 1e-9  # s or m: times are sums of 0.02 s periods
+_DREAM_RENDERS = ("kinematic", "physics")  # values of skills.dodge_vision.dream_render and of dream --render
+# The stand's punch (record_stand), launch state in the situation frame: 50 m behind the dog, flying away at 1 m/s, so
+# the stand runs the punch scene (the robot's physics of a punch episode) with the object never near the dog or in view.
+_STAND_OBJECT = (-50.0, 0.0, 0.3, -1.0, 0.0, 0.0)
+# The standing dog steps in place (its feet move up to 0.05 m between two camera frames, world seed 0): a geom's surface
+# may come this many times its move between the poses of two frames (centre move + rbound x rotation angle) closer to
+# the punch between those frames (_kinematic_limit_s).
+_SWAY_FACTOR = 2.0
 
 
 # ----- config ----------------------------------------------------------------------------------------------------
@@ -838,6 +851,277 @@ def render_windows(
     return out
 
 
+# ----- kinematic dream frames ------------------------------------------------------------------------------------
+#
+# In a dream episode the dog only stands on the zero command and a punch flies a straight line at constant velocity
+# (gravcomp, no drag). Before the punch touches the dog nothing couples the two (the object is its own free body after
+# the robot: its own tree, no constraint rows), the simulator is deterministic and the zero command makes the latency
+# draw irrelevant, so the robot's qpos at each frame is the same in every zero-command episode of the punch scene.
+# A scene without an object runs Go2World's scene without the object body, whose standing dog differs (measured
+# 2026-11-21, world seed 0: up to 0.023 in qpos over the episode, already at the launch instant; up to 0.04 grey in a
+# window), so it gets a stand of its own. Both identities were checked against render_windows: 0.0 difference.
+# record_stand records both once; render_windows_kinematic puts the stand and the punch's line into a private MjData
+# and paints the frame through HeadView, with no physics episode.
+
+
+def _stand_scenario(config: Mapping[str, Any], empty: bool = False) -> dict[str, Any]:
+    """The punch stand (the punch _STAND_OBJECT) or, with empty, the scene without an object."""
+    situation: dict[str, Any] = {} if empty else {k: float(v) for k, v in zip(_ball_keys(), _STAND_OBJECT)}
+    situation.update(dog_forward_speed_m_s=0.0, settle_s=_value(config, f"{_ROOT}.settle_s"))
+    return {"scenario_id": -1, "kind": "empty" if empty else "stand", "object_kind": "punch", "situation": situation}
+
+
+def _stand_qpos(world: Any, ep: _Episode, q: int) -> np.ndarray:
+    """(n_frames, q) qpos[:q] at every camera frame of the episode just reset, stepping the zero command."""
+    rows = np.empty((ep.timing.frame_periods.size, q), dtype=np.float64)
+    zero, now = ep.actions.commands[ep.actions.no_op], 0
+    for index, period in enumerate(ep.timing.frame_periods.tolist()):
+        if period > now:
+            world.step(zero, (period - now) * ep.timing.period_s)
+            now = period
+        rows[index] = world.policy.data.qpos[:q]
+    return rows
+
+
+def record_stand(world: Any, config: Mapping[str, Any]) -> dict[str, Any]:
+    """Two zero-command episodes, recording at every camera frame time the robot's part of qpos (all qpos before the
+    object's free joint: the trunk free joint and the 12 leg joints; HeadView reads qpos only): one in the punch scene
+    with the punch _STAND_OBJECT (50 m behind, flying away), with the trunk pose at the launch instant (the frame of a
+    situation's object coordinates), and one in the scene without an object. The last episode is left open (the next
+    reset abandons it).
+
+    Returns {"frame_periods" (n_frames,) int64, "robot_qpos" (n_frames, q) float64 (punch scene), "empty_qpos"
+    (n_frames, q) float64 (scene without an object), "launch_pos" (3,) float64, "launch_yaw" float, "object_qposadr"
+    q, "world_seed", "world_preset", and in memory only "model" / "empty_model" (the two scenes' MjModels), "data" /
+    "empty_data" (a private MjData of each) and the "probe_*" keys of _contact_probe}.
+    """
+    from learned_judgment.env.world import _yaw  # on use: see _ball_keys; the yaw Go2World._throw turns the launch by
+
+    ep = _episode(config)
+    if abs(world.policy.control_dt - ep.timing.period_s) > 1e-12:
+        raise ValueError(f"the world's control period {world.policy.control_dt} s is not {ep.timing.period_s} s")
+    _reset(world, _stand_scenario(config), 0)
+    model, data = world.model, world.policy.data
+    q = int(model.jnt_qposadr[model.body("ball").jntadr[0]])
+    launch_pos, launch_yaw = data.qpos[0:3].copy(), float(_yaw(data.qpos[3:7]))
+    robot = _stand_qpos(world, ep, q)
+    _reset(world, _stand_scenario(config, empty=True), 0)
+    empty_model = world.model
+    if empty_model.nq != q:
+        raise RuntimeError(f"the scene without an object has nq {empty_model.nq}, not the robot's {q}")
+    empty = _stand_qpos(world, ep, q)
+    return {
+        "frame_periods": ep.timing.frame_periods.astype(np.int64),
+        "robot_qpos": robot,
+        "empty_qpos": empty,
+        "launch_pos": launch_pos,
+        "launch_yaw": launch_yaw,
+        "object_qposadr": q,
+        "world_seed": int(world.seed),
+        "world_preset": str(world.preset),
+        "model": model,
+        "data": mujoco.MjData(model),
+        "empty_model": empty_model,
+        "empty_data": mujoco.MjData(empty_model),
+    } | _contact_probe(model, robot, q)
+
+
+def _save_stand(stand: Mapping[str, Any], path: Path) -> None:
+    buffer = io.BytesIO()
+    np.savez_compressed(
+        buffer,
+        frame_periods=stand["frame_periods"],
+        robot_qpos=stand["robot_qpos"],
+        empty_qpos=stand["empty_qpos"],
+        launch_pos=stand["launch_pos"],
+        launch_yaw=np.float64(stand["launch_yaw"]),
+        object_qposadr=np.int64(stand["object_qposadr"]),
+        world_seed=np.int64(stand["world_seed"]),
+        world_preset=np.str_(stand["world_preset"]),
+    )
+    atomic_write_bytes(path, buffer.getvalue())
+
+
+def _load_stand(world: Any, config: Mapping[str, Any], path: Path) -> dict[str, Any]:
+    """stand.npz for this world: a reset of each stand scenario gives that scene's model, and its launch-instant qpos
+    must equal the file's bit for bit (else RuntimeError: the file belongs to another world or config)."""
+    with np.load(path) as file:
+        stand: dict[str, Any] = {key: file[key] for key in file.files}
+    stand["launch_yaw"] = float(stand["launch_yaw"])
+    stand["object_qposadr"] = q = int(stand["object_qposadr"])
+    stand["world_seed"], stand["world_preset"] = int(stand["world_seed"]), str(stand["world_preset"])
+    if stand["world_seed"] != world.seed or stand["world_preset"] != world.preset:
+        raise RuntimeError(f"{path} is the stand of world seed {stand['world_seed']} {stand['world_preset']!r}")
+    for empty, key in ((False, ""), (True, "empty_")):
+        _reset(world, _stand_scenario(config, empty), 0)
+        qpos = world.policy.data.qpos
+        recorded = stand["empty_qpos" if empty else "robot_qpos"]
+        if stand["frame_periods"][0] != 0 or not np.array_equal(qpos[:q], recorded[0]) or (
+            not empty and not np.array_equal(qpos[0:3], stand["launch_pos"])
+        ):
+            raise RuntimeError(f"{path}: this world's stand differs at the launch instant; the file is stale")
+        stand[f"{key}model"], stand[f"{key}data"] = world.model, mujoco.MjData(world.model)
+    stand.update(_contact_probe(stand["model"], stand["robot_qpos"], q))
+    return stand
+
+
+def _contact_probe(model: Any, robot_qpos: np.ndarray, q: int) -> dict[str, Any]:
+    """In-memory keys of a stand for _kinematic_limit_s: every geom of the punch scene the object can touch (collision
+    masks set, not the object's: the robot's collision geoms and the floor) with its pose at each frame of the stand."""
+    data = mujoco.MjData(model)
+    body = model.body("ball").id
+    geoms = np.array([g for g in range(model.ngeom) if model.geom_bodyid[g] != body
+                      and (model.geom_contype[g] or model.geom_conaffinity[g])], dtype=np.int64)
+    plane = model.geom_type[geoms] == int(mujoco.mjtGeom.mjGEOM_PLANE)  # rbound 0: no bounding sphere
+    solid = geoms[~plane]
+    xpos = np.empty((robot_qpos.shape[0], solid.size, 3))
+    xmat = np.empty((robot_qpos.shape[0], solid.size, 9))
+    for k, row in enumerate(robot_qpos):
+        data.qpos[:q] = row
+        mujoco.mj_kinematics(model, data)
+        xpos[k], xmat[k] = data.geom_xpos[solid], data.geom_xmat[solid]
+    # Each geom's surface move from frame k to k + 1 (the last frame repeats the largest): centre move plus rbound
+    # times the rotation angle (trace(R_k^T R_k+1) = sum of the elementwise product).
+    turn = np.arccos(np.clip(((xmat[:-1] * xmat[1:]).sum(axis=2) - 1.0) / 2.0, -1.0, 1.0))
+    move = np.linalg.norm(np.diff(xpos, axis=0), axis=2) + model.geom_rbound[solid] * turn
+    move = np.vstack([move, move.max(axis=0)])
+    obj = model.geom("ball").id
+    return {"probe": data, "object_geom": obj, "probe_planes": geoms[plane], "probe_geoms": solid,
+            "probe_reach": model.geom_rbound[solid] + model.geom_rbound[obj], "probe_xpos": xpos, "probe_xmat": xmat,
+            "probe_move": move}
+
+
+def _launch_world(stand: Mapping[str, Any], situation: Mapping[str, Any]) -> tuple[np.ndarray, np.ndarray]:
+    """(position (3,), velocity (3,)) at the launch of a situation's object in the world frame, as Go2World._throw
+    turns them with the stand's launch-instant trunk pose."""
+    launch = [float(situation[key]) for key in _ball_keys()]
+    yaw = float(stand["launch_yaw"])
+    turn = np.array([[math.cos(yaw), -math.sin(yaw), 0.0], [math.sin(yaw), math.cos(yaw), 0.0], [0.0, 0.0, 1.0]])
+    return stand["launch_pos"] + turn @ launch[:3], turn @ launch[3:]
+
+
+def _kinematic_limit_s(config: Mapping[str, Any], scenario: Mapping[str, Any], stand: Mapping[str, Any]) -> float:
+    """Decision times below this are drawn exactly by render_windows_kinematic: inf for a scene without an object,
+    -inf for an object other than a punch, else the punch's predicted first contact minus
+    skills.dodge_vision.kinematic_contact_margin_s (inf when no contact is predicted in the stand's frames).
+
+    The contact, from the stand's real geometry: the first frame time t_k at which the punch on its straight line is
+    closer than |velocity| x (t_(k+1) - t_k) + _SWAY_FACTOR x (the geom's move from frame k to k + 1) to a geom it can
+    touch in the stand's pose of frame k (mj_geomDistance; the robot's collision geoms and the floor, which does not
+    move). No contact can happen between two earlier frames, so t_k is at or before the real first contact. (The
+    physics guess's trunk capsule missed real contacts with the legs and hips: 7 of 300 dream scenes, 2026-11-21.)"""
+    situation = scenario["situation"]
+    if not any(key in situation for key in _ball_keys()):
+        return math.inf
+    if scenario.get("object_kind", "ball") != "punch":
+        return -math.inf
+    margin = _value(config, f"{_ROOT}.kinematic_contact_margin_s")
+    if margin < 0.0:
+        raise ConfigError(f"config.yaml key '{_ROOT}.kinematic_contact_margin_s' must be >= 0; got {margin}")
+    start, velocity = _launch_world(stand, situation)
+    speed = float(np.linalg.norm(velocity))
+    period_s = _positive(config, "robot.walking_policy.command_schema.update_period_s")
+    times = stand["frame_periods"] * period_s
+    gaps = np.diff(times, append=times[-1] + np.diff(times).max())
+    model, data, obj = stand["model"], stand["probe"], stand["object_geom"]
+    geoms, planes, reach = stand["probe_geoms"], stand["probe_planes"], stand["probe_reach"]
+    data.geom_xmat[obj] = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+    for k, t in enumerate(times):
+        point = start + velocity * t
+        travel = speed * gaps[k]
+        thresholds = travel + _SWAY_FACTOR * stand["probe_move"][k]
+        near = np.flatnonzero(np.linalg.norm(stand["probe_xpos"][k] - point, axis=1) - reach < thresholds)
+        data.geom_xpos[geoms], data.geom_xmat[geoms] = stand["probe_xpos"][k], stand["probe_xmat"][k]
+        data.geom_xpos[obj] = point
+        pairs = [(int(geoms[i]), float(thresholds[i])) for i in near] + [(int(g), travel) for g in planes]
+        for g, threshold in pairs:
+            if mujoco.mj_geomDistance(model, data, obj, g, threshold, None) < threshold:
+                return float(t) - margin
+    return math.inf
+
+
+def render_windows_kinematic(
+    world: Any,
+    view: Any,
+    scenario: Mapping[str, Any],
+    decision_frames: Sequence[int],
+    settings: VisionSettings,
+    stand: Mapping[str, Any],
+    augment_rngs: Sequence[np.random.Generator] | None = None,
+) -> np.ndarray:
+    """(len(decision_frames), D) float32: render_windows of the same arguments without a physics episode.
+
+    For each needed frame k: a private MjData (stand["data"], of the punch scene stand["model"]) gets the robot qpos
+    the stand recorded at frame k and the object's pose launch position + velocity x t (t = frame k's time; the
+    situation's launch state turned into the world frame as Go2World._throw does, from the stand's launch-instant
+    trunk pose; orientation identity), and view.frame paints it (HeadView's kinematics pass, the scenario's visual).
+    Preprocessing, windows and augmentation (one augment_rngs Generator per decision frame) are those of render_windows.
+    A scene without an object is drawn from the stand of the scene without an object (stand["empty_*"]).
+
+    stand: from record_stand or _load_stand, for this world (seed, preset) and config (frame periods).
+
+    Raises ValueError for what it cannot draw exactly (the caller renders those with render_windows): an object other
+    than a punch, any decision frame at or after _kinematic_limit_s (the predicted first contact, from the stand's
+    collision geoms and the floor, less the margin), a world that renders the head camera itself; and for a bad
+    argument or a stand of another world.
+    """
+    ep = _episode(world.config)
+    if not isinstance(settings, VisionSettings):
+        raise TypeError(f"settings must be VisionSettings; got {type(settings).__name__}")
+    if not callable(getattr(view, "frame", None)):
+        raise TypeError(f"view must have a frame(world) method; got {type(view).__name__}")
+    if not isinstance(scenario, Mapping) or not isinstance(scenario.get("situation"), Mapping):
+        raise ValueError(f"scenario must be a mapping with a 'situation' mapping; got {scenario!r}")
+    if not isinstance(stand, Mapping) or "model" not in stand:
+        raise ValueError("stand must come from record_stand or _load_stand")
+    if stand["world_seed"] != world.seed or stand["world_preset"] != world.preset:
+        raise ValueError(f"the stand is of world seed {stand['world_seed']} {stand['world_preset']!r}, not this world's")
+    if not np.array_equal(stand["frame_periods"], ep.timing.frame_periods):
+        raise ValueError("the stand's frame periods are not this config's")
+    render_frame = getattr(world, "render_frame", None)
+    if render_frame is not None and "camera" in inspect.signature(render_frame).parameters:
+        raise ValueError("the world renders the head camera itself; its frames are drawn by render_windows")
+    if isinstance(decision_frames, (str, bytes)) or not isinstance(decision_frames, Sequence) or not decision_frames:
+        raise ValueError(f"decision_frames must be a non-empty sequence of ints; got {decision_frames!r}")
+    frames = [_check_frame("decision frame", frame, settings, ep) for frame in decision_frames]
+    if augment_rngs is not None and len(augment_rngs) != len(frames):
+        raise ValueError(f"augment_rngs must have one Generator per decision frame ({len(frames)}); got {len(augment_rngs)}")
+    situation = scenario["situation"]
+    keys = _ball_keys()
+    has_object = any(key in situation for key in keys)
+    if has_object and scenario.get("object_kind", "ball") != "punch":
+        raise ValueError(f"object_kind {scenario.get('object_kind', 'ball')!r} is not drawn kinematically (only a punch)")
+    limit = _kinematic_limit_s(world.config, scenario, stand)
+    times = ep.timing.frame_periods * ep.timing.period_s
+    late = [frame for frame in frames if times[frame] >= limit]
+    if late:
+        raise ValueError(f"decision frame(s) {late} lie at or after {limit:.3f} s, the punch's predicted contact less the margin")
+
+    q = int(stand["object_qposadr"])
+    if has_object:
+        start, velocity = _launch_world(stand, situation)
+        model, data, robot = stand["model"], stand["data"], stand["robot_qpos"]
+    else:
+        model, data, robot = stand["empty_model"], stand["empty_data"], stand["empty_qpos"]
+    proxy = SimpleNamespace(model=model, policy=SimpleNamespace(data=data))
+    visual = scenario.get("visual")
+    needed = sorted({k for frame in frames for k in range(frame - settings.frames + 1, frame + 1)})
+    rendered = {}
+    for k in needed:
+        data.qpos[:q] = robot[k]
+        if has_object:
+            data.qpos[q : q + 3] = start + velocity * times[k]
+            data.qpos[q + 3 : q + 7] = (1.0, 0.0, 0.0, 0.0)
+        rendered[k] = preprocess_frame(view.frame(proxy, visual), settings)
+    out = np.empty((len(frames), settings.n_features), dtype=np.float32)
+    for row, frame in enumerate(frames):
+        window = np.stack([rendered[k] for k in range(frame - settings.frames + 1, frame + 1)])
+        if augment_rngs is not None:
+            window = augment_window(window, augment_rngs[row], ep.augmentation)
+        out[row] = flatten_window(window)
+    return out
+
+
 def closed_loop(
     world: Any,
     view: Any,
@@ -1106,14 +1390,20 @@ def build_observed_spec(config: Mapping[str, Any]) -> DodgeVisionSpec:
 _WORKER: dict[str, Any] = {}
 
 
-def _worker_init(config: Mapping[str, Any], frames: int) -> None:
-    """Per process: its own Go2World (observed.world_seed, observed.world_preset; no trace files) and HeadView."""
+def _make_world(config: Mapping[str, Any]) -> Any:
+    """A Go2World of observed.world_seed and observed.world_preset that writes no trace files."""
     from learned_judgment.env import Go2World  # on use: see _ball_keys
 
     config = copy.deepcopy(dict(config))
     config["world"]["save_traces"] = False
-    world = Go2World(config, require(config, "observed.world_seed"), require(config, "observed.world_preset"))
+    return Go2World(config, require(config, "observed.world_seed"), require(config, "observed.world_preset"))
+
+
+def _worker_init(config: Mapping[str, Any], frames: int, stand_path: str | None = None) -> None:
+    """Per process: its own Go2World (_make_world), HeadView and, given stand_path, the stand (_load_stand)."""
+    world = _make_world(config)
     _WORKER.update(world=world, view=HeadView(config), settings=VisionSettings.from_config(config, frames))
+    _WORKER["stand"] = None if stand_path is None else _load_stand(world, world.config, Path(stand_path))
 
 
 def _row_task(task: tuple) -> tuple[int, int, np.ndarray, dict[str, float]]:
@@ -1125,15 +1415,34 @@ def _row_task(task: tuple) -> tuple[int, int, np.ndarray, dict[str, float]]:
     return scenario["scenario_id"], action, features, measured
 
 
-def _dream_task(task: tuple) -> tuple[int, np.ndarray]:
+def _dream_task(task: tuple) -> tuple[int, np.ndarray, np.ndarray]:
+    """(scenario_id, windows (len(frames), D), kinematic (len(frames),) bool). With a stand loaded, each decision frame
+    before _kinematic_limit_s is drawn by render_windows_kinematic and the rest by render_windows; each window keeps
+    its own augmentation Generator either way."""
     scenario, frames, augments = task
     w = _WORKER
+    world, stand = w["world"], w["stand"]
     rngs = [np.random.default_rng(seed) for seed in augments]
-    windows = render_windows(w["world"], w["view"], scenario, scenario["scenario_id"], frames, w["settings"], rngs)
-    return scenario["scenario_id"], windows
+    kinematic = np.zeros(len(frames), dtype=bool)
+    if stand is not None:
+        limit = _kinematic_limit_s(world.config, scenario, stand)
+        kinematic[:] = frame_times(world.config)[frames] < limit
+    windows = np.empty((len(frames), w["settings"].n_features), dtype=np.float32)
+    for flag in (True, False):
+        rows = np.flatnonzero(kinematic == flag)
+        if rows.size == 0:
+            continue
+        chosen, chosen_rngs = [frames[i] for i in rows], [rngs[i] for i in rows]
+        if flag:
+            windows[rows] = render_windows_kinematic(world, w["view"], scenario, chosen, w["settings"], stand, chosen_rngs)
+        else:
+            windows[rows] = render_windows(world, w["view"], scenario, scenario["scenario_id"], chosen, w["settings"], chosen_rngs)
+    return scenario["scenario_id"], windows, kinematic
 
 
-def _run(config: Mapping[str, Any], frames: int, function: Callable[[tuple], Any], tasks: list[tuple]) -> list[Any]:
+def _run(
+    config: Mapping[str, Any], frames: int, function: Callable[[tuple], Any], tasks: list[tuple], stand_path: str | None = None
+) -> list[Any]:
     """function over tasks in observed.workers spawned processes, results in task order, sparse progress lines."""
     workers = require(config, "observed.workers")
     if isinstance(workers, bool) or not isinstance(workers, int) or workers < 1:
@@ -1141,7 +1450,8 @@ def _run(config: Mapping[str, Any], frames: int, function: Callable[[tuple], Any
     every = max(1, len(tasks) // 10)
     results = []
     context = multiprocessing.get_context("spawn")
-    with context.Pool(min(workers, len(tasks)), initializer=_worker_init, initargs=(config, frames)) as pool:
+    initargs = (config, frames, stand_path)
+    with context.Pool(min(workers, len(tasks)), initializer=_worker_init, initargs=initargs) as pool:
         for result in pool.imap(function, tasks):
             results.append(result)
             if len(results) % every == 0 or len(results) == len(tasks):
@@ -1167,6 +1477,27 @@ def _eligible_frames(config: Mapping[str, Any], frames: int) -> np.ndarray:
     if eligible.size == 0:
         raise ConfigError(f"no frame with a full {frames}-frame window lies in '{_ROOT}.decision_time_range_s'")
     return eligible
+
+
+def _frames_before_arrival(config: Mapping[str, Any], scenario: Mapping[str, Any], eligible: np.ndarray) -> np.ndarray:
+    """The eligible decision frames of one scenario that lie before its object reaches the dog.
+
+    An object moving toward the dog (x velocity < 0 in the launch frame) reaches the plane x = punch.aim_x_m at
+    t = (x0 - aim_x_m) / -vx on its straight line (scorer-side arithmetic from the scenario's launch state; a ball
+    under gravity is treated the same way, as an upper bound on how long the approach lasts). Frames later than
+    that minus skills.dodge_vision.pre_contact_margin_s are dropped: after the object has hit or passed, the image
+    shows a bounce or nothing, and development run v2 had half of its incoming windows there. Scenarios without an
+    object, or with one that does not approach, keep every eligible frame. If nothing is left (an arrival before
+    the first full window), the earliest eligible frame is kept.
+    """
+    situation = scenario["situation"]
+    if "ball_vel_x_m_s" not in situation or float(situation["ball_vel_x_m_s"]) >= -1e-9:
+        return eligible
+    aim_x = float(require(config, f"{_ROOT}.punch.aim_x_m"))
+    arrival = (float(situation["ball_rel_x_m"]) - aim_x) / -float(situation["ball_vel_x_m_s"])
+    latest = arrival - float(require(config, f"{_ROOT}.pre_contact_margin_s"))
+    kept = eligible[frame_times(config)[eligible] <= latest + _TOLERANCE]
+    return kept if kept.size else eligible[:1]
 
 
 def _meta(config: Mapping[str, Any], split: str, frames: int, scenarios: list[dict[str, Any]], n_situations: int) -> dict[str, Any]:
@@ -1231,7 +1562,8 @@ def collect_rows(config: Mapping[str, Any], split: str, out_dir: str | Path, n: 
     tasks = []
     for scenario, seed in zip(scenarios, seeds):
         frame_seed, augment_seed = seed.spawn(2)
-        frame = int(eligible[np.random.default_rng(frame_seed).integers(eligible.size)])
+        own = _frames_before_arrival(config, scenario, eligible)
+        frame = int(own[np.random.default_rng(frame_seed).integers(own.size)])
         tasks.extend((scenario, frame, action, augment_seed) for action in range(len(ep.actions.names)))
     c = len(ep.actions.names)
     print(f"rows: split {split}, {n} scenarios x {c} actions = {len(tasks)} episodes", flush=True)
@@ -1276,13 +1608,23 @@ def collect_rows(config: Mapping[str, Any], split: str, out_dir: str | Path, n: 
     return meta
 
 
-def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None = None) -> dict[str, Any]:
+def collect_dream(
+    config: Mapping[str, Any], out_dir: str | Path, n: int | None = None, render: str | None = None
+) -> dict[str, Any]:
     """Render the dream situations and write <out_dir>/dream.npz and dream.json; returns the meta.
 
-    n zero-command episodes (default observed.dodge_vision.dream_episodes) from the dream seed, each giving
+    n zero-command scenes (default observed.dodge_vision.dream_episodes) from the dream seed, each giving
     windows_per_dream_episode windows at distinct eligible decision frames (each window its own augmentation draw),
     and the physics guess of every action for each window.
+
+    render (default skills.dodge_vision.dream_render): "physics" runs a zero-command episode per scene
+    (render_windows); "kinematic" records the stand once (record_stand, written to <out_dir>/stand.npz and loaded by
+    every worker) and draws each window before _kinematic_limit_s with render_windows_kinematic, the rest with
+    render_windows. dream.json's render counts both.
     """
+    render = require(config, f"{_ROOT}.dream_render") if render is None else render
+    if render not in _DREAM_RENDERS:
+        raise ValueError(f"render must be one of {list(_DREAM_RENDERS)}; got {render!r}")
     n = _count("n", require(config, "observed.dodge_vision.dream_episodes") if n is None else n)
     per_episode = _count(f"{_ROOT}.windows_per_dream_episode", require(config, f"{_ROOT}.windows_per_dream_episode"))
     settings = VisionSettings.from_config(config)
@@ -1294,15 +1636,21 @@ def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None 
     tasks = []
     for scenario, seed in zip(scenarios, seeds):
         frame_seed, augment_seed = seed.spawn(2)
-        chosen = np.sort(np.random.default_rng(frame_seed).choice(eligible, size=per_episode, replace=False))
+        own = _frames_before_arrival(config, scenario, eligible)
+        chosen = np.sort(np.random.default_rng(frame_seed).choice(own, size=per_episode, replace=bool(own.size < per_episode)))
         tasks.append((scenario, [int(f) for f in chosen], augment_seed.spawn(per_episode)))
-    print(f"dream: {n} episodes x {per_episode} windows = {n * per_episode} situations", flush=True)
+    print(f"dream: {n} episodes x {per_episode} windows = {n * per_episode} situations, render {render}", flush=True)
     start = time.perf_counter()
-    results = _run(config, settings.frames, _dream_task, tasks)
+    stand_path = None
+    if render == "kinematic":
+        stand_path = Path(out_dir) / "stand.npz"
+        _save_stand(record_stand(_make_world(config), config), stand_path)
+    results = _run(config, settings.frames, _dream_task, tasks, None if stand_path is None else str(stand_path))
     wall_s = time.perf_counter() - start
 
     scenario_index = np.repeat(np.array([r[0] for r in results], dtype=np.int64), per_episode)
     features = np.concatenate([r[1] for r in results]).astype(np.float32, copy=False)
+    kinematic = np.concatenate([r[2] for r in results])
     decision_frame = np.array([f for task in tasks for f in task[1]], dtype=np.int64)
     decision_time_s = frame_times(config)[decision_frame]
     m = scenario_index.size
@@ -1311,8 +1659,14 @@ def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None 
     ).reshape(m, c, len(OUTCOME_NAMES))
     meta = _meta(config, "dream", settings.frames, scenarios, m)
     meta["n_episodes"], meta["windows_per_dream_episode"] = n, per_episode
+    meta["render"] = {
+        "mode": render,
+        "kinematic_windows": int(kinematic.sum()),
+        "physics_windows": int(m - kinematic.sum()),
+        "wall_s": round(wall_s, 3),
+    }
     _write(Path(out_dir), "dream", meta, scenario_index=scenario_index, decision_time_s=decision_time_s,
-           features=features, physics=physics)
+           features=features, physics=physics, kinematic=kinematic)
 
     no_op = build_observed_spec(config).no_op_index
     kinds = [scenarios[i]["kind"] for i in scenario_index]
@@ -1320,7 +1674,8 @@ def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None 
     print("physics-guess NO_OP collision p > 0.5 (windows): " + ", ".join(
         f"{k} {int(sum(physics[r, no_op, 1] > 0.5 for r in range(m) if kinds[r] == k))}/{v * per_episode}"
         for k, v in meta["kind_counts"].items() if v))
-    print(f"wall time {wall_s:.1f} s for {n} episodes: {wall_s / n:.3f} s per episode")
+    print(f"render {render}: {meta['render']['kinematic_windows']} kinematic, {meta['render']['physics_windows']} physics windows")
+    print(f"wall time {wall_s:.1f} s for {n} scenes ({m} windows): {wall_s / n:.3f} s per scene, {m / wall_s:.1f} windows/s")
     print(f"wrote {Path(out_dir) / 'dream.npz'} and dream.json", flush=True)
     return meta
 
@@ -1337,12 +1692,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     dream = commands.add_parser("dream", help="rendered dream situations")
     dream.add_argument("--out", required=True, help="output directory")
     dream.add_argument("--n", type=int, help="episodes (default observed.dodge_vision.dream_episodes)")
+    dream.add_argument("--render", choices=_DREAM_RENDERS, help="default skills.dodge_vision.dream_render")
     args = parser.parse_args(argv)
     config = load_config()
     if args.command == "rows":
         collect_rows(config, args.split, args.out, args.n, args.frames)
     else:
-        collect_dream(config, args.out, args.n)
+        collect_dream(config, args.out, args.n, args.render)
     return 0
 
 

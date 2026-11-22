@@ -178,3 +178,16 @@ A stage of the track moves only while a real event says it is running. A recorde
 ## 2026-11-21 — The world lane's work-in-progress branch is public
 
 Person A approved pushing `person-a/lane-world` before its tests are complete so Person B can build against it; each commit message says what is tested. Tested commits reach Person B only through `person-a/go2-env`, and neither branch is rewritten.
+
+## 2026-11-21/22 — Person B: decisions of the chat-skill and vision-DODGE work
+
+- **A second, small engine for skills whose inputs are observed inside the episode** (`learned_judgment/observed.py`: dodge_vision, ramp, move). The first engine treats every situation value as a teacher and student feature and decides once before the episode; it cannot keep scorer-side truth out of the features. The new one reuses the production teacher, cache, ledger, SNN training and NumPy runtime.
+- **The physics guess may use scenario truth; the student never does.** Teacher columns are window + action + physics guess; the SNN reads the image window only.
+- **`tabpfn.max_tokens_per_request` raised from 10,000 to 60,000** for image-window tables (32,000 query rows at 1,161 columns quote 41,056).
+- **Student input is frame-to-frame change, not raw grey levels** (lead: the person stays visible in the live camera and the fist may be darker or brighter than the background). Encodings compared on dev: signed change, change against the oldest frame, event-camera ON/OFF events, raw.
+- **Punch scenes start 0.4-1.05 m from the camera at 0.4-1.2 m/s** (lead's description of the demo punch), with still, receding, crossing and passing objects at the same range as safe scenes. The backdrop grey is drawn near the floor grey.
+- **Decision frames only before contact; threat target = the dream world's predicted collision under NO_OP; action target = the dream's decision with a fixed tie-break** (readout order, tolerance 0.1 objective units). Each was chosen from a failed development round, never from held-out data.
+- **Sweep rule fixed in advance:** dev precision >= 0.99 with at least 20 issued commands, then highest recall, ties to fewer frames. A student with 19 commands was not accepted.
+- **RAMP:** the correction is speed only (a yaw trim on the slope made every climb fail); incline band 15-18 degrees, where the nominal walk leaves room; slope entry from trunk pitch (on 5.0, off 3.0 degrees, 0.1 s), set on dev episodes.
+- **Chat is Claude only** (lead: no fallbacks). `parse_request` exists but the server does not use it.
+- **Dev A's files:** after Dev A's session paused, the lead allowed Person B to edit `app/**`; every such change is listed in `talkhere.md`.

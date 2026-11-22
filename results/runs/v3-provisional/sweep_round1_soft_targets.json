@@ -1,0 +1,1342 @@
+{
+ "run_id": "v3",
+ "skill": "dodge_vision",
+ "argv": [
+  "--run",
+  "v3",
+  "--dream",
+  "results/runs/v3/dream",
+  "--scores",
+  "results/runs/v3/scores.npz",
+  "--trace",
+  "results/runs/v3/trace_dev.npz",
+  "--freeze-best"
+ ],
+ "created_utc": "2026-11-21T23:29:54.389994+00:00",
+ "rule": "qualifies: offline dev calibration's chosen triple has precision >= inference.gate.precision_target and emitted >= observed.dodge_vision.sweep.min_emitted; among qualifying: highest dev recall, ties -> fewer frames, then smaller hidden size (total units, then layers, then sizes in order), then encoding order as listed; none qualifying: no winner, nothing relaxed",
+ "rule_settings": {
+  "precision_target": 0.99,
+  "min_emitted": 20,
+  "tie_breaks": [
+   "fewer frames",
+   "smaller hidden size",
+   "encoding order"
+  ],
+  "encodings_order": [
+   "signed_diff",
+   "signed_diff_first",
+   "events",
+   "raw"
+  ]
+ },
+ "settings": {
+  "frames": [
+   4,
+   6,
+   8
+  ],
+  "encodings": [
+   "signed_diff",
+   "signed_diff_first",
+   "events",
+   "raw"
+  ],
+  "hidden_sizes": [
+   [
+    128
+   ]
+  ],
+  "steps": 1500,
+  "jobs": 6,
+  "min_emitted": 20
+ },
+ "variants_override": {},
+ "config_overrides": [],
+ "dream": "D:/BerlinPrior-eval/results/runs/v3/dream",
+ "scores": "D:/BerlinPrior-eval/results/runs/v3/scores.npz",
+ "trace": "D:/BerlinPrior-eval/results/runs/v3/trace_dev.npz",
+ "trace_n_scenarios": 240,
+ "trace_n_threats": 72,
+ "jobs": 6,
+ "config_digest": "daf9339212ef92f6ee9ea4b55f05d4229e896db44ec19f37caa31ac2f062961b",
+ "variants": [
+  {
+   "name": "f4_signed_diff_h128",
+   "settings": {
+    "frames": 4,
+    "encoding": "signed_diff",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1100,
+    "best_step": 600,
+    "stopped_early": true,
+    "initial_validation_loss": 0.6256049732612273,
+    "best_validation_loss": 0.30860075807916887,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.40090860983596915,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.21629290632236853,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 133.30344160000095,
+    "network_sha256": "64859729e52585efa2750614426670475f59ae38c9a7c6b39e716aba5a744980"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.95,
+     "action": 0.4,
+     "margin": 0.2
+    },
+    "emitted": 8,
+    "correct": 8,
+    "precision": 1.0,
+    "precision_ci": [
+     0.6755924351161198,
+     1.0
+    ],
+    "recalled": 8,
+    "recall": 0.1111111111111111,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.95,
+      "action": 0.4,
+      "margin": 0.2,
+      "emitted": 8,
+      "precision": 1.0,
+      "recall": 0.1111111111111111,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.95,
+      "action": 0.4,
+      "margin": 0.2,
+      "emitted": 8,
+      "precision": 1.0,
+      "recall": 0.1111111111111111,
+      "false_activations": 0
+     }
+    },
+    "wall_s": 96.87169169998378,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 1.1102230246251565e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 141.26141599999391,
+    "calibrate": 100.90898199999356,
+    "total": 242.17322160000913
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 3
+  },
+  {
+   "name": "f4_signed_diff_first_h128",
+   "settings": {
+    "frames": 4,
+    "encoding": "signed_diff_first",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_first_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_first_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_first_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1000,
+    "best_step": 500,
+    "stopped_early": true,
+    "initial_validation_loss": 0.6263210868026187,
+    "best_validation_loss": 0.3049281812566588,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.3862831242122449,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.22357323830107276,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 126.43197860001237,
+    "network_sha256": "eafadb2dc9fbdf90986acb836a6acf41d1b8cbce90746c2637f33925a299e008"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.9,
+     "action": 0.6,
+     "margin": 0.5
+    },
+    "emitted": 6,
+    "correct": 6,
+    "precision": 1.0,
+    "precision_ci": [
+     0.6096657120978348,
+     1.0
+    ],
+    "recalled": 5,
+    "recall": 0.06944444444444445,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.9,
+      "action": 0.6,
+      "margin": 0.5,
+      "emitted": 6,
+      "precision": 1.0,
+      "recall": 0.06944444444444445,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.9,
+      "action": 0.5,
+      "margin": 0.1,
+      "emitted": 13,
+      "precision": 0.9230769230769231,
+      "recall": 0.1527777777777778,
+      "false_activations": 1
+     }
+    },
+    "wall_s": 89.47006929997588,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 2.220446049250313e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 134.58788870001445,
+    "calibrate": 92.69447399998899,
+    "total": 227.28512149999733
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_first_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_signed_diff_first_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 5
+  },
+  {
+   "name": "f4_events_h128",
+   "settings": {
+    "frames": 4,
+    "encoding": "events",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_events_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_events_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_events_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1500,
+    "best_step": 1000,
+    "stopped_early": false,
+    "initial_validation_loss": 0.6271409330992881,
+    "best_validation_loss": 0.32727590748319346,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.4235187989103722,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.23103301605601478,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 163.90950049998355,
+    "network_sha256": "12c8eb7561d0ed9572478cc2eac16f3484cc210a345ac0e84ef03b5f19ff176b"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.98,
+     "action": 0.5,
+     "margin": 0.1
+    },
+    "emitted": 4,
+    "correct": 4,
+    "precision": 1.0,
+    "precision_ci": [
+     0.5101091635454027,
+     1.0
+    ],
+    "recalled": 4,
+    "recall": 0.05555555555555555,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.98,
+      "action": 0.5,
+      "margin": 0.1,
+      "emitted": 4,
+      "precision": 1.0,
+      "recall": 0.05555555555555555,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.98,
+      "action": 0.5,
+      "margin": 0.1,
+      "emitted": 4,
+      "precision": 1.0,
+      "recall": 0.05555555555555555,
+      "false_activations": 0
+     }
+    },
+    "wall_s": 88.71320889997878,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 1.1102230246251565e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 171.98012339998968,
+    "calibrate": 91.35042649999377,
+    "total": 263.33305489999475
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_events_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_events_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 7
+  },
+  {
+   "name": "f4_raw_h128",
+   "settings": {
+    "frames": 4,
+    "encoding": "raw",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_raw_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_raw_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_raw_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1100,
+    "best_step": 600,
+    "stopped_early": true,
+    "initial_validation_loss": 0.7943499768637381,
+    "best_validation_loss": 0.3599766237055868,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.4728528820663836,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.24710036534479002,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 136.70628700000816,
+    "network_sha256": "3b027b82f6fe6f9f71497495ce3ba4d602e6f1242703eb0a6671b4965b27d38e"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.8,
+     "action": 0.7,
+     "margin": 0.5
+    },
+    "emitted": 6,
+    "correct": 6,
+    "precision": 1.0,
+    "precision_ci": [
+     0.6096657120978348,
+     1.0
+    ],
+    "recalled": 5,
+    "recall": 0.06944444444444445,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.8,
+      "action": 0.7,
+      "margin": 0.5,
+      "emitted": 6,
+      "precision": 1.0,
+      "recall": 0.06944444444444445,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.8,
+      "action": 0.6,
+      "margin": 0.5,
+      "emitted": 10,
+      "precision": 0.9,
+      "recall": 0.1111111111111111,
+      "false_activations": 1
+     }
+    },
+    "wall_s": 69.88386040000478,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 3.3306690738754696e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 144.64181299999473,
+    "calibrate": 73.04644619999453,
+    "total": 217.69077489999472
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_raw_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f4_raw_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 6
+  },
+  {
+   "name": "f6_signed_diff_h128",
+   "settings": {
+    "frames": 6,
+    "encoding": "signed_diff",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1000,
+    "best_step": 500,
+    "stopped_early": true,
+    "initial_validation_loss": 0.6237235086615192,
+    "best_validation_loss": 0.27484645781686134,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.359496212616396,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.1901967030173267,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 131.09518969999044,
+    "network_sha256": "b79feed40c8b916635547e01b1f66238de855965d6a9c9b8a51a0f216189374d"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.95,
+     "action": 0.4,
+     "margin": 0.1
+    },
+    "emitted": 11,
+    "correct": 11,
+    "precision": 1.0,
+    "precision_ci": [
+     0.7411670330319684,
+     1.0
+    ],
+    "recalled": 10,
+    "recall": 0.1388888888888889,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.95,
+      "action": 0.4,
+      "margin": 0.1,
+      "emitted": 11,
+      "precision": 1.0,
+      "recall": 0.1388888888888889,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.9,
+      "action": 0.5,
+      "margin": 0.1,
+      "emitted": 24,
+      "precision": 0.9166666666666666,
+      "recall": 0.2916666666666667,
+      "false_activations": 2
+     }
+    },
+    "wall_s": 94.11889779998455,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 2.220446049250313e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 139.62213630002225,
+    "calibrate": 97.11617749999277,
+    "total": 236.74091570000746
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 2
+  },
+  {
+   "name": "f6_signed_diff_first_h128",
+   "settings": {
+    "frames": 6,
+    "encoding": "signed_diff_first",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_first_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_first_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_first_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1000,
+    "best_step": 500,
+    "stopped_early": true,
+    "initial_validation_loss": 0.6279929121080973,
+    "best_validation_loss": 0.28798880387385595,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.37016838527813406,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.20580922246957786,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 131.505685000011,
+    "network_sha256": "2a0beed0c3dbeb3c95322099920732b3cef7a983e07823d7ba2593314be4a4e5"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.95,
+     "action": 0.5,
+     "margin": 0.2
+    },
+    "emitted": 6,
+    "correct": 6,
+    "precision": 1.0,
+    "precision_ci": [
+     0.6096657120978348,
+     1.0
+    ],
+    "recalled": 4,
+    "recall": 0.05555555555555555,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.95,
+      "action": 0.5,
+      "margin": 0.2,
+      "emitted": 6,
+      "precision": 1.0,
+      "recall": 0.05555555555555555,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.95,
+      "action": 0.5,
+      "margin": 0.2,
+      "emitted": 6,
+      "precision": 1.0,
+      "recall": 0.05555555555555555,
+      "false_activations": 0
+     }
+    },
+    "wall_s": 88.7354812999838,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 3.3306690738754696e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 139.96386089999578,
+    "calibrate": 91.99149750001379,
+    "total": 231.95805990000372
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_first_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_signed_diff_first_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 8
+  },
+  {
+   "name": "f6_events_h128",
+   "settings": {
+    "frames": 6,
+    "encoding": "events",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_events_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_events_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_events_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1000,
+    "best_step": 500,
+    "stopped_early": true,
+    "initial_validation_loss": 0.6235645674354688,
+    "best_validation_loss": 0.3162973394322186,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.4197589124069999,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.21283576645743735,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 104.15605219997815,
+    "network_sha256": "cec2d15608275f29fce0bee0849f76fd5a8b0b31bf1d8bec318636c93694d941"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.95,
+     "action": 0.4,
+     "margin": 0.1
+    },
+    "emitted": 14,
+    "correct": 14,
+    "precision": 1.0,
+    "precision_ci": [
+     0.7846891972623643,
+     1.0
+    ],
+    "recalled": 13,
+    "recall": 0.18055555555555555,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.95,
+      "action": 0.4,
+      "margin": 0.1,
+      "emitted": 14,
+      "precision": 1.0,
+      "recall": 0.18055555555555555,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.9,
+      "action": 0.4,
+      "margin": 0.1,
+      "emitted": 26,
+      "precision": 0.9230769230769231,
+      "recall": 0.3055555555555556,
+      "false_activations": 2
+     }
+    },
+    "wall_s": 109.31974940001965,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 8.326672684688674e-17,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 111.11616480001248,
+    "calibrate": 112.26287379997666,
+    "total": 223.38153380001313
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_events_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_events_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 1
+  },
+  {
+   "name": "f6_raw_h128",
+   "settings": {
+    "frames": 6,
+    "encoding": "raw",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_raw_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_raw_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_raw_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1400,
+    "best_step": 900,
+    "stopped_early": true,
+    "initial_validation_loss": 0.6380531128676015,
+    "best_validation_loss": 0.3726531065490621,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.5072221231175842,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.23808408998053998,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 146.37619420001283,
+    "network_sha256": "ebd3ec158a4fa31e1590cd40103fd44966941b04d29706445a717519d8642675"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.9,
+     "action": 0.5,
+     "margin": 0.2
+    },
+    "emitted": 6,
+    "correct": 6,
+    "precision": 1.0,
+    "precision_ci": [
+     0.6096657120978348,
+     1.0
+    ],
+    "recalled": 6,
+    "recall": 0.08333333333333333,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.9,
+      "action": 0.5,
+      "margin": 0.2,
+      "emitted": 6,
+      "precision": 1.0,
+      "recall": 0.08333333333333333,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.9,
+      "action": 0.5,
+      "margin": 0.2,
+      "emitted": 6,
+      "precision": 1.0,
+      "recall": 0.08333333333333333,
+      "false_activations": 0
+     }
+    },
+    "wall_s": 68.05569750000723,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 2.220446049250313e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 154.06327640000382,
+    "calibrate": 72.39691609999863,
+    "total": 226.46321330001228
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_raw_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f6_raw_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 4
+  },
+  {
+   "name": "f8_signed_diff_h128",
+   "settings": {
+    "frames": 8,
+    "encoding": "signed_diff",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1000,
+    "best_step": 500,
+    "stopped_early": true,
+    "initial_validation_loss": 0.6226011973282397,
+    "best_validation_loss": 0.25527966187542206,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.34507263419317213,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.16548668955767198,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 118.8199177000206,
+    "network_sha256": "0f41b0806870cf4da55cd1930dcb91f6142da3902cda9df5803271c32a462d59"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.98,
+     "action": 0.6,
+     "margin": 0.2
+    },
+    "emitted": 3,
+    "correct": 3,
+    "precision": 1.0,
+    "precision_ci": [
+     0.4385029682449546,
+     1.0
+    ],
+    "recalled": 3,
+    "recall": 0.041666666666666664,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.98,
+      "action": 0.6,
+      "margin": 0.2,
+      "emitted": 3,
+      "precision": 1.0,
+      "recall": 0.041666666666666664,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.95,
+      "action": 0.6,
+      "margin": 0.3,
+      "emitted": 10,
+      "precision": 0.9,
+      "recall": 0.125,
+      "false_activations": 1
+     }
+    },
+    "wall_s": 96.33201270000427,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 2.220446049250313e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 127.28345220000483,
+    "calibrate": 99.93793990000268,
+    "total": 227.22411489998922
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 10
+  },
+  {
+   "name": "f8_signed_diff_first_h128",
+   "settings": {
+    "frames": 8,
+    "encoding": "signed_diff_first",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_first_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_first_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_first_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1500,
+    "best_step": 1300,
+    "stopped_early": false,
+    "initial_validation_loss": 0.6254544820105934,
+    "best_validation_loss": 0.26800596382059877,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.36696874846324085,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.16904317917795672,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 161.5275184000202,
+    "network_sha256": "35ed33247f56d4eac188eecdb069173055810e7cd04339e5f2d18cf209744b90"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.9,
+     "action": 0.9,
+     "margin": 0.7
+    },
+    "emitted": 4,
+    "correct": 4,
+    "precision": 1.0,
+    "precision_ci": [
+     0.5101091635454027,
+     1.0
+    ],
+    "recalled": 4,
+    "recall": 0.05555555555555555,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.9,
+      "action": 0.9,
+      "margin": 0.7,
+      "emitted": 4,
+      "precision": 1.0,
+      "recall": 0.05555555555555555,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.9,
+      "action": 0.9,
+      "margin": 0.7,
+      "emitted": 4,
+      "precision": 1.0,
+      "recall": 0.05555555555555555,
+      "false_activations": 0
+     }
+    },
+    "wall_s": 85.26059190000524,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 2.220446049250313e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 171.91875929999514,
+    "calibrate": 88.0964202999894,
+    "total": 260.0177696000028
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_first_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_signed_diff_first_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 9
+  },
+  {
+   "name": "f8_events_h128",
+   "settings": {
+    "frames": 8,
+    "encoding": "events",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_events_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_events_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_events_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1000,
+    "best_step": 500,
+    "stopped_early": true,
+    "initial_validation_loss": 0.6272001818803613,
+    "best_validation_loss": 0.3015531606771651,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.4076816282202244,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.1954246931341057,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 117.8893742999935,
+    "network_sha256": "a357cc0c3495cc459185f1ac866e1eae7925ecae7a101d7fa15ddbef0c746b9d"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.9,
+     "action": 0.9,
+     "margin": 0.7
+    },
+    "emitted": 3,
+    "correct": 3,
+    "precision": 1.0,
+    "precision_ci": [
+     0.4385029682449546,
+     1.0
+    ],
+    "recalled": 3,
+    "recall": 0.041666666666666664,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.9,
+      "action": 0.5,
+      "margin": 0.1,
+      "emitted": 27,
+      "precision": 0.9629629629629629,
+      "recall": 0.3611111111111111,
+      "false_activations": 1
+     },
+     "0.90": {
+      "threat": 0.9,
+      "action": 0.4,
+      "margin": 0.1,
+      "emitted": 31,
+      "precision": 0.9354838709677419,
+      "recall": 0.4027777777777778,
+      "false_activations": 2
+     }
+    },
+    "wall_s": 91.86619339999743,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 1.1102230246251565e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 131.1940141999803,
+    "calibrate": 97.06682380000711,
+    "total": 228.2637373000034
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_events_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_events_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 11
+  },
+  {
+   "name": "f8_raw_h128",
+   "settings": {
+    "frames": 8,
+    "encoding": "raw",
+    "hidden_sizes": [
+     128
+    ],
+    "steps": 1500
+   },
+   "dir": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_raw_h128",
+   "config": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_raw_h128/config.yaml",
+   "student": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_raw_h128/student",
+   "status": "done",
+   "failed_step": null,
+   "error": null,
+   "training": {
+    "state": "done",
+    "steps_run": 1500,
+    "best_step": 1200,
+    "stopped_early": false,
+    "initial_validation_loss": 0.6179560987713035,
+    "best_validation_loss": 0.3485663301424677,
+    "validation_vs_constant": {
+     "action": {
+      "validation_loss": 0.4793508002111872,
+      "constant_predictor": 0.6259992541788288,
+      "below_constant": true
+     },
+     "threat": {
+      "validation_loss": 0.2177818600737482,
+      "constant_predictor": 0.3999698862798671,
+      "below_constant": true
+     }
+    },
+    "split": {
+     "by": "group",
+     "validation_fraction": 0.1,
+     "n_train_rows": 8100,
+     "n_validation_rows": 900,
+     "n_groups": 1500
+    },
+    "train_wall_s": 159.3481449999963,
+    "network_sha256": "1c3b26a7ea715caf03537d21cafc7a0aac8032dc5795feb1b0cc54b0d421d743"
+   },
+   "calibration": {
+    "thresholds": {
+     "threat": 0.95,
+     "action": 0.6,
+     "margin": 0.2
+    },
+    "emitted": 1,
+    "correct": 1,
+    "precision": 1.0,
+    "precision_ci": [
+     0.20654931437723745,
+     1.0
+    ],
+    "recalled": 1,
+    "recall": 0.013888888888888888,
+    "false_activations": 0,
+    "gate_passed": true,
+    "n_scenarios": 240,
+    "n_threats": 72,
+    "precision_target": 0.99,
+    "best_recall_at_precision": {
+     "0.95": {
+      "threat": 0.95,
+      "action": 0.6,
+      "margin": 0.2,
+      "emitted": 1,
+      "precision": 1.0,
+      "recall": 0.013888888888888888,
+      "false_activations": 0
+     },
+     "0.90": {
+      "threat": 0.95,
+      "action": 0.6,
+      "margin": 0.2,
+      "emitted": 1,
+      "precision": 1.0,
+      "recall": 0.013888888888888888,
+      "false_activations": 0
+     }
+    },
+    "wall_s": 57.66773350001313,
+    "readout_check": {
+     "n_frames": 50,
+     "max_abs_difference": 2.220446049250313e-16,
+     "tolerance": 1e-09,
+     "passed": true
+    }
+   },
+   "wall_s": {
+    "train": 167.97805750000407,
+    "calibrate": 60.21480050001992,
+    "total": 228.1952985000098
+   },
+   "logs": {
+    "train": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_raw_h128/train.log",
+    "calibrate": "D:/BerlinPrior-eval/results/runs/v3/sweep/f8_raw_h128/calibrate.log"
+   },
+   "qualifies": false,
+   "rank": 12
+  }
+ ],
+ "ranking": [
+  "f6_events_h128",
+  "f6_signed_diff_h128",
+  "f4_signed_diff_h128",
+  "f6_raw_h128",
+  "f4_signed_diff_first_h128",
+  "f4_raw_h128",
+  "f4_events_h128",
+  "f6_signed_diff_first_h128",
+  "f8_signed_diff_first_h128",
+  "f8_signed_diff_h128",
+  "f8_events_h128",
+  "f8_raw_h128"
+ ],
+ "winner": null,
+ "result": "NO WINNER: no variant reached precision_target 0.99 with >= 20 issued commands on dev; the gate target was not met and nothing was relaxed",
+ "wall_s": 499.1613958000089,
+ "where": "simulation dev trace (MuJoCo Go2World, saved once); students trained and read out on this computer's CPU"
+}
