@@ -4,7 +4,7 @@ import { fromQuatPos } from "./mat.js";
 
 const IDENTITY = fromQuatPos([1, 0, 0, 0], [0, 0, 0]);
 
-// {drawables: [{geom, body, meshKey, local, rgba}], meshes: Map(key -> geometry), floorZ, rootBody, bodyCount}.
+// {drawables: [{geom, body, meshKey, local, rgba, trainedRgba}], meshes: Map(key -> geometry), floorZ, rootBody, bodyCount}.
 // Which geoms: with a group field, groups 0 to 2 (MuJoCo's visual groups; collision geoms are group 3); without it,
 // only the meshes of a body that has meshes (its primitives are collision shapes), and every other body's primitives.
 // The plane is the floor, drawn by the viewer: only its height is kept. Throws Error with the reason if unreadable.
@@ -38,11 +38,26 @@ export function buildScene(robot) {
         meshes.set(key, p);
       }
     }
-    drawables.push({ geom: g.id, body: g.body, meshKey: key, local: fromQuatPos(g.quat ?? [1, 0, 0, 0], g.pos ?? [0, 0, 0]), rgba: g.rgba ?? [0.6, 0.6, 0.6, 1] });
+    const rgba = g.rgba ?? [0.6, 0.6, 0.6, 1];
+    drawables.push({ geom: g.id, body: g.body, meshKey: key, local: fromQuatPos(g.quat ?? [1, 0, 0, 0], g.pos ?? [0, 0, 0]), rgba, trainedRgba: g.trained_rgba ?? rgba });
   }
   const drawn = new Set(drawables.map((d) => d.body));
   const root = bodies.find((b) => b.id !== 0 && b.parent === 0 && drawn.has(b.id));
-  return { drawables, meshes, floorZ, rootBody: root ? root.id : null, bodyCount: bodies.length };
+  return { drawables, meshes, floorZ, rootBody: root ? root.id : null, bodyCount: bodies.length, label: robot?.trained_label ?? null };
+}
+
+// The trained dog's lettering (/api/robot trained_label: {text, rgba, centre_m [x, |y|, z], size_m [length, height]},
+// in the trunk frame) as two quads, one on each side of the trunk: 12 vertices of (x, y, z, u, v). u runs left to right
+// for a reader facing that side, so the text starts at the head on the left side and at the tail on the right; v = 1 is
+// the top of the letters. null when there is nothing readable to draw.
+export function labelQuads(label) {
+  if (typeof label?.text !== "string" || !label.text || !vec(label.centre_m, 3) || !vec(label.size_m, 2)) return null;
+  const [cx, cy, cz] = label.centre_m, [w, h] = label.size_m, out = [];
+  for (const side of [1, -1]) { // +y is the dog's left
+    const y = side * Math.abs(cy), x0 = cx + (side * w) / 2, x1 = cx - (side * w) / 2, z0 = cz - h / 2, z1 = cz + h / 2;
+    out.push(x0, y, z1, 0, 1, x0, y, z0, 0, 0, x1, y, z0, 1, 0, x0, y, z1, 0, 1, x1, y, z0, 1, 0, x1, y, z1, 1, 1);
+  }
+  return Float32Array.from(out);
 }
 
 // The contract's "scene" event -> drawables in the world frame: [{id, type, size, model, rgba, transparent}].

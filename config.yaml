@@ -24,6 +24,19 @@ robot:
     source: https://github.com/unitreerobotics/unitree_mujoco/tree/1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d/unitree_robots/go2
     revision: 1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d
     sha256: 2014a3d76e30f17ab9447d8a67bd015291f74fa4d71ae30d005f1a32bd693d4b
+  # Look only, browser only: the trained ("after") dog of a side-by-side run is drawn with these colours in place of
+  # go2.xml's materials. The simulator, its camera frames and the other dog keep upstream's colours.
+  trained_material_rgba:
+    gray: [0.93, 0.84, 0.68, 1.0]   # cream: trunk shell, hips, thighs (tiramisu: mascarpone)
+    white: [0.93, 0.84, 0.68, 1.0]  # the trunk's cream: Unitree's lettering on the trunk sides blends in under trained_label
+    metal: [0.55, 0.36, 0.20, 1.0]  # coffee: joint covers
+    black: [0.24, 0.13, 0.07, 1.0]  # cocoa: lower legs, feet, head details
+  # Look only, browser only: lettering on both sides of the trained dog's trunk, where go2.xml has Unitree's.
+  trained_label:
+    text: tiramisu
+    rgba: [0.24, 0.13, 0.07, 1.0]  # cocoa
+    centre_m: [0.0, 0.099, 0.034]  # Trunk (base_link) frame: x ahead, |y| just outside the side panel (0.097 m), z up; the middle of Unitree's lettering.
+    size_m: [0.2, 0.05]  # Length along the trunk and height, in metres.
   walking_policy:
     # verified: the command fields and ranges in command_schema below were each proven by a recorded run (E4). It says
     # nothing about speed-tracking accuracy: see experiments/EXPERIMENTS_LOG.md, "Gate 1 — locomotion acceptance".

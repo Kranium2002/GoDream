@@ -298,7 +298,8 @@ class Simulation(threading.Thread):
         """Make model the one GET /api/robot describes. When its description differs from the current one, the version
         goes up and a ("robot", {reason, version}) event is returned for the caller to publish; else []."""
         started = time.perf_counter()
-        described = robot.describe(model)
+        described = robot.describe(model, self.config["robot"].get("trained_material_rgba"),
+                                   self.config["robot"].get("trained_label"))
         body = to_json(described)
         with self.changed:
             if body == self.robot_body:

@@ -205,3 +205,9 @@ Person B's session ran out of usage and handed the Dodge demo over (`talkhere.md
 - Applied to the duel only: 2 of 2 votes (`app.duel.dodge.votes_needed`, `of_last`; `inference.gate` stays 3 of 4) and the page's punch speed control starting at 0.5 m/s instead of 0.8 (`default_speed_m_s`).
 - Real duel rounds, the same 15 consecutive seeds, punch as the page sends it (1.075 m): 3 of 4 at 0.8 m/s dodged 7 of 14 hits (commands a median 0.37 s before contact); 2 of 2 at 0.8: 9 of 14 (0.42 s); 3 of 4 at 0.5: 10 of 15 (0.63 s); 2 of 2 at 0.5: 10 of 15 (0.67 s). No falls. Fifteen rounds each: a direction, not an evaluation.
 - Tests: `tests/b` and `tests/app` 396 passed, 9 skipped, 1 xfailed; `node --test tests/front` 174 passed.
+
+## 2026-11-22 — Person A: the trained dog's look on the page (tiramisu), browser only
+
+- The trained ("after") dog of a side-by-side run is drawn cream with coffee and cocoa parts (`robot.trained_material_rgba`, material name to colour) and carries the word "tiramisu" on both sides of its trunk where Unitree's lettering is (`robot.trained_label`: text, colour, place and size in the trunk frame). `/api/robot` adds `trained_rgba` to each geom and passes `trained_label` on; `viewer/scene.js` `labelQuads` makes one quad per side and `viewer/viewer.js` draws them with the text as a texture, in the trained view only.
+- The simulator, its camera frames, the student and the untrained dog are unchanged: go2.xml and its hash stay upstream's.
+- Tests on `person-b` at `7e5a4cc` plus this change: `tests/app/test_robot.py` 8 passed; `node --test tests/front` 134 passed. The full `tests/b` and `tests/app` suites: NOT RUN on this tree.

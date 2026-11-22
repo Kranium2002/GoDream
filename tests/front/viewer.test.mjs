@@ -107,6 +107,7 @@ test("buildScene draws only the meshes of a body that has meshes, other bodies' 
   assert.equal(sc.rootBody, 1); // the first child of the world body that carries geometry
   assert.equal(sc.bodyCount, 4);
   assert.deepEqual(sc.drawables[2].rgba, [1, 0.3, 0.1, 1]);
+  assert.deepEqual(sc.drawables[2].trainedRgba, [1, 0.3, 0.1, 1]); // no trained_rgba: the geom's own colour
   assert.ok(sc.meshes.get("m0").normals.length === 9);
 });
 
@@ -301,4 +302,24 @@ test("the orbit never puts the camera below the target's height", () => {
   const o = createOrbit({ target: [0, 0, 0.22], distance: 2, yaw: 0, pitch: -1 });
   assert.ok(o.pitch > 0);
   assert.ok(o.eye()[2] > 0.22);
+});
+
+test("the trained dog's lettering is one quad on each side of the trunk, read left to right from outside", async () => {
+  const { labelQuads } = await import("../../app/static/js/viewer/scene.js");
+  const q = labelQuads({ text: "tiramisu", centre_m: [0.1, 0.099, 0.034], size_m: [0.2, 0.05] });
+  assert.equal(q.length, 2 * 6 * 5); // two sides, two triangles each, (x, y, z, u, v) per vertex
+  const verts = Array.from({ length: 12 }, (_, k) => Array.from(q.slice(5 * k, 5 * k + 5)));
+  const near = (a, b) => Math.abs(a - b) < 1e-6;
+  for (const [side, firstLetterX] of [[1, 0.2], [-1, 0.0]]) { // left side: the text starts at the head; right side: at the tail
+    const mine = verts.filter((v) => Math.sign(v[1]) === side);
+    assert.equal(mine.length, 6);
+    assert.ok(mine.every((v) => near(Math.abs(v[1]), 0.099)));
+    for (const [x, , z, u, v] of mine) {
+      assert.ok(near(x, u === 0 ? firstLetterX : 0.2 - firstLetterX)); // u = 0 is the first letter's edge
+      assert.ok(near(z, v === 1 ? 0.059 : 0.009)); // v = 1 is the top of the letters
+    }
+  }
+  assert.equal(labelQuads(null), null);
+  assert.equal(labelQuads({ text: "", centre_m: [0, 0.1, 0], size_m: [0.2, 0.05] }), null);
+  assert.equal(labelQuads({ text: "x", centre_m: [0, 0.1], size_m: [0.2, 0.05] }), null);
 });

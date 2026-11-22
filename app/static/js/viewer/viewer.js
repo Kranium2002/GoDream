@@ -5,7 +5,7 @@
 // ResizeObserver rather than from the layout on every frame, and no drawing while the view is inactive or hidden.
 import { lookAt, multiply, normalMatrix, perspective } from "./mat.js";
 import { createOrbit, headingOf, smooth, smoothAngle } from "./orbit.js";
-import { buildScene, bodyMatrix, sceneItems } from "./scene.js";
+import { buildScene, bodyMatrix, labelQuads, sceneItems } from "./scene.js";
 import { createPoseBuffer } from "./pose.js";
 import { createQuality } from "./quality.js";
 import { primitive } from "./geometry.js";
@@ -72,6 +72,22 @@ void main() {
   outColor = vec4(mix(c, uSky, fade), 1.0);
 }`;
 
+// The trained dog's lettering: flat colour, the letters' shape from the alpha of a texture drawn with canvas text.
+const LABEL_VS = `#version 300 es
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec2 aUv;
+uniform mat4 uProj, uView, uModel;
+out vec2 vUv;
+void main() { vUv = aUv; gl_Position = uProj * uView * uModel * vec4(aPos, 1.0); }`;
+
+const LABEL_FS = `#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uText;
+uniform vec3 uColor;
+out vec4 outColor;
+void main() { outColor = vec4(uColor, texture(uText, vUv).a); }`;
+
 function program(gl, vs, fs) {
   const p = gl.createProgram();
   for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
@@ -120,16 +136,19 @@ function inside(scene, q) {
   return false;
 }
 
-// createViewer(canvas, {background, floor, distance, yaw, pitch, lockHeading, frameScene}) -> {setRobot, pushPose,
+// trained: draw the robot in its trained colours (geom trained_rgba), for the trained dog of a side-by-side run.
+// createViewer(canvas, {background, floor, distance, yaw, pitch, lockHeading, frameScene, trained}) -> {setRobot, pushPose,
 // setShift, resetView, destroy}. lockHeading: the camera keeps the heading the dog had at its first pose instead of
 // turning with it, so two views of two dogs keep the same angle. frameScene: the view widens and moves to keep the
 // scene's objects (a hill, an incoming object) in frame with the dog. Throws Error when WebGL2 is missing or a shader
 // fails, so the page can fall back to the image stream.
-export function createViewer(canvas, { background = "#0e0e0e", floor = "#1d1d1d", distance = 1.7, yaw = 0.75, pitch = 0.3, lockHeading = false, frameScene = false } = {}) {
+export function createViewer(canvas, { background = "#0e0e0e", floor = "#1d1d1d", distance = 1.7, yaw = 0.75, pitch = 0.3, lockHeading = false, frameScene = false, trained = false } = {}) {
   const gl = canvas.getContext("webgl2", { antialias: true, alpha: false });
   if (!gl) throw new Error("This browser offers no WebGL2.");
   const robotP = program(gl, ROBOT_VS, ROBOT_FS);
   const floorP = program(gl, FLOOR_VS, FLOOR_FS);
+  const labelP = trained ? program(gl, LABEL_VS, LABEL_FS) : null;
+  let label = null; // {vao, tex, count, rgb}: the trained dog's lettering, when /api/robot names one
   const sky = hex(background), floorRgb = hex(floor);
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -171,10 +190,38 @@ export function createViewer(canvas, { background = "#0e0e0e", floor = "#1d1d1d"
     return { vao, count: geom.indices.length };
   }
 
+  // The lettering's two quads and its texture: the text in white on a clear canvas, of which only the alpha is used.
+  function uploadLabel(quads, { text, rgba }) {
+    const c = document.createElement("canvas");
+    c.width = 512; c.height = 128;
+    const g = c.getContext("2d");
+    Object.assign(g, { font: "700 96px Inter, sans-serif", textAlign: "center", textBaseline: "middle", fillStyle: "#fff" });
+    g.fillText(text, 256, 68, 496); // a longer text is squeezed to fit
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, quads, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+    gl.bindVertexArray(null);
+    return { vao, tex, count: quads.length / 5, rgb: Array.isArray(rgba) && rgba.length >= 3 ? rgba.slice(0, 3) : [0, 0, 0] };
+  }
+
   function setRobot(robot) {
     const next = buildScene(robot); // throws with the reason if unreadable
     for (const { vao } of vaos.values()) gl.deleteVertexArray(vao);
     vaos = new Map([...next.meshes].map(([k, g]) => [k, upload(g)]));
+    if (label) { gl.deleteVertexArray(label.vao); gl.deleteTexture(label.tex); label = null; }
+    const quads = labelP ? labelQuads(next.label) : null;
+    if (quads) label = uploadLabel(quads, next.label);
     scene = next;
     poses.clear();
     follow = null;
@@ -273,7 +320,7 @@ export function createViewer(canvas, { background = "#0e0e0e", floor = "#1d1d1d"
       const g = vaos.get(d.meshKey);
       gl.uniformMatrix4fv(robotP.u.uModel, false, model);
       gl.uniformMatrix3fv(robotP.u.uNormalMat, false, normalMatrix(model));
-      gl.uniform4f(robotP.u.uColor, ...d.rgba);
+      gl.uniform4f(robotP.u.uColor, ...(trained ? d.trainedRgba : d.rgba));
       gl.bindVertexArray(g.vao);
       gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, 0);
     }
@@ -292,6 +339,20 @@ export function createViewer(canvas, { background = "#0e0e0e", floor = "#1d1d1d"
         gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, 0);
       }
       if (pass) { gl.disable(gl.BLEND); gl.depthMask(true); }
+    }
+    if (label && scene.rootBody !== null) { // the lettering rides on the trunk, blended over its side
+      gl.useProgram(labelP.p);
+      gl.uniformMatrix4fv(labelP.u.uProj, false, proj);
+      gl.uniformMatrix4fv(labelP.u.uView, false, view);
+      gl.uniformMatrix4fv(labelP.u.uModel, false, bodyMatrix(pose, scene.rootBody));
+      gl.uniform3f(labelP.u.uColor, ...label.rgb);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, label.tex);
+      gl.uniform1i(labelP.u.uText, 0);
+      gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+      gl.bindVertexArray(label.vao);
+      gl.drawArrays(gl.TRIANGLES, 0, label.count);
+      gl.disable(gl.BLEND); gl.depthMask(true);
     }
     gl.bindVertexArray(null);
   }

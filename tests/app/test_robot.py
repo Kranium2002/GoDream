@@ -54,6 +54,16 @@ def test_geoms_carry_their_pose_in_the_body_frame_size_and_colour(world, describ
         assert np.allclose(g["rgba"], expected)
 
 
+def test_trained_rgba_recolours_only_the_named_materials(world, described):
+    m, pink = world.model, [1.0, 0.31, 0.64, 1.0]
+    trained = robot.describe(m, {"black": pink})["geoms"]
+    black = m.material("black").id
+    assert any(m.geom_matid[g["id"]] == black for g in trained)
+    for g, plain in zip(trained, described["geoms"]):
+        assert g["rgba"] == plain["rgba"] and plain["trained_rgba"] == plain["rgba"]  # the model's colours stay
+        assert g["trained_rgba"] == (pink if m.geom_matid[g["id"]] == black else g["rgba"])
+
+
 def test_meshes_decode_to_the_models_vertices_and_faces(world, described):
     m = world.model
     used = {g["mesh"] for g in described["geoms"] if g["mesh"] is not None}
@@ -84,3 +94,9 @@ def test_poses_are_every_bodys_world_pose_from_the_data(world):
     assert pose["t_s"] == 0.2 and len(pose["pos"]) == len(pose["quat"]) == world.model.nbody
     assert np.allclose(pose["pos"], data.xpos) and np.allclose(pose["quat"], data.xquat)
     world.finish_episode()
+
+
+def test_the_trained_label_is_passed_on_only_when_configured(world, described):
+    label = {"text": "tiramisu", "rgba": [0.24, 0.13, 0.07, 1.0], "centre_m": [0.0, 0.099, 0.034], "size_m": [0.2, 0.05]}
+    assert robot.describe(world.model, None, label)["trained_label"] == label
+    assert "trained_label" not in described  # none configured: the answer is as before
