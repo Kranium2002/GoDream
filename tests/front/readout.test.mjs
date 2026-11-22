@@ -87,6 +87,42 @@ test("threshold values and a provisional student show only when the server sends
   assert.equal(readout(answer({ margin: "0.4" })).values.margin, null);
 });
 
+test("the plain state line names what the dog does, in the visitor's words", async () => {
+  const { plainState } = await import("../../app/static/js/readout.js");
+  const s = (over) => plainState(readout(answer(over)));
+  assert.equal(s({ action: "NO_OP", issued: false, cooldown_remaining_s: 0 }).text, "Calm. Nothing is coming.");
+  assert.equal(s({ action: "UNCERTAIN", issued: false, cooldown_remaining_s: 0 }).text, "Something moved. Not sure yet.");
+  assert.equal(s({ action: "DODGE_LEFT" }).text, "Dodging left!");
+  assert.equal(s({ action: "DODGE_RIGHT" }).text, "Dodging right!");
+  assert.equal(s({ action: "RETREAT" }).text, "Backing away!");
+  assert.equal(s({ action: "NO_OP", issued: false, cooldown_remaining_s: 0.4 }).text, "Catching its breath");
+  assert.equal(plainState(readout({ ok: false, status: 503, code: "infer_unavailable", message: "x", unavailable: true })).kind, "unavailable");
+});
+
+test("the why line comes from the gate's own fields", async () => {
+  const { plainWhy } = await import("../../app/static/js/readout.js");
+  const w = (over) => plainWhy(readout(answer(over)));
+  assert.equal(w({}), "It was sure in 3 of its last 4 looks, so it moves.");
+  assert.equal(w({ action: "NO_OP", issued: false, cooldown_remaining_s: 0, gate: { threat_ok: true, action_ok: true, margin_ok: true, votes: 1, votes_needed: 3, of_last: 4, passed: false } }),
+    "Something seems to be coming. It wants to be sure 3 times before it moves (1 so far).");
+  assert.equal(w({ action: "NO_OP", issued: false, cooldown_remaining_s: 0, gate: { threat_ok: false, votes: 0, votes_needed: 3, of_last: 4 } }),
+    "Nothing in view looks like it is coming at it.");
+  assert.equal(w({ action: "NO_OP", issued: false, cooldown_remaining_s: 0, gate: { threat_ok: true, action_ok: false, margin_ok: true } }),
+    "Something seems to be coming, but it cannot yet tell which way to go.");
+});
+
+test("the honesty lines come from the student's status, its gate and its thresholds only", async () => {
+  const { plainHonesty } = await import("../../app/static/js/readout.js");
+  const h = (over) => plainHonesty(readout(answer(over)));
+  assert.deepEqual(h({ student_status: "Thresholds frozen from 240 simulation dev trajectories. NOT been evaluated on held-out data yet." }),
+    ["Trained only in simulation.", "This model has not yet reached our strictest accuracy goal in testing."]);
+  assert.deepEqual(h({ student_status: "Held-out: the 0.99 target NOT met, in simulation." }),
+    ["Trained only in simulation.", "This model has not yet reached our strictest accuracy goal in testing."]);
+  assert.deepEqual(h({ student_status: "Calibrated in simulation; target met." }), ["Trained only in simulation."]);
+  assert.deepEqual(h({}), []);
+  assert.deepEqual(h({ thresholds: "development" }), ["Its reaction settings are still a first guess."]);
+});
+
 test("the server's frame age, window validity and cooldown conflict are shown, and development thresholds are flagged", () => {
   const r = readout(answer({ frame_age_ms: 41.26, frame_age_clamped: true, valid: true, cooldown_conflict: false, thresholds: "development" }));
   assert.equal(row(r, "Frame age at the server"), "41.3 ms (clamped)");

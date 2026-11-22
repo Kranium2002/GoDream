@@ -24,6 +24,8 @@ export function readout(result) {
   return {
     state: "decision",
     development: d.thresholds === "development", // shown prominently: the thresholds are not calibrated
+    studentStatus: typeof d.student_status === "string" && d.student_status ? d.student_status : null,
+    gatePassed: typeof d.gate_passed === "boolean" ? d.gate_passed : null,
     action: { code, label: ACTIONS[code] ?? code, tone: TONES[code] ?? "neutral" },
     issued: typeof d.issued === "boolean" ? d.issued : null,
     command: commandOf(d.command),
@@ -86,6 +88,53 @@ function badges(d) {
 }
 
 const commandOf = (c) => (c && typeof c === "object" && !Array.isArray(c) && Object.values(c).every(finiteNum) ? { ...c } : null);
+
+// ---- plain words for visitors, built only from the fields of a readout() view -----------------------------------
+const MOVES = { DODGE_LEFT: "Dodging left!", DODGE_RIGHT: "Dodging right!", RETREAT: "Backing away!" };
+
+// What the dog is doing now, in one short line: {text, tone, kind}. A move (issued now or still held) first, then the
+// pause after a move, then the quiet answers. tone: calm | warn | accent | neutral | danger.
+export function plainState(view) {
+  if (view.state === "unavailable") return { text: "The dog cannot react to the camera right now.", tone: "neutral", kind: "unavailable" };
+  if (view.state !== "decision") return { text: "The dog's answer did not arrive.", tone: "danger", kind: "error" };
+  const code = view.action.code, v = view.values;
+  if (MOVES[code]) return { text: MOVES[code], tone: "accent", kind: "move" };
+  if (v.cooldown !== null && v.cooldown > 0) return { text: "Catching its breath", tone: "neutral", kind: "cooldown" };
+  if (code === "UNCERTAIN") return { text: "Something moved. Not sure yet.", tone: "warn", kind: "unsure" };
+  if (code === "NO_OP") return { text: "Calm. Nothing is coming.", tone: "calm", kind: "calm" };
+  return { text: "The dog gave an answer this page does not know.", tone: "neutral", kind: "unknown" };
+}
+
+// One sentence on why it moves or stays still, from the gate's own fields.
+export function plainWhy(view) {
+  if (view.state === "unavailable") return "Its model is not loaded on this server, so the camera gives it no orders.";
+  if (view.state !== "decision") return "The server could not answer this time; the page tries again in a few seconds.";
+  const g = view.gateState, v = view.values, code = view.action.code;
+  if (MOVES[code] && view.issued === true) {
+    return g && g.votes !== null && g.ofLast !== null
+      ? `It was sure in ${g.votes} of its last ${g.ofLast} looks, so it moves.` : "It is sure something is coming, so it moves.";
+  }
+  if (MOVES[code]) return "It is still getting out of the way.";
+  if (v.cooldown !== null && v.cooldown > 0) return "It just moved, so it waits a moment before it can move again.";
+  if (v.valid === false) return "It could not read this moment, so it waits for the next one.";
+  if (!g || g.threat !== true) return code === "UNCERTAIN" ? "Something changed, but not enough to look like a threat." : "Nothing in view looks like it is coming at it.";
+  if (g.action === false || g.margin === false) return "Something seems to be coming, but it cannot yet tell which way to go.";
+  if (g.votesOk === false && g.votesNeeded !== null) {
+    return `Something seems to be coming. It wants to be sure ${g.votesNeeded} times before it moves (${g.votes ?? 0} so far).`;
+  }
+  return "It is watching.";
+}
+
+// The honesty lines shown to visitors, from student_status, gate_passed and thresholds only. The exact server sentence
+// belongs in the engineers' drawer.
+export function plainHonesty(view) {
+  if (view.state !== "decision") return [];
+  const s = view.studentStatus ?? "", out = [];
+  if (/simulat/i.test(s)) out.push("Trained only in simulation.");
+  if (/\bNOT\b[^.]*\b(met|evaluated)\b/.test(s) || view.gatePassed === false) out.push("This model has not yet reached our strictest accuracy goal in testing.");
+  if (view.development) out.push("Its reaction settings are still a first guess.");
+  return out;
+}
 
 // The command line under the action: what was sent to the simulated dog, with the units /api/state publishes.
 export function commandText(view, fields) {

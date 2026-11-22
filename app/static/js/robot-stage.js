@@ -12,6 +12,13 @@ export function poseStatus(poseCount, sinceLastMs) {
     : "The simulator has stopped sending poses; the dog is shown where it last was.";
 }
 
+// The stage's sky and floor from the page's tokens (style.css --stage-sky, --stage-floor), as #rrggbb.
+function stageColours() {
+  const css = getComputedStyle(document.documentElement);
+  const pick = (name) => { const v = css.getPropertyValue(name).trim(); return /^#[0-9a-f]{6}$/i.test(v) ? v : undefined; };
+  return Object.fromEntries(Object.entries({ background: pick("--stage-sky"), floor: pick("--stage-floor") }).filter(([, v]) => v));
+}
+
 export function initRobotStage({ api }) {
   const $ = (id) => document.getElementById(id);
   const canvas = $("scene"), fallback = $("scene-fallback"), statusEl = $("scene-status");
@@ -43,7 +50,7 @@ export function initRobotStage({ api }) {
       try { a.viewer.setRobot(robot); } catch (e) { a.onStatus(`The 3D view is unavailable: ${e.message}`); }
     }
     try {
-      if (!viewer) { viewer = createViewer(canvas); viewer.setShift(...shift); }
+      if (!viewer) { viewer = createViewer(canvas, stageColours()); viewer.setShift(...shift); }
       viewer.setRobot(robot);
     } catch (e) {
       return useFallback(e.message);

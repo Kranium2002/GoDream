@@ -205,6 +205,20 @@ world:
       # yaw_rate trims tried on flat ground; the one that turns least is used for the trimmed sweep. Small steps near 0:
       # the first sweep (artifacts/env/20261121T212102-w3-incline-sweep) found -0.07 turned the dog about 180 degrees.
       trim_candidates_rad_s: [0.0, -0.005, -0.01, -0.015, -0.02, -0.025, -0.03]
+  # A smooth mound (Go2World situation keys mound_x_m, mound_y_m, mound_radius_m, mound_height_m; learned_judgment/env/
+  # mound.py): a spherical cap placed at the decision instant relative to the dog (centre ahead / left of the trunk
+  # origin), flat on top and steepest at its rim. One massless sphere on a mocap body, resized and placed per episode.
+  mound:
+    radius_m: [0.3, 2.0]  # Footprint radius limits accepted by reset.
+    height_m: [0.02, 0.6]  # Top height limits accepted by reset (and below the radius: a cap under a half sphere).
+    # Steepest slope accepted, at the rim: asin(radius / sphere radius). PART A sweep (2026-11-22, vel_x 0.6 held, 14 s,
+    # seed 0): no fall and no MuJoCo bad state anywhere up to 45 deg (radius 0.6-1.5 m); with radius 1.0 the straight
+    # walk still gets past at 32 deg, so 30 left no mound it cannot simply walk over at that size. Raised to 40.
+    max_rim_slope_deg: 40.0
+    min_gap_m: 0.4  # Rim at least this far from the trunk origin at the decision instant: the mound never appears under the feet.
+    park_radius_m: 1.0  # Compiled sphere radius, used while parked (spawn and settle trot).
+    park_height_m: 100.0  # Height the parked sphere waits at, clear of the spawn's lowest-geom search (as world.incline).
+    rgba: [0.45, 0.55, 0.35, 1.0]  # Visible colour: a muted green against MuJoCo's default floor.
   # The hidden world (Go2World._hidden_effects). A preset's values are applied only for the effects switched on in
   # `enabled`; with all five off an episode is bit-identical to one without hidden effects. The ranges bound the
   # experiments (MISSION.md); presets are not range-checked, so a test can build a world outside them.
@@ -561,6 +575,74 @@ skills:
       drift: 2.0  # Per metre of off-axis drift.
       fall: 10.0  # Per unit of fall probability.
       spread: 2.0  # Per axis scale of predicted error spread.
+  reflex:  # REFLEX (Person B, learned_judgment.skills.reflex): a blind closed-loop steering reflex from raw body sensors.
+    # Everything about a particular lesson (senses, timing, steering options, goal, practice world) is in `declaration`,
+    # designed by a language model as data from `menu` (learned_judgment/reflex_lesson.py) and checked against it. The
+    # repository config carries no declaration: a run's own config.yaml adds skills.reflex.declaration.
+    status: planned
+    teacher_features: [window, action, physics]  # observed.py block names; "window" carries the raw sensor window.
+    # Dream decision target (observed.dream_targets): the first candidate in readout order (straight first) whose dream
+    # score is within tie_tolerance of the best, smoothed. Objective units: 0.02 = 2 cm of progress at progress weight 1.
+    action_target: {mode: decision, tie_tolerance: 0.02, smoothing: 0.05}
+    standing_settle_s: 1.0  # A standing start stands this long on the zero command before t_s 0 (as skills.move.settle_s).
+    outcome_bounds:  # Short-horizon outcomes (progress_m, offset_m, tilt_deg, fall), clipped to these.
+      progress_m: [-3.0, 4.0]  # Gain along the start heading over at most 3 s at up to 1 m/s; negative when pushed back.
+      offset_m: [0.0, 12.0]  # |sideways offset| from the line to the spot; the straight walk drifts 3.6 m in 14 s.
+      tilt_deg: [0.0, 90.0]  # Trunk tilt from upright; a fall is at robot.fall.max_tilt_deg (60).
+    menu:  # What a lesson may choose from. A language model designs the lesson within it; check_lesson enforces it.
+      # Sense groups, in the window's channel order. Each channel is scaled to [0, 1] with its fixed [low, high] and
+      # clipped. Body-frame quantities only: never position, velocity over the ground or anything about the mound.
+      sense_groups:
+        tilt:
+          description: "How the trunk leans: nose-up pitch and left-side-up roll, degrees (from the trunk orientation an IMU gives)."
+          channels: [[pitch_deg, -30.0, 30.0], [roll_deg, -30.0, 30.0]]
+        turn_rates:
+          description: "How fast the trunk rotates in its own frame: roll, pitch and yaw rates, rad/s (gyroscope)."
+          channels: [[roll_rate_rad_s, -4.0, 4.0], [pitch_rate_rad_s, -4.0, 4.0], [yaw_rate_rad_s, -2.0, 2.0]]
+        heading:
+          description: "Which way the dog faces compared with when the lesson started, degrees, + to the left (integrated IMU heading)."
+          channels: [[heading_deg, -90.0, 90.0]]
+        joint_angles:
+          description: "The 12 leg joint angles minus the walking policy's default pose, rad (joint encoders)."
+          channels: [[FL_hip, -1.0, 1.0], [FL_thigh, -1.0, 1.0], [FL_calf, -1.0, 1.0], [FR_hip, -1.0, 1.0],
+                     [FR_thigh, -1.0, 1.0], [FR_calf, -1.0, 1.0], [RL_hip, -1.0, 1.0], [RL_thigh, -1.0, 1.0],
+                     [RL_calf, -1.0, 1.0], [RR_hip, -1.0, 1.0], [RR_thigh, -1.0, 1.0], [RR_calf, -1.0, 1.0]]
+        joint_speeds:
+          description: "The 12 leg joint speeds, rad/s (joint encoders)."
+          channels: [[FL_hip_speed, -20.0, 20.0], [FL_thigh_speed, -20.0, 20.0], [FL_calf_speed, -20.0, 20.0],
+                     [FR_hip_speed, -20.0, 20.0], [FR_thigh_speed, -20.0, 20.0], [FR_calf_speed, -20.0, 20.0],
+                     [RL_hip_speed, -20.0, 20.0], [RL_thigh_speed, -20.0, 20.0], [RL_calf_speed, -20.0, 20.0],
+                     [RR_hip_speed, -20.0, 20.0], [RR_thigh_speed, -20.0, 20.0], [RR_calf_speed, -20.0, 20.0]]
+        feet:
+          description: "Which of the four feet touch the ground (FL, FR, RL, RR), 0 or 1 (foot contact switches)."
+          channels: [[FL_contact, 0.0, 1.0], [FR_contact, 0.0, 1.0], [RL_contact, 0.0, 1.0], [RR_contact, 0.0, 1.0]]
+        last_command:
+          description: "The steering command the dog itself sent last: forward speed (m/s), sideways speed (m/s), turn rate (rad/s)."
+          channels: [[cmd_vel_x, -1.0, 1.0], [cmd_vel_y, -1.0, 1.0], [cmd_yaw_rate, -1.0, 1.0]]
+      sample_every_s: [0.02, 0.5]  # Spacing of the window's samples; whole 0.02 s control periods.
+      history_s: [0.02, 2.0]  # Span of the window (oldest to newest sample); a whole number of sample spacings.
+      max_history_samples: 21  # Samples per window, history_s / sample_every_s + 1, at most this.
+      max_window_width: 600  # Numbers per window (samples x channels), at most this.
+      decide_every_s: [0.1, 1.0]  # Time between two decisions; whole control periods.
+      horizon_s: [0.2, 3.0]  # How far ahead each decision's result is measured; whole control periods.
+      time_limit_s: [8.0, 30.0]  # Longest episode.
+      starts: [standing, trotting]  # standing: from a stand (skills.reflex.standing_settle_s); trotting: after world.settle_s at the nominal speed.
+      nominal_speed_m_s: [0.3, 1.0]  # Forward speed of the plain walk; inside the verified vel_x range.
+      steer:  # Steering choices; each command is checked against the verified command schema (vel_y is always 0).
+        yaw_rate_rad_s: [-1.0, 1.0]
+        vel_x_m_s: [0.2, 1.0]
+        max_choices: 7  # Choices per field.
+      max_candidates: 12  # yaw_rate choices x vel_x choices, at most this.
+      goal:
+        forward_m: [2.0, 10.0]  # Distance to the spot straight ahead, along the heading at t_s 0.
+        tolerance_m: [0.2, 2.0]  # Largest |sideways offset| at the goal line that still counts as reaching the spot.
+        weight_max: 100.0  # Each objective weight in [0, this].
+      world:  # The practice world a lesson may draw its scenarios from (inside world.mound's limits).
+        flat_share: [0.0, 0.6]
+        radius_m: [0.6, 1.6]
+        height_m: [0.1, 0.6]  # A drawn height above the rim-slope limit (world.mound.max_rim_slope_deg) is lowered to it.
+        centre_ahead_m: [1.4, 4.0]
+        centre_side_m: [-1.0, 1.0]
 
 engine:
   candidate_batch_size: null  # Determine with verified API limits and dev runs.
@@ -865,6 +947,17 @@ observed:  # learned_judgment.observed (Person B): the learning run of a skill w
     fast_attempts: 40  # Fast run (run_skill --mode fast): context scenarios, ONE episode each; 40 = the top of MISSION.md's 10-40 attempts.
     fast_dream_situations: 1000  # Fast run: dream situations (no simulator); 1000 x 32 candidates = 32000 query rows, one request chunk per outcome.
     fast_snn_max_steps: 600  # Fast run: max optimizer steps of the spiking student. Was 1200: move-fast1 spent 35.2 s of its 51.1 s train step on 1200 steps (dream validation loss 0.0100 at 600, 0.0058 at 1200); wall time only. move-fast2 (600 steps, loop 23.7 s) shared the CPU with another 6-worker run, so its gain is not cleanly measured.
+  reflex:
+    attempt_episodes: 12  # Exploration episodes on context scenarios; every decision of each is a teacher row.
+    dream_episodes: 20  # Further unbilled rule-of-thumb episodes on dream scenarios whose sensor windows join the dream.
+    dev_scenarios: 30
+    test_scenarios: 30
+    fast_attempts: 8  # Fast run: exploration episodes.
+    fast_dream_episodes: 10  # Fast run: extra dream episodes.
+    fast_snn_max_steps: 1500  # Fast run: max optimizer steps of the spiking student.
+    snn_hidden_sizes: [64]
+    snn_max_steps: 3000
+    tracks_per_method: 6  # run: the per-period pose track (qpos) of the first this many test scenarios of each method.
 
 app:  # The local viewer server: uv run python -m app.server
   host: 127.0.0.1  # The only address the server accepts: it serves this machine alone.

@@ -14,11 +14,12 @@ from learned_judgment.env.acceptance import trunk_on_floor
 from learned_judgment.env.commands import validate_command
 from learned_judgment.env.policy import WalkingPolicy
 from learned_judgment.env.incline import place as place_incline
+from learned_judgment.env.mound import MOUND_KEYS, check as check_mound, park as park_mound, place as place_mound
 from learned_judgment.env.scene import build_model, is_ground
 from learned_judgment.env.throws import BALL_KEYS, sample_dodge_situations
 
 STREAMS = ("situation", "world", "ball", "noise")
-SITUATION_KEYS = ("dog_forward_speed_m_s", "settle_s", *BALL_KEYS, "object_kind", "incline_deg")
+SITUATION_KEYS = ("dog_forward_speed_m_s", "settle_s", *BALL_KEYS, "object_kind", "incline_deg", *MOUND_KEYS)
 OBJECT_KINDS = ("ball", "punch")  # object_kind: config.yaml `ball` and `punch`
 FEET = ("FL", "FR", "RL", "RR")  # go2.xml foot geoms, in the model's body order
 BAD_STATE = (mujoco.mjtWarning.mjWARN_BADQPOS, mujoco.mjtWarning.mjWARN_BADQVEL, mujoco.mjtWarning.mjWARN_BADQACC)
@@ -129,6 +130,16 @@ class Go2World:
     them. The angle is hidden: it is only in <trace>.hidden.json. sample_ramp_situations(config, rng, n) draws angles
     from world.incline.range_deg.
 
+    Mound. All four MOUND_KEYS place, at the decision instant, a smooth static mound (a spherical cap; learned_judgment/
+    env/mound.py) in the frame of the ball keys: its centre mound_x_m ahead of the trunk origin along the heading then
+    and mound_y_m to its left (m), footprint radius mound_radius_m and top height mound_height_m (m). Some of the four
+    raise ValueError naming the missing ones; none gives the scene, the physics and the trace exactly as without the
+    keys. Limits (config.yaml world.mound): radius_m, height_m, max_rim_slope_deg (the cap is steepest at its rim) and
+    min_gap_m (rim to trunk origin), each with a ValueError naming it. The mound is ground like the floor (foot contact,
+    the trunk-on-ground fall check, foot_slip_m), visible, and hidden: only <trace>.hidden.json records it ("mound":
+    the four keys plus centre_xy_m in the world frame, sphere_radius_m and rim_slope_deg); no observation or outcome key
+    reveals it.
+
     Observation, one per control period (0.02 s). World frame: x, y on the floor, z up (normal to the floor; a slope
     tilts gravity instead), origin on the floor under the spawn point (the dog starts facing +x).
         t_s                 float, s. Episode time, 0.0 at the decision instant.
@@ -210,9 +221,9 @@ class Go2World:
         self._episodes = 0
         self._active = False
         self._renderer = None
-        # (object kind or None, incline) -> (model, policy); a scene with an object or the incline is built for its
-        # first episode
-        self._scenes = {(None, False): (self.model, self.policy)}
+        # (object kind or None, incline, mound) -> (model, policy); a scene with an object, the incline or the mound is
+        # built for its first episode
+        self._scenes = {(None, False, False): (self.model, self.policy)}
         self._ground = is_ground(self.model)
         self._ball_live = False
 
@@ -263,7 +274,15 @@ class Go2World:
         if not 0.0 <= incline <= self.config["world"]["incline"]["max_deg"]:
             raise ValueError(f"incline_deg must be from 0 to world.incline.max_deg "
                              f"({self.config['world']['incline']['max_deg']}), got {incline}")
-        trot = {name: 0.0 for name in self.command_schema["fields"]} | {
+        mound = None
+        if any(k in situation for k in MOUND_KEYS):
+            missing = [k for k in MOUND_KEYS if k not in situation]
+            if missing:
+                raise ValueError(f"missing mound key(s) {missing}: give all four of {list(MOUND_KEYS)} or none")
+            mound = dict(zip(MOUND_KEYS, (_number(k, situation[k]) for k in MOUND_KEYS)))
+            check_mound(self.config["world"]["mound"], mound["mound_radius_m"], mound["mound_height_m"],
+                        mound["mound_x_m"], mound["mound_y_m"])
+        trot ={name: 0.0 for name in self.command_schema["fields"]} | {
             "vel_x": situation.get("dog_forward_speed_m_s", 0.0)}
         native = validate_command(trot, self.command_schema)
         settle_s = _number("settle_s", situation.get("settle_s", self.config["world"]["settle_s"]))
@@ -276,8 +295,10 @@ class Go2World:
         self._attempt_seed, self.attempt_streams = attempt, streams
         self._episodes += 1
         self._object = kind if ball else None
-        self._use_scene(self._object, incline > 0.0)
+        self._use_scene(self._object, incline > 0.0, mound is not None)
         self._incline = incline
+        if mound is not None:
+            park_mound(self.model, self.config["world"]["mound"])  # its compiled radius until the decision instant
         dt, self._delay = self.policy.control_dt, 0  # control periods from issuing a command to the policy receiving it
         if "latency" in self._hidden:
             # From a child of the attempt's noise stream (Generator.spawn), so that stream reaches its user untouched.
@@ -288,6 +309,7 @@ class Go2World:
         if incline:  # parked out of the spawn's way until the decision instant
             self.policy.data.mocap_pos[:] = [0.0, 0.0, self.config["world"]["incline"]["park_height_m"]]
             self.policy.data.mocap_quat[:] = [1.0, 0.0, 0.0, 0.0]
+        # A mound waits parked at its compiled body position, which mj_resetData (the spawn) restores.
         self.policy.reset(on_substep=self._watch)
         for _ in range(round(settle_s / self.policy.control_dt)):
             self.policy.step(native, on_substep=self._watch)
@@ -301,6 +323,10 @@ class Go2World:
         if incline:
             self._ramp = place_incline(self.model, self.policy.data, self.config["world"]["incline"], incline,
                                        self._start_pos, self._start_yaw)
+        self._mound = None if mound is None else mound | place_mound(
+            self.model, self.policy.data, mound["mound_x_m"], mound["mound_y_m"], mound["mound_radius_m"],
+            mound["mound_height_m"], self._start_pos, self._start_yaw)
+        if incline or mound is not None:
             mujoco.mj_kinematics(self.model, self.policy.data)  # so a frame at t_s 0 shows it; the policy reads qpos
         self._slip = 0.0
         self._issued = self._command = {name: float(v) for name, v in trot.items()}  # last issued; policy's (delayed)
@@ -409,13 +435,14 @@ class Go2World:
     # The ball. Its scene is the plain one plus a free body after the robot (scene.build_model), so the robot's qpos,
     # qvel, body and geom indices are the same in both scenes.
 
-    def _use_scene(self, ball: str | None, incline: bool = False) -> None:
+    def _use_scene(self, ball: str | None, incline: bool = False, mound: bool = False) -> None:
         """Point model and policy at the scene with the thrown object of kind `ball` (or none) and with or without
-        the incline, building it on first use. The object collides with nothing until _throw. Object and incline come
-        after the robot, the object first, so the robot's and the object's indices are the same in every scene."""
-        key = (ball, incline)
+        the incline and the mound, building it on first use. The object collides with nothing until _throw. Object,
+        incline and mound come after the robot, in that order, so the robot's and the object's indices are the same in
+        every scene."""
+        key = (ball, incline, mound)
         if key not in self._scenes:
-            model = build_model(self.config, self._hidden, ball=ball or False, incline=incline)
+            model = build_model(self.config, self._hidden, ball=ball or False, incline=incline, mound=mound)
             self._scenes[key] = (model, WalkingPolicy(self.config, model, self._hidden.get("motor_strength", 1.0)))
         if ball:
             model = self._scenes[key][0]
@@ -519,5 +546,7 @@ class Go2World:
                   "hidden_effects": self._hidden, "attempt_latency_s": self._delay * self.policy.control_dt,
                   "incline_deg": self._incline, "object_kind": self._object,
                   "policy_command": self._policy_commands}
+        if self._mound is not None:  # only with a mound, so a flat episode's sidecar is as before
+            hidden["mound"] = self._mound
         path.with_suffix(".hidden.json").write_text(json.dumps(hidden, indent=2, default=lambda o: o.tolist()))
         return path.as_posix()

@@ -2,387 +2,199 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Go2 skill teacher</title>
-  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Learned Judgment</title>
   <link rel="stylesheet" href="style.css">
   <script type="module" src="js/app.js"></script>
 </head>
-<body>
-  <a class="skip" href="#main">Skip to content</a>
-  <header class="bar">
-    <div class="frame bar__in">
-      <p class="brand">Go2 skill teacher <span class="brand__sub">simulated Unitree Go2</span></p>
-      <nav class="areas" aria-label="Sections">
-        <a href="#robot">Robot</a>
-        <a href="#learn">Learnt skills</a>
-        <a href="#try">Try it</a>
-      </nav>
-      <div class="conn" role="status" aria-live="polite">
-        <p class="conn__line"><span class="dot" id="conn-mark" aria-hidden="true"></span> <span id="conn-text">Connecting to the server</span></p>
-        <p class="conn__sim" id="sim-text"></p>
-      </div>
+<body data-screen="teach">
+  <a class="skip" href="#main">Skip to the content</a>
+
+  <!-- The stage: the real simulated dog fills the window behind every screen. -->
+  <div class="stage">
+    <canvas id="scene" class="stage__canvas" tabindex="0" aria-label="The simulated robot dog, live from the simulator. Drag to look around; arrow keys turn the view."></canvas>
+    <img id="scene-fallback" class="stage__canvas" alt="The simulator's own camera view of the dog" hidden>
+    <div class="stage__shade" aria-hidden="true"></div>
+  </div>
+
+  <header class="topbar glass" id="topbar">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true"></span>
+      <span class="brand__text">
+        <span class="brand__name">Learned Judgment</span>
+        <span class="brand__tag">A robot dog that learns new tricks from a few tries</span>
+      </span>
     </div>
+    <nav class="progress" aria-label="Steps">
+      <ol class="progress__list">
+        <li><a class="progress__step" href="#teach" data-screen="teach"><span class="progress__num" aria-hidden="true">1</span><span class="progress__label">Teach</span></a></li>
+        <li><a class="progress__step" href="#learn" data-screen="learn"><span class="progress__num" aria-hidden="true">2</span><span class="progress__label">Learn</span></a></li>
+        <li><a class="progress__step" href="#results" data-screen="results"><span class="progress__num" aria-hidden="true">3</span><span class="progress__label">Results</span></a></li>
+        <li><a class="progress__step" href="#live" data-screen="live"><span class="progress__num" aria-hidden="true">4</span><span class="progress__label">Try it live</span></a></li>
+      </ol>
+    </nav>
+    <button class="btn btn--quiet btn--sm topbar__details" id="drawer-open" type="button" aria-expanded="false" aria-controls="drawer">
+      <span class="when-wide">Details for engineers</span><span class="when-narrow">Details</span>
+    </button>
   </header>
 
-  <main id="main">
-    <section class="stage-hero theme-dark" id="robot" aria-labelledby="hero-h">
-      <canvas id="scene" tabindex="0" role="img" aria-label="The simulated Go2 robot in 3D. Arrow keys turn the view, plus and minus zoom, 0 resets it." hidden></canvas>
-      <img id="scene-fallback" alt="The simulator's tracking camera" hidden>
-      <div class="stage-main">
-        <div class="hero-copy" id="hero-copy">
-          <p class="eyebrow">Unitree Go2 · live MuJoCo simulation</p>
-          <h1 id="hero-h">A robot dog that learns a new skill from a few tries</h1>
-          <p class="hero-lead">Tell it what to learn. A physics guess proposes each move, a PFN teacher corrects it from a few real simulator attempts, and a small spiking network learns inside the teacher's dreams. Every number here is measured in simulation.</p>
-          <button class="btn btn--primary btn--hero" type="button" id="teach-open" aria-controls="dock" aria-expanded="false">Teach it anything</button>
+  <main id="main" class="screens">
+    <!-- 1 Teach -->
+    <section class="panel glass" id="screen-teach" aria-labelledby="teach-h" hidden>
+      <div class="panel__body">
+        <h1 class="display" id="teach-h" tabindex="-1">What should the dog learn?</h1>
+        <p class="lead">Say it in your own words. It practises in a simulator and learns from its tries.</p>
+        <form class="ask" id="ask" aria-busy="false">
+          <label class="sr-only" for="msg">What should the dog learn?</label>
+          <input class="ask__input" id="msg" type="text" autocomplete="off" maxlength="400" placeholder="Walk forward 1.5 m and stop" enterkeyhint="send">
+          <button class="btn btn--accent ask__send" id="send" type="submit">Teach</button>
+        </form>
+        <div class="chips" role="group" aria-label="Examples">
+          <button class="chip" type="button" data-example="Climb a steep ramp">Climb a steep ramp</button>
+          <button class="chip" type="button" data-example="Walk forward 1.5 m and stop">Walk forward 1.5 m and stop</button>
+          <button class="chip" type="button" data-example="Dodge a slow punch">Dodge a slow punch</button>
         </div>
-        <div class="stage-foot">
-          <div class="notes notes--stage" id="stage-notes" role="status" aria-live="polite" hidden></div>
-          <div class="caption" id="episode-caption" role="status" aria-live="polite" hidden>
-            <p class="caption__top"><span class="chip chip--accent" id="ep-chip">Episode</span> <span class="caption__title" id="ep-title"></span></p>
-            <p class="caption__text" id="ep-text"></p>
-            <dl class="caption__outcome" id="ep-outcome" hidden></dl>
-            <p class="caption__note" id="ep-note"></p>
-          </div>
-          <div class="stage-bar">
-            <div class="zoom" role="group" aria-label="Zoom the 3D view">
-              <button class="btn btn--icon" type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
-              <button class="btn btn--icon" type="button" id="zoom-in" aria-label="Zoom in">+</button>
-              <button class="btn btn--secondary btn--sm" type="button" id="view-reset">Reset view</button>
-            </div>
-            <p class="scene-status" id="scene-status" role="status" aria-live="polite">Loading the robot.</p>
-          </div>
-        </div>
-        <div class="drive panel-dark" id="drive" aria-labelledby="drive-h" hidden>
-          <div class="panel-head">
-            <h2 id="drive-h">Drive the simulated dog</h2>
-            <button class="btn btn--secondary btn--sm" type="button" id="drive-close">Close</button>
-          </div>
-          <p class="inline-note inline-note--warn" id="drive-cap" hidden></p>
-          <div class="drive__pad" role="group" aria-label="Direction">
-            <button class="pad" type="button" data-dir="turn_left" aria-keyshortcuts="Q">Turn left <kbd>Q</kbd></button>
-            <button class="pad" type="button" data-dir="forward" aria-keyshortcuts="W">Forward <kbd>W</kbd></button>
-            <button class="pad" type="button" data-dir="turn_right" aria-keyshortcuts="E">Turn right <kbd>E</kbd></button>
-            <button class="pad" type="button" data-dir="left" aria-keyshortcuts="A">Left <kbd>A</kbd></button>
-            <button class="pad pad--stop" type="button" data-dir="stop" aria-keyshortcuts="Space">Stop <kbd>Space</kbd></button>
-            <button class="pad" type="button" data-dir="right" aria-keyshortcuts="D">Right <kbd>D</kbd></button>
-            <span></span>
-            <button class="pad" type="button" data-dir="back" aria-keyshortcuts="S">Back <kbd>S</kbd></button>
-            <span></span>
-          </div>
-          <div class="field-row">
-            <label for="drive-speed">Speed</label>
-            <select class="input" id="drive-speed">
-              <option value="0.25">A quarter of the supported range</option>
-              <option value="0.5" selected>Half of the supported range</option>
-              <option value="1">The full supported range</option>
-            </select>
-          </div>
-          <div class="field-row">
-            <label for="drive-preset">World</label>
-            <select class="input" id="drive-preset"></select>
-            <button class="btn btn--secondary btn--sm" type="button" id="drive-reset">Reset the episode</button>
-          </div>
-          <p class="small" id="drive-status" role="status" aria-live="polite">The dog is roaming on the zero command until you press a direction.</p>
-          <p class="small muted">Scenario episodes of a learning run are shown with "Show this run's episodes" on its card.</p>
-        </div>
-        <aside class="dock theme-light" id="dock" aria-labelledby="dock-h" hidden>
-          <div class="dock__head">
-            <h2 id="dock-h">Teach a skill</h2>
-            <button class="btn btn--secondary btn--sm" type="button" id="teach-close">Close</button>
-          </div>
-          <div class="dock__scroll" id="dock-scroll">
-            <div class="notes" id="dock-notes" role="status" aria-live="polite" hidden></div>
-            <section class="dock__part" aria-labelledby="skills-h">
-              <h3 id="skills-h">What it can learn</h3>
-              <p class="muted small" id="skills-empty">Not known yet: the skill catalogue has not arrived.</p>
-              <ul class="checks" id="skills" aria-labelledby="skills-h"></ul>
-              <p class="label">Try asking</p>
-              <div class="examples">
-                <button class="suggest" type="button" data-example="Teach it to cross this slope safely.">Teach it to cross this slope safely.</button>
-                <button class="suggest" type="button" data-example="Teach it to dodge an incoming punch or ball, but stay quiet when it is safe.">Teach it to dodge an incoming punch or ball, but stay quiet when it is safe.</button>
-              </div>
-            </section>
-            <section class="dock__part" aria-labelledby="chat-h">
-              <h3 id="chat-h">Chat</h3>
-              <ol class="log" id="log" tabindex="0" aria-label="Conversation" aria-live="polite">
-                <li class="log__empty" id="log-empty">Describe what the dog should learn, for example crossing a slope or dodging an incoming ball.</li>
-              </ol>
-            </section>
-            <section class="dock__part" aria-labelledby="spec-h">
-              <h3 id="spec-h">What it understood</h3>
-              <p class="verdict" id="verdict" role="status" aria-live="polite"><span class="dot dot--hollow" aria-hidden="true"></span> <span>No skill declared yet</span></p>
-              <div id="spec-body">
-                <p class="muted small">The server turns your request into a declared skill and checks it; it appears here.</p>
-              </div>
-              <div class="run" aria-labelledby="run-h">
-                <h4 id="run-h">Learning run</h4>
-                <fieldset class="seg-field" id="run-modes" hidden>
-                  <legend class="label">Run mode</legend>
-                  <div class="seg" id="run-mode-list"></div>
-                  <p class="small muted" id="run-mode-help"></p>
-                  <p class="inline-note" id="run-mode-note" hidden></p>
-                </fieldset>
-                <div class="confirm" id="confirm" hidden>
-                  <h4 id="confirm-h" tabindex="-1">Confirm the quoted usage</h4>
-                  <p class="small" id="confirm-msg"></p>
-                  <dl class="kv kv--quote" id="confirm-quote"></dl>
-                  <div class="btn-row">
-                    <button class="btn btn--primary" type="button" id="confirm-yes">Confirm and start the run</button>
-                    <button class="btn btn--secondary" type="button" id="confirm-no">Cancel</button>
-                  </div>
-                </div>
-                <div class="btn-row" id="start-row">
-                  <button class="btn btn--primary" type="button" id="start" disabled aria-describedby="run-status">Start learning run</button>
-                </div>
-                <p class="small" id="run-status" tabindex="-1" role="status" aria-live="polite">Available once the declared skill is valid.</p>
-              </div>
-            </section>
-          </div>
-          <div class="dock__foot">
-            <form class="ask" id="ask">
-              <label class="sr-only" for="msg">Your message</label>
-              <textarea class="input" id="msg" name="msg" rows="2" required aria-describedby="msg-hint" placeholder="Describe a skill for the dog"></textarea>
-              <button class="btn btn--primary" type="submit" id="send">Send</button>
-              <p class="sr-only" id="msg-hint">Enter sends. Shift and Enter adds a line.</p>
-            </form>
-          </div>
-        </aside>
+        <div class="answer" id="answer" aria-live="polite" hidden></div>
+        <section class="known" id="known" aria-labelledby="known-h" hidden>
+          <h2 class="title" id="known-h">What it already knows</h2>
+          <ul class="known__list" id="known-list"></ul>
+        </section>
       </div>
-      <div class="track" id="track" aria-labelledby="track-title" hidden>
-        <div class="track__head">
-          <div class="track__titles">
-            <p class="track__title" id="track-title" role="status" aria-live="polite"></p>
-            <p class="track__meta" id="track-meta" hidden><span id="l-mode-wrap" hidden>RAMP mode: <span id="l-mode"></span></span> <span id="l-gate-wrap" hidden>DODGE: <span id="l-gate"></span></span></p>
-          </div>
-          <div class="track__actions">
-            <button class="btn btn--secondary btn--sm" type="button" id="track-episodes" data-episodes="" hidden>Show this run's episodes</button>
-            <button class="btn btn--secondary btn--sm" type="button" id="replay-stop" hidden>Stop replay</button>
-            <button class="btn btn--secondary btn--sm" type="button" id="track-close">Hide</button>
-          </div>
-        </div>
-        <ol class="track__steps" id="track-steps"></ol>
-      </div>
+      <div class="panel__foot" id="teach-foot" hidden></div>
     </section>
 
-    <div class="frame below">
-      <section class="section" id="learn" aria-labelledby="learn-h">
-        <div class="section-head">
-          <h2 id="learn-h">Learnt skills</h2>
-          <p class="section-lead">Every learning run saved on this computer. Replay its recorded progress on the robot stage, or show its own episodes there.</p>
+    <!-- 2 Learn -->
+    <section class="panel glass" id="screen-learn" aria-labelledby="learn-h" hidden>
+      <div class="panel__body">
+        <div class="empty" id="learn-empty" hidden>
+          <h1 class="display" tabindex="-1">No lesson yet.</h1>
+          <p class="lead">Teach it something first, then watch it learn here.</p>
         </div>
-        <div class="notes" id="learn-notes" role="status" aria-live="polite" hidden></div>
-        <div class="toolbar">
-          <div class="field-row">
-            <label for="replay-speed">Replay speed</label>
-            <select class="input input--auto" id="replay-speed">
-              <option value="1">1x, as recorded</option>
-              <option value="10" selected>10x</option>
-              <option value="60">60x</option>
-            </select>
+        <div id="learn-main">
+          <p class="eyebrow" id="learn-eyebrow"></p>
+          <h1 class="display" id="learn-h" tabindex="-1">Loading the lesson…</h1>
+          <ol class="lesson" id="lesson" aria-label="The lesson, step by step"></ol>
+          <p class="calm" id="learn-note" hidden></p>
+        </div>
+      </div>
+      <div class="panel__foot" id="learn-foot" hidden></div>
+    </section>
+
+    <!-- 3 Results -->
+    <section class="panel glass" id="screen-results" aria-labelledby="res-h" hidden>
+      <div class="panel__body">
+        <div class="empty" id="res-empty" hidden>
+          <h1 class="display" id="res-empty-h" tabindex="-1">Nothing learned yet.</h1>
+          <p class="lead" id="res-empty-p">Teach it something first.</p>
+        </div>
+        <div id="res-main">
+          <p class="eyebrow" id="res-eyebrow"></p>
+          <h1 class="headline" id="res-h" tabindex="-1">Reading the test results…</h1>
+          <ul class="tiles" id="res-tiles" aria-label="Before and after learning"></ul>
+          <div class="calm-notes" id="res-notes" hidden></div>
+          <div class="watch" id="res-watch" hidden>
+            <div class="watch__row" id="res-watch-row"></div>
+            <p class="hint" id="res-watch-hint"></p>
           </div>
-          <details class="disclosure">
-            <summary>Open a run by its id</summary>
-            <form class="pick" id="run-pick">
-              <div class="field">
-                <label for="run-select">Runs seen on this page</label>
-                <select class="input" id="run-select"><option value="">No run in this session yet</option></select>
-              </div>
-              <div class="field">
-                <label for="run-id">Run id</label>
-                <input class="input" id="run-id" name="run-id" autocomplete="off" spellcheck="false">
-              </div>
-              <button class="btn btn--secondary" type="submit">Open run</button>
-            </form>
+          <details class="numbers-box" id="res-numbers" hidden>
+            <summary>The numbers</summary>
+            <div id="res-numbers-body"></div>
           </details>
         </div>
-        <p class="muted" id="cards-empty" hidden>No learning run is saved on this computer yet.</p>
-        <ul class="run-cards" id="cards" aria-label="Learning runs"></ul>
-        <p class="status-line" id="learn-status" role="status" aria-live="polite">No run open. Start one from the chat, or open a learnt skill.</p>
+      </div>
+      <div class="panel__foot" id="res-foot" hidden></div>
+    </section>
 
-        <div class="grid-2">
-          <section class="card" aria-labelledby="train-h">
-            <h3 id="train-h">SNN training</h3>
-            <div id="train-body"><p class="muted">No training observations in this run yet.</p></div>
-          </section>
-          <section class="card" aria-labelledby="res-h">
-            <h3 id="res-h">Before and after</h3>
-            <h4>Baseline before learning</h4>
-            <div id="baseline-body"><p class="muted">Not reported yet.</p></div>
-            <h4>Results</h4>
-            <div id="results-body"><p class="muted">Not reported yet.</p></div>
-          </section>
+    <!-- 4 Try it live -->
+    <section class="panel glass panel--live" id="screen-live" aria-labelledby="live-h" hidden>
+      <div class="panel__body">
+        <h1 class="display" id="live-h" tabindex="-1">Try it live</h1>
+        <p class="lead">Move something toward your camera, fast. The dog sees what changes and decides whether to get out of the way.</p>
+        <p class="calm" id="live-cannot" hidden></p>
+        <p class="problem" id="live-problem" role="alert" hidden></p>
+        <div class="eye" id="eye" hidden>
+          <figure class="eye__cam">
+            <div class="cam"><video id="cam-video" muted playsinline></video><div class="cam__crop" id="cam-crop" hidden></div></div>
+            <figcaption>Your camera. The outlined square is what the dog sees.</figcaption>
+          </figure>
+          <figure class="eye__dog">
+            <figcaption class="eye__title">What the dog's eye sees</figcaption>
+            <div class="eye__pair">
+              <canvas class="pixelated" id="eye-grey" width="1" height="1" role="img" aria-label="The 12 by 12 grey picture the dog gets"></canvas>
+              <canvas class="pixelated" id="eye-events" width="1" height="1" role="img" aria-label="Which cells got brighter (white) or darker (black) since the last frame"></canvas>
+            </div>
+            <p class="eye__note">Like an event camera: it only notices what changes.</p>
+          </figure>
         </div>
-
-        <details class="card disclosure-card" id="step-details">
-          <summary><h3 id="tl-h">Step details</h3></summary>
-          <p class="small muted" id="tl-meta"></p>
-          <ol class="timeline" id="timeline"></ol>
-        </details>
-      </section>
-
-      <section class="section" id="try" aria-labelledby="try-h">
-        <div class="section-head">
-          <h2 id="try-h">Try what it learned</h2>
-          <p class="section-lead">Walk the simulated dog yourself, or stand in front of the laptop camera and see the world the way the robot's network sees it.</p>
-        </div>
-        <div class="card card--action">
-          <div class="card--action__text">
-            <h3>Try it in the simulation</h3>
-            <p class="muted">Drive the real simulated Go2 on the stage above and look at it from any angle. The camera test is below.</p>
+        <div class="mind" id="mind" hidden>
+          <p class="state" id="state-line" aria-live="polite" data-tone="calm">Watching…</p>
+          <div class="danger">
+            <div class="danger__head"><span>Danger</span></div>
+            <div class="danger__bar" id="danger" role="meter" aria-label="Danger" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+              <span class="danger__fill" id="danger-fill"></span>
+              <span class="danger__mark" id="danger-mark" hidden><span class="danger__label">acts above here</span></span>
+            </div>
           </div>
-          <button class="btn btn--primary" type="button" id="try-sim">Open the drive controls</button>
+          <p class="why" id="why-line"></p>
+          <dl class="counters">
+            <div><dt>Times it looked</dt><dd id="n-looked">0</dd></div>
+            <div><dt>Times it dodged</dt><dd id="n-dodged">0</dd></div>
+          </dl>
         </div>
-      </section>
-
-      <section class="section" id="live" aria-labelledby="live-h">
-        <div class="section-head">
-          <h2 id="live-h">Try it on the camera</h2>
-          <p class="section-lead">A separate test of a frozen model: it never learns from the camera. Frames stay in this page's memory and nothing from the camera is stored; only the grey cells of each window go to the server on this computer.</p>
-        </div>
-        <div class="notes" id="live-notes" role="status" aria-live="polite" hidden></div>
-        <div class="toolbar">
-          <div class="btn-row">
-            <button class="btn btn--primary" type="button" id="cam-start">Start camera</button>
-            <button class="btn btn--secondary" type="button" id="cam-stop" disabled>Stop camera</button>
-          </div>
-          <p class="status-line" id="cam-status" role="status" aria-live="polite">The camera is off. Nothing is requested until you press Start camera.</p>
-        </div>
-        <p class="small muted" id="window-text" hidden></p>
-
-        <div class="grid-2 grid-2--eye">
-          <section class="card" aria-labelledby="cam-label">
-            <h3 id="cam-label">Your camera, not mirrored</h3>
-            <figure class="tile tile--4x3">
-              <div class="tile__media eye__video">
-                <video id="cam-video" muted playsinline aria-labelledby="cam-label"></video>
-                <span class="eye__crop" id="cam-crop" aria-hidden="true" hidden></span>
-                <p class="tile__empty when-off">Camera off</p>
-              </div>
-              <figcaption class="tile__cap">The outlined square is the part the robot uses.</figcaption>
-            </figure>
-            <dl class="statrow">
-              <div><dt>Camera frames per second</dt><dd id="st-fps">not measured</dd></div>
-              <div><dt>Window filled</dt><dd id="st-fill">not started</dd></div>
-              <div><dt>Windows dropped while waiting</dt><dd id="st-dropped">0</dd></div>
-            </dl>
-          </section>
-
-          <section class="card" aria-labelledby="seen-h">
-            <h3 id="seen-h">What the robot sees</h3>
-            <div class="tiles tiles--2">
-              <figure class="tile tile--1x1">
-                <div class="tile__media"><canvas id="cam-greyfull" width="1" height="1" role="img" aria-label="The centre square of the newest frame in grey"></canvas><p class="tile__empty when-off">Appears when the camera is on</p></div>
-                <figcaption class="tile__cap">1 · Centre square in grey</figcaption>
-              </figure>
-              <figure class="tile tile--1x1">
-                <div class="tile__media"><canvas id="cam-grey" width="1" height="1" role="img" aria-labelledby="grey-label grey-text"></canvas><p class="tile__empty when-off">Appears when the camera is on</p></div>
-                <figcaption class="tile__cap" id="grey-label">2 · The grey cells sent to the model</figcaption>
-              </figure>
-            </div>
-            <p class="small muted" id="grey-text">Nothing yet.</p>
-            <p class="small muted" id="encoding-text"></p>
-            <h4 class="label" id="strip-h">3 · The window sent to the model, oldest first</h4>
-            <ol class="strip" id="cam-strip" aria-labelledby="strip-h"></ol>
-          </section>
-        </div>
-
-        <div class="grid-2">
-          <section class="card decision" aria-labelledby="dec-h">
-            <div class="card-head">
-              <h3 id="dec-h">Decision</h3>
-              <p class="badges" id="dec-badges"></p>
-            </div>
-            <div class="decision__now">
-              <p class="chip chip--lg chip--neutral" id="dec-action" role="status" aria-live="polite"><span class="chip__dot" aria-hidden="true"></span><span id="dec-action-text">No decision yet</span></p>
-              <p class="small decision__cmd" id="dec-issued">Commands appear here when the model answers a window.</p>
-            </div>
-            <div class="decision__groups">
-              <section class="group" aria-labelledby="dec-readout-h">
-                <h4 class="label" id="dec-readout-h">Readout</h4>
-                <div class="readout" id="rd-threat">
-                  <p class="readout__top"><span>Threat confidence</span> <span class="readout__val" data-v>—</span></p>
-                  <div class="meter" aria-hidden="true"><span class="meter__fill" data-fill></span><span class="meter__tick" data-tick hidden></span></div>
-                  <p class="readout__thr" data-thr>Threshold not sent by the server</p>
-                </div>
-                <div class="readout" id="rd-best">
-                  <p class="readout__top"><span>Best action</span> <span class="readout__val" data-v>—</span></p>
-                </div>
-                <div class="readout" id="rd-action">
-                  <p class="readout__top"><span>Action confidence</span> <span class="readout__val" data-v>—</span></p>
-                  <div class="meter" aria-hidden="true"><span class="meter__fill" data-fill></span><span class="meter__tick" data-tick hidden></span></div>
-                  <p class="readout__thr" data-thr>Threshold not sent by the server</p>
-                </div>
-                <div class="readout" id="rd-margin">
-                  <p class="readout__top"><span>Margin</span> <span class="readout__val" data-v>—</span></p>
-                  <p class="readout__thr" data-thr>Threshold not sent by the server</p>
-                </div>
-              </section>
-              <section class="group" aria-labelledby="dec-gate-h">
-                <h4 class="label" id="dec-gate-h">Gate</h4>
-                <ul class="checklist" id="dec-gate">
-                  <li data-check="threat_ok"><span class="dot dot--hollow" aria-hidden="true"></span><span>Threat confidence high enough</span> <span class="checklist__state">no data</span></li>
-                  <li data-check="action_ok"><span class="dot dot--hollow" aria-hidden="true"></span><span>Action confidence high enough</span> <span class="checklist__state">no data</span></li>
-                  <li data-check="margin_ok"><span class="dot dot--hollow" aria-hidden="true"></span><span>Margin wide enough</span> <span class="checklist__state">no data</span></li>
-                  <li data-check="votes"><span class="dot dot--hollow" aria-hidden="true"></span><span>Enough votes</span> <span class="checklist__state">no data</span></li>
-                </ul>
-                <div class="votes"><span class="votes__dots" id="dec-votes" aria-hidden="true"></span> <span class="small" id="dec-votes-text">Votes: no data</span></div>
-                <p class="gate-state" id="dec-gate-state"><span class="dot dot--hollow" aria-hidden="true"></span> <span>Gate: no data</span></p>
-                <div class="countdowns">
-                  <p class="countdown" id="dec-cooldown"><span class="small muted">Cooldown</span> <span class="countdown__val" data-v>—</span></p>
-                  <p class="countdown" id="dec-hold"><span class="small muted">Hold</span> <span class="countdown__val" data-v>—</span></p>
-                </div>
-                <p class="small muted" id="dec-flags">Window valid: no data · Cooldown conflict: no data</p>
-              </section>
-            </div>
-            <dl class="statrow statrow--compact" id="dec-timing">
-              <div><dt>Inference on the server</dt><dd id="tm-inference">—</dd></div>
-              <div><dt>Server latency</dt><dd id="tm-latency">—</dd></div>
-              <div><dt>Frame age at the server</dt><dd id="tm-age">—</dd></div>
-              <div><dt>Round trip measured here</dt><dd id="tm-rtt">—</dd></div>
-              <div><dt>Frame age when the answer arrived</dt><dd id="tm-age-answer">—</dd></div>
-              <div><dt>Decisions this session</dt><dd id="st-decisions">0</dd></div>
-              <div><dt>Active commands issued</dt><dd id="st-issued">0</dd></div>
-            </dl>
-          </section>
-
-          <section class="card" aria-labelledby="stage-h">
-            <div class="card-head">
-              <h3 id="stage-h">The simulated dog</h3>
-              <div class="seg seg--sm" role="radiogroup" aria-label="How the dog is drawn">
-                <label class="seg__item"><input type="radio" name="dog-view" value="3d" checked> <span>3D view</span></label>
-                <label class="seg__item"><input type="radio" name="dog-view" value="render"> <span>Simulator render</span></label>
-              </div>
-            </div>
-            <div class="tiles tiles--2" id="stage">
-              <figure class="tile tile--4x3">
-                <div class="tile__media">
-                  <canvas id="live-scene" role="img" aria-label="The simulated Go2 in 3D, drawn in this browser from the simulator's poses"></canvas>
-                  <img id="stage-tracking" alt="Live simulator frames from the tracking camera" hidden>
-                  <p class="tile__empty" id="trk-note" hidden></p>
-                  <p class="tile__empty" id="live-scene-note" hidden></p>
-                </div>
-                <figcaption class="tile__cap" id="trk-label">3D view, drawn here from the simulator's poses</figcaption>
-              </figure>
-              <figure class="tile tile--4x3">
-                <div class="tile__media">
-                  <img id="stage-head" class="pixelated" alt="Live simulator frames from the dog's head camera" hidden>
-                  <p class="tile__empty" id="head-note" hidden></p>
-                </div>
-                <figcaption class="tile__cap" id="head-label">Head camera</figcaption>
-              </figure>
-            </div>
-            <p class="small muted" id="live-scene-status" role="status" aria-live="polite"></p>
-          </section>
-        </div>
-      </section>
-
-      <details class="card disclosure-card caps">
-        <summary><h2 id="caps-h">What the server can do now</h2> <span class="small muted" id="caps-count"></span></summary>
-        <p class="muted" id="caps-empty">Not known yet: the server's state has not arrived.</p>
-        <ul class="checks checks--grid" id="caps"></ul>
-      </details>
-    </div>
+        <p class="hint hint--warn" id="slow-hint" role="status" hidden>Your camera is slow in this light; brighter light helps the dog react faster.</p>
+        <p class="fineprint" id="honesty" hidden></p>
+        <p class="fineprint">Your camera never leaves this computer and nothing is saved.</p>
+      </div>
+      <div class="panel__foot">
+        <button class="btn btn--accent btn--lg" id="cam-toggle" type="button" data-on="false">Start camera</button>
+      </div>
+    </section>
   </main>
+
+  <!-- On the stage: what is playing, and the drive pad. -->
+  <div class="caption glass" id="ep-caption" role="status" hidden>
+    <span class="caption__phase" id="ep-phase"></span>
+    <span class="caption__title" id="ep-title"></span>
+    <span class="caption__outcome" id="ep-outcome" hidden></span>
+    <button class="caption__info" id="ep-info" type="button" aria-expanded="false" aria-controls="ep-detail" aria-label="What the server says about this test">i</button>
+    <p class="caption__detail" id="ep-detail" hidden></p>
+  </div>
+
+  <div class="drive" id="drive" hidden>
+    <button class="btn btn--glass btn--sm" id="drive-toggle" type="button" aria-expanded="false" aria-controls="drive-pad">Drive it yourself</button>
+    <div class="drive__pad glass" id="drive-pad" hidden>
+      <div class="drive__grid" role="group" aria-label="Drive the dog">
+        <button class="pad" type="button" data-dir="turn_left" aria-label="Turn left (Q)">⟲</button>
+        <button class="pad" type="button" data-dir="forward" aria-label="Forward (W)">↑</button>
+        <button class="pad" type="button" data-dir="turn_right" aria-label="Turn right (E)">⟳</button>
+        <button class="pad" type="button" data-dir="left" aria-label="Step left (A)">←</button>
+        <button class="pad pad--stop" type="button" data-dir="stop" aria-label="Stop (Space)">■</button>
+        <button class="pad" type="button" data-dir="right" aria-label="Step right (D)">→</button>
+        <span></span>
+        <button class="pad" type="button" data-dir="back" aria-label="Back (S)">↓</button>
+        <span></span>
+      </div>
+      <button class="btn btn--quiet btn--sm drive__reset" id="drive-reset" type="button">Start fresh</button>
+      <p class="drive__status" id="drive-status" aria-live="polite">Keys: W A S D, Q E to turn, Space to stop.</p>
+    </div>
+  </div>
+
+  <p class="toast glass" id="conn" role="status" hidden></p>
+
+  <!-- Details for engineers. -->
+  <aside class="drawer" id="drawer" aria-labelledby="drawer-h" hidden>
+    <div class="drawer__head">
+      <h2 id="drawer-h">Details for engineers</h2>
+      <button class="btn btn--quiet btn--sm" id="drawer-close" type="button">Close</button>
+    </div>
+    <div class="drawer__body">
+      <details class="dsec" id="dr-notes-box" open><summary>Messages</summary><div class="notes" id="drawer-notes"></div></details>
+      <details class="dsec" open><summary>Live camera and decision</summary><div id="dr-live-body"></div></details>
+      <details class="dsec" open><summary>Open run</summary><div id="dr-run-body"></div></details>
+      <details class="dsec" id="dr-log" hidden><summary>Run event log <span class="dsec__count" id="dr-log-count"></span></summary><ol class="log" id="dr-log-body"></ol></details>
+      <details class="dsec"><summary>Server and simulator</summary><div id="dr-server-body"></div><p class="small" id="scene-status"></p></details>
+    </div>
+  </aside>
 </body>
 </html>
