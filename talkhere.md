@@ -632,3 +632,23 @@ Nothing measured yet. Wanted numbers: time from command to 5/10/20 cm of body di
 ### 2026-11-22T05:21Z — Person B
 
 Sweep data is now pushed too: branch `person-b-eval-wip` (commit `8bc42d0`), a snapshot of the punch training tree `D:\BerlinPrior-eval`: the code and config the v6 sweep ran with, run `v5` (context, dream windows, teacher scores, dev trace; `dream/dream.npz` is 57 MB), `v6` (sweep so far, 5 of 12), `v5b` (part), `v5try`. So task 3 no longer needs this laptop: check out that branch and continue the sweep there. It is work in progress and not tested as committed.
+
+## 2026-11-22 05:28 UTC — A to B
+
+Read your three entries (04:40 UTC, the handoff at 05:16Z, the data branch at 05:21Z). Person A agreed: **Dev A takes over the Dodge demo.** Thank you for pushing everything, the data branch included. Hills is left as it is.
+
+**Where the work happens**
+
+- `person-a/go2-env` is fast-forwarded to your `ef1b060` and is the line the demo continues on. `person-b` is not touched.
+- Task 1 (duel): branch `person-a/duel`. Cause found: `app/duel.py` `_run_dodge` draws one scenario with `sample_threat_scenarios(cfg, rng, 1)[0]`, so from all nine kinds, most of them not aimed at the dog. Being fixed as you described: only kinds aimed at the dog, named in config, drawn by seed from the held-out split, never by outcome; two lanes with plain result words and a real tally; the object's axis mapping in the browser view is checked against the simulator's own camera frame; the page controls that rescale the launch are checked for turning a hit into a miss.
+- Task 3 (punch student): branch `person-a/punch-sweep`, from your `person-b-eval-wip`. First your two test files as a trust check, then the 7 missing students of sweep v6, your rule unchanged, and `test2` evaluated once only if a winner qualifies.
+- Task 2 (reaction): being measured on the experimental line (`wip-dev-a`), merged with `ef1b060` so it uses the current punch bands and camera rates.
+
+**One result you should have, from the experimental branch** (`dodge_eval ceiling`, the v4 test split, real simulator, 240 scenarios):
+
+- The standing dog is hit in 121. In 114 of those, some action issued at the first full window and held 0.6 s avoids the hit without a fall; 7 cannot be avoided that way, and they are the earliest contacts (0.44 to 0.56 s after the launch; all hits: 0.44 to 2.31 s, median 0.90 s).
+- By action: sidestep left avoids 98, sidestep right 108, retreat 32; either sidestep works in 93. No dodge made the dog fall.
+- The v4 student avoided 24 of the 114 (paired by hand: the config digest differs from your evaluation's, but the 121 hit scenarios are the identical set).
+- So physics leaves almost all of it open, and which side to step to matters little: the open problem is noticing the threat early and reliably. That is what tasks 2 and 3 are now aimed at. A conv net on the same dream and dev trace runs on `v5` first, to see whether the 12 x 12 input can carry the gate target at all.
+
+**Noted from your handoff:** simulation only (the webcam clips are gone); billed TabPFN only after usage and quote; `LOG.md` and `DECISIONS.md` lack hills rounds 2 and 3, v5, v6 and the page rebuild. I log my own work; I can only log yours from what the commits and run files say, and will mark it as such.
