@@ -142,37 +142,116 @@ test("the pose buffer is empty until the first pose, then shows it", () => {
   vecNear(b.sample(5000).pos[1], [1, 0, 0]);
 });
 
-test("between two poses it moves from the older to the newer over one arrival interval, then holds", () => {
+// Synthesised pose streams (test input only): the dog at x = t_s, one pose every 40 ms of simulated time.
+const stream = (b, arrivals) => arrivals.forEach(([t, at]) => b.push({ t_s: t, pos: [[0, 0, 0], [t, 0, 0]], quat: [[1, 0, 0, 0], [1, 0, 0, 0]] }, at));
+
+test("playback runs on the simulator's clock, between two poses, and never past the newest", () => {
   const b = createPoseBuffer();
-  b.push(P(0, 0), 1000);
-  b.push(P(1, 90), 1040);
-  vecNear(b.sample(1040).pos[1], [0, 0, 0]);
-  vecNear(b.sample(1060).pos[1], [0.5, 0, 0]);
-  const q = b.sample(1060).quat[1];
-  vecNear([q[0], q[3]], [Math.cos(Math.PI / 8), Math.sin(Math.PI / 8)], 1e-6); // halfway, 45 degrees
-  vecNear(b.sample(2000).pos[1], [1, 0, 0]); // never past the newest pose
+  stream(b, [[0, 1000], [0.04, 1040], [0.08, 1080], [0.12, 1120]]); // real time: 40 ms of simulation per 40 ms
+  const first = b.sample(1120).pos[1][0];
+  assert.ok(first >= 0 && first < 0.12, `starts a delay behind the newest pose, at ${first}`);
+  let last = first;
+  for (let now = 1136; now <= 1600; now += 16) {
+    const x = b.sample(now).pos[1][0];
+    assert.ok(x >= last - 1e-9 && x <= 0.12 + 1e-9, `at ${now}: ${x} after ${last}`);
+    last = x;
+  }
+  assert.ok(Math.abs(last - 0.12) < 1e-6, `settles on the newest pose, at ${last}`);
+  assert.equal(b.moving(), false);
 });
 
-test("the pose buffer interpolates the short way round and survives a body count change by restarting", () => {
+test("bursty arrivals from a slow simulator still move the dog on almost every frame", () => {
+  // The laptop's measured pattern: the simulator at about 0.4 of real time, poses (40 ms of simulated time apart)
+  // arriving in pairs about 200 ms apart.
+  const b = createPoseBuffer(), arrivals = [];
+  for (let k = 0; k < 60; k++) arrivals.push([k * 0.04, 1000 + Math.floor(k / 2) * 200 + (k % 2) * 5]);
+  const frames = [];
+  let next = 0;
+  for (let now = 1000; now <= 7000; now += 16) {
+    while (next < arrivals.length && arrivals[next][1] <= now) { stream(b, [arrivals[next]]); next++; }
+    const s = b.sample(now);
+    if (s && now > 2500 && now < 6500) frames.push(s.pos[1][0]);
+  }
+  let still = 0, longest = 0, run = 0;
+  for (let k = 1; k < frames.length; k++) {
+    const moved = frames[k] > frames[k - 1] + 1e-9;
+    assert.ok(frames[k] >= frames[k - 1] - 1e-9, "never goes backwards");
+    if (!moved) { still++; run++; longest = Math.max(longest, run); } else run = 0;
+  }
+  assert.ok(still / frames.length < 0.05, `${still} of ${frames.length} frames held still`);
+  assert.ok(longest <= 2, `longest hold ${longest} frames`);
+});
+
+test("the pose buffer interpolates the short way round and restarts on a body count change or a clock reset", () => {
   const b = createPoseBuffer();
-  b.push({ pos: [[0, 0, 0]], quat: [[1, 0, 0, 0]] }, 0);
-  b.push({ pos: [[0, 0, 0]], quat: [[-1, 0, 0, 0]] }, 40); // the same rotation, opposite sign
-  vecNear(b.sample(20).quat[0].map(Math.abs), [1, 0, 0, 0]);
-  b.push({ pos: [[0, 0, 0], [1, 1, 1]], quat: [[1, 0, 0, 0], [1, 0, 0, 0]] }, 80);
+  b.push({ t_s: 0, pos: [[0, 0, 0]], quat: [[1, 0, 0, 0]] }, 0);
+  b.push({ t_s: 0.04, pos: [[0, 0, 0]], quat: [[-1, 0, 0, 0]] }, 40); // the same rotation, opposite sign
+  for (let now = 40; now < 200; now += 16) vecNear(b.sample(now).quat[0].map(Math.abs), [1, 0, 0, 0]);
+  b.push({ t_s: 0.08, pos: [[0, 0, 0], [1, 1, 1]], quat: [[1, 0, 0, 0], [1, 0, 0, 0]] }, 80);
   vecNear(b.sample(80).pos[1], [1, 1, 1]);
+  b.push({ t_s: 0.12, pos: [[0, 0, 0], [2, 2, 2]], quat: [[1, 0, 0, 0], [1, 0, 0, 0]] }, 120);
+  b.push({ t_s: 0, pos: [[0, 0, 0], [5, 5, 5]], quat: [[1, 0, 0, 0], [1, 0, 0, 0]] }, 160); // a new episode
+  vecNear(b.sample(160).pos[1], [5, 5, 5]);
   b.clear();
-  assert.equal(b.sample(100), null);
+  assert.equal(b.sample(200), null);
 });
 
-test("the pose buffer says when it is still moving between two poses, and when it has settled", () => {
+test("the pose buffer says when it is still moving, and when it has settled", () => {
   const b = createPoseBuffer();
-  assert.equal(b.moving(0), false);
+  assert.equal(b.moving(), false);
   b.push(P(0), 1000);
-  assert.equal(b.moving(1000), false); // one pose: nothing to interpolate
-  b.push(P(1), 1040);
-  assert.equal(b.moving(1050), true);
-  assert.equal(b.moving(1080), true);  // the end of the interval is still drawn once
-  assert.equal(b.moving(1100), false);
+  assert.equal(b.moving(), false); // one pose: nothing to interpolate
+  b.push(P(0.04), 1040);
+  assert.equal(b.moving(), true);
+  for (let now = 1040; now < 2000; now += 16) b.sample(now);
+  assert.equal(b.moving(), false);
+});
+
+// ---- the contract's "scene" event: synthesised test input only, never shown as a result -----------------------
+test("scene objects and markers become world-frame drawables; unreadable entries are left out", async () => {
+  const { sceneItems } = await import("../../app/static/js/viewer/scene.js");
+  const items = sceneItems({
+    objects: [
+      { id: "ball", shape: "sphere", size: [0.1], rgba: [1, 0.4, 0.1, 1], pos: [1, 2, 0.3], quat: [1, 0, 0, 0] },
+      { id: "ramp", shape: "box", size: [1, 0.5, 0.05], rgba: [0.5, 0.5, 0.5, 0.5], pos: [2, 0, 0.1], quat: [s, 0, s, 0] },
+      { id: "post", shape: "cylinder", size: [0.05, 0.4], rgba: [0, 1, 0, 1], pos: [0, 0, 0.4] },
+      { id: "bad", shape: "cone", size: [1], rgba: [1, 1, 1, 1], pos: [0, 0, 0] },
+      { id: "bad2", shape: "box", size: [1, 1], rgba: [1, 1, 1, 1], pos: [0, 0, 0] },
+    ],
+    markers: [
+      { id: "target", shape: "disc", pos: [3, 0, 0], to: null, rgba: [0, 0.5, 1, 0.6] },
+      { id: "path", shape: "line", pos: [0, 0, 0], to: [0, 2, 0], rgba: [1, 1, 0, 1] },
+      { id: "zero", shape: "line", pos: [1, 1, 1], to: [1, 1, 1], rgba: [1, 1, 0, 1] },
+    ],
+  });
+  assert.deepEqual(items.map((i) => [i.id, i.type, i.transparent]), [["ball", "sphere", false], ["ramp", "box", true], ["post", "cylinder", false], ["target", "cylinder", true], ["path", "cylinder", false]]);
+  vecNear(transformPoint(items[0].model, [0, 0, 0]), [1, 2, 0.3]);
+  vecNear(transformPoint(items[1].model, [0, 0, 1]), [3, 0, 0.1], 1e-6); // the quat turns +z onto +x
+  vecNear(transformPoint(items[3].model, [0, 0, 0]), [3, 0, 0.002]); // the disc lies on its point
+  vecNear(transformPoint(items[4].model, [0, 0, 0]), [0, 1, 0]); // the rod's centre
+  vecNear(transformPoint(items[4].model, [0, 0, 1]), [0, 2, 0], 1e-6); // its half length along +z reaches `to`
+  assert.deepEqual(items[4].size, [0.008, 1]);
+  assert.deepEqual(sceneItems(null), []);
+});
+
+test("scene objects ride on the poses: interpolated by id, dropped with the scene that drops them", async () => {
+  const { blendScene } = await import("../../app/static/js/viewer/pose.js");
+  const ball = (x) => ({ objects: [{ id: "ball", shape: "sphere", size: [0.1], rgba: [1, 0, 0, 1], pos: [x, 0, 0.5], quat: [1, 0, 0, 0] }], markers: [{ id: "m", shape: "disc", pos: [x, 0, 0], rgba: [1, 1, 1, 1] }] });
+  vecNear(blendScene(ball(0), ball(1), 0.25).objects[0].pos, [0.25, 0, 0.5]);
+  vecNear(blendScene(ball(0), ball(1), 0.75).objects[0].pos, [0.75, 0, 0.5]);
+  assert.deepEqual(blendScene(ball(0), { objects: [], markers: [] }, 0.6).objects, []); // the player stopped
+  assert.equal(blendScene(ball(0), { objects: [], markers: [] }, 0.4).objects.length, 1);
+  const b = createPoseBuffer();
+  stream(b, [[0, 0]]);
+  b.pushScene(ball(0));
+  stream(b, [[0.04, 40]]);
+  b.pushScene(ball(1));
+  stream(b, [[0.08, 80]]);
+  b.pushScene({ objects: [], markers: [] });
+  const seen = [];
+  for (let now = 80; now < 1000; now += 16) seen.push(b.sample(now).scene.objects.length);
+  assert.equal(seen.at(-1), 0); // the empty scene the server sends when the player stops removes the ball
+  assert.ok(seen.includes(1));
 });
 
 test("the quality controller lowers the resolution when frames are slow and raises it when they are fast", async () => {

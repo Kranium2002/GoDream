@@ -510,10 +510,10 @@ skills:
       roll_speed_m_s: [1.0, 2.5]  # Ground speed of a rolling ball.
       throw_speed_m_s: [4.0, 7.0]  # Horizontal speed of a thrown ball.
       throw_release_height_m: [0.0, 0.5]  # Release height above the trunk origin.
-      aim_center_m: [0.0, 0.08]  # |sideways offset| of the aim point at the dog, incoming_center.
-      aim_side_m: [0.08, 0.22]  # incoming_left (+y) and incoming_right (-y).
-      aim_ambiguous_m: [0.25, 0.45]  # Near misses and grazes.
-      aim_off_path_m: [0.6, 1.5]  # Clear misses.
+      aim_center_m: [0.0, 0.04]  # v4: bands re-set for the 5 cm punch from measured NO_OP episodes of run v3 (131 approaches): |aim| under 0.08 m hit 26 of 26, 0.08-0.14 m 23 of 28, 0.14-0.18 m 10 of 18, 0.18-0.22 m 3 of 18, beyond 0.22 m 0 of 41. The earlier bands were set for the 9.4 cm handball. Was [0.0, 0.08].  # |sideways offset| of the aim point at the dog, incoming_center.
+      aim_side_m: [0.04, 0.08]  # was [0.08, 0.22]: a third of those 'incoming' punches brushed past, and a dodge of a 3 cm miss counted as a false activation.  # incoming_left (+y) and incoming_right (-y).
+      aim_ambiguous_m: [0.08, 0.3]  # was [0.25, 0.45]: the band now holds the real boundary between hit and miss.  # Near misses and grazes.
+      aim_off_path_m: [0.5, 1.5]  # Clear misses.
       static_distance_m: [0.6, 1.4]  # A ball at rest on the floor, in view.
       receding_distance_m: [0.5, 1.0]  # Start of a ball rolling away at roll_speed_m_s.
       background_distance_m: [0.7, 1.4]  # A ball crossing sideways at roll_speed_m_s, never approaching.
@@ -871,6 +871,20 @@ app:  # The local viewer server: uv run python -m app.server
   pose_hz: 25  # Body pose events per second on /api/events for the 3D view; the same rule as stream_fps.
   fall_restart_pause_s: 2.0  # After a fall, seconds the fallen dog stays on screen before a fresh episode starts.
   png_compression_level: 1  # zlib level 0-9; measured on 640x480 frames: level 1 13 ms and 64 kB, level 6 51 ms and 61 kB.
+  # GET /api/stream frames (app/simulation.py FrameRenderer): drawn on a thread of their own from the newest stage state,
+  # so a frame is skipped, never queued, while the renderer is busy, and rendering never holds up the simulation or its
+  # pose events. Measured on this laptop under load (60 frames each, PNG level 1, 2026-11-22): 640x480 with MuJoCo's
+  # default shadows 227 ms a frame, 640x480 without 97 ms, 480x360 without 81 ms; the Go2's visual meshes (196748
+  # faces) cost about 55 ms of it whatever the size.
+  stream:
+    width: 480  # pixels; at most the model's offscreen buffer, 640 x 480 (world.render)
+    height: 360
+    shadows: false
+  # POST /api/episodes/start (app/player.py): a run's own episodes replayed on the stage, paced to the wall clock.
+  episodes:
+    pause_s: 1.5  # The end of a played episode stays on the stage this long before the next one starts.
+    resync_after_s: 0.25  # A played episode further than this behind the wall clock restarts its clock instead of rushing.
+    stop_timeout_s: 15.0  # How long a stop waits for the player thread (a reset settles with no point to stop at).
   # POST /api/chat: Claude turns a request into a declaration (data only, validated, never executed). The key is
   # ANTHROPIC_API_KEY from the server's environment, else from env_file; it never reaches a response, log or file.
   chat:

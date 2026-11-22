@@ -50,6 +50,9 @@ export function createApi(fetchFn) {
     run: (runId) => call(`/api/runs/${encodeURIComponent(runId)}`),
     // mode: "full" or "fast" (Dev B's run_skill modes); left out, the server runs "full".
     startRun: (declaredSpec, confirmCost, mode) => call("/api/runs", { declared_spec: declaredSpec, confirm_cost: confirmCost, ...(mode ? { mode } : {}) }),
+    // A run's own episodes replayed on the stage (same scenarios and seeds); the state shows under /api/state episodes.
+    episodesStart: (runId) => call("/api/episodes/start", { run_id: runId }),
+    episodesStop: () => call("/api/episodes/stop", {}),
     // The camera window goes here and nowhere else. captured_ms: the newest frame's capture time, ms since the epoch.
     // sessionStart: the first window after Start camera, so the server resets the gate and the cooldown clock.
     infer: (window, frames, capturedMs, sessionStart = false) => call("/api/infer", {

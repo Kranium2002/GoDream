@@ -18,7 +18,7 @@ const row = (r, label) => r.rows.find(([l]) => l === label)?.[1];
 test("a decision maps every field to a labelled readout", () => {
   const r = readout(answer());
   assert.equal(r.state, "decision");
-  assert.deepEqual(r.action, { code: "DODGE_LEFT", label: "Dodge left" });
+  assert.deepEqual(r.action, { code: "DODGE_LEFT", label: "Dodge left", tone: "accent" });
   assert.equal(r.issued, true);
   assert.equal(row(r, "Threat confidence"), "0.93");
   assert.equal(row(r, "Best action"), "DODGE_LEFT");
@@ -39,13 +39,13 @@ test("a decision maps every field to a labelled readout", () => {
 
 test("UNCERTAIN reads as uncertain, with no command issued", () => {
   const r = readout(answer({ action: "UNCERTAIN", issued: false }));
-  assert.deepEqual(r.action, { code: "UNCERTAIN", label: "Uncertain: stays still" });
+  assert.deepEqual(r.action, { code: "UNCERTAIN", label: "Uncertain: stays still", tone: "warn" });
   assert.equal(r.issued, false);
 });
 
 test("a failed gate shows which checks failed and that the gate is closed", () => {
   const r = readout(answer({ action: "NO_OP", issued: false, gate: { threat_ok: true, action_ok: false, margin_ok: false, votes: 1, votes_needed: 3, of_last: 4, passed: false } }));
-  assert.deepEqual(r.action, { code: "NO_OP", label: "No action" });
+  assert.deepEqual(r.action, { code: "NO_OP", label: "No action", tone: "neutral" });
   assert.deepEqual(r.gate.map((g) => g.ok), [true, false, false, false, false]);
   assert.equal(r.gate[3].label, "Votes: 1 of 3 needed in the last 4");
   assert.equal(r.gate[4].label, "Gate closed");
@@ -56,7 +56,7 @@ test("a field the server did not send says so, never a made-up value", () => {
   assert.equal(row(r, "Margin"), "not sent");
   assert.deepEqual(r.gate, []);
   assert.equal(r.issued, null);
-  assert.deepEqual(r.action, { code: "SOMETHING_NEW", label: "SOMETHING_NEW" });
+  assert.deepEqual(r.action, { code: "SOMETHING_NEW", label: "SOMETHING_NEW", tone: "neutral" });
 });
 
 test("unavailable and other errors keep the server's message", () => {
@@ -64,6 +64,27 @@ test("unavailable and other errors keep the server's message", () => {
     { state: "unavailable", message: "No frozen model." });
   assert.deepEqual(readout({ ok: false, status: 400, code: "bad_window", message: "Wrong size.", unavailable: false, data: {} }),
     { state: "error", code: "bad_window", message: "Wrong size." });
+});
+
+test("the structured readout keeps numbers, gate state and badges exactly as sent", async () => {
+  const { commandText } = await import("../../app/static/js/readout.js");
+  const r = readout(answer({ thresholds: "frozen", gate_passed: true, valid: true, cooldown_conflict: false }));
+  assert.deepEqual(r.values, { threat: 0.934, action: 0.8812, margin: 0.41, best: "DODGE_LEFT", cooldown: 0.95, hold: 0.3, valid: true, cooldownConflict: false });
+  assert.equal(r.thresholds, null); // the server sent no threshold values: no tick is drawn
+  assert.deepEqual(r.gateState, { threat: true, action: true, margin: true, votes: 3, votesNeeded: 3, ofLast: 4, passed: true, votesOk: true });
+  assert.deepEqual(r.badges.map((b) => b.text), ["Thresholds frozen by calibration", "Calibration gate passed"]);
+  assert.deepEqual(r.command, { vel_x: 0, vel_y: 0.5, yaw_rate: 0 });
+  assert.equal(commandText(r, { vel_y: { unit: "m/s" } }), "Command issued to the simulated dog now: vel_y 0.50 m/s.");
+  assert.equal(commandText(readout(answer({ issued: false })), null), "No command issued.");
+  assert.equal(commandText(readout(answer({ issued: undefined })), null), "Command issued: not sent");
+});
+
+test("threshold values and a provisional student show only when the server sends them", () => {
+  const r = readout(answer({ threshold_values: { threat: 0.95, action: 0.4, margin: "x" }, student_status: "PROVISIONAL development student", thresholds: "development", gate_passed: false }));
+  assert.deepEqual(r.thresholds, { threat: 0.95, action: 0.4, margin: null });
+  assert.deepEqual(r.badges.map((b) => [b.text, b.tone]), [["Provisional student", "warn"], ["Development thresholds, not calibrated", "warn"], ["Calibration gate not passed", "warn"]]);
+  assert.deepEqual(readout(answer({ gate: undefined })).gateState, null);
+  assert.equal(readout(answer({ margin: "0.4" })).values.margin, null);
 });
 
 test("the server's frame age, window validity and cooldown conflict are shown, and development thresholds are flagged", () => {

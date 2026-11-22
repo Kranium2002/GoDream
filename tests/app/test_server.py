@@ -152,8 +152,8 @@ def test_state_describes_the_controls_from_config(server, config):
     assert state["presets"] == list(config["world"]["presets"])
     assert state["preset"] in state["available_presets"]
     assert state["status"] in ("roaming", "resetting", "fallen")
-    assert state["frame"] == {"width": config["world"]["render"]["width"],
-                              "height": config["world"]["render"]["height"],
+    assert state["frame"] == {"width": config["app"]["stream"]["width"],
+                              "height": config["app"]["stream"]["height"],
                               "stream_fps": config["app"]["stream_fps"]}
     assert {"skills", "image_window", "actions"} <= set(state)
     dodge = config["skills"]["dodge_vision"]
@@ -257,7 +257,7 @@ def test_invalid_drive_is_refused_and_the_dog_keeps_its_command(server, bad):
 
 
 def test_stream_sends_real_png_frames_of_the_configured_size(server, config):
-    size = config["world"]["render"]
+    size = config["app"]["stream"]
     with event_stream(server) as events:
         fresh_episode(server, events)
         request(server, "POST", "/api/drive", FORWARD)

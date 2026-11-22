@@ -1,11 +1,14 @@
-// The robot viewer: WebGL2, no library. It draws /api/robot placed by the simulator's pose events and nothing else:
-// before the first pose there is no dog to draw. Orbit by drag, zoom by wheel or pinch, keyboard: arrows orbit,
-// + and - zoom, 0 resets the view.
+// The robot viewer: WebGL2, no library. It draws /api/robot placed by the simulator's pose events, plus the objects
+// and markers of the contract's "scene" event, and nothing else: before the first pose there is no dog to draw. Orbit
+// by drag, zoom by wheel or pinch, keyboard: arrows orbit, + and - zoom, 0 resets the view. Smooth by design: one
+// requestAnimationFrame loop, poses played back on the simulator's clock (pose.js), the canvas size read from a
+// ResizeObserver rather than from the layout on every frame, and no drawing while the view is inactive or hidden.
 import { lookAt, multiply, normalMatrix, perspective } from "./mat.js";
 import { createOrbit, headingOf, smooth, smoothAngle } from "./orbit.js";
-import { buildScene, bodyMatrix } from "./scene.js";
+import { buildScene, bodyMatrix, sceneItems } from "./scene.js";
 import { createPoseBuffer } from "./pose.js";
 import { createQuality } from "./quality.js";
+import { primitive } from "./geometry.js";
 
 const ROBOT_VS = `#version 300 es
 layout(location = 0) in vec3 aPos;
@@ -92,7 +95,7 @@ const hex = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16) / 255);
 
 // createViewer(canvas, {background, floor}) -> {setRobot, pushPose, setShift, resetView, destroy}. Throws Error when
 // WebGL2 is missing or a shader fails, so the page can fall back to the image stream.
-export function createViewer(canvas, { background = "#101215", floor = "#1a1d22" } = {}) {
+export function createViewer(canvas, { background = "#101215", floor = "#1a1d22", distance = 1.7 } = {}) {
   const gl = canvas.getContext("webgl2", { antialias: true, alpha: false });
   if (!gl) throw new Error("This browser offers no WebGL2.");
   const robotP = program(gl, ROBOT_VS, ROBOT_FS);
@@ -100,11 +103,13 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
   const sky = hex(background), floorRgb = hex(floor);
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
-  const START = { distance: 1.7, yaw: 0.75, pitch: 0.3 };
+  const START = { distance, yaw: 0.75, pitch: 0.3 };
   const orbit = createOrbit({ target: [0, 0, 0.25], ...START, minDistance: 0.6, maxDistance: 8 });
   const poses = createPoseBuffer();
   const quality = createQuality(); // the internal resolution scale; its rule is in quality.js
-  let scene = null, vaos = new Map(), shift = [0, 0, 1], shiftGoal = [0, 0, 1], raf = 0, dirty = true;
+  let scene = null, vaos = new Map(), shift = [0, 0, 1], shiftGoal = [0, 0, 1], raf = 0, dirty = true, active = true;
+  const extraVaos = new Map(); // scene-event shapes by type and size
+  let size = { w: canvas.clientWidth, h: canvas.clientHeight }; // CSS pixels, kept by the ResizeObserver below
   // The follow camera: the trunk's position and heading, smoothed, so the dog keeps its place and size on screen and
   // the floor moving under it shows the walking. The person's drag turns the view around the dog (orbit.yaw).
   const FOLLOW_TAU_MS = 600;
@@ -147,7 +152,7 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
 
   function resize() {
     const dpr = Math.min(devicePixelRatio || 1, 2) * quality.scale;
-    const w = Math.max(1, Math.round(canvas.clientWidth * dpr)), h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    const w = Math.max(1, Math.round(size.w * dpr)), h = Math.max(1, Math.round(size.h * dpr));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; dirty = true; }
   }
 
@@ -158,7 +163,7 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
       dirty = true;
     }
     // Draw only when something changed: a pose pair still being interpolated, a camera move, a resize, a new robot.
-    if (!dirty && !(scene && poses.moving(now))) return;
+    if (!dirty && !(scene && poses.moving())) return;
     dirty = false;
     const dt = Math.min(100, now - lastDraw);
     lastDraw = now;
@@ -167,13 +172,15 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     const pose = scene ? poses.sample(now) : null;
     const p = pose && scene.rootBody !== null ? pose.pos[scene.rootBody] : null;
     if (p) {
-      const goal = { x: p[0], y: p[1], heading: headingOf(pose.quat[scene.rootBody]) };
-      if (!follow || reduceMotion.matches) follow = { ...goal };
+      // The camera looks a little below the trunk, and rises with it (a ramp lifts the dog off the floor plane).
+      const goal = { x: p[0], y: p[1], z: Math.max(scene.floorZ + 0.22, p[2] - 0.1), heading: headingOf(pose.quat[scene.rootBody]) };
+      // A jump (a new episode placed the dog elsewhere) moves the camera at once instead of sweeping through the scene.
+      if (!follow || reduceMotion.matches || Math.hypot(goal.x - follow.x, goal.y - follow.y, goal.z - follow.z) > 1) follow = { ...goal };
       else {
-        follow = { x: smooth(follow.x, goal.x, dt, FOLLOW_TAU_MS), y: smooth(follow.y, goal.y, dt, FOLLOW_TAU_MS), heading: smoothAngle(follow.heading, goal.heading, dt, FOLLOW_TAU_MS) };
-        if (Math.hypot(goal.x - follow.x, goal.y - follow.y) > 1e-4 || Math.abs(Math.sin(goal.heading - follow.heading)) > 1e-4) dirty = true; // still catching up
+        follow = { x: smooth(follow.x, goal.x, dt, FOLLOW_TAU_MS), y: smooth(follow.y, goal.y, dt, FOLLOW_TAU_MS), z: smooth(follow.z, goal.z, dt, FOLLOW_TAU_MS), heading: smoothAngle(follow.heading, goal.heading, dt, FOLLOW_TAU_MS) };
+        if (Math.hypot(goal.x - follow.x, goal.y - follow.y, goal.z - follow.z) > 1e-4 || Math.abs(Math.sin(goal.heading - follow.heading)) > 1e-4) dirty = true; // still catching up
       }
-      orbit.setTarget([follow.x, follow.y, scene.floorZ + 0.22]);
+      orbit.setTarget([follow.x, follow.y, follow.z]);
     }
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(...sky, 1);
@@ -220,7 +227,34 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
       gl.bindVertexArray(g.vao);
       gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, 0);
     }
+    // The scene event's objects and markers, in the world frame: opaque ones first, then see-through ones blended.
+    const items = sceneItems(pose.scene);
+    for (const pass of [false, true]) {
+      if (pass) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }
+      for (const it of items) {
+        if (it.transparent !== pass) continue;
+        const g = shapeVao(it.type, it.size);
+        if (!g) continue;
+        gl.uniformMatrix4fv(robotP.u.uModel, false, it.model);
+        gl.uniformMatrix3fv(robotP.u.uNormalMat, false, normalMatrix(it.model));
+        gl.uniform4f(robotP.u.uColor, ...it.rgba);
+        gl.bindVertexArray(g.vao);
+        gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, 0);
+      }
+      if (pass) { gl.disable(gl.BLEND); gl.depthMask(true); }
+    }
     gl.bindVertexArray(null);
+  }
+
+  function shapeVao(type, sz) {
+    const key = `${type}:${sz.join(",")}`;
+    if (!extraVaos.has(key)) {
+      const p = primitive(type, sz);
+      if (!p) return null;
+      if (extraVaos.size >= 64) { const [k, v] = extraVaos.entries().next().value; gl.deleteVertexArray(v.vao); extraVaos.delete(k); }
+      extraVaos.set(key, upload(p));
+    }
+    return extraVaos.get(key);
   }
 
   // ---- input --------------------------------------------------------------------------------------------------
@@ -262,25 +296,32 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
 
   function resetView() { Object.assign(orbit, { distance: START.distance, yaw: START.yaw, pitch: START.pitch }); dirty = true; }
 
-  // ---- lifecycle: no drawing while the tab is hidden ---------------------------------------------------------
-  const onVisibility = () => {
+  // ---- lifecycle: no drawing while the tab is hidden or the view is inactive (off screen) -----------------------
+  const run = () => {
     cancelAnimationFrame(raf);
-    if (!document.hidden) { dirty = true; raf = requestAnimationFrame(frame); }
+    raf = 0;
+    if (active && !document.hidden) { dirty = true; raf = requestAnimationFrame(frame); }
   };
-  document.addEventListener("visibilitychange", onVisibility);
-  const onResize = () => { dirty = true; };
-  addEventListener("resize", onResize);
-  raf = requestAnimationFrame(frame);
+  document.addEventListener("visibilitychange", run);
+  const sizer = new ResizeObserver(([e]) => {
+    const box = e.contentBoxSize?.[0];
+    size = box ? { w: box.inlineSize, h: box.blockSize } : { w: e.contentRect.width, h: e.contentRect.height };
+    dirty = true;
+  });
+  sizer.observe(canvas);
+  run();
 
   return {
     setRobot,
     pushPose(pose) { if (scene && Array.isArray(pose?.pos) && Array.isArray(pose?.quat)) { poses.push(pose, performance.now()); dirty = true; } },
+    setScene(s) { poses.pushScene(s); dirty = true; },
+    setActive(v) { if (active !== Boolean(v)) { active = Boolean(v); run(); } },
     resolutionScale: () => quality.scale,
-    hasPose: () => Boolean(scene && poses.sample(performance.now())),
+    hasPose: () => Boolean(scene && poses.peek()),
     bodyCount: () => scene?.bodyCount ?? 0,
     setShift(x, y = 0, k = 1) { shiftGoal = [x, y, k]; },
     zoomBy(f) { orbit.zoom(f); dirty = true; },
     resetView,
-    destroy() { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVisibility); removeEventListener("resize", onResize); },
+    destroy() { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", run); sizer.disconnect(); },
   };
 }

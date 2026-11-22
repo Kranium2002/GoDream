@@ -7,6 +7,8 @@ import { initLiveView } from "./live-view.js";
 import { initLearnView } from "./learn-view.js";
 import { initRobotStage } from "./robot-stage.js";
 import { initDriveView } from "./drive-view.js";
+import { mountNotes } from "./notes.js";
+import { initEpisodesView } from "./episodes-view.js";
 
 const api = createApi((url, init) => fetch(url, init));
 const $ = (id) => document.getElementById(id);
@@ -24,11 +26,19 @@ function el(tag, props = {}, ...children) {
 const CAP_LABELS = { drive: "Drive the dog", head_camera: "Head camera", scenarios: "Scenarios", chat: "Chat",
   runs: "Learning runs", results: "Results", infer: "Live inference" };
 
-const live = initLiveView({ api, el });
-const learn = initLearnView({ api, el, catalogue: () => catalogue });
+// One status area per section: errors and "unavailable" notices, newest first, repeats merged.
+const notes = {
+  stage: mountNotes($("stage-notes"), el),
+  learn: mountNotes($("learn-notes"), el),
+  live: mountNotes($("live-notes"), el),
+  dock: mountNotes($("dock-notes"), el),
+};
 
 // ---- the robot stage and the sections below it --------------------------------------------------------------
 const stage = initRobotStage({ api });
+const episodes = initEpisodesView({ api, el, notes: notes.stage, reloadState: () => loadState(), onStarted: () => learn.showStage() });
+const live = initLiveView({ api, el, notes: notes.live, robotStage: stage });
+const learn = initLearnView({ api, el, notes: notes.learn, episodes, catalogue: () => catalogue });
 const wide = matchMedia("(min-width: 760px)"); // copy beside the dog; below this the dog sits above the copy
 // The stage fills the screen under the header, whatever height the header wraps to.
 new ResizeObserver(() => document.documentElement.style.setProperty("--bar-h", `${document.querySelector(".bar").offsetHeight}px`)).observe(document.querySelector(".bar"));
@@ -96,9 +106,7 @@ $("dock").addEventListener("keydown", (e) => { if (e.key === "Escape") setDock(f
 let capabilities = [];
 
 function setConnection(good, text) {
-  const mark = $("conn-mark");
-  mark.textContent = good ? "●" : "○";
-  mark.className = `mark ${good ? "is-good" : "is-bad"}`;
+  $("conn-mark").className = `dot ${good ? "dot--ok" : "dot--bad dot--hollow"}`;
   $("conn-text").textContent = text;
 }
 
@@ -120,21 +128,25 @@ async function loadState() {
   live.setState(s, capabilities);
   drive.setState(s, capabilities);
   learn.setState(s, capabilities);
+  episodes.setState(s);
 }
 
 function renderCapabilities() {
   $("caps-empty").hidden = true;
   $("caps-count").textContent = `${capabilities.filter((c) => c.available).length} of ${capabilities.length} available`;
-  $("caps").replaceChildren(...capabilities.map((c) => el("li", { class: c.available ? "is-good" : "is-bad" },
-    el("span", { class: "mark", "aria-hidden": "true" }, c.available ? "✓" : "✕"),
-    el("span", {}, el("span", { class: "caps__name" }, CAP_LABELS[c.name] ?? c.name), " ",
-      el("span", { class: "caps__state" }, c.available ? "Available" : "Unavailable")),
-    c.reason ? el("span", { class: "caps__reason" }, c.reason) : null)));
-  for (const [name, id] of [["chat", "chat-cap"], ["runs", "runs-cap"]]) {
+  $("caps").replaceChildren(...capabilities.map((c) => checkItem(c.available, CAP_LABELS[c.name] ?? c.name, c.available ? "Available" : "Unavailable", c.reason ? [c.reason] : [])));
+  for (const name of ["chat", "runs"]) {
     const c = capabilities.find((x) => x.name === name);
-    $(id).hidden = !c || c.available;
-    if (c && !c.available) $(id).textContent = name === "runs" ? `Starting a new run is not available yet: ${c.reason}` : `${CAP_LABELS[name]} unavailable: ${c.reason}`;
+    if (!c || c.available) notes.dock.clear(name);
+    else notes.dock.set(name, "warn", name === "runs" ? `Starting a new run is not available yet: ${c.reason}` : `${CAP_LABELS[name]} unavailable: ${c.reason}`, "Unavailable");
   }
+}
+
+// A row of a check list: a filled dot when it holds, a hollow one when not, and the state in words.
+function checkItem(good, name, state, reasons) {
+  return el("li", {}, el("span", { class: `dot ${good ? "dot--ok" : "dot--hollow"}`, "aria-hidden": "true" }),
+    el("span", {}, el("span", { class: "checks__name" }, name), " ", el("span", { class: "checks__state" }, `· ${state}`)),
+    ...reasons.map((r) => el("span", { class: "checks__reason" }, r)));
 }
 
 let reconnecting = false;
@@ -152,7 +164,10 @@ function connectEvents() {
       : "Server connection lost. Trying to reconnect.");
   };
   source.addEventListener("episode", (e) => {
-    try { if (JSON.parse(e.data)?.phase === "start") $("notice").hidden = true; } catch { /* keep the notice */ }
+    let data = null;
+    try { data = JSON.parse(e.data); } catch { /* not shown: nothing readable came */ }
+    if (data && typeof data.state === "string") episodes.onEvent(data); // a run's episode replayed on the stage
+    if (data?.phase === "start") notes.stage.clear("sim");               // the roaming stage's own episodes
     loadState();
   });
   const forward = (name, handle) => source.addEventListener(name, (e) => {
@@ -162,16 +177,14 @@ function connectEvents() {
   });
   forward("run", (d) => learn.onRunEvent(d));
   forward("pose", (d) => stage.onPose(d));
+  forward("scene", (d) => stage.onScene(d));
   forward("robot", () => stage.onRobotChanged());
   forward("observation", (d) => learn.onObservation(d));
   forward("infer", (d) => learn.onInfer(d));
   source.addEventListener("notice", (e) => {
     let data = null;
     try { data = JSON.parse(e.data); } catch { /* not shown: nothing readable came */ }
-    if (typeof data?.message === "string") {
-      $("notice").hidden = false;
-      $("notice").textContent = data.message;
-    }
+    if (typeof data?.message === "string") notes.stage.set("sim", "info", data.message, "Simulator");
   });
 }
 
@@ -181,20 +194,14 @@ async function loadCatalogue() {
   const r = await api.skills();
   catalogue = r.ok && Array.isArray(r.data) ? r.data : null;
   const problem = !r.ok ? r.message : catalogue ? "" : "The server's answer was not a list of skills.";
-  $("catalogue-note").hidden = !problem;
-  $("catalogue-note").textContent = problem
-    ? `${r.unavailable ? "The skill catalogue is unavailable" : "The skill catalogue could not be read"}: ${problem} Supported ranges cannot be shown.`
-    : "";
+  if (!problem) notes.dock.clear("catalogue");
+  else notes.dock.set("catalogue", r.unavailable ? "warn" : "danger", `${r.unavailable ? "The skill catalogue is unavailable" : "The skill catalogue could not be read"}: ${problem} Supported ranges cannot be shown.`, r.unavailable ? "Unavailable" : "Error");
   learn.catalogueChanged();
   const rows = catalogueRows(catalogue);
   $("skills-empty").hidden = rows.length > 0;
   $("skills-empty").textContent = catalogue ? "The catalogue lists no skills." : "Not known: the skill catalogue could not be read.";
-  $("skills").replaceChildren(...rows.map((s) => el("li", { class: s.available ? "is-good" : "is-bad" },
-    el("span", { class: "mark", "aria-hidden": "true" }, s.available ? "✓" : "✕"),
-    el("span", {}, el("span", { class: "caps__name" }, s.skill), " ",
-      el("span", { class: "caps__state" }, s.available ? "Supported" : "Not supported yet")),
-    s.description ? el("span", { class: "caps__reason" }, s.description) : null,
-    s.missing.length ? el("span", { class: "caps__reason" }, `Missing: ${s.missing.join("; ")}`) : null)));
+  $("skills").replaceChildren(...rows.map((s) => checkItem(s.available, s.skill, s.available ? "Supported" : "Not supported yet",
+    [s.description, s.missing.length ? `Missing: ${s.missing.join("; ")}` : null].filter(Boolean))));
 }
 
 // ---- chat ------------------------------------------------------------------------------------------------------
@@ -248,7 +255,7 @@ $("msg").addEventListener("keydown", (e) => {
 function setVerdict(good, text) {
   const v = $("verdict");
   v.className = `verdict ${good === null ? "" : good ? "is-good" : "is-bad"}`;
-  v.replaceChildren(el("span", { class: "mark", "aria-hidden": "true" }, good === null ? "○" : good ? "✓" : "✕"), " ", el("span", {}, text));
+  v.replaceChildren(el("span", { class: `dot${good ? "" : " dot--hollow"}`, "aria-hidden": "true" }), " ", el("span", {}, text));
 }
 
 function renderSpec() {
@@ -274,7 +281,7 @@ function renderSpec() {
       el("ul", { class: "missing" }, ...unsupported.missing.map((m) => el("li", {}, m)))));
   }
   if (decl) body.push(specTable(attached.rows));
-  else if (!missing.length) body.push(el("p", { class: "empty" }, "The server did not declare a skill for this request."));
+  else if (!missing.length) body.push(el("p", { class: "muted small" }, "The server did not declare a skill for this request."));
   $("spec-body").replaceChildren(...body);
 
   renderModes();
@@ -291,18 +298,19 @@ function problemText(p) {
     typeof p?.code === "string" ? el("code", {}, `(${p.code})`) : null);
 }
 
+// Two columns, so the dock's width is shared sensibly: the item, and its value with the supported range under it.
 function specTable(rows) {
-  return el("table", { class: "specs" },
+  return el("table", { class: "specs specs--spec" },
     el("caption", {}, "As parsed by the server; ranges from the skill catalogue"),
-    el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Item"), el("th", { scope: "col" }, "Value"),
-      el("th", { scope: "col", class: "col-range" }, "Supported range"))),
+    el("colgroup", {}, el("col", { class: "c-item" }), el("col", {})),
+    el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Item"), el("th", { scope: "col" }, "Value and supported range"))),
     el("tbody", {}, ...rows.map((r) => el("tr", { class: r.problems.length ? "has-problem" : "" },
       el("th", { scope: "row" }, el("span", { class: r.field.startsWith("params.") ? "field" : "" }, r.label),
         r.note ? el("span", { class: "note" }, r.note) : null),
       el("td", {}, r.value === null ? el("em", { class: "unset" }, "not set") : r.value,
         r.isDefault ? el("span", { class: "note" }, "catalogue default, not declared") : null,
-        ...r.problems.map((p) => el("p", { class: "problem" }, problemText(p)))),
-      el("td", { class: "col-range" }, r.range ?? "")))));
+        r.range ? el("span", { class: "note" }, `Supported: ${r.range}`) : null,
+        ...r.problems.map((p) => el("p", { class: "problem" }, problemText(p))))))));
 }
 
 // ---- learning run ----------------------------------------------------------------------------------------------
@@ -314,26 +322,35 @@ const MODE_HINTS = {
   fast: "One real simulator attempt per context scenario and a smaller dream; the quote shows the exact counts.",
 };
 
-// The run modes of the declared skill: only the ones Dev B's run_skill accepts are offered; a refused one is named with
-// run_skill's own reason.
+// The run modes of the declared skill as a segmented control: the ones Dev B's run_skill accepts can be picked; a
+// refused one stays visible but disabled, with run_skill's own reason as an inline note.
+const SEG_LABELS = { full: "Full", fast: "Fast" };
 function renderModes() {
   const decl = lastChat && isValid(lastChat, catalogue) ? lastChat.declared_spec : null;
   const modes = decl ? runModes[decl.skill] : null;
   const box = $("run-modes");
   box.hidden = !modes || typeof modes !== "object";
   if (box.hidden) return;
-  const offered = Object.keys(modes).filter((m) => modes[m] === "");
-  const refused = Object.keys(modes).filter((m) => typeof modes[m] === "string" && modes[m] !== "");
+  const all = Object.keys(modes).filter((m) => typeof modes[m] === "string");
+  const offered = all.filter((m) => modes[m] === "");
+  const refused = all.filter((m) => modes[m] !== "");
   const was = chosenMode();
   const pick = offered.includes(was) ? was : offered.includes("full") ? "full" : offered[0];
-  $("run-mode-list").replaceChildren(...offered.map((m) => {
+  $("run-mode-list").replaceChildren(...all.map((m) => {
     const input = el("input", { type: "radio", name: "run-mode", value: m, id: `run-mode-${m}` });
     input.checked = m === pick;
-    return el("label", { class: "modes__item", for: `run-mode-${m}` }, input, " ",
-      el("span", { class: "caps__name" }, MODE_LABELS[m] ?? m), MODE_HINTS[m] ? el("span", { class: "note" }, MODE_HINTS[m]) : null);
+    input.disabled = !offered.includes(m);
+    input.addEventListener("change", modeHelp);
+    return el("label", { class: "seg__item", for: `run-mode-${m}` }, input, el("span", {}, SEG_LABELS[m] ?? MODE_LABELS[m] ?? m,
+      input.disabled ? el("span", { class: "seg__off" }, "not offered") : null));
   }));
   $("run-mode-note").textContent = refused.map((m) => `${MODE_LABELS[m] ?? m} is not offered for ${decl.skill}: ${modes[m]}.`).join(" ");
   $("run-mode-note").hidden = !refused.length;
+  modeHelp();
+}
+function modeHelp() {
+  const m = chosenMode();
+  $("run-mode-help").textContent = m ? `${MODE_LABELS[m] ?? m}: ${MODE_HINTS[m] ?? "as run_skill defines it."}` : "No run mode is offered for this skill.";
 }
 
 function chosenMode() {
@@ -353,7 +370,8 @@ async function requestRun(ev) {
 }
 
 function renderRun(before) {
-  $("run-modes").disabled = run.phase === "starting" || run.phase === "confirm"; // the quoted mode is the one started
+  const locked = run.phase === "starting" || run.phase === "confirm"; // the quoted mode is the one started
+  $("run-modes").disabled = locked;
   $("start").disabled = !canStart(run);
   $("confirm").hidden = run.phase !== "confirm";
   $("start-row").hidden = run.phase === "confirm";

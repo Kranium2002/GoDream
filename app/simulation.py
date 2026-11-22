@@ -1,7 +1,12 @@
-"""The viewer's simulation thread: the only thread that touches Go2World and its renderer.
+"""The viewer's simulation thread: the only thread that touches the roaming Go2World, and the stage the page shows.
 
 Other threads hand it requests through submit() and read what it publishes, all guarded by one condition: its
-status, the latest PNG frame, the latest observation and the episode and notice events.
+status, the latest PNG frame, the latest observation, pose and scene and the episode and notice events.
+
+The stage is the roaming world unless the episode player (app/player.py) holds it: then roaming pauses where it is
+and the player publishes its own world's observations, poses, scenes and frames through publish_stage and offer_frame
+until it releases the stage. Stream frames are drawn by FrameRenderer, a thread of its own, from the newest state it
+was offered, so rendering never holds up stepping or pose events.
 """
 import copy
 import logging
@@ -11,8 +16,10 @@ import struct
 import threading
 import time
 import zlib
+from collections import deque
 from concurrent.futures import Future
 
+import mujoco
 import numpy as np
 
 from app import robot
@@ -45,6 +52,20 @@ def periods_per(rate_hz: float, period_s: float, key: str) -> int:
     return every
 
 
+def stream_settings(config: dict) -> dict:
+    """config.yaml app.stream checked: {width, height, shadows}; ValueError naming the key otherwise. The size must fit
+    the model's offscreen buffer, world.render's width x height."""
+    stream, buffer = config["app"].get("stream") or {}, config["world"]["render"]
+    for key, limit in (("width", buffer["width"]), ("height", buffer["height"])):
+        value = stream.get(key)
+        if type(value) is not int or not 1 <= value <= limit:
+            raise ValueError(f"config.yaml app.stream.{key} must be a whole number of pixels from 1 to {limit} (the "
+                             f"offscreen buffer), got {value!r}")
+    if type(stream.get("shadows")) is not bool:
+        raise ValueError(f"config.yaml app.stream.shadows must be true or false, got {stream.get('shadows')!r}")
+    return {"width": stream["width"], "height": stream["height"], "shadows": stream["shadows"]}
+
+
 def describe(obs: dict, command: dict) -> dict:
     """What the browser is told about a Go2World observation and the command last issued. policy_obs is left out: on a
     sloped world it reveals a hidden value; so is command_active, which once meant the command the policy receives a
@@ -65,13 +86,99 @@ def describe(obs: dict, command: dict) -> dict:
     }
 
 
+class FrameRenderer(threading.Thread):
+    """Draws the stream's frames from the newest stage state offered (offer, from any thread): the state is copied
+    (qpos and the mocap poses, all a frame needs) into a one-slot mailbox, so while a frame is being drawn a newer
+    offer replaces an older one (counted in skipped) and no frame ever queues. The frame is MuJoCo's tracking camera
+    on the trunk at world.render.tracking_distance_m, as Go2World.render_frame draws it, at app.stream's size, with
+    app.stream.shadows; the pose comes from a private MjData per model (mj_kinematics, mj_comPos, mj_camlight).
+    publish(png) gets each frame. Its OpenGL contexts live and die on this thread."""
+
+    def __init__(self, stream: dict, distance_m: float, level: int, publish):
+        super().__init__(name="stream-render", daemon=True)
+        self.stream, self.distance_m, self.level, self.publish = stream, distance_m, level, publish
+        self._lock, self._wake, self._stopping = threading.Lock(), threading.Event(), False
+        self._slot = None
+        self.offered = self.skipped = self.rendered = 0
+        self.ms = deque(maxlen=200)  # wall ms per frame, render and PNG encoding, the newest 200
+
+    def offer(self, model, data) -> None:
+        snapshot = (model, data.qpos.copy(), data.mocap_pos.copy(), data.mocap_quat.copy())
+        with self._lock:
+            self.offered += 1
+            if self._slot is not None:
+                self.skipped += 1
+            self._slot = snapshot
+        self._wake.set()
+
+    def stop(self) -> None:
+        self._stopping = True
+        self._wake.set()
+        if self.is_alive():
+            self.join(timeout=10)
+
+    def stats(self) -> dict:
+        with self._lock:
+            ms = sorted(self.ms)
+            return {"offered": self.offered, "skipped": self.skipped, "rendered": self.rendered,
+                    "ms_median": ms[len(ms) // 2] if ms else None}
+
+    def run(self) -> None:
+        drawn = {}  # model -> (renderer, scratch MjData, camera), at most a few: the stage switches scenes
+        try:
+            while True:
+                self._wake.wait()
+                self._wake.clear()
+                if self._stopping:
+                    return
+                with self._lock:
+                    snapshot, self._slot = self._slot, None
+                if snapshot is None:
+                    continue
+                started = time.perf_counter()
+                model, qpos, mocap_pos, mocap_quat = snapshot
+                if model not in drawn:
+                    if len(drawn) >= 4:
+                        oldest = next(iter(drawn))
+                        drawn.pop(oldest)[0].close()
+                    renderer = mujoco.Renderer(model, height=self.stream["height"], width=self.stream["width"])
+                    camera = mujoco.MjvCamera()
+                    mujoco.mjv_defaultFreeCamera(model, camera)
+                    camera.type, camera.trackbodyid = mujoco.mjtCamera.mjCAMERA_TRACKING, model.body("base_link").id
+                    camera.distance = self.distance_m
+                    drawn[model] = renderer, mujoco.MjData(model), camera
+                renderer, scratch, camera = drawn[model]
+                scratch.qpos[:], scratch.mocap_pos[:], scratch.mocap_quat[:] = qpos, mocap_pos, mocap_quat
+                mujoco.mj_kinematics(model, scratch)
+                mujoco.mj_comPos(model, scratch)
+                mujoco.mj_camlight(model, scratch)
+                renderer.update_scene(scratch, camera=camera)
+                renderer.scene.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = self.stream["shadows"]
+                png = encode_png(renderer.render(), self.level)
+                with self._lock:
+                    self.rendered += 1
+                    self.ms.append((time.perf_counter() - started) * 1000.0)
+                self.publish(png)
+                if self.rendered % 200 == 0:
+                    stats = self.stats()
+                    log.info("Stream frames: %d drawn, %d offers skipped while busy, median %.0f ms a frame (newest "
+                             "200; %dx%d, shadows %s)", stats["rendered"], stats["skipped"], stats["ms_median"],
+                             self.stream["width"], self.stream["height"], self.stream["shadows"])
+        except Exception:
+            log.exception("The stream renderer stopped on an error; the stream shows its last frame")
+        finally:
+            for renderer, _, _ in drawn.values():
+                renderer.close()
+
+
 class Simulation(threading.Thread):
     """Roams one Go2World at a time: one continuing episode, advanced one control period per step at the pace of the
     wall clock, with the latest drive command. A fall ends the episode and a fresh one starts after
     app.fall_restart_pause_s. Every episode starts on the zero command, so the dog first stands.
 
     Requests (submit): ("drive", command) from the next control period on; ("reset", preset or None) ends the episode
-    and starts a fresh one, on a new world if the preset differs. Status: resetting, roaming, fallen, or failed after
+    and starts a fresh one, on a new world if the preset differs; ("hold", token) pauses roaming where it is, for the
+    episode player, until ("release", token) with the same token. Status: resetting, roaming, fallen, or failed after
     an internal error (logged with its traceback; the thread then stops).
     """
 
@@ -86,17 +193,25 @@ class Simulation(threading.Thread):
         self.frame_every = periods_per(self.app["stream_fps"], self.period_s, "stream_fps")
         self.observation_every = periods_per(self.app["observation_hz"], self.period_s, "observation_hz")
         self.pose_every = periods_per(self.app["pose_hz"], self.period_s, "pose_hz")
-        self.described = None  # the MuJoCo model robot_text describes (this thread only)
-        self.robot_text, self.robot_version = None, 0  # GET /api/robot's JSON, built once per model; guarded
+        self.stream = stream_settings(self.config)
+        self.renderer = FrameRenderer(self.stream, self.config["world"]["render"]["tracking_distance_m"],
+                                      self.app["png_compression_level"], self._new_frame)
+        self.described = None  # the roaming model robot_text last described (this thread only)
+        # GET /api/robot's JSON (robot_text) and its version, and the description without version (robot_body) to
+        # tell whether another model draws the same; built once per model; guarded
+        self.robot_text, self.robot_body, self.robot_version = None, None, 0
         self.zero = dict.fromkeys(self.schema["fields"], 0.0)
         self.command = self.zero
         self.requests = queue.Queue()
         self.ready = threading.Event()  # set once the first episode runs, or once the thread has stopped
         self.changed = threading.Condition()
+        self.holder = None  # the episode player's token while it holds the stage (this thread only)
         # Guarded by self.changed and written by this thread only:
         self.status, self.preset, self.available = "resetting", None, []
-        self.frame, self.frame_n = b"", 0
-        self.latest = {}  # name -> (count, data) of the events only the newest of which matters: observation, infer
+        self.frame, self.frame_n = b"", 0  # written by the renderer thread
+        self.stream_readers = 0  # open /api/stream responses: frames are drawn only while there is one
+        # name -> (count, data) of the events only the newest of which matters: observation, pose, scene, infer
+        self.latest = {}
         # shortcut: grows by one entry per episode start, end, notice, run line or inference (a few hundred bytes);
         # trim it if the server ever has to run for days. Also written by announce() from other threads.
         self.event_log = []
@@ -140,20 +255,27 @@ class Simulation(threading.Thread):
             return {"status": self.status, "preset": self.preset, "available_presets": list(self.available)}
 
     def frames(self):
-        """Each PNG frame as it is published, starting with the latest; ends when the thread stops."""
+        """Each PNG frame as it is published, starting with the latest; ends when the thread stops. Frames are drawn
+        only while at least one of these is open."""
         seen = 0
-        while True:
+        with self.changed:
+            self.stream_readers += 1
+        try:
+            while True:
+                with self.changed:
+                    self.changed.wait_for(lambda: (self.frame_n != seen and self.frame) or self.stopped)
+                    if self.stopped:
+                        return
+                    seen, frame = self.frame_n, self.frame
+                yield frame
+        finally:
             with self.changed:
-                self.changed.wait_for(lambda: self.frame_n != seen or self.stopped)
-                if self.stopped:
-                    return
-                seen, frame = self.frame_n, self.frame
-            yield frame
+                self.stream_readers -= 1
 
     def events(self):
-        """(name, data) for every logged event (episode, notice, run) from now on and the latest observation and infer
-        event after them; a reader too slow for every one of those gets the newest. Ends when the thread stops and all
-        has been sent."""
+        """(name, data) for every logged event (episode, notice, run) from now on and the latest observation, pose,
+        scene and infer event after them; a reader too slow for every one of those gets the newest. Ends when the
+        thread stops and all has been sent."""
         with self.changed:
             logged, seen = len(self.event_log), {name: n for name, (n, _) in self.latest.items()}
 
@@ -170,7 +292,51 @@ class Simulation(threading.Thread):
                 return
             yield from new
 
+    # ---- the stage, for the episode player (any thread) ----------------------------------------------------------
+
+    def show_model(self, model) -> list:
+        """Make model the one GET /api/robot describes. When its description differs from the current one, the version
+        goes up and a ("robot", {reason, version}) event is returned for the caller to publish; else []."""
+        started = time.perf_counter()
+        described = robot.describe(model)
+        body = to_json(described)
+        with self.changed:
+            if body == self.robot_body:
+                return []
+            version = self.robot_version + 1
+            self.robot_body, self.robot_version = body, version
+            self.robot_text = to_json(described | {"version": version})
+        log.info("Robot description %d: %d bytes in %.0f ms", version, len(body), (time.perf_counter() - started) * 1000)
+        return [("robot", {"reason": "world_rebuilt", "version": version})]
+
+    def publish_stage(self, events=(), observation=None, pose=None, scene=None) -> None:
+        """The episode player's events (logged), observation, pose ({t_s, pos, quat}; the version is added here) and
+        scene, published together."""
+        with self.changed:
+            self.event_log.extend(events)
+            if observation is not None:
+                self._add("observation", observation, latest_only=True)
+            if pose is not None:
+                self._add("pose", pose | {"version": self.robot_version}, latest_only=True)
+            if scene is not None:
+                self._add("scene", scene, latest_only=True)
+            self.changed.notify_all()
+
+    def offer_frame(self, model, data) -> None:
+        """A stage state for the stream; drawn when the renderer is free, else replaced by a newer one; nothing while
+        no /api/stream response is open."""
+        if self.stream_readers:
+            self.renderer.offer(model, data)
+
+    def _new_frame(self, png: bytes) -> None:  # the renderer thread
+        with self.changed:
+            self.frame, self.frame_n = png, self.frame_n + 1
+            self.changed.notify_all()
+
+    # ---- this thread ---------------------------------------------------------------------------------------------
+
     def run(self) -> None:
+        self.renderer.start()
         try:
             self._open_worlds()
             self._start_episode()
@@ -182,7 +348,8 @@ class Simulation(threading.Thread):
                                       "message": "The simulation stopped after an internal error; restart the server."}),
                           status="failed")
         finally:
-            self.world = None  # its renderer is closed here, on the thread that made it (mujoco.Renderer.__del__)
+            self.renderer.stop()
+            self.world = None
             with self.changed:
                 self.stopped = True
                 self.changed.notify_all()
@@ -208,8 +375,9 @@ class Simulation(threading.Thread):
     def _roam(self) -> None:
         self.due = time.perf_counter()  # wall-clock time of the next control period, or of the end of a fall's pause
         while True:
+            timeout = None if self.holder is not None else max(0.0, self.due - time.perf_counter())
             try:
-                kind, value, future = self.requests.get(timeout=max(0.0, self.due - time.perf_counter()))
+                kind, value, future = self.requests.get(timeout=timeout)
             except queue.Empty:  # due: the next control period, or a fresh episode after a fall
                 if self.status == "fallen":
                     self._start_episode()
@@ -233,34 +401,42 @@ class Simulation(threading.Thread):
             if self.status == "roaming":
                 self._end_episode("resetting")
             if value is not None and value != self.world.preset:
-                self.world = None  # the old world's renderer is closed here, on its own thread
+                self.world = None
                 self.world = Go2World(self.config, self.seed, value)
                 with self.changed:
                     self.preset = value
             self._start_episode()
+        elif kind == "hold":
+            self.holder = value
+        elif kind == "release":
+            if self.holder is not None and self.holder == value:
+                self.holder = None
+                self.described = None  # the player may have shown its own model: describe ours again if it differs
+                events = self._describe_world()
+                self._publish(*events, obs=self.last_obs, pose=self.last_obs["t_s"])  # the roaming dog, where it paused
+                self.offer_frame(self.world.model, self.world.policy.data)
+                self.due = time.perf_counter()
         else:
             raise ValueError(f"unknown request {kind!r}")
+
+    def _describe_world(self) -> list:
+        if self.world.model is self.described:
+            return []
+        self.described = self.world.model  # a new world, or a scene with an object: the page redraws if it differs
+        return self.show_model(self.world.model)
 
     def _start_episode(self) -> None:
         with self.changed:
             self.status = "resetting"
-        obs = self.world.reset()
+        obs = self.last_obs = self.world.reset()
         self.n = 0  # control periods since the decision instant
-        events = [("episode", {"phase": "start", "preset": self.world.preset})]
-        if self.world.model is not self.described:  # a new world, or a scene with an object: the page redraws
-            started = time.perf_counter()
-            self.described, version = self.world.model, self.robot_version + 1
-            text = to_json(robot.describe(self.world.model) | {"version": version})
-            log.info("Robot description %d: %d bytes in %.0f ms", version, len(text),
-                     (time.perf_counter() - started) * 1000)
-            with self.changed:
-                self.robot_text, self.robot_version = text, version
-            events.insert(0, ("robot", {"reason": "world_rebuilt", "version": version}))
-        self._publish(*events, obs=obs, frame=self._frame(), pose=obs["t_s"], status="roaming")
+        events = [*self._describe_world(), ("episode", {"phase": "start", "preset": self.world.preset})]
+        self.offer_frame(self.world.model, self.world.policy.data)
+        self._publish(*events, obs=obs, pose=obs["t_s"], status="roaming")
         self.due = time.perf_counter()
 
     def _step(self) -> None:
-        obs = self.world.step(self.command, self.period_s)
+        obs = self.last_obs = self.world.step(self.command, self.period_s)
         self.n += 1
         self.due += self.period_s
         if obs["fallen"]:
@@ -269,8 +445,9 @@ class Simulation(threading.Thread):
             self._publish(("notice", {"code": "fell", "message": "The dog fell over; a fresh episode starts shortly."}))
             self.due = time.perf_counter() + self.app["fall_restart_pause_s"]
             return
+        if self.n % self.frame_every == 0:
+            self.offer_frame(self.world.model, self.world.policy.data)
         self._publish(obs=obs if self.n % self.observation_every == 0 else None,
-                      frame=self._frame() if self.n % self.frame_every == 0 else None,
                       pose=obs["t_s"] if self.n % self.pose_every == 0 else None)
 
     def _end_episode(self, status: str) -> None:
@@ -280,22 +457,17 @@ class Simulation(threading.Thread):
         self.command = self.zero
         self._publish(("episode", {"phase": "end", "preset": self.world.preset, "outcome": outcome}), status=status)
 
-    def _frame(self) -> bytes:
-        return encode_png(self.world.render_frame(), self.app["png_compression_level"])
-
-    def _publish(self, *events, obs=None, frame=None, pose=None, status=None) -> None:
-        """Publish events, an observation, a frame, the bodies' poses and a status together, so no reader sees one
-        without the others. pose is the episode time to stamp the bodies' poses with, or None for none."""
+    def _publish(self, *events, obs=None, pose=None, status=None) -> None:
+        """Publish events, an observation, the bodies' poses and a status together, so no reader sees one without the
+        others. pose is the episode time to stamp the bodies' poses with, or None for none."""
         observation = None if obs is None else describe(obs, self.command)
-        poses = None if pose is None else robot.pose(self.world.policy.data, pose) | {"version": self.robot_version}
+        poses = None if pose is None else robot.pose(self.world.policy.data, pose)
         with self.changed:
             self.event_log.extend(events)
             if observation is not None:
                 self._add("observation", observation, latest_only=True)
             if poses is not None:
-                self._add("pose", poses, latest_only=True)
-            if frame is not None:
-                self.frame, self.frame_n = frame, self.frame_n + 1
+                self._add("pose", poses | {"version": self.robot_version}, latest_only=True)
             if status is not None:
                 self.status = status
             self.changed.notify_all()

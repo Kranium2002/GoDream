@@ -8,7 +8,8 @@ Serves on config.yaml app.host and app.port (--port 0 picks a free port) until C
     GET  /api/state    what the page needs to draw its controls: command fields and ranges, presets, status,
                        frame size and rate, the skill catalogue and which capabilities work, each with its reason,
                        and run_modes: per skill, the learning-run modes Dev B's run_skill accepts
-    GET  /api/stream   multipart/x-mixed-replace stream of PNG frames rendered by MuJoCo, at app.stream_fps;
+    GET  /api/stream   multipart/x-mixed-replace stream of PNG frames rendered by MuJoCo, at app.stream_fps at most
+                       (app.stream: size and shadows; a frame is skipped while the renderer is busy);
                        ?camera=tracking (the default); head is 503 until the head camera exists, anything else 400
     GET  /api/events   Server-Sent Events: observation (app.observation_hz), episode (start, end with the outcome),
                        notice ({code, message})
@@ -19,6 +20,8 @@ Serves on config.yaml app.host and app.port (--port 0 picks a free port) until C
     GET  /api/runs, GET /api/runs/{run_id}, POST /api/runs   learning runs (app/runs.py)
     GET  /api/robot    the stage's bodies, geoms and meshes for the 3D view; SSE pose and robot (app/robot.py)
     POST /api/infer    live inference from the browser's image window (app/infer.py)
+    POST /api/episodes/start, /api/episodes/stop   a run's own episodes replayed on the stage (app/player.py); the
+                       drive pad, a reset, a stop and live inference take the stage back
     GET  /             and other static files, from app/static only
 Every refusal or error is {code, message}: a stable code and one plain sentence; the detail goes to the log on stderr.
 Routes live in app/routes.py's table: the ones above are registered here, each later feature in a module of its own,
@@ -37,6 +40,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 import app.chat  # noqa: F401  registers GET /api/skills, POST /api/chat and the chat capability
 import app.infer  # noqa: F401  registers POST /api/infer and the infer capability
+import app.player  # noqa: F401  registers POST /api/episodes/start and /api/episodes/stop
 import app.robot  # noqa: F401  registers GET /api/robot
 import app.runs  # noqa: F401  registers the run routes and the runs and results capabilities
 from app import backend
@@ -63,6 +67,7 @@ class Server(ThreadingHTTPServer):
 
     def __init__(self, config: dict, port: int):
         self.config, self.sim = config, Simulation(config)
+        self.player = app.player.Player(self)
         self.closing = threading.Event()  # set by stop(); background helpers (app/runs.py) end on it
         super().__init__((config["app"]["host"], port), Handler)
 
@@ -167,20 +172,20 @@ def drive_capability(server: Server) -> dict:
 @route("GET", "/api/state")
 def state(h: Handler) -> None:
     config, sim = h.server.config, h.server.sim
-    render = config["world"]["render"]
     actions, hold_s = backend.actions(config)
     h.send_json(200, {
         "commands": {name: {"unit": f["unit"], "min": f["min"], "max": f["max"]}
                      for name, f in sim.schema["fields"].items()},
         "presets": list(config["world"]["presets"]),
         **sim.state(),
-        "frame": {"width": render["width"], "height": render["height"], "stream_fps": config["app"]["stream_fps"]},
+        "frame": {"width": sim.stream["width"], "height": sim.stream["height"], "stream_fps": config["app"]["stream_fps"]},
         "capabilities": capabilities(h.server),
         "skills": backend.skill_catalog(config),
         "run_modes": backend.run_modes(config),  # {skill: {mode: "" or Dev B's refusal}}, asked of run_skill.plan_run
         "image_window": backend.image_window(config),  # null until config.yaml has Dev B's vision block
         "actions": actions,  # {name: command} of skills.dodge_vision, unchanged
         "action_hold_s": hold_s,  # how long an emitted action's command is held (skills.dodge_vision.hold_s)
+        "episodes": h.server.player.state(),  # the episode player (app/player.py): {playing, run_id, note}
     })
 
 
@@ -221,6 +226,7 @@ def command(h: Handler, command: dict) -> None:
         log.warning("Drive command refused: %s", e)
         raise Refusal(400, "invalid_command", "A drive command needs every value, each a number within its range.")
     command = {name: float(command[name]) for name in schema["fields"]}
+    h.server.player.stop()  # the drive pad takes the stage back
     h.submit("drive", command)
     h.send_json(200, {"command": command})
 
@@ -237,6 +243,7 @@ def reset(h: Handler) -> None:
         if preset not in h.server.sim.state()["available_presets"]:
             raise Refusal(400, "preset_unavailable", "That world preset cannot be built yet, so the dog stays "
                                                      "where it is.")
+    h.server.player.stop()  # a reset takes the stage back
     h.submit("reset", preset)
     h.send_json(200, {"preset": h.server.sim.state()["preset"]})
 
@@ -266,6 +273,7 @@ def start(config: dict, port: int) -> Server:
 def stop(server: Server) -> None:
     """Stop serving, stop the simulation thread (open streams then end) and free the port. Safe to call again."""
     server.closing.set()
+    server.player.stop()
     server.shutdown()
     server.sim.stop()
     server.server_close()

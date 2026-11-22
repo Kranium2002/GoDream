@@ -97,6 +97,7 @@ def post_infer(h) -> None:
     infer_fn, reset_fn, window, missing = backend.inference(h.server.config)
     if missing:
         raise Refusal(503, "infer_unavailable", f"Live inference needs {'; and '.join(missing)}.")
+    h.server.player.stop()  # a live-camera session takes the stage back from the episode player
     try:
         result = run(h.read_body(), h.server.config, infer_fn, reset_fn, window, received_mono, received_wall)
     except Refusal:

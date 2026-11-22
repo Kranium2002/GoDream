@@ -9,7 +9,7 @@ const FINAL = ["done", "failed", "refused", "stopped"];
 const BOX = { width: 640, height: 260, pad: 52 };
 const fmt = (v) => (typeof v === "number" && Number.isFinite(v) ? String(Number(v.toPrecision(4))) : String(v)); // display rounding only
 
-export function initLearnView({ api, el, catalogue = () => null }) {
+export function initLearnView({ api, el, notes, episodes, catalogue = () => null }) {
   const $ = (id) => document.getElementById(id);
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const runs = new Map(); // run id -> SSE lines received this session (memory only)
@@ -39,10 +39,12 @@ export function initLearnView({ api, el, catalogue = () => null }) {
       const plain = await api.runs(); // the bare list of ids, when the summary is not offered
       if (plain.ok) { r = plain; cards = cardsFrom(plain.data); }
     }
-    $("cards-note").hidden = r.ok && cards.length > 0;
-    $("cards-note").textContent = !r.ok ? `Saved runs cannot be listed: ${r.message}` : "No learning run is saved on this computer yet.";
+    if (r.ok) notes.clear("cards");
+    else notes.set("cards", r.unavailable ? "warn" : "danger", `Saved runs cannot be listed: ${r.message}`, r.unavailable ? "Unavailable" : "Error");
+    $("cards-empty").hidden = !(r.ok && !cards.length);
     lastCards = cards;
     $("cards").replaceChildren(...cards.map(card));
+    episodes?.refresh();
     for (const c of cards) addRun(c.runId);
   }
 
@@ -57,23 +59,26 @@ export function initLearnView({ api, el, catalogue = () => null }) {
     const facts = [c.state && `state ${c.state}`, c.stepsDone !== null && `${c.stepsDone} ${c.stepsDone === 1 ? "step" : "steps"} done`, when && `updated ${when}`].filter(Boolean);
     const badges = [c.hasResult === true && "result saved", c.hasStudent === true && "student trained"].filter(Boolean);
     const timed = timingLine(c.timing); // measured by Dev B's run_skill worker, wall clock
-    const b = el("button", { class: "card", type: "button", "aria-describedby": `card-${c.runId}` },
-      el("span", { class: "card__skill" }, label?.name ?? c.skill ?? `Run ${c.runId}`),
-      label?.description ? el("span", { class: "card__desc" }, label.description) : null,
-      el("span", { class: "card__id" }, el("code", {}, c.skill && label ? `${c.skill} · run ${c.runId}` : `run ${c.runId}`)),
-      el("span", { class: "card__facts", id: `card-${c.runId}` }, facts.join(" · ") || "No summary from the server."),
-      timed ? el("span", { class: "card__facts" }, `Measured: ${timed}.`) : null,
-      badges.length ? el("span", { class: "card__badges" }, ...badges.map((t) => el("span", { class: "badge" }, t))) : null,
-      el("span", { class: "card__go" }, "Replay on the robot"));
-    b.addEventListener("click", () => playRun(c.runId));
-    return el("li", {}, b);
+    const replayBtn = el("button", { class: "btn btn--primary btn--sm", type: "button", "aria-describedby": `card-${c.runId}` }, "Replay on the robot");
+    replayBtn.addEventListener("click", () => playRun(c.runId));
+    const epBtn = el("button", { class: "btn btn--secondary btn--sm", type: "button", "data-episodes": c.runId, "aria-describedby": `card-${c.runId}` }, "Show this run's episodes");
+    return el("li", {}, el("article", { class: "card run-card", "aria-label": `${label?.name ?? c.skill ?? "Run"} ${c.runId}` },
+      el("div", { class: "run-card__head" },
+        el("h3", {}, label?.name ?? c.skill ?? `Run ${c.runId}`),
+        el("p", { class: "run-card__id" }, el("code", {}, c.skill && label ? `${c.skill} · run ${c.runId}` : `run ${c.runId}`))),
+      label?.description ? el("p", { class: "run-card__desc" }, label.description) : el("span", {}),
+      el("div", { class: "run-card__body" },
+        el("p", { class: "run-card__facts", id: `card-${c.runId}` }, facts.join(" · ") || "No summary from the server."),
+        timed ? el("p", { class: "run-card__facts" }, `Measured: ${timed}.`) : null,
+        badges.length ? el("p", { class: "badges" }, ...badges.map((t) => el("span", { class: "badge badge--neutral" }, t))) : null),
+      el("div", { class: "run-card__actions" }, replayBtn, epBtn)));
   }
 
   // ---- runs -----------------------------------------------------------------------------------------------------
   async function loadRunList() {
     const r = await api.runs();
-    $("run-list-note").hidden = r.ok;
-    if (!r.ok) $("run-list-note").textContent = `Runs saved on disk cannot be listed: ${r.message} Runs from this session and a typed id still work.`;
+    if (r.ok) notes.clear("run-list");
+    else notes.set("run-list", r.unavailable ? "warn" : "danger", `Runs saved on disk cannot be listed: ${r.message} Runs from this session and a typed id still work.`, r.unavailable ? "Unavailable" : "Error");
     for (const id of r.ok ? runIds(r.data) : []) addRun(id);
   }
 
@@ -199,32 +204,37 @@ export function initLearnView({ api, el, catalogue = () => null }) {
     document.body.classList.toggle("track-open", Boolean(selected));
     if (!selected) return;
     $("replay-stop").hidden = !replay || replay.finished;
+    $("track-episodes").dataset.episodes = selected;
+    $("track-episodes").hidden = false;
+    episodes?.refresh();
     const skill = tl.skill ? skillLabel(catalogue(), tl.skill)?.name ?? tl.skill : null;
     $("track-title").textContent = replay
       ? `Replay of recorded run ${replay.id} at ${replay.speed}x${replay.finished ? ", finished" : ""}${skill ? ` · ${skill}` : ""}`
       : `Run ${selected}${skill ? ` · ${skill}` : ""}${tl.state ? ` · ${tl.state}` : ""}`;
     $("track-steps").replaceChildren(...trackStages(rows, tl.state).map((s) => {
-      const cls = s.state === "done" ? "is-done" : ["failed", "refused", "stopped"].includes(s.state) ? "is-bad" : s.running ? "is-running" : "";
-      const mark = s.state === "done" ? "✓" : cls === "is-bad" ? "✕" : s.running ? "●" : "○";
-      const bar = s.fraction === null ? null : el("span", { class: "ts__bar", role: "img", "aria-label": `${s.progress}` }, el("span", { class: "ts__fill" }));
-      if (bar) bar.firstChild.style.width = `${(s.fraction * 100).toFixed(1)}%`;
+      const bad = ["failed", "refused", "stopped"].includes(s.state);
+      const cls = s.state === "done" ? "is-done" : bad ? "is-bad" : s.running ? "is-running" : "";
+      const tone = s.state === "done" ? "ok" : bad ? "danger" : s.running ? "accent" : "neutral";
+      const progress = s.fraction === null ? (s.progress ? el("span", { class: "ts__count" }, s.progress) : null)
+        : el("span", { class: "ts__progress" }, el("span", { class: "ts__count" }, s.progress),
+          el("span", { class: "ts__bar", role: "img", "aria-label": `${s.progress}` }, el("span", { class: "ts__fill" })));
+      if (s.fraction !== null) progress.querySelector(".ts__fill").style.transform = `scaleX(${s.fraction.toFixed(4)})`;
       return el("li", { class: `ts ${cls}` },
-        el("span", { class: "ts__top" }, el("span", { class: "mark", "aria-hidden": "true" }, mark), el("span", { class: "ts__label" }, s.label)),
-        el("span", { class: "ts__state" }, [s.stateText, s.progress].filter(Boolean).join(" · ")),
-        bar,
-        s.explain ? el("span", { class: "ts__explain" }, s.explain) : null);
+        el("span", { class: "ts__label" }, s.label),
+        el("span", { class: `chip chip--${tone} ts__state` }, el("span", { class: "chip__dot", "aria-hidden": "true" }), s.stateText),
+        progress ?? el("span", {}),
+        s.explain ? el("span", { class: "ts__explain" }, s.explain) : el("span", {}));
     }));
   }
 
   function stepItem(r) {
-    const mark = r.state === "done" ? "✓" : ["failed", "refused", "stopped"].includes(r.state) ? "✕" : r.state ? "●" : "○";
-    const cls = r.state === "done" ? "is-good" : ["failed", "refused", "stopped"].includes(r.state) ? "is-bad" : "";
+    const cls = r.state === "done" ? "is-done" : ["failed", "refused", "stopped"].includes(r.state) ? "is-bad" : "";
     const facts = [r.state ?? "no event yet", r.progress, r.time].filter(Boolean).join(" · ");
     let data = null;
-    if (r.isTrainObservation) data = el("p", { class: "hint" }, "Training observation: shown in the training chart.");
+    if (r.isTrainObservation) data = el("p", { class: "small muted" }, "Training observation: shown in the training chart.");
     else if (r.dataRows.length) data = kv(r.dataRows);
     return el("li", { class: cls },
-      el("span", { class: "mark", "aria-hidden": "true" }, mark),
+      el("span", { class: `dot${cls ? "" : " dot--hollow"}`, "aria-hidden": "true" }),
       el("div", {}, el("p", { class: "timeline__label" }, r.label), el("p", { class: "timeline__facts" }, facts),
         r.reason ? el("p", { class: "problem" }, `Reason: ${r.reason}`) : null, data));
   }
@@ -232,7 +242,7 @@ export function initLearnView({ api, el, catalogue = () => null }) {
   function renderTraining() {
     const series = trainSeries(tl);
     const body = $("train-body");
-    if (!series.length) return body.replaceChildren(el("p", { class: "empty" }, "No training observations in this run yet."));
+    if (!series.length) return body.replaceChildren(el("p", { class: "muted" }, "No training observations in this run yet."));
     const last = series[series.length - 1];
     const facts = [
       ["Step", typeof last.max_steps === "number" ? `${last.step} of ${last.max_steps}` : String(last.step)],
@@ -268,10 +278,10 @@ export function initLearnView({ api, el, catalogue = () => null }) {
     add("text", { x: p - 8, y: p + 5, class: "curve__label", "text-anchor": "end" }, fmt(c.y[1]));
     add("text", { x: p - 8, y: h - p + 5, class: "curve__label", "text-anchor": "end" }, fmt(c.y[0]));
     add("text", { x: p - 8, y: p - 16, class: "curve__label", "text-anchor": "end" }, "loss");
-    return el("figure", { class: "curve-wrap" }, svg, el("p", { class: "hint" }, "Solid: training loss. Dashed: validation loss."));
+    return el("figure", { class: "curve-wrap" }, svg, el("figcaption", { class: "small muted" }, "Solid: training loss. Dashed: validation loss."));
   }
 
-  const sections = (rows) => groupRows(rows).map((g) => el("details", { class: "section" },
+  const sections = (rows) => groupRows(rows).map((g) => el("details", { class: "section-group" },
     el("summary", {}, `${g.key} (${g.rows.length} ${g.rows.length === 1 ? "value" : "values"})`), kv(g.rows)));
 
   // How long learning took, as Dev B's run_skill worker measured it on this laptop (wall clock per step).
@@ -293,10 +303,10 @@ export function initLearnView({ api, el, catalogue = () => null }) {
 
   function renderResult(body, result) {
     const v = resultView(result);
-    if (v.kind === "none") return body.replaceChildren(el("p", { class: "empty" }, replay && !replay.finished ? "Appears when the replay reaches the end." : "Not reported yet."));
+    if (v.kind === "none") return body.replaceChildren(el("p", { class: "muted" }, replay && !replay.finished ? "Appears when the replay reaches the end." : "Not reported yet."));
     const timing = body === $("results-body") ? timingBlock(result) : null;
     if (v.kind === "raw") {
-      return body.replaceChildren(...(timing ? [timing] : []), el("p", { class: "hint" }, "The server sent a result without a metrics table; its sections are shown as sent."), ...sections(v.rows));
+      return body.replaceChildren(...(timing ? [timing] : []), el("p", { class: "small muted" }, "The server sent a result without a metrics table; its sections are shown as sent."), ...sections(v.rows));
     }
     const facts = [v.scenarioCount !== null && `${v.scenarioCount} held-out scenarios`, v.seeds && `seeds ${v.seeds}`].filter(Boolean).join(", ");
     const table = el("table", { class: "specs" },
@@ -310,7 +320,7 @@ export function initLearnView({ api, el, catalogue = () => null }) {
       el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Metric"), el("th", { scope: "col" }, "Comparison"), el("th", { scope: "col" }, "Difference"))),
       el("tbody", {}, ...v.paired.map((p) => el("tr", {}, el("th", { scope: "row" }, p.name), el("td", {}, p.comparison), el("td", {}, p.diff))))) : null;
     const extra = v.extra.length ? [el("p", { class: "block-title" }, "Other sections of the result, as sent"), ...sections(v.extra)] : [];
-    body.replaceChildren(...(timing ? [timing] : []), table, ...(paired ? [paired] : []), ...extra);
+    body.replaceChildren(...(timing ? [timing] : []), el("div", { class: "table-wrap" }, table), ...(paired ? [el("div", { class: "table-wrap" }, paired)] : []), ...extra);
   }
 
   // ---- controls -------------------------------------------------------------------------------------------------
@@ -326,6 +336,6 @@ export function initLearnView({ api, el, catalogue = () => null }) {
   loadCards(); // once at start too, so the cards never wait for the section to scroll into view
 
   // The catalogue arrived or changed: the cards name their skills from it.
-  const catalogueChanged = () => $("cards").replaceChildren(...lastCards.map(card));
-  return { setState, setVisible, addRun, onRunEvent, onObservation, onInfer, catalogueChanged };
+  const catalogueChanged = () => { $("cards").replaceChildren(...lastCards.map(card)); episodes?.refresh(); };
+  return { setState, setVisible, addRun, onRunEvent, onObservation, onInfer, catalogueChanged, showStage, selected: () => selected };
 }

@@ -208,9 +208,14 @@ def inference(config: dict):
                            window_encoding=spec.get("window_encoding", "raw"), diff_floor=spec.get("diff_floor"),
                            gate_passed=gate_passed if isinstance(gate_passed, bool) else None,
                            window={"frames": published["frames"], "height": model.frame_size, "width": model.frame_size},
-                           student_frames=model.frames)
+                           student_frames=model.frames,
+                           # what the page needs to draw the threshold ticks and to say what kind of student this is
+                           threshold_values={k: float(v) for k, v in dict(model.thresholds).items()},
+                           student_status=(student.get("provenance") or {}).get("status"))
         model, window, mode = _loaded["model"], _loaded["window"], _loaded["thresholds"]
-        extra = {"thresholds": mode} | ({} if _loaded["gate_passed"] is None else {"gate_passed": _loaded["gate_passed"]})
+        extra = {"thresholds": mode, "threshold_values": _loaded["threshold_values"]} | (
+            {} if _loaded["gate_passed"] is None else {"gate_passed": _loaded["gate_passed"]}) | (
+            {} if not _loaded["student_status"] else {"student_status": _loaded["student_status"]})
 
     def run(frames, t_capture_s):
         with _runtime_lock:
