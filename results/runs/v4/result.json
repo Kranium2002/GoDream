@@ -1,0 +1,422 @@
+{
+ "run_id": "v4",
+ "skill": "dodge_vision",
+ "trace_dev": {
+  "state": "done",
+  "argv": [
+   "trace",
+   "--run",
+   "v4"
+  ],
+  "skill": "dodge_vision",
+  "run_id": "v4",
+  "split": "dev",
+  "n_scenarios": 240,
+  "n_threats": 107,
+  "frames_shape": [
+   240,
+   120,
+   12,
+   12
+  ],
+  "window_frames": 8,
+  "first_decision_index": 7,
+  "decision_frames": 113,
+  "vision": {
+   "frame_size": 12,
+   "frame_rate_hz": 30.0,
+   "frames": 8,
+   "luma_weights": [
+    0.299,
+    0.587,
+    0.114
+   ],
+   "pixel_scale": 255.0
+  },
+  "seeds": {
+   "runtime_seed": 20261121,
+   "split": "dev",
+   "split_code": 2,
+   "scenarios": "dodge_vision._split_plan: np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), first n of sample_threat_scenarios",
+   "augmentation": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2)[1]), fresh for every episode of the scenario (paired)",
+   "attempt_seed": "scenario_id",
+   "world_seed": 0,
+   "world_preset": "default"
+  },
+  "t_hit": "Go2World.finish_episode first_collision_time_s of the NO_OP episode (NaN in the npz: none)",
+  "window_rebuild_check": {
+   "windows_checked": 27120,
+   "method": "every policy window equal (np.array_equal) to the stored frames it overlaps plus its newest frame; the last window of each episode rebuilt from the stored stack and compared exactly",
+   "passed": true
+  },
+  "npz": "D:/BerlinPrior-eval/results/runs/v4/trace_dev.npz",
+  "wall_s": 477.6698916000023,
+  "created_utc": "2026-11-22T01:59:55.885405+00:00",
+  "config_digest": "16f984011974f4d7a4fb7ca1e5ab5342d032c24dea8d5064ae6e7d34356913cc"
+ },
+ "updated_utc": "2026-11-22T02:21:09.048862+00:00",
+ "teach": {
+  "state": "done",
+  "started_utc": "2026-11-22T02:10:27.206228+00:00",
+  "argv": [
+   "teach",
+   "--run",
+   "v4",
+   "--skill",
+   "dodge_vision",
+   "--context",
+   "results/runs/v4/context",
+   "--dream",
+   "results/runs/v4/dream",
+   "--confirm-billing"
+  ],
+  "config_digest": "16f984011974f4d7a4fb7ca1e5ab5342d032c24dea8d5064ae6e7d34356913cc",
+  "context": "results/runs/v4/context",
+  "dream": "results/runs/v4/dream",
+  "dev": null,
+  "feature_set": [
+   "window",
+   "action",
+   "physics"
+  ],
+  "teacher": {
+   "n_context_rows": 320,
+   "n_features": 1160,
+   "call_log": "D:/BerlinPrior-eval/results/tabpfn_calls.jsonl"
+  },
+  "quote": {
+   "dream": {
+    "mode": "stacked",
+    "n_query_rows": 48000,
+    "n_train_rows": 320,
+    "n_features": 1160,
+    "active_outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "constant_outcomes": [
+     "fall",
+     "command_travel_m"
+    ],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 0,
+      "n_chunks": 5,
+      "n_train": 960,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40336,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 1,
+      "n_chunks": 5,
+      "n_train": 960,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40336,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 2,
+      "n_chunks": 5,
+      "n_train": 960,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40336,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 3,
+      "n_chunks": 5,
+      "n_train": 960,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40336,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 4,
+      "n_chunks": 5,
+      "n_train": 960,
+      "n_query": 16000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 22858,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 184202,
+    "usage": {
+     "current_usage": 1210485,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 413763,
+     "daily_token_limit": 35000000,
+     "daily_usage": 413763,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-23 00:00:00 UTC",
+     "monthly_tokens_used": 1210485,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 1210485,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 33789515,
+    "tokens_quoted_for_billed_calls": 1100485,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   }
+  },
+  "scores": {
+   "path": "D:/BerlinPrior-eval/results/runs/v4/scores.npz",
+   "sha256": "87df8e3ab0b7a22011876b099ef99dc0cf7265de0203acdd0bfb61c2d51c4dc6",
+   "shape": [
+    12000,
+    4
+   ],
+   "request_keys": [
+    "d1ed12f80c1f7a304eed1f19b471c45eb9d5b6339b3ea126ff38649271289bc1",
+    "c57f20255f426e2dd77df76050de05648f283b46fefaab02f328041bc4023061",
+    "8bcf91e1041ce7abb7d81c21d3bb0c7d27551cc42e009289078b1311140e2690",
+    "2dc6911bec9b508e88f5527b151fc2de6e3e455ffb96406e454bed0b8c4a6246",
+    "3b75313514672add9a72ae96d08853e1ae7027c2a600e40ca7c7b1d23a70b529"
+   ]
+  }
+ },
+ "sweep": {
+  "state": "done",
+  "argv": [
+   "--run",
+   "v4",
+   "--dream",
+   "results/runs/v4/dream",
+   "--scores",
+   "results/runs/v4/scores.npz",
+   "--trace",
+   "results/runs/v4/trace_dev.npz",
+   "--variants-json",
+   "{\"frames\":[4,6,8],\"encodings\":[\"signed_diff\",\"events\"],\"hidden_sizes\":[[128]],\"steps\":2000}",
+   "--freeze-best"
+  ],
+  "sweep_json": "D:\\BerlinPrior-eval\\results\\runs\\v4\\sweep.json",
+  "rule": "qualifies: offline dev calibration's chosen triple has precision >= inference.gate.precision_target and emitted >= observed.dodge_vision.sweep.min_emitted; among qualifying: highest dev recall, ties -> fewer frames, then smaller hidden size (total units, then layers, then sizes in order), then encoding order as listed; none qualifying: no winner, nothing relaxed",
+  "winner": "f4_events_h128",
+  "settings": {
+   "frames": 4,
+   "encoding": "events",
+   "hidden_sizes": [
+    128
+   ],
+   "steps": 2000
+  },
+  "student": "D:\\BerlinPrior-eval\\results\\runs\\v4\\student",
+  "replaced_student": null,
+  "thresholds": {
+   "threat": 0.95,
+   "action": 0.4,
+   "margin": 0.1
+  },
+  "calibration": {
+   "thresholds": {
+    "threat": 0.95,
+    "action": 0.4,
+    "margin": 0.1
+   },
+   "emitted": 39,
+   "correct": 39,
+   "precision": 1.0,
+   "precision_ci": [
+    0.9103331462924287,
+    1.0
+   ],
+   "recalled": 36,
+   "recall": 0.3364485981308411,
+   "false_activations": 0,
+   "gate_passed": true,
+   "n_scenarios": 240,
+   "n_threats": 107,
+   "precision_target": 0.99,
+   "best_recall_at_precision": {
+    "0.95": {
+     "threat": 0.9,
+     "action": 0.7,
+     "margin": 0.3,
+     "emitted": 42,
+     "precision": 0.9523809523809523,
+     "recall": 0.34579439252336447,
+     "false_activations": 2
+    },
+    "0.90": {
+     "threat": 0.9,
+     "action": 0.4,
+     "margin": 0.1,
+     "emitted": 67,
+     "precision": 0.9253731343283582,
+     "recall": 0.5420560747663551,
+     "false_activations": 5
+    }
+   },
+   "wall_s": 96.11603390000528,
+   "readout_check": {
+    "n_frames": 50,
+    "max_abs_difference": 1.1102230246251565e-16,
+    "tolerance": 1e-09,
+    "passed": true
+   }
+  },
+  "training": {
+   "state": "done",
+   "steps_run": 900,
+   "best_step": 400,
+   "stopped_early": true,
+   "initial_validation_loss": 0.7800478530949866,
+   "best_validation_loss": 0.4369837854066091,
+   "validation_vs_constant": {
+    "action": {
+     "validation_loss": 0.6362847476415436,
+     "constant_predictor": 0.9180616677857747,
+     "below_constant": true
+    },
+    "threat": {
+     "validation_loss": 0.2376828231716746,
+     "constant_predictor": 0.49543509153256954,
+     "below_constant": true
+    }
+   },
+   "split": {
+    "by": "group",
+    "validation_fraction": 0.1,
+    "n_train_rows": 10800,
+    "n_validation_rows": 1200,
+    "n_groups": 2000
+   },
+   "train_wall_s": 126.066834199999,
+   "network_sha256": "207ae1582c3589d244fb4b2240529c9b9e19032e744f9a636173addccb6c164a"
+  },
+  "frozen_utc": "2026-11-22T02:20:45.093554+00:00"
+ },
+ "closed_loop_test": {
+  "state": "running",
+  "argv": [
+   "evaluate",
+   "--run",
+   "v4",
+   "--student",
+   "results/runs/v4/student",
+   "--split",
+   "test"
+  ],
+  "student": "D:/BerlinPrior-eval/results/runs/v4/student",
+  "network_sha256": "207ae1582c3589d244fb4b2240529c9b9e19032e744f9a636173addccb6c164a",
+  "thresholds": {
+   "threat": 0.95,
+   "action": 0.4,
+   "margin": 0.1
+  },
+  "calibration": {
+   "split": "dev",
+   "n_scenarios": 240,
+   "n_threats": 107,
+   "grid_size": 240,
+   "chosen": {
+    "threat": 0.95,
+    "action": 0.4,
+    "margin": 0.1,
+    "emitted": 39,
+    "correct": 39,
+    "precision": 1.0,
+    "recalled": 36,
+    "recall": 0.3364485981308411,
+    "false_activations": 0,
+    "precision_ci": [
+     0.9103331462924287,
+     1.0
+    ],
+    "ci_level": 0.95,
+    "ci_method": "Wilson"
+   },
+   "precision_target": 0.99,
+   "gate_passed": true,
+   "rule": "precision >= target: highest recall, then fewer false activations, then higher threat, action, margin",
+   "seeds": {
+    "runtime_seed": 20261121,
+    "split": "dev",
+    "split_code": 2,
+    "scenarios": "dodge_vision._split_plan: np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), first n of sample_threat_scenarios",
+    "augmentation": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2)[1]), fresh for every episode of the scenario (paired)",
+    "attempt_seed": "scenario_id",
+    "world_seed": 0,
+    "world_preset": "default"
+   },
+   "t_hit": "Go2World.finish_episode first_collision_time_s of the NO_OP episode",
+   "source": "offline: the saved NO_OP trace (dodge_eval trace), windows rebuilt from its frames, readouts batched through observed.student_readout, the same gate replay as calibrate",
+   "trace": "D:/BerlinPrior-eval/results/runs/v4/trace_dev.npz",
+   "trace_config_digest": "16f984011974f4d7a4fb7ca1e5ab5342d032c24dea8d5064ae6e7d34356913cc",
+   "readout_check": {
+    "n_frames": 50,
+    "max_abs_difference": 1.1102230246251565e-16,
+    "tolerance": 1e-09,
+    "passed": true,
+    "seed": 20261121,
+    "method": "np.random.default_rng(runtime.seed).choice of (scenario, decision frame) without replacement; DodgeRuntime.readout of that window against the batched observed.student_readout"
+   },
+   "config_digest": "66418b9214fd94f5b01a4f3eb3eec74f604767bb5aac9e2fa84d37fd32ea4d7f",
+   "run_id": "f4_events_h128",
+   "records": "D:/BerlinPrior-eval/results/runs/v4/sweep/f4_events_h128/calibration_dev_offline.json",
+   "traces": "D:/BerlinPrior-eval/results/runs/v4/sweep/f4_events_h128/calibration_dev_offline.npz",
+   "frozen_utc": "2026-11-22T02:20:45.093554+00:00",
+   "sweep": {
+    "sweep_json": "D:/BerlinPrior-eval/results/runs/v4/sweep.json",
+    "variant": "f4_events_h128",
+    "copied_from": "D:/BerlinPrior-eval/results/runs/v4/sweep/f4_events_h128/student",
+    "rule": "qualifies: offline dev calibration's chosen triple has precision >= inference.gate.precision_target and emitted >= observed.dodge_vision.sweep.min_emitted; among qualifying: highest dev recall, ties -> fewer frames, then smaller hidden size (total units, then layers, then sizes in order), then encoding order as listed; none qualifying: no winner, nothing relaxed"
+   }
+  },
+  "frames": 4
+ }
+}
