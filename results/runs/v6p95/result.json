@@ -1,0 +1,134 @@
+{
+ "run_id": "v6p95",
+ "skill": "dodge_vision",
+ "sweep": {
+  "state": "done",
+  "argv": [
+   "--run",
+   "v6p95",
+   "--dream",
+   "results/runs/v5/dream",
+   "--scores",
+   "results/runs/v5/scores.npz",
+   "--trace",
+   "results/runs/v5/trace_dev.npz",
+   "--freeze-best"
+  ],
+  "sweep_json": "D:\\BerlinPrior-eval\\results\\runs\\v6p95\\sweep.json",
+  "rule": "qualifies: offline dev calibration's chosen triple has precision >= inference.gate.precision_target and emitted >= observed.dodge_vision.sweep.min_emitted; among qualifying: highest dev recall, ties -> fewer frames, then smaller hidden size (total units, then layers, then sizes in order), then encoding order as listed; none qualifying: no winner, nothing relaxed",
+  "winner": "f4_signed_diff_h128",
+  "settings": {
+   "frames": 4,
+   "encoding": "signed_diff",
+   "hidden_sizes": [
+    128
+   ],
+   "steps": 1500
+  },
+  "student": "D:\\BerlinPrior-eval\\results\\runs\\v6p95\\student",
+  "replaced_student": null,
+  "thresholds": {
+   "threat": 0.98,
+   "action": 0.4,
+   "margin": 0.1
+  },
+  "calibration": {
+   "thresholds": {
+    "threat": 0.98,
+    "action": 0.4,
+    "margin": 0.1
+   },
+   "emitted": 61,
+   "correct": 59,
+   "precision": 0.9672131147540983,
+   "precision_ci": [
+    0.8881050958050438,
+    0.9909621096016377
+   ],
+   "recalled": 55,
+   "recall": 0.41044776119402987,
+   "false_activations": 2,
+   "gate_passed": true,
+   "n_scenarios": 240,
+   "threat_definition": {
+    "mode": "near_approach",
+    "separation_m": 0.08,
+    "outcome": "min_separation_m"
+   },
+   "n_threats": 134,
+   "strict_collision": {
+    "n_collisions": 111,
+    "emitted": 61,
+    "correct": 51,
+    "precision": 0.8360655737704918,
+    "recalled": 47,
+    "recall": 0.42342342342342343,
+    "false_activations": 10,
+    "precision_ci": [
+     0.7238716146826548,
+     0.9084398839432039
+    ],
+    "truth": "NO_OP collision; on time = at or before its first contact"
+   },
+   "precision_target": 0.95,
+   "best_recall_at_precision": {
+    "0.95": {
+     "threat": 0.98,
+     "action": 0.4,
+     "margin": 0.1,
+     "emitted": 61,
+     "precision": 0.9672131147540983,
+     "recall": 0.41044776119402987,
+     "false_activations": 2
+    },
+    "0.90": {
+     "threat": 0.98,
+     "action": 0.4,
+     "margin": 0.1,
+     "emitted": 61,
+     "precision": 0.9672131147540983,
+     "recall": 0.41044776119402987,
+     "false_activations": 2
+    }
+   },
+   "wall_s": 48.15003240000806,
+   "readout_check": {
+    "n_frames": 50,
+    "max_abs_difference": 2.220446049250313e-16,
+    "tolerance": 1e-09,
+    "passed": true
+   }
+  },
+  "training": {
+   "state": "done",
+   "steps_run": 1200,
+   "best_step": 700,
+   "stopped_early": true,
+   "initial_validation_loss": 0.878312749957542,
+   "best_validation_loss": 0.49087009404799675,
+   "validation_vs_constant": {
+    "action": {
+     "validation_loss": 0.6302124569127936,
+     "constant_predictor": 0.8410387198765866,
+     "below_constant": true
+    },
+    "threat": {
+     "validation_loss": 0.35152773118319997,
+     "constant_predictor": 0.6777335463951766,
+     "below_constant": true
+    }
+   },
+   "split": {
+    "by": "group",
+    "validation_fraction": 0.1,
+    "n_train_rows": 13500,
+    "n_validation_rows": 1500,
+    "n_groups": 2500
+   },
+   "train_wall_s": 56.9031590000086,
+   "network_sha256": "821cc5fbbbe29a3d270e0e7aef7018be6e65a6f1775f0f52aa51c8fbdd8fbeef"
+  },
+  "frozen_utc": "2026-11-22T05:49:09.427999+00:00"
+ },
+ "updated_utc": "2026-11-22T05:49:09.455172+00:00"
+}
