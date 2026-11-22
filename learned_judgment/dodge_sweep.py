@@ -278,7 +278,8 @@ def _training_summary(section: Mapping[str, Any]) -> dict[str, Any]:
 
 def _calibration_summary(section: Mapping[str, Any]) -> dict[str, Any]:
     keys = ("thresholds", "emitted", "correct", "precision", "precision_ci", "recalled", "recall", "false_activations",
-            "gate_passed", "n_scenarios", "n_threats", "precision_target", "best_recall_at_precision", "wall_s")
+            "gate_passed", "n_scenarios", "threat_definition", "n_threats", "strict_collision", "precision_target",
+            "best_recall_at_precision", "wall_s")
     out = {key: section.get(key) for key in keys}
     check = section.get("readout_check") or {}
     out["readout_check"] = {k: check.get(k) for k in ("n_frames", "max_abs_difference", "tolerance", "passed")}
@@ -352,7 +353,7 @@ def _fmt(value: Any, digits: int = 3) -> str:
 def table(ranked: Sequence[Mapping[str, Any]]) -> str:
     """The ranked variants as a fixed-width text table."""
     header = ("rank", "variant", "status", "Q", "thr val/const", "act val/const", "thresholds t/a/m", "gate", "emit",
-              "prec", "Wilson", "recall", "FA", "r@.95", "r@.90", "train s", "cal s")
+              "prec", "Wilson", "recall", "FA", "r@.95", "r@.90", "coll prec", "coll rec", "train s", "cal s")
     lines = []
     for e in ranked:
         t, c = e.get("training") or {}, e.get("calibration") or {}
@@ -365,6 +366,7 @@ def table(ranked: Sequence[Mapping[str, Any]]) -> str:
         th = c.get("thresholds") or {}
         ci = c.get("precision_ci") or [None, None]
         best = c.get("best_recall_at_precision") or {}
+        strict = c.get("strict_collision") or {}
         lines.append((
             str(e.get("rank")), e["name"], e["status"] + ("" if e["status"] == "done" else f" ({e['failed_step']})"),
             "Q" if e.get("qualifies") else "", head("threat"), head("action"),
@@ -372,6 +374,7 @@ def table(ranked: Sequence[Mapping[str, Any]]) -> str:
             _fmt(c.get("gate_passed")), _fmt(c.get("emitted")),_fmt(c.get("precision")), f"{_fmt(ci[0], 2)}..{_fmt(ci[1], 2)}",
             _fmt(c.get("recall")), _fmt(c.get("false_activations")),
             _fmt((best.get("0.95") or {}).get("recall")), _fmt((best.get("0.90") or {}).get("recall")),
+            _fmt(strict.get("precision")), _fmt(strict.get("recall")),
             _fmt(e["wall_s"].get("train"), 0), _fmt(e["wall_s"].get("calibrate"), 0),
         ))
     widths = [max(len(row[i]) for row in [header, *lines]) for i in range(len(header))]

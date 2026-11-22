@@ -1,0 +1,12 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+skill names searched: ['brake', 'dodge', 'kick', 'ramp', 'turn']
+  [ok] learned_judgment/pipeline.py: no skill name []
+  [ok] learned_judgment/skills/__init__.py: no skill name []
+
+INFO (not part of this check): the same search over learned_judgment/engine/
+  learned_judgment/engine/streams.py:7: 'dodge'
+  learned_judgment/engine/streams.py:8: 'dodge'
+  learned_judgment/engine/streams.py:9: 'dodge'
+  learned_judgment/engine/streams.py:10: 'dodge'
+
+CHECK RESULT (plumbing): 2 assertions held, 0 failed 

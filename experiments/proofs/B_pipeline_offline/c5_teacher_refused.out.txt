@@ -1,0 +1,42 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+LIVE FREE CALLS ONLY: authentication, usage and estimate_cost; every billable entry point is tripwired
+tripwires installed on 32 entry points
+settings the pipeline uses: project_token_budget None (forced null), cache and call log under <tmp>, mode stacked, max rows/request 32000
+
+== teacher fit (free) ==
+  [ok] teacher fitted; step 'teacher' done
+  [ok] manifest step 'teacher' records the method
+
+== free status and previews ==
+  [ok] tabpfn_status reachable: True 
+  [ok] status: budget null, nothing quoted in the (temporary) call log
+  usage before: {'current_usage': 100000, 'usage_limit': 35000000, 'daily_tokens_used': 100000, 'daily_token_limit': 35000000, 'monthly_tokens_used': 100000, 'monthly_token_limit': 35000000}
+  [ok] cost_preview: reachable, total quoted tokens 10000
+  [ok] cost_preview: 1 request(s), each quoted ([(20, 1400, 9)])
+  [ok] gate replay: would refuse (budget not set)
+  [ok] dream_cost_preview: 1 keyed request(s), none cached, 700 query rows
+  [ok] direct_tabpfn preview reachable, 1 request(s)
+
+== dream with the teacher ==
+  [ok] dream('teacher', 20) -> StepRefused: step 'dream' refused: BudgetError: request 5ae98f97db906a0ce8ed80b57c6878ee9b7c099651db521504fa56107f3707a5 refused before any billable call: tabpfn.project_token_budget is not set; the lead must set it before the first billable request
+  [ok] manifest: dream refused with the reason
+  [ok] the usage and the quote were written into the manifest first
+  [ok] no dream file
+
+== decide_with and evaluate with the teacher ==
+  [ok] decide_with('teacher') -> StepRefused: step 'decide' refused: BudgetError: request df027647889ea62995d0747a2fd6c3592e853301cb4cf63b57c4db313be330a4 refused before any billable call: tabpfn.project_token_budget is not set; the lead must set it before the first billable request
+  [ok] evaluate(['physics_only', 'teacher']) -> StepRefused: step 'evaluate' refused: BudgetError: request c78d116842f6e56d11ea453513da33a0fcbcbcf6f84067da70f564c79211eb52 refused before any billable call: tabpfn.project_token_budget is not set; the lead must set it before the first billable request
+  [ok] manifest: evaluate refused
+  [ok] no episode was run (no attempt file)
+
+== nothing was sent ==
+  [ok] the provider's prediction counter stayed 0
+  [ok] no tripwire was hit []
+  [ok] call log: 3 record(s), events ['refused'], no dispatch
+  [ok] the preview's request key and shape equal the request the teacher built and refused for the dream
+  [ok] zero tokens counted toward the project budget
+  [ok] nothing was cached
+  usage after:  {'current_usage': 100000, 'usage_limit': 35000000, 'daily_tokens_used': 100000, 'daily_token_limit': 35000000, 'monthly_tokens_used': 100000, 'monthly_token_limit': 35000000}
+  [ok] account token counters unchanged
+
+CHECK RESULT (plumbing): 24 assertions held, 0 failed 

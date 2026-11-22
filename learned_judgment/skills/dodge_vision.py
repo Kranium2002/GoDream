@@ -87,6 +87,7 @@ __all__ = [
     "TRUTH_NAMES",
     "DodgeVisionSpec",
     "HeadView",
+    "arrival_time_s",
     "build_observed_spec",
     "closed_loop",
     "collect_dream",
@@ -1528,6 +1529,18 @@ def _eligible_frames(config: Mapping[str, Any], frames: int) -> np.ndarray:
     return eligible
 
 
+def arrival_time_s(config: Mapping[str, Any], scenario: Mapping[str, Any]) -> float | None:
+    """t_s at which the scenario's object, on its straight line from the launch state, reaches the plane
+    x = punch.aim_x_m (the head) of the dog's launch frame: (x0 - aim_x_m) / -vx; None for a scene without an
+    object or with one that does not approach (x velocity >= -1e-9). Scorer-side arithmetic, as
+    _frames_before_arrival; dodge_eval uses it as the deadline of a near approach that makes no contact."""
+    situation = scenario["situation"]
+    if "ball_vel_x_m_s" not in situation or float(situation["ball_vel_x_m_s"]) >= -1e-9:
+        return None
+    aim_x = float(require(config, f"{_ROOT}.punch.aim_x_m"))
+    return (float(situation["ball_rel_x_m"]) - aim_x) / -float(situation["ball_vel_x_m_s"])
+
+
 def _frames_before_arrival(config: Mapping[str, Any], scenario: Mapping[str, Any], eligible: np.ndarray) -> np.ndarray:
     """The eligible decision frames of one scenario that lie before its object reaches the dog.
 
@@ -1539,11 +1552,9 @@ def _frames_before_arrival(config: Mapping[str, Any], scenario: Mapping[str, Any
     object, or with one that does not approach, keep every eligible frame. If nothing is left (an arrival before
     the first full window), the earliest eligible frame is kept.
     """
-    situation = scenario["situation"]
-    if "ball_vel_x_m_s" not in situation or float(situation["ball_vel_x_m_s"]) >= -1e-9:
+    arrival = arrival_time_s(config, scenario)
+    if arrival is None:
         return eligible
-    aim_x = float(require(config, f"{_ROOT}.punch.aim_x_m"))
-    arrival = (float(situation["ball_rel_x_m"]) - aim_x) / -float(situation["ball_vel_x_m_s"])
     latest = arrival - float(require(config, f"{_ROOT}.pre_contact_margin_s"))
     kept = eligible[frame_times(config)[eligible] <= latest + _TOLERANCE]
     return kept if kept.size else eligible[:1]

@@ -21,7 +21,9 @@ export function readWindowSettings(raw) {
   // What the student computes from the window (named only; the server encodes): present when the server says.
   const encoding = typeof raw.window_encoding === "string" && raw.window_encoding
     ? { windowEncoding: raw.window_encoding, encodingFrom: raw.window_encoding_from === "student" ? "student" : "config" } : {};
-  return { ok: true, settings: { frames, height, width, hz, luma: [...luma], divisor: raw.normalization, ...encoding } };
+  // The encoding's threshold ("events": the event threshold; the diff encodings: the smallest divisor), when sent.
+  const floor = typeof raw.diff_floor === "number" && raw.diff_floor > 0 && Number.isFinite(raw.diff_floor) ? { diffFloor: raw.diff_floor } : {};
+  return { ok: true, settings: { frames, height, width, hz, luma: [...luma], divisor: raw.normalization, ...encoding, ...floor } };
 }
 
 export function preprocess(rgba, W, H, { height, width, luma, divisor }) {

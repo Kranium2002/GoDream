@@ -1,0 +1,105 @@
+{
+ "what": "path_memory (dead reckoning) estimate minus the scorer truth at the goal line, 6 real rule-of-thumb episodes (scorer-side evaluation only)",
+ "command": ".venv/Scripts/python.exe -m learned_judgment.run_skill _exec --config results/runs/reflex2/config.yaml learned_judgment.skills.reflex run --no-student --methods physics_only --split test --n 6 --out results/runs/reflex3/path_memory_drift",
+ "exit_code": 0,
+ "lesson": "reflex2 (its practice world; reflex2 test scenarios 0-5, already looked at; outcomes identical to results/runs/reflex2/test_run)",
+ "where": "simulation (MuJoCo Go2World); student inference on this computer's CPU (numpy)",
+ "config_digest": "17b175d60261b9b392c28d7f5b7282eeb46448af251af784243f93a535afeaf3",
+ "seeds": {
+  "runtime_seed": 20261121,
+  "split": "test",
+  "split_code": 3,
+  "scenarios": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), rng.random(6) per scenario",
+  "attempt_seed": "scenario_id",
+  "world_seed": 0,
+  "world_preset": "default"
+ },
+ "sideways_abs_error_m": {
+  "mean": 0.4873148094880479,
+  "max": 0.9779344224090643
+ },
+ "forward_abs_error_m": {
+  "mean": 1.2256054248393522,
+  "max": 3.1889810810185937
+ },
+ "episodes": [
+  {
+   "scenario_id": 0,
+   "difficulty": "flat",
+   "rim_slope_deg": null,
+   "passage": null,
+   "end_reason": "goal",
+   "true_forward_m": 6.000422337399511,
+   "true_sideways_m": 0.23096451808474505,
+   "path_memory_forward_m": 6.533568999106536,
+   "path_memory_sideways_m": 0.1390379688302114,
+   "sideways_error_m": -0.09192654925453364,
+   "forward_error_m": 0.5331466617070246
+  },
+  {
+   "scenario_id": 1,
+   "difficulty": "gentle",
+   "rim_slope_deg": 21.288594195070523,
+   "passage": "around",
+   "end_reason": "goal",
+   "true_forward_m": 6.009164476950943,
+   "true_sideways_m": 0.33458849764650145,
+   "path_memory_forward_m": 6.77295633720463,
+   "path_memory_sideways_m": -0.1262123165875119,
+   "sideways_error_m": -0.4608008142340133,
+   "forward_error_m": 0.7637918602536873
+  },
+  {
+   "scenario_id": 2,
+   "difficulty": "gentle",
+   "rim_slope_deg": 14.106319307837655,
+   "passage": "over",
+   "end_reason": "goal",
+   "true_forward_m": 6.001047385139276,
+   "true_sideways_m": 0.29626886897421545,
+   "path_memory_forward_m": 6.603124616199456,
+   "path_memory_sideways_m": 0.1677892281831783,
+   "sideways_error_m": -0.12847964079103716,
+   "forward_error_m": 0.6020772310601803
+  },
+  {
+   "scenario_id": 3,
+   "difficulty": "steep",
+   "rim_slope_deg": 39.99999987507585,
+   "passage": "around",
+   "end_reason": "goal",
+   "true_forward_m": 6.00207708629689,
+   "true_sideways_m": 0.2918474719598141,
+   "path_memory_forward_m": 6.710172113515897,
+   "path_memory_sideways_m": -0.10488118542711761,
+   "sideways_error_m": -0.3967286573869317,
+   "forward_error_m": 0.7080950272190067
+  },
+  {
+   "scenario_id": 4,
+   "difficulty": "steep",
+   "rim_slope_deg": 38.415867012647894,
+   "passage": "around",
+   "end_reason": "goal",
+   "true_forward_m": 6.009434643713818,
+   "true_sideways_m": 0.15496835966341038,
+   "path_memory_forward_m": 7.566975331491438,
+   "path_memory_sideways_m": 1.0229871325161177,
+   "sideways_error_m": 0.8680187728527073,
+   "forward_error_m": 1.5575406877776201
+  },
+  {
+   "scenario_id": 5,
+   "difficulty": "steep",
+   "rim_slope_deg": 39.9999998801741,
+   "passage": "around",
+   "end_reason": "goal",
+   "true_forward_m": 6.0026246247747155,
+   "true_sideways_m": 0.08510249998581365,
+   "path_memory_forward_m": 9.19160570579331,
+   "path_memory_sideways_m": 1.063036922394878,
+   "sideways_error_m": 0.9779344224090643,
+   "forward_error_m": 3.1889810810185937
+  }
+ ]
+}

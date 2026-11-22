@@ -39,6 +39,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 
 import app.chat  # noqa: F401  registers GET /api/skills, POST /api/chat and the chat capability
+import app.duel  # noqa: F401 registers demos, paired duels and run stories
 import app.infer  # noqa: F401  registers POST /api/infer and the infer capability
 import app.player  # noqa: F401  registers POST /api/episodes/start and /api/episodes/stop
 import app.robot  # noqa: F401  registers GET /api/robot
@@ -226,6 +227,7 @@ def command(h: Handler, command: dict) -> None:
         log.warning("Drive command refused: %s", e)
         raise Refusal(400, "invalid_command", "A drive command needs every value, each a number within its range.")
     command = {name: float(command[name]) for name in schema["fields"]}
+    app.duel.stop_for_stage(h.server)
     h.server.player.stop()  # the drive pad takes the stage back
     h.submit("drive", command)
     h.send_json(200, {"command": command})
@@ -243,6 +245,7 @@ def reset(h: Handler) -> None:
         if preset not in h.server.sim.state()["available_presets"]:
             raise Refusal(400, "preset_unavailable", "That world preset cannot be built yet, so the dog stays "
                                                      "where it is.")
+    app.duel.stop_for_stage(h.server)
     h.server.player.stop()  # a reset takes the stage back
     h.submit("reset", preset)
     h.send_json(200, {"preset": h.server.sim.state()["preset"]})
@@ -273,6 +276,7 @@ def start(config: dict, port: int) -> Server:
 def stop(server: Server) -> None:
     """Stop serving, stop the simulation thread (open streams then end) and free the port. Safe to call again."""
     server.closing.set()
+    app.duel.stop_for_stage(server)
     server.player.stop()
     server.shutdown()
     server.sim.stop()

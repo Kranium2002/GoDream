@@ -789,6 +789,8 @@ class Player:
 
 @route("POST", "/api/episodes/start")
 def start_episodes(h) -> None:
+    from app.duel import stop_for_stage
+    stop_for_stage(h.server)
     body = h.read_body()
     if set(body) != {"run_id"} or not isinstance(body["run_id"], str):
         raise Refusal(400, "invalid_body", "An episode request is a run_id and nothing else.")
@@ -797,6 +799,8 @@ def start_episodes(h) -> None:
 
 @route("POST", "/api/episodes/stop")
 def stop_episodes(h) -> None:
+    from app.duel import stop_for_stage
+    stop_for_stage(h.server)
     h.read_body()
     h.server.player.stop()
     h.send_json(200, {"playing": False})

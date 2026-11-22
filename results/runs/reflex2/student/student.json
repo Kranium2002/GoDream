@@ -1,0 +1,90 @@
+{
+ "format": "learned-judgment/observed-student/v1",
+ "skill": "reflex",
+ "action_names": [
+  "yaw+0.00_vx0.60",
+  "yaw+0.00_vx0.40",
+  "yaw+0.70_vx0.60",
+  "yaw+0.70_vx0.40",
+  "yaw-0.70_vx0.60",
+  "yaw-0.70_vx0.40"
+ ],
+ "heads": {
+  "action": [
+   0,
+   6
+  ]
+ },
+ "no_op_index": null,
+ "input": {
+  "features": 81,
+  "encoding": "(x - 0.5) * sqrt(12)"
+ },
+ "vision": null,
+ "thresholds": null,
+ "provenance": {
+  "dream": "results/runs/reflex2/round_3/dream",
+  "scores": "results/runs/reflex2/round_3/scores.npz",
+  "frames": null,
+  "window_encoding": null,
+  "diff_floor": null,
+  "hidden_sizes": [
+   64
+  ],
+  "max_steps": 3000,
+  "run_id": "reflex2",
+  "dream_config_digest": "17b175d60261b9b392c28d7f5b7282eeb46448af251af784243f93a535afeaf3",
+  "scores_sha256": "cf48a54937244f95cb3dd5b5443a8b3eb8657054ffae621ade8fe1e30b6ec65b",
+  "teacher_request_keys": [
+   "acaede901b7d246346aef1c8ff0f1d5509e727260e7f20cec6048c7050d75892",
+   "e9f0c45d22f49dfc77c555c6b8025582cc41c84a832fa2e00f6bc0294465d051"
+  ],
+  "config_digest": "17b175d60261b9b392c28d7f5b7282eeb46448af251af784243f93a535afeaf3",
+  "seeds": {
+   "seed": 20261121,
+   "streams": {
+    "validation_split": "reflex/observed/validation_split",
+    "init": "reflex/observed/init",
+    "train": "reflex/observed/train"
+   },
+   "init": 2799798159,
+   "train": 2539747869
+  },
+  "training_settings": {
+   "hidden_sizes": [
+    64
+   ],
+   "time_steps": 10,
+   "beta": 0.9,
+   "threshold": 1.0,
+   "readout_beta": 0.9,
+   "learn_beta": false,
+   "learn_threshold": false,
+   "surrogate": "atan",
+   "surrogate_alpha": 2.0,
+   "target_temperature": 0.5,
+   "target_spread": "global_median",
+   "spike_rate_penalty": 0.0,
+   "learning_rate": 0.002,
+   "adam_beta1": 0.9,
+   "adam_beta2": 0.999,
+   "adam_eps": 1e-08,
+   "weight_decay": 0.0,
+   "batch_size": 64,
+   "max_steps": 3000,
+   "validation_fraction": 0.1,
+   "evaluate_every_steps": 100,
+   "patience_evaluations": 5,
+   "torch_threads": 1,
+   "parity_logit_tolerance": 1e-09,
+   "out_of_range": "error"
+  }
+ },
+ "network": {
+  "files": [
+   "network.npz",
+   "network.json"
+  ],
+  "sha256": "68073d3f6afa7fb53cca1f7499985abb34b129e7a1c4cfecc9a77786c42c40dc"
+ }
+}

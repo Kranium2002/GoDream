@@ -629,4 +629,18 @@ def test_the_catalogue_and_state_follow_dev_bs_skills_and_student(server, config
     assert {"RAMP", "DODGE", "MOVE"} <= {s["skill"] for s in skills}
     state = request(server, "GET", "/api/state")[1]
     assert state["capabilities"]["runs"]["available"] is True
-    assert state["image_window"]["window_encoding"] == config["vision"]["encoding"]  # no student configured here
+    student_dir = config["app"]["infer"].get("student_dir")
+    if student_dir:
+        student = json.loads((Path(student_dir) / "student.json").read_text(encoding="utf-8"))
+        expected = student["input"].get("window_encoding", "raw")
+    else:
+        expected = config["vision"]["encoding"]
+    assert state["image_window"]["window_encoding"] == expected
+
+
+def test_demos_and_stories_are_run_backed(server):
+    status, cards = request(server, "GET", "/api/demos")
+    assert status == 200 and [card["id"] for card in cards] == ["hills", "dodge"]
+    assert all({"headline", "handles", "outcome_fields", "available", "missing"} <= set(card) for card in cards)
+    status, story = request(server, "GET", "/api/story/move1")
+    assert status == 200 and {"attempts", "what_if", "imagination", "brain", "test"} <= set(story)

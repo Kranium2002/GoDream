@@ -62,8 +62,9 @@ _PERIOD_TOLERANCE = 1e-6
 SYSTEM = """You design a lesson for a blind simulated robot dog (a Unitree Go2 in the MuJoCo simulator).
 
 The dog walks with a frozen, borrowed walking policy that takes only three commands: forward speed, sideways speed and
-turn rate. Your lesson does not change how it walks. It decides what a small spiking neural network may FEEL (raw body
-sensors only: no camera, no map, no position) and which walking commands it may PICK, several times per second. The
+turn rate. Your lesson does not change how it walks. It decides what a small spiking neural network may FEEL (its own
+body sensors, and if you choose it a rough path memory counted from its own commands and heading: no camera, no map,
+no true position) and which walking commands it may PICK, several times per second. The
 network then learns from practice episodes in the simulator which pick is best for what it feels.
 
 Answer with data only, in the JSON format you are given: one lesson object. Rules:
@@ -98,8 +99,9 @@ def menu_text(config: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "sense_groups": {name: {"what": g["description"], "channels": [c[0] for c in g["channels"]]}
                          for name, g in menu["sense_groups"].items()},
-        "never_available": "position, speed over the ground, a camera, a map, or anything about where or how big the "
-                           "hill is",
+        "never_available": "the true position (path_memory is only the dog's own drifting estimate from its commands "
+                           "and heading), speed over the ground, a camera, a map, or anything about where or how big "
+                           "the hill is",
         "window": {"sample_every_s": menu["sample_every_s"], "history_s": menu["history_s"],
                    "max_samples": menu["max_history_samples"], "max_numbers": menu["max_window_width"],
                    "note": "the window holds samples every sample_every_s over the last history_s, oldest first"},
@@ -144,7 +146,8 @@ def lesson_schema(config: Mapping[str, Any]) -> dict[str, Any]:
             "title": {"type": "string", "description": f"A short name for the lesson, at most {TITLE_MAX_CHARS} characters."},
             "senses": {"type": "array", "items": {"type": "string", "enum": groups},
                        "description": f"The sense groups the dog may feel, at least one, each at most once. {group_text}. "
-                                      "Position, speed over the ground and anything about the hill are never available."},
+                                      "The true position, speed over the ground and anything about the hill are never "
+                                      "available."},
             "sense": {"type": "object", "additionalProperties": False, "required": list(SENSE_KEYS),
                       "description": "How much recent feeling the dog keeps: samples every sample_every_s covering the "
                                      f"last history_s, oldest first. At most {menu['max_history_samples']} samples "
@@ -449,7 +452,9 @@ def _summary(lesson: Mapping[str, Any]) -> str:
     words ={"tilt": "how its body leans", "turn_rates": "how fast it is rotating", "heading":
              "which way it faces compared with the start", "joint_angles": "the angles of its leg joints",
              "joint_speeds": "how fast its leg joints move", "feet": "which feet touch the ground",
-             "last_command": "the command it sent last"}
+             "last_command": "the command it sent last",
+             "path_memory": "a rough memory of how far it has walked forward and sideways, counted from its own "
+                            "commands and heading"}
     felt = [words.get(g, g) for g in lesson["senses"]]
     felt_text = felt[0] if len(felt) == 1 else ", ".join(felt[:-1]) + " and " + felt[-1]
     goal, world, steer = lesson["goal"], lesson["practice_world"], lesson["steer"]

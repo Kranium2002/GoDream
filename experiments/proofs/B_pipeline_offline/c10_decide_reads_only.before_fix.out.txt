@@ -1,0 +1,18 @@
+PLUMBING CHECK on a fixture world - mechanics of learned_judgment.pipeline only; not evidence about the robot, the simulator, TabPFN or any model
+
+== a driver and a Play object on the same run ==
+  [ok] the driver's evaluation is in the manifest
+  [ok] play.decide_with('constant_bias') answered (chosen 10)
+  [ok] play.decide_with('gaussian_process') answered (chosen 0)
+  [ok] play.decide_with('gradient_boosting') answered (chosen 5)
+  [ok] play.decide_with('mlp_on_attempts') answered (chosen 5)
+  [FAILED] the manifest bytes are unchanged by decide_with
+  [FAILED] the driver's evaluation is still listed (no lost update)
+  [FAILED] a local dream cost preview writes nothing
+
+== the same object: an unrecorded fit never hides a recorded step ==
+  [FAILED] driver.decide_with wrote nothing either
+  [FAILED] dream recorded its fit as step 'teacher' first (history ['dream'])
+  [ok] the recorded fit and the unrecorded fit decide identically (same seed, same attempts)
+
+CHECK RESULT (plumbing): 6 assertions held, 5 failed ['the manifest bytes are unchanged by decide_with', "the driver's evaluation is still listed (no lost update)", 'a local dream cost preview writes nothing', 'driver.decide_with wrote nothing either', "dream recorded its fit as step 'teacher' first (history ['dream'])"]
