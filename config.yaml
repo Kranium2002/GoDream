@@ -1016,6 +1016,10 @@ app:  # The local viewer server: uv run python -m app.server
     max_retries: 2  # The SDK default: connection errors, 408, 409, 429 and 5xx.
     max_messages: 20  # Messages per chat request (the browser sends the whole conversation).
     max_message_chars: 4000  # Characters per message.
+  duel:  # POST /api/duel/start (app/duel.py): both lanes of a demo run the same situation, untrained | trained.
+    dodge:  # The dodge demo's punch, the same in both lanes.
+      split: test  # The punches come from this split of observed.dodge_vision (the held-out one), never picked by outcome.
+      kinds: [incoming_center, incoming_left, incoming_right]  # Only kinds aimed at the dog; round seed s takes the (s mod their count)-th of them.
   runs:
     poll_s: 0.5  # Seconds between looks for new lines in the run event files (observed.runs_dir) relayed as SSE.
   infer:
