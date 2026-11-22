@@ -5,8 +5,8 @@ Lane contract (Person B, dodge_vision)
 --------------------------------------
 The dog stands on the zero command; at t_s 0 (the launch) an object may move in the scene: a ball (under gravity) or
 a punch (a slow straight flight at head height), by skills.dodge_vision.object_kinds. A student sees only
-image windows from the head camera and picks one of C commands; the scorer side (physics guess, objective) may use
-the scenario's truth, which never becomes a student input. Shared arrays:
+image windows from the head camera and picks one of C commands; the scorer side (physics guess, objective, and the
+teacher's "truth" block: truth_features) may use the scenario's truth, which never becomes a student input. Shared arrays:
 
     ACTIONS   C = len(skills.dodge_vision.actions) in config order (NO_OP, DODGE_LEFT, DODGE_RIGHT, RETREAT); the
               candidate index is the position. An active command is held for hold_s, then the zero command is sent.
@@ -84,6 +84,7 @@ __all__ = [
     "OUTCOME_NAMES",
     "SKILL",
     "SPLIT_CODES",
+    "TRUTH_NAMES",
     "DodgeVisionSpec",
     "HeadView",
     "build_observed_spec",
@@ -99,6 +100,7 @@ __all__ = [
     "render_windows",
     "render_windows_kinematic",
     "sample_threat_scenarios",
+    "truth_features",
 ]
 
 SKILL = "dodge_vision"
@@ -1298,6 +1300,47 @@ def physics_guess(
     return guess
 
 
+TRUTH_NAMES = ("present", "time_to_arrival_s", "aim_y_m", "aim_z_m", "speed_m_s")
+
+
+# shortcut: straight flight only (the punch); a ball under gravity raises ValueError here, give it physics_guess's ballistic path before throwing balls again.
+def truth_features(
+    config: Mapping[str, Any], scenarios: Sequence[Mapping[str, Any]], decision_times_s: Sequence[float]
+) -> np.ndarray:
+    """Scene truth (n, 5) float64 in TRUTH_NAMES order, for the teacher's "truth" block (never a student input).
+
+    From the scenario's launch state (the six _ball_keys, launch frame: x ahead, y left) moved on its straight line to
+    the row's decision time: an object arrives when its x velocity is < 0 and it is still ahead (x > 0);
+    time_to_arrival_s = x / closing speed clipped to [0, episode_duration_s], aim = (y, z) at that moment. Otherwise
+    time_to_arrival_s = episode_duration_s and the aim is the current (y, z). speed_m_s = |velocity|. No object (no
+    launch key, kind empty): [0, episode_duration_s, 0, 0, 0].
+    """
+    duration = _positive(config, f"{_ROOT}.episode_duration_s")
+    times = np.asarray(decision_times_s, dtype=np.float64)
+    n = len(scenarios)
+    if times.shape != (n,) or not np.all(np.isfinite(times)) or np.any(times < 0.0):
+        raise ValueError(f"decision_times_s must be ({n},) finite and >= 0; got shape {times.shape}")
+    keys = _ball_keys()
+    out = np.zeros((n, len(TRUTH_NAMES)), dtype=np.float64)
+    out[:, 1] = duration
+    for i, scenario in enumerate(scenarios):
+        situation = scenario["situation"]
+        if not any(k in situation for k in keys):
+            continue
+        if scenario.get("object_kind", "ball") != "punch":
+            raise ValueError(f"truth_features models a straight flight (punch) only; scenario {scenario.get('scenario_id')} "
+                             f"has object_kind {scenario.get('object_kind', 'ball')!r}")
+        x0, y0, z0, vx, vy, vz = (float(situation[k]) for k in keys)
+        t = times[i]
+        x, y, z = x0 + vx * t, y0 + vy * t, z0 + vz * t
+        arrival = duration
+        if vx < 0.0 and x > 0.0:
+            arrival = min(x / -vx, duration)
+            y, z = y + vy * arrival, z + vz * arrival
+        out[i] = (1.0, arrival, y, z, math.sqrt(vx * vx + vy * vy + vz * vz))
+    return out
+
+
 def objective(config: Mapping[str, Any], predicted: OutcomeDistribution) -> np.ndarray:
     """Risk-aware utility (n,), higher is better (weights: skills.dodge_vision.objective_weights)::
 
@@ -1341,6 +1384,7 @@ class DodgeVisionSpec:
     no_op_index           index of the zero command
     outcome_names         OUTCOME_NAMES; outcome_kinds OUTCOME_KINDS
     outcome_bounds        (K, 2) float64, read-only: [low, high] per outcome
+    truth_names           TRUTH_NAMES: the columns of truth() (teacher side only; never a student input)
     """
 
     name: str
@@ -1352,10 +1396,15 @@ class DodgeVisionSpec:
     outcome_kinds: tuple[str, ...]
     outcome_bounds: np.ndarray
     config: Mapping[str, Any] = field(repr=False, compare=False)
+    truth_names: tuple[str, ...] = TRUTH_NAMES
 
     def objective(self, predicted: OutcomeDistribution) -> np.ndarray:
         """(n,) objective(config, predicted)."""
         return objective(self.config, predicted)
+
+    def truth(self, scenarios: Sequence[Mapping[str, Any]], decision_times_s: Sequence[float]) -> np.ndarray:
+        """(n, 5) truth_features(config, scenarios, decision_times_s)."""
+        return truth_features(self.config, scenarios, decision_times_s)
 
 
 def build_observed_spec(config: Mapping[str, Any]) -> DodgeVisionSpec:

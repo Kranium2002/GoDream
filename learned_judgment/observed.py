@@ -21,8 +21,11 @@ stored and save_student records as "input": {"features": D, "encoding"}):
 
 The run, with nothing skill-specific in this module (the spec object carries the skill):
 
-    teacher_matrix   [window (D) | action features (A) | physics guess (K)] per row, in the
-                     blocks named by skills.<name>.teacher_features
+    teacher_matrix   [window (D) or truth (T) | action features (A) | physics guess (K)] per row,
+                     in the blocks named by skills.<name>.teacher_features; truth = spec.truth
+                     (scene truth, e.g. dodge_vision.truth_features) of meta "scenarios"
+                     [scenario_index] at decision_time_s, computed at teach time on the teacher
+                     side only: it is never written to a file and never reaches the student
     make_teacher     the production TabPFN residual teacher fitted on measured - physics of
                      the rows file (fit stores the context; no network)
     quote_dream      the provider's free quote of every request a prediction would send
@@ -137,7 +140,7 @@ __all__ = [
 
 EVENT_STEPS = ("baseline", "attempts", "teacher_fit", "dream", "train", "evaluate")
 EVENT_STATES = ("running", "done", "failed", "refused", "stopped")
-FEATURE_BLOCKS = ("window", "action", "physics")  # the only order a FeatureLayout can describe
+FEATURE_BLOCKS = ("window", "truth", "action", "physics")  # the only order a FeatureLayout can describe; window and truth are both the situation block, so at most one of them
 OUTCOME_KINDS = ("regression", "binary")
 STUDENT_FORMAT = "learned-judgment/observed-student/v1"
 INPUT_ENCODING = "(x - 0.5) * sqrt(12)"
@@ -510,6 +513,8 @@ def _feature_set(feature_set: Any) -> tuple[str, ...]:
         raise ValueError(f"feature_set must name distinct blocks out of {FEATURE_BLOCKS}; got {list(blocks)}")
     if "action" not in blocks or "physics" not in blocks:
         raise ValueError(f"feature_set must contain 'action' and 'physics'; got {list(blocks)}")
+    if "window" in blocks and "truth" in blocks:
+        raise ValueError(f"feature_set takes 'window' or 'truth' as its situation block, not both; got {list(blocks)}")
     if blocks != tuple(block for block in FEATURE_BLOCKS if block in blocks):
         raise ValueError(
             f"feature_set must keep the FeatureLayout block order {FEATURE_BLOCKS} "
@@ -519,7 +524,12 @@ def _feature_set(feature_set: Any) -> tuple[str, ...]:
 
 
 def teacher_matrix(
-    spec: Any, features: np.ndarray, action: np.ndarray, physics: np.ndarray, feature_set: Sequence[str]
+    spec: Any,
+    features: np.ndarray,
+    action: np.ndarray,
+    physics: np.ndarray,
+    feature_set: Sequence[str],
+    truth: np.ndarray | None = None,
 ) -> tuple[np.ndarray, FeatureLayout]:
     """The residual teacher's feature matrix and its layout.
 
@@ -529,12 +539,14 @@ def teacher_matrix(
         action:      (n,) int candidate indices into spec.action_names.
         physics:     (n, K) physics guess in the spec's outcome order.
         feature_set: blocks in this order, "action" and "physics" required:
-                     ["window", "action", "physics"] or ["action", "physics"].
+                     ["window", "action", "physics"], ["truth", "action", "physics"] or ["action", "physics"].
+        truth:       (n, len(spec.truth_names)) scene truth (spec.truth); required with the "truth" block, else unused.
 
     Returns:
-        X float64 (n, F): "window" -> D columns window_<i>; "action" -> spec.action_features[action]
-        (A columns named spec.action_feature_names); "physics" -> K columns physics_<outcome>.
-        FeatureLayout: skill spec.name, no categorical column, n_situation D or 0, n_action A,
+        X float64 (n, F): "window" -> D columns window_<i>; "truth" -> columns truth_<name> of spec.truth_names;
+        "action" -> spec.action_features[action] (A columns named spec.action_feature_names); "physics" -> K columns
+        physics_<outcome>.
+        FeatureLayout: skill spec.name, no categorical column, n_situation D, the truth width or 0, n_action A,
         n_physics K, n_extra 0, outcome names and kinds of the spec.
     """
     checked = _check_spec(spec)
@@ -543,12 +555,20 @@ def teacher_matrix(
     n = physics.shape[0]
     action = _actions(action, n, checked.n_actions)
     window = _matrix("features", features, rows=n)
+    situation_width = window.shape[1] if "window" in blocks else 0
     columns: list[np.ndarray] = []
     names: list[str] = []
     for block in blocks:
         if block == "window":
             columns.append(window)
             names.extend(f"window_{index}" for index in range(window.shape[1]))
+        elif block == "truth":
+            truth_names = _truth_names(spec)
+            if truth is None:
+                raise ValueError("the 'truth' block needs the truth matrix (spec.truth of the rows' scenarios)")
+            columns.append(_matrix("truth", truth, rows=n, width=len(truth_names)))
+            names.extend(f"truth_{name}" for name in truth_names)
+            situation_width = len(truth_names)
         elif block == "action":
             columns.append(checked.action_features[action])
             names.extend(checked.action_feature_names)
@@ -561,7 +581,7 @@ def teacher_matrix(
         skill=checked.name,
         names=tuple(names),
         categorical=(),
-        n_situation=window.shape[1] if "window" in blocks else 0,
+        n_situation=situation_width,
         n_action=checked.action_features.shape[1],
         n_physics=checked.n_outcomes,
         n_extra=0,
@@ -571,13 +591,35 @@ def teacher_matrix(
     return np.ascontiguousarray(np.concatenate(columns, axis=1), dtype=np.float64), layout
 
 
+def _truth_names(spec: Any) -> tuple[str, ...]:
+    if not callable(getattr(spec, "truth", None)) or not hasattr(spec, "truth_names"):
+        raise ValueError(f"skill {getattr(spec, 'name', spec)!r} has no scene truth (spec.truth, spec.truth_names): "
+                         "its teacher_features cannot hold the 'truth' block")
+    return _names("truth_names", spec.truth_names)
+
+
+def _scene_truth(spec: Any, data: Mapping[str, Any], feature_set: Sequence[str]) -> np.ndarray | None:
+    """spec.truth of a rows or dream file's rows (scenario from meta "scenarios"[scenario_index], decision_time_s)
+    when the feature set holds "truth", else None. Teacher side only: the result never enters a file or the student."""
+    if "truth" not in _feature_set(feature_set):
+        return None
+    _truth_names(spec)
+    listed = data.get("meta", {}).get("scenarios")
+    index = np.asarray(data["scenario_index"])
+    if not isinstance(listed, list) or (index.size and (int(index.min()) < 0 or int(index.max()) >= len(listed))):
+        raise ValueError("the 'truth' block needs the file's meta 'scenarios' listing every scenario_index")
+    return spec.truth([listed[int(i)] for i in index], np.asarray(data["decision_time_s"], dtype=np.float64))
+
+
 def make_teacher(spec: Any, rows: Mapping[str, Any], config: Mapping[str, Any], feature_set: Sequence[str]) -> TabPFNTeacher:
     """The production TabPFN residual teacher fitted on a rows file (a :func:`load_rows` dict).
 
-    Context: teacher_matrix of the rows; targets: residuals measured - physics (n, K). Settings
-    from TeacherSettings.from_config (tabpfn.*, engine.*). fit stores the context: no network.
+    Context: teacher_matrix of the rows (with the "truth" block: spec.truth of the rows' scenarios, rows.json
+    "scenarios"); targets: residuals measured - physics (n, K). Settings from TeacherSettings.from_config (tabpfn.*,
+    engine.*). fit stores the context: no network.
     """
-    x, layout = teacher_matrix(spec, rows["features"], rows["action"], rows["physics"], feature_set)
+    truth = _scene_truth(spec, rows, feature_set)
+    x, layout = teacher_matrix(spec, rows["features"], rows["action"], rows["physics"], feature_set, truth=truth)
     measured = _matrix("measured", rows["measured"], rows=x.shape[0], width=layout.n_outcomes)
     residuals = measured - np.asarray(rows["physics"], dtype=np.float64)
     settings = TeacherSettings.from_config(config)
@@ -736,15 +778,17 @@ def predict_outcomes(
 
 
 def _candidate_rows(
-    spec: Any, features: np.ndarray, physics: np.ndarray, feature_set: Sequence[str]
+    spec: Any, features: np.ndarray, physics: np.ndarray, feature_set: Sequence[str], truth: np.ndarray | None = None
 ) -> tuple[np.ndarray, np.ndarray, FeatureLayout]:
-    """Every candidate of every dream situation, situation-major (row i * C + c)."""
+    """Every candidate of every dream situation, situation-major (row i * C + c); truth (m, T) repeated per candidate."""
     checked = _check_spec(spec)
     m, c = physics.shape[0], checked.n_actions
     if physics.shape[1:] != (c, checked.n_outcomes):
         raise ValueError(f"dream physics must have shape (m, {c}, {checked.n_outcomes}); got {physics.shape}")
     flat_physics = physics.reshape(m * c, checked.n_outcomes)
-    x, layout = teacher_matrix(spec, np.repeat(features, c, axis=0), np.tile(np.arange(c), m), flat_physics, feature_set)
+    flat_truth = None if truth is None else np.repeat(truth, c, axis=0)
+    x, layout = teacher_matrix(spec, np.repeat(features, c, axis=0), np.tile(np.arange(c), m), flat_physics, feature_set,
+                               truth=flat_truth)
     return x, flat_physics, layout
 
 
@@ -753,7 +797,8 @@ def dream_scores(
 ) -> np.ndarray:
     """spec.objective of every candidate of every dream situation: float64 (m, C), higher is better.
 
-    ``dream`` holds "features" (m, D) and "physics" (m, C, K) (a :func:`load_dream` dict). One
+    ``dream`` holds "features" (m, D) and "physics" (m, C, K) (a :func:`load_dream` dict; with the
+    "truth" block also "scenario_index", "decision_time_s" and meta "scenarios"). One
     :func:`predict_outcomes` call over the m * C rows (the teacher chunks it); BILLABLE, so
     RuntimeError first unless ``allow_billing is True``. The request keys are then in
     ``teacher.last_request_hashes``.
@@ -762,7 +807,8 @@ def dream_scores(
     physics = np.asarray(dream["physics"], dtype=np.float64)
     if physics.ndim != 3:
         raise ValueError(f"dream physics must have shape (m, C, K); got {physics.shape}")
-    x, flat_physics, layout = _candidate_rows(spec, np.asarray(dream["features"]), physics, feature_set)
+    truth = _scene_truth(spec, dream, feature_set)
+    x, flat_physics, layout = _candidate_rows(spec, np.asarray(dream["features"]), physics, feature_set, truth)
     if layout.names != teacher.layout.names:
         raise ValueError("the teacher was fitted on other columns than this feature_set builds")
     predicted = predict_outcomes(teacher, spec, x, flat_physics, allow_billing=allow_billing)
@@ -1445,7 +1491,8 @@ def _dev_teacher(
     """Residual MAE per outcome (physics only vs teacher) and the teacher rule's one-shot report;
     one billed prediction over the dev rows."""
     checked = _check_spec(spec)
-    x, _ = teacher_matrix(spec, dev["features"], dev["action"], dev["physics"], feature_set)
+    truth = _scene_truth(spec, dev, feature_set)
+    x, _ = teacher_matrix(spec, dev["features"], dev["action"], dev["physics"], feature_set, truth=truth)
     predicted = predict_outcomes(teacher, spec, x, dev["physics"], allow_billing=True)
     keys = list(teacher.last_request_hashes)
     measured = np.asarray(dev["measured"], dtype=np.float64)

@@ -494,7 +494,7 @@ skills:
     episode_duration_s: 4.0  # Simulated seconds per episode after the launch: slowest arrival (3.2 m at 1.0 m/s), then hold and recovery.
     decision_time_range_s: [0.3, 3.0]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
     windows_per_dream_episode: 6  # Decision instants taken from one rendered dream episode (the dog stays on the zero command, so one episode gives several windows).
-    teacher_features: [window, action, physics]  # Columns given to the residual teacher. Compared on dev with [action, physics]; the wider one is talkhere.md's plan.
+    teacher_features: [truth, action, physics]  # Columns given to the residual teacher (observed.py blocks). truth: 5 scene-truth numbers of the punch (dodge_vision.truth_features) instead of the 1152 window columns, teacher side only; [window, action, physics] is the v4 setting.
     window_repeat_tolerance: 0.01  # Largest allowed grey difference (0-1 scale) between the windows the episodes of one situation saw before acting; the render repeats to within 0.002 (seen twice in about 700 situations).
     dream_render: kinematic  # Dream windows before contact are rendered without stepping physics (recorded stand, object on its line); exact against the physics render (b-ramp-try 77bc403).
     kinematic_contact_margin_s: 0.1
