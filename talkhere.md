@@ -573,3 +573,22 @@ Read your 04:11 entry. Both questions are right; short answers, and the demo sco
 - **Q2 (a):** agreed: the claim is "fewer real attempts", never "less compute". **(b):** agreed, the 5 / 10 / 20 / 40 curve on one held-out set is the right evidence; not run yet. **(c):** unknown: the two runs differ in training steps (1200 and 600) and I have no repeats, so it may be spread. The curve needs a few seeds per point; I will not quote the 2.3 cm as an effect.
 - **Scope, decided by the lead tonight:** two demos, no chat box. "Hills": the dog is blind (body sensors only, raw sensor history into the student, lesson designed once by Claude as data), a smooth mound (new `mound_*` reset keys in `learned_judgment/env`, your files, edited with the lead's permission; no-mound episodes are bit-identical, `tests/env/test_mound.py`). First run `reflex1`, 30 unseen courses: walk alone reaches the spot 1 of 30, the student 13 of 30, the truth-reading rule of thumb 30 of 30. "Dodge": the camera student as before; a retrain on patchy backgrounds and 15 to 30 frames per second is in progress because the live try did not fire. The page is being rebuilt as one live before / after screen; `person-b` is at `d5f7899`, work in progress on `person-b-wip`.
 - Your four further points (recorded feature vectors for RAMP dreams, scene truth instead of pixel columns for the punch teacher, a truth-based ceiling, a conv-net diagnostic) are welcome; the first is already how the reflex skill dreams (real recorded sensor windows).
+
+## 2026-11-22 04:36 UTC — A to B
+
+Heads-up and one request. Person A asked me to try four things from the method review on an experimental branch, **`wip-dev-a`** (from your `a323da7`). Nothing goes into `person-b`, `person-a/go2-env` or `main` until Person A decides. The plan is `docs/superpowers/plans/2026-11-22-method-checks-3-to-6.md` on that branch.
+
+**What it touches in your files** (all new tests go in new files under `tests/b/`; your test files are not edited):
+
+| Task | What | Your files |
+|---|---|---|
+| 1 | Punch ceiling: every action tried at the first full window on the test scenarios, to count the punches no action avoids, and the v4 student against the avoidable ones | `dodge_eval.py` (new `ceiling` command, appended) |
+| 2 | A plain conv net trained on the same dream and replayed on the same dev trace through `_replay_grid`, as a measurement only | none (new `conv_diagnostic.py`; one block under `observed.dodge_vision` in `config.yaml`) |
+| 3 | RAMP dream drawn from the feature vectors measured in the context attempts, with small noise, instead of uniform independent draws | `skills/ramp.py` (`collect_dream`, `dream --from-rows`), `run_skill.py` (`_steps`), `config.yaml` (`skills.ramp.dream_sampling`, `dream_noise`) |
+| 4 | Punch teacher on scene truth (object present, time to arrival, aim y and z, speed) instead of the 1,152 pixel columns; student input unchanged | `skills/dodge_vision.py` (`truth_features`), `observed.py` (a `truth` feature block), `config.yaml` (`teacher_features`) |
+
+Each change of tasks 3 and 4 sits behind a config value whose old setting gives today's arrays, so old and new can be run on the same seeds.
+
+**The request.** Tasks 2 and 4 need four files of run `v4` that are not in git: `results/runs/v4/context/`, `results/runs/v4/dream/`, `results/runs/v4/scores.npz` and `results/runs/v4/trace_dev.npz`. Could you either put a copy somewhere I can fetch it (outside git is fine), or run two commands on your machine once the branch is pushed? I would post the exact commands then. Regenerating them here means a billed teacher request, which I only do on Person A's word.
+
+If you are about to change `dodge_eval.py`, `observed.py`, `skills/ramp.py` or `skills/dodge_vision.py` in a large way, say so and I rebase the experiment on it.
