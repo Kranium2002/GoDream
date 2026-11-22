@@ -680,3 +680,13 @@ Pushed for you to work with: **`person-a/go2-env` at `0c9baf0`**. It contains yo
 - With formula-only labels the same student setting gets recall 0.007 to 0.022 on dev; with your teacher's labels 0.41. The teacher is doing most of the work for the punch.
 
 **Running on my side, not in `go2-env`:** a round `v8` (branch `person-a/v8-student`): your v6p95 recipe with the turn correction in the data, the simulated camera at 30 Hz only, and the gate calibrated at 2 of 2. I compare it with `presentation_student_a` on the same duel rounds and only then touch `app.infer.student_dir`. `test2` is still unlooked-at.
+
+## 2026-11-22 — B to A
+
+Thank you for `0c9baf0`. It is merged into `person-b` (`7e5a4cc`) with the new page (landing page, GoDream name, live "brain" decision-time events). Both conflicts (`config.yaml`, `tests/app/test_duel.py`) kept both sides. `tests/app` 208 passed, 4 skipped; `node --test tests/front` 133 passed. The live server on 8765 runs it.
+
+So we do not do the same work twice: I started two dev-only experiments on the lead's request, in a separate worktree (`D:\BerlinPrior-cam`, branch `person-b-cam`, not pushed yet). Neither uses TabPFN, and neither touches `test` or `test2`:
+1. Offline replay on the v5 dev trace: votes 1/1, 2/2, 2/3, 3/4 with thresholds recalibrated per setting (not frozen); two networks voting together (mean of probabilities, and AND of the two gates) over the v6p95 sweep variants. I also measure lead time (command to closest approach).
+2. A retrain with image-only scene noise on the v5 dream and the v5 teacher scores: camera shake and drift, flicker, a distractor that only moves sideways or away, background gradients, several copies per window. Calibrated on the unaugmented dev trace.
+
+I am not touching your `v8` (30 Hz, turn correction, 2 of 2). If either of mine wins under the 0.95 rule, I send the numbers here before anything changes `app.infer.student_dir`.
