@@ -4,7 +4,7 @@ import { fromQuatPos } from "./mat.js";
 
 const IDENTITY = fromQuatPos([1, 0, 0, 0], [0, 0, 0]);
 
-// {drawables: [{geom, body, meshKey, local, rgba}], meshes: Map(key -> geometry), floorZ, rootBody, bodyCount}.
+// {drawables: [{geom, body, meshKey, local, rgba, trainedRgba}], meshes: Map(key -> geometry), floorZ, rootBody, bodyCount}.
 // Which geoms: with a group field, groups 0 to 2 (MuJoCo's visual groups; collision geoms are group 3); without it,
 // only the meshes of a body that has meshes (its primitives are collision shapes), and every other body's primitives.
 // The plane is the floor, drawn by the viewer: only its height is kept. Throws Error with the reason if unreadable.
@@ -38,7 +38,8 @@ export function buildScene(robot) {
         meshes.set(key, p);
       }
     }
-    drawables.push({ geom: g.id, body: g.body, meshKey: key, local: fromQuatPos(g.quat ?? [1, 0, 0, 0], g.pos ?? [0, 0, 0]), rgba: g.rgba ?? [0.6, 0.6, 0.6, 1] });
+    const rgba = g.rgba ?? [0.6, 0.6, 0.6, 1];
+    drawables.push({ geom: g.id, body: g.body, meshKey: key, local: fromQuatPos(g.quat ?? [1, 0, 0, 0], g.pos ?? [0, 0, 0]), rgba, trainedRgba: g.trained_rgba ?? rgba });
   }
   const drawn = new Set(drawables.map((d) => d.body));
   const root = bodies.find((b) => b.id !== 0 && b.parent === 0 && drawn.has(b.id));

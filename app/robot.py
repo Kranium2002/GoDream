@@ -31,8 +31,11 @@ def _b64(array: np.ndarray, dtype: str) -> str:
     return base64.b64encode(np.ascontiguousarray(array, dtype=dtype).tobytes()).decode()
 
 
-def describe(model) -> dict:
-    """GET /api/robot's answer for a compiled MuJoCo model (without version)."""
+def describe(model, trained_rgba: dict | None = None) -> dict:
+    """GET /api/robot's answer for a compiled MuJoCo model (without version). trained_rgba (config
+    robot.trained_material_rgba, material name -> rgba) adds trained_rgba to each geom: the colour the trained dog's view
+    draws it in, its own rgba when its material is not named."""
+    trained_rgba = trained_rgba or {}
     robot_root = model.body_rootid[model.body("base_link").id]
     geoms = []
     for g in range(model.ngeom):
@@ -43,10 +46,12 @@ def describe(model) -> dict:
         if kind is None:
             continue  # heightfields and SDFs: none in this stage
         matid = model.geom_matid[g]
+        rgba = (model.mat_rgba[matid] if matid >= 0 else model.geom_rgba[g]).tolist()
+        material = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_MATERIAL, matid) if matid >= 0 else None
         geoms.append({"id": g, "body": body, "group": int(model.geom_group[g]), "type": kind,
                       "size": model.geom_size[g].tolist(),
                       "pos": model.geom_pos[g].tolist(), "quat": model.geom_quat[g].tolist(),
-                      "rgba": (model.mat_rgba[matid] if matid >= 0 else model.geom_rgba[g]).tolist(),
+                      "rgba": rgba, "trained_rgba": [float(v) for v in trained_rgba.get(material, rgba)],
                       "mesh": int(model.geom_dataid[g]) if kind == "mesh" else None})
     meshes = []
     for i in sorted({g["mesh"] for g in geoms if g["mesh"] is not None}):

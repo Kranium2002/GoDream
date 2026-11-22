@@ -54,6 +54,16 @@ def test_geoms_carry_their_pose_in_the_body_frame_size_and_colour(world, describ
         assert np.allclose(g["rgba"], expected)
 
 
+def test_trained_rgba_recolours_only_the_named_materials(world, described):
+    m, pink = world.model, [1.0, 0.31, 0.64, 1.0]
+    trained = robot.describe(m, {"black": pink})["geoms"]
+    black = m.material("black").id
+    assert any(m.geom_matid[g["id"]] == black for g in trained)
+    for g, plain in zip(trained, described["geoms"]):
+        assert g["rgba"] == plain["rgba"] and plain["trained_rgba"] == plain["rgba"]  # the model's colours stay
+        assert g["trained_rgba"] == (pink if m.geom_matid[g["id"]] == black else g["rgba"])
+
+
 def test_meshes_decode_to_the_models_vertices_and_faces(world, described):
     m = world.model
     used = {g["mesh"] for g in described["geoms"] if g["mesh"] is not None}

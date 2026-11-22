@@ -120,12 +120,13 @@ function inside(scene, q) {
   return false;
 }
 
-// createViewer(canvas, {background, floor, distance, yaw, pitch, lockHeading, frameScene}) -> {setRobot, pushPose,
+// trained: draw the robot in its trained colours (geom trained_rgba), for the trained dog of a side-by-side run.
+// createViewer(canvas, {background, floor, distance, yaw, pitch, lockHeading, frameScene, trained}) -> {setRobot, pushPose,
 // setShift, resetView, destroy}. lockHeading: the camera keeps the heading the dog had at its first pose instead of
 // turning with it, so two views of two dogs keep the same angle. frameScene: the view widens and moves to keep the
 // scene's objects (a hill, an incoming object) in frame with the dog. Throws Error when WebGL2 is missing or a shader
 // fails, so the page can fall back to the image stream.
-export function createViewer(canvas, { background = "#101215", floor = "#1a1d22", distance = 1.7, yaw = 0.75, pitch = 0.3, lockHeading = false, frameScene = false } = {}) {
+export function createViewer(canvas, { background = "#101215", floor = "#1a1d22", distance = 1.7, yaw = 0.75, pitch = 0.3, lockHeading = false, frameScene = false, trained = false } = {}) {
   const gl = canvas.getContext("webgl2", { antialias: true, alpha: false });
   if (!gl) throw new Error("This browser offers no WebGL2.");
   const robotP = program(gl, ROBOT_VS, ROBOT_FS);
@@ -273,7 +274,7 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
       const g = vaos.get(d.meshKey);
       gl.uniformMatrix4fv(robotP.u.uModel, false, model);
       gl.uniformMatrix3fv(robotP.u.uNormalMat, false, normalMatrix(model));
-      gl.uniform4f(robotP.u.uColor, ...d.rgba);
+      gl.uniform4f(robotP.u.uColor, ...(trained ? d.trainedRgba : d.rgba));
       gl.bindVertexArray(g.vao);
       gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, 0);
     }

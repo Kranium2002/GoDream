@@ -51,7 +51,7 @@ export function createRobotViews({ api, onProblem = () => {} }) {
   function attach(canvas, { side = null, palette = "single", fallback = null, ...options } = {}) {
     const v = { side, canvas, fallback, viewer: null, poses: 0, lastPoseAt: 0, problem: null, active: false };
     try {
-      v.viewer = createViewer(canvas, { ...colours(palette), ...options });
+      v.viewer = createViewer(canvas, { ...colours(palette), trained: side === "after", ...options });
       v.viewer.setActive(false);
       if (robot) v.viewer.setRobot(robot);
     } catch (e) {

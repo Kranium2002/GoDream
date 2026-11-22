@@ -18,8 +18,6 @@ def build_model(config: dict, hidden: dict | None = None, ball: bool | str = Fal
     hidden = hidden or {}
     # from_file resolves go2.xml's meshdir="assets" against the file's own directory.
     spec = mujoco.MjSpec.from_file(config["robot"]["model_asset"]["path"])
-    for name, rgba in config["robot"].get("material_rgba", {}).items():
-        spec.material(name).rgba = rgba
     # Same floor and light as Unitree's scene.xml (lines 20-21), without its material.
     spec.worldbody.add_geom(name="floor", type=mujoco.mjtGeom.mjGEOM_PLANE, size=[0, 0, 0.05])
     spec.worldbody.add_light(pos=[0, 0, 1.5], dir=[0, 0, -1], type=mujoco.mjtLightType.mjLIGHT_DIRECTIONAL)

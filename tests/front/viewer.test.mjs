@@ -107,6 +107,7 @@ test("buildScene draws only the meshes of a body that has meshes, other bodies' 
   assert.equal(sc.rootBody, 1); // the first child of the world body that carries geometry
   assert.equal(sc.bodyCount, 4);
   assert.deepEqual(sc.drawables[2].rgba, [1, 0.3, 0.1, 1]);
+  assert.deepEqual(sc.drawables[2].trainedRgba, [1, 0.3, 0.1, 1]); // no trained_rgba: the geom's own colour
   assert.ok(sc.meshes.get("m0").normals.length === 9);
 });
 
