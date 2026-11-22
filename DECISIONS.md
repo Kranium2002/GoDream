@@ -191,3 +191,14 @@ Person A approved pushing `person-a/lane-world` before its tests are complete so
 - **RAMP:** the correction is speed only (a yaw trim on the slope made every climb fail); incline band 15-18 degrees, where the nominal walk leaves room; slope entry from trunk pitch (on 5.0, off 3.0 degrees, 0.1 s), set on dev episodes.
 - **Chat is Claude only** (lead: no fallbacks). `parse_request` exists but the server does not use it.
 - **Dev A's files:** after Dev A's session paused, the lead allowed Person B to edit `app/**`; every such change is listed in `talkhere.md`.
+
+## 2026-11-22 — Experimental branch `wip-dev-a`: what was decided while building the method checks
+
+Everything below lives on `wip-dev-a` only; Person A decides later what is merged.
+
+- **Ceiling at the first decision only.** The oracle issues each action once at the first full window and holds it `hold_s`, as the student's gate would. A later decision could avoid a hit this counts as unavoidable; the 7 unavoidable hits are the earliest contacts, so this was not widened to a grid of times.
+- **Pairing a student with the ceiling.** The command pairs only when the config digest and the scenario ids of `closed_loop_<split>.json` equal the ceiling's, and otherwise records why not. For v4 the digests differ and the pairing in `LOG.md` was made by hand, justified by the identical set of 121 `NO_OP` hits.
+- **Recorded dream noise follows the measured covariance.** Independent noise per feature, the first design, broke the link between raw and filtered pitch at small scale (correlation 0.26 against 0.998 measured) and moved a feature that is constant. The noise is now drawn with the covariance of the measured per-scenario vectors times `dream_noise` squared, and a feature without spread gets none. Scenarios are drawn evenly, not rows, because a full run has one row per candidate per scenario.
+- **Scene truth is allowed on the teacher side.** The thrown object's launch state may be a teacher feature (Person B's `dodge_vision` contract already lets the physics guess use it); hidden world values (payload, friction, slope, motor strength, latency) may not. The truth block is computed in memory at teach time, never written to a file and never given to the student. It covers straight flight only: a ball under gravity is refused until it gets the ballistic path of `physics_guess`.
+- **The conv-net verdict needs the same precision bar.** It is `inconclusive` unless its chosen dev row meets `inference.gate.precision_target`, so its recall is compared with the spiking student's at the same bar. The two recall limits (0.60 and 0.45) were fixed in config before any run.
+- **Old behaviour stays reachable.** `skills.ramp.dream_sampling: uniform` and `teacher_features: [window, action, physics]` give the previous arrays and table, so old and new can be run on the same seeds.
