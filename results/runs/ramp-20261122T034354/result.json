@@ -1,0 +1,883 @@
+{
+ "run_id": "ramp-20261122T034354",
+ "skill": "ramp",
+ "teach": {
+  "state": "done",
+  "started_utc": "2026-11-22T03:45:06.193817+00:00",
+  "argv": [
+   "teach",
+   "--run",
+   "ramp-20261122T034354",
+   "--skill",
+   "ramp",
+   "--context",
+   "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\context",
+   "--dream",
+   "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\dream",
+   "--confirm-billing"
+  ],
+  "config_digest": "e0a10e69bdfff118bac366ed9ccdd19b1411a11a731cbe9ad647ab1589a80595",
+  "context": "D:/BerlinPrior/results/runs/ramp-20261122T034354/context",
+  "dream": "D:/BerlinPrior/results/runs/ramp-20261122T034354/dream",
+  "dev": null,
+  "feature_set": [
+   "window",
+   "action",
+   "physics"
+  ],
+  "teacher": {
+   "n_context_rows": 28,
+   "n_features": 12,
+   "call_log": "D:/BerlinPrior/results/tabpfn_calls.jsonl"
+  },
+  "quote": {
+   "dream": {
+    "mode": "stacked",
+    "n_query_rows": 4000,
+    "n_train_rows": 28,
+    "n_features": 12,
+    "active_outcomes": [
+     "progress_m",
+     "reached_top",
+     "fall",
+     "sideways_m",
+     "slip_m"
+    ],
+    "constant_outcomes": [],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "progress_m",
+       "reached_top",
+       "fall",
+       "sideways_m",
+       "slip_m"
+      ],
+      "chunk": 0,
+      "n_chunks": 1,
+      "n_train": 140,
+      "n_query": 20000,
+      "n_features": 13,
+      "padded_rows": 0,
+      "quote_tokens": 10000,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 10000,
+    "usage": {
+     "current_usage": 1404687,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 607965,
+     "daily_token_limit": 35000000,
+     "daily_usage": 607965,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-23 00:00:00 UTC",
+     "monthly_tokens_used": 1404687,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 1404687,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 33595313,
+    "tokens_quoted_for_billed_calls": 447652,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   }
+  },
+  "scores": {
+   "path": "D:/BerlinPrior/results/runs/ramp-20261122T034354/scores.npz",
+   "sha256": "df5bdc3032ca9795797199b66506862e36bcccf44c5dce37aa27b5c82de4d005",
+   "shape": [
+    1000,
+    4
+   ],
+   "request_keys": [
+    "3c41121702c1603ff3b732991292ff8927aaeb385af826de311f4277528ba716"
+   ]
+  }
+ },
+ "updated_utc": "2026-11-22T03:47:18.296289+00:00",
+ "train": {
+  "state": "done",
+  "started_utc": "2026-11-22T03:45:21.046801+00:00",
+  "argv": [
+   "train",
+   "--run",
+   "ramp-20261122T034354",
+   "--skill",
+   "ramp",
+   "--dream",
+   "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\dream",
+   "--scores",
+   "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\scores.npz",
+   "--steps",
+   "1200"
+  ],
+  "config_digest": "e0a10e69bdfff118bac366ed9ccdd19b1411a11a731cbe9ad647ab1589a80595",
+  "dream": "D:/BerlinPrior/results/runs/ramp-20261122T034354/dream",
+  "scores": "D:/BerlinPrior/results/runs/ramp-20261122T034354/scores.npz",
+  "frames": null,
+  "window_encoding": null,
+  "diff_floor": null,
+  "hidden_sizes": [
+   32
+  ],
+  "max_steps": 1200,
+  "student": "D:/BerlinPrior/results/runs/ramp-20261122T034354/student",
+  "network_sha256": "fece98b1c3ce73020fad692191a2e2d5baddd2e3f1f1b9e4e0255c2da4d5a94f",
+  "split": {
+   "by": "group",
+   "validation_fraction": 0.1,
+   "n_train_rows": 900,
+   "n_validation_rows": 100,
+   "n_groups": 1000
+  },
+  "parity": {
+   "action": {
+    "n_inputs_checked": 1000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": 2.220446049250313e-15,
+    "spike_train_mismatches_per_layer": [
+     0
+    ],
+    "spike_train_cells_per_layer": [
+     320000
+    ],
+    "total_spikes_per_layer_torch": [
+     66943
+    ],
+    "total_spikes_per_layer_numpy": [
+     66943
+    ],
+    "decisions_differing": 0,
+    "decision_agreement": 1.0,
+    "decide_one_vs_batch_differing": 0,
+    "decide_one_vs_torch_differing": 0
+   },
+   "combined": {
+    "n_inputs_checked": 1000,
+    "logit_tolerance": 1e-09,
+    "max_abs_logit_difference": {
+     "action": 0.0
+    },
+    "action_decisions_differing": 0
+   }
+  },
+  "training": {
+   "loss": "per head KL(target || softmax(logits)) averaged over that head's rows, weighted by the head's share of the batch, plus spike_rate_penalty x mean hidden firing rate; early stopping on the sampling-weighted validation KL",
+   "acceptance": "the restored weights must have a total validation KL below initialisation, a validation KL per head below that of the head's mean training target (the best constant prediction), and spikes in every hidden layer on the validation rows; otherwise fit raises TrainingError",
+   "heads": [
+    "action"
+   ],
+   "sampling": {
+    "action": 1.0
+   },
+   "n_train_rows": {
+    "action": 900
+   },
+   "n_validation_rows": {
+    "action": 100
+   },
+   "steps_run": 1200,
+   "best_step": 1200,
+   "stopped_early": false,
+   "initial_validation_loss": 0.45510825863239446,
+   "best_validation_loss": 0.028043768779833438,
+   "best_validation_loss_per_head": {
+    "action": 0.028043768779833438
+   },
+   "constant_predictor_validation_loss": {
+    "action": 0.1871665408378893
+   },
+   "constant_predictor_validation_loss_null_means": "infinite",
+   "train_loss_curve": [
+    [
+     100,
+     0.1333484835990524
+    ],
+    [
+     200,
+     0.06704047193708088
+    ],
+    [
+     300,
+     0.055712169680965415
+    ],
+    [
+     400,
+     0.04749864279182581
+    ],
+    [
+     500,
+     0.040854553001018236
+    ],
+    [
+     600,
+     0.0365020975141897
+    ],
+    [
+     700,
+     0.032520348885464824
+    ],
+    [
+     800,
+     0.02966339325305169
+    ],
+    [
+     900,
+     0.02724820504885997
+    ],
+    [
+     1000,
+     0.025803763326109758
+    ],
+    [
+     1100,
+     0.024567811028092884
+    ],
+    [
+     1200,
+     0.022996785731064485
+    ]
+   ],
+   "validation_loss_curve": [
+    [
+     0,
+     {
+      "action": 0.45510825863239446
+     }
+    ],
+    [
+     100,
+     {
+      "action": 0.09829059378568142
+     }
+    ],
+    [
+     200,
+     {
+      "action": 0.07561295665375244
+     }
+    ],
+    [
+     300,
+     {
+      "action": 0.06175065892213208
+     }
+    ],
+    [
+     400,
+     {
+      "action": 0.05168043539163283
+     }
+    ],
+    [
+     500,
+     {
+      "action": 0.04584006399273048
+     }
+    ],
+    [
+     600,
+     {
+      "action": 0.04117194788850512
+     }
+    ],
+    [
+     700,
+     {
+      "action": 0.03685256889919014
+     }
+    ],
+    [
+     800,
+     {
+      "action": 0.03476545721106512
+     }
+    ],
+    [
+     900,
+     {
+      "action": 0.03216172821021356
+     }
+    ],
+    [
+     1000,
+     {
+      "action": 0.029825277410997057
+     }
+    ],
+    [
+     1100,
+     {
+      "action": 0.028462809248455668
+     }
+    ],
+    [
+     1200,
+     {
+      "action": 0.028043768779833438
+     }
+    ]
+   ],
+   "validation_total_curve": [
+    [
+     0,
+     0.45510825863239446
+    ],
+    [
+     100,
+     0.09829059378568142
+    ],
+    [
+     200,
+     0.07561295665375244
+    ],
+    [
+     300,
+     0.06175065892213208
+    ],
+    [
+     400,
+     0.05168043539163283
+    ],
+    [
+     500,
+     0.04584006399273048
+    ],
+    [
+     600,
+     0.04117194788850512
+    ],
+    [
+     700,
+     0.03685256889919014
+    ],
+    [
+     800,
+     0.03476545721106512
+    ],
+    [
+     900,
+     0.03216172821021356
+    ],
+    [
+     1000,
+     0.029825277410997057
+    ],
+    [
+     1100,
+     0.028462809248455668
+    ],
+    [
+     1200,
+     0.028043768779833438
+    ]
+   ],
+   "initial_firing_rate_per_layer": [
+    0.1770625
+   ],
+   "firing_rate_per_layer": [
+    0.20825
+   ],
+   "dead_fraction_per_layer": [
+    0.0
+   ],
+   "saturated_fraction_per_layer": [
+    0.0
+   ],
+   "silent_layers": [],
+   "wall_seconds": 16.468720899982145,
+   "seed": 1453346127,
+   "torch_threads": 1,
+   "versions": {
+    "torch": "2.15.0+cpu",
+    "snntorch": "1.0.0",
+    "numpy": "2.5.5",
+    "python": "3.13.16"
+   },
+   "optimizer": {
+    "name": "Adam",
+    "lr": 0.002,
+    "betas": [
+     0.9,
+     0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0
+   }
+  },
+  "wall_s": 19.306167599977925
+ },
+ "run_test": {
+  "state": "done",
+  "argv": [
+   "run",
+   "--student",
+   "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\student",
+   "--split",
+   "test",
+   "--out",
+   "D:\\BerlinPrior\\results\\runs\\ramp-20261122T034354\\test_run",
+   "--run",
+   "ramp-20261122T034354"
+  ],
+  "split": "test",
+  "student": "D:/BerlinPrior/results/runs/ramp-20261122T034354/student",
+  "network_sha256": "fece98b1c3ce73020fad692191a2e2d5baddd2e3f1f1b9e4e0255c2da4d5a94f",
+  "config_digest": "e0a10e69bdfff118bac366ed9ccdd19b1411a11a731cbe9ad647ab1589a80595",
+  "records": "D:/BerlinPrior/results/runs/ramp-20261122T034354/test_run/run.json",
+  "summary": {
+   "nominal": {
+    "flat_scenarios": 19,
+    "flat_false_activations": 0,
+    "slope_scenarios": 41,
+    "missed_slope_entries": 0,
+    "entered_without_decision": 0,
+    "entry_latency_s": {
+     "n": 41,
+     "mean": 0.1092682926829267,
+     "median": 0.11999999999999988,
+     "min": 0.07999999999999985,
+     "max": 0.15999999999999992
+    },
+    "ascent_success": {
+     "count": 25,
+     "of_slope": 41,
+     "rate": 0.6097560975609756
+    },
+    "falls": {
+     "count": 0,
+     "of": 60
+    },
+    "slip_m": {
+     "flat": {
+      "n": 19,
+      "mean": 3.01122615192469,
+      "median": 3.0112261519246903,
+      "min": 3.0112261519246903,
+      "max": 3.0112261519246903
+     },
+     "slope": {
+      "n": 41,
+      "mean": 6.4081544862383675,
+      "median": 5.872896577303849,
+      "min": 4.291049456565134,
+      "max": 9.18150989174734
+     }
+    },
+    "progress_m": {
+     "flat": {
+      "n": 19,
+      "mean": 5.665007310616079,
+      "median": 5.66500731061608,
+      "min": 5.66500731061608,
+      "max": 5.66500731061608
+     },
+     "slope": {
+      "n": 41,
+      "mean": 3.186128074867967,
+      "median": 3.6701599713568243,
+      "min": 1.088505806599792,
+      "max": 4.602520498541019
+     }
+    },
+    "sideways_m": {
+     "flat": {
+      "n": 19,
+      "mean": 2.7478278597419252,
+      "median": 2.7478278597419252,
+      "min": 2.7478278597419252,
+      "max": 2.7478278597419252
+     },
+     "slope": {
+      "n": 41,
+      "mean": 3.1072975492138837,
+      "median": 3.0812067157275824,
+      "min": 2.775110412185454,
+      "max": 3.3787593264608318
+     }
+    },
+    "time_to_top_s": {
+     "n": 25,
+     "mean": 8.519200000000001,
+     "median": 8.46,
+     "min": 7.16,
+     "max": 10.24
+    },
+    "elapsed_s": {
+     "n": 60,
+     "mean": 12.0,
+     "median": 12.0,
+     "min": 12.0,
+     "max": 12.0
+    },
+    "recovery_s": {
+     "n": 25,
+     "mean": 0.0,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.0,
+     "not_recovered": 0
+    },
+    "commands_changed_on_flat": {
+     "total": 0,
+     "episodes_with_any": 0
+    },
+    "action_counts": {
+     "vx+0.40_yaw+0.00": 0,
+     "vx+0.60_yaw+0.00": 0,
+     "vx+0.80_yaw+0.00": 0,
+     "vx+1.00_yaw+0.00": 0
+    }
+   },
+   "student": {
+    "flat_scenarios": 19,
+    "flat_false_activations": 0,
+    "slope_scenarios": 41,
+    "missed_slope_entries": 0,
+    "entered_without_decision": 0,
+    "entry_latency_s": {
+     "n": 41,
+     "mean": 0.1092682926829267,
+     "median": 0.11999999999999988,
+     "min": 0.07999999999999985,
+     "max": 0.15999999999999992
+    },
+    "ascent_success": {
+     "count": 31,
+     "of_slope": 41,
+     "rate": 0.7560975609756098
+    },
+    "falls": {
+     "count": 0,
+     "of": 60
+    },
+    "slip_m": {
+     "flat": {
+      "n": 19,
+      "mean": 3.01122615192469,
+      "median": 3.0112261519246903,
+      "min": 3.0112261519246903,
+      "max": 3.0112261519246903
+     },
+     "slope": {
+      "n": 41,
+      "mean": 7.104736663810825,
+      "median": 6.560578814951212,
+      "min": 4.840444828678689,
+      "max": 12.359275093897626
+     }
+    },
+    "progress_m": {
+     "flat": {
+      "n": 19,
+      "mean": 5.665007310616079,
+      "median": 5.66500731061608,
+      "min": 5.66500731061608,
+      "max": 5.66500731061608
+     },
+     "slope": {
+      "n": 41,
+      "mean": 4.474577826260069,
+      "median": 5.013051731633438,
+      "min": 1.0846123253673936,
+      "max": 6.295060954028719
+     }
+    },
+    "sideways_m": {
+     "flat": {
+      "n": 19,
+      "mean": 2.7478278597419252,
+      "median": 2.7478278597419252,
+      "min": 2.7478278597419252,
+      "max": 2.7478278597419252
+     },
+     "slope": {
+      "n": 41,
+      "mean": 3.2283501419414105,
+      "median": 3.1778238789816844,
+      "min": 1.503180409045354,
+      "max": 5.627597062623634
+     }
+    },
+    "time_to_top_s": {
+     "n": 31,
+     "mean": 6.752903225806452,
+     "median": 6.44,
+     "min": 5.46,
+     "max": 11.22
+    },
+    "elapsed_s": {
+     "n": 60,
+     "mean": 12.0,
+     "median": 12.0,
+     "min": 12.0,
+     "max": 12.0
+    },
+    "recovery_s": {
+     "n": 31,
+     "mean": 0.028387096774193574,
+     "median": 0.0,
+     "min": 0.0,
+     "max": 0.41999999999999993,
+     "not_recovered": 0
+    },
+    "commands_changed_on_flat": {
+     "total": 1138,
+     "episodes_with_any": 31
+    },
+    "action_counts": {
+     "vx+0.40_yaw+0.00": 0,
+     "vx+0.60_yaw+0.00": 0,
+     "vx+0.80_yaw+0.00": 1,
+     "vx+1.00_yaw+0.00": 40
+    }
+   }
+  },
+  "metric_notes": {
+   "ascent_success_rate": "slope scenarios whose episode ended with reached_top 1 (final_forward_m >= ramp_end_m, no fall); Wilson interval",
+   "fall_rate": "every scenario (flat and slope) with fall 1; Wilson interval",
+   "mean_progress_m": "mean final_forward_m over the slope scenarios",
+   "mean_slip_m": "mean foot_slip_m over the slope scenarios (the whole episode, approach included)",
+   "flat_false_activations": "flat scenarios in which the detector switched to SLOPE at least once (a count; n = flat scenarios)",
+   "no_op": "the nominal walking command throughout (RAMP has no NO_OP; the detector observes and never acts)",
+   "snn": "the exported spiking student's argmax candidate, sent while the detector is in SLOPE"
+  },
+  "wall_s": 94.75722559998394,
+  "seeds": {
+   "runtime_seed": 20261121,
+   "split_code": 3,
+   "scenarios": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code]))",
+   "attempt_seed": "scenario_id",
+   "split": "test",
+   "world_seed": 0,
+   "world_preset": "default",
+   "bootstrap": "ramp/run/test/paired_bootstrap[0]"
+  },
+  "bootstrap": {
+   "method": "percentile bootstrap over slope scenarios",
+   "resamples": 9999,
+   "level": 0.95
+  },
+  "where": "simulation (MuJoCo Go2World); student inference on this computer's CPU (numpy)"
+ },
+ "seeds": {
+  "runtime_seed": 20261121,
+  "split_code": 3,
+  "scenarios": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code]))",
+  "attempt_seed": "scenario_id",
+  "split": "test",
+  "world_seed": 0,
+  "world_preset": "default",
+  "bootstrap": "ramp/run/test/paired_bootstrap[0]"
+ },
+ "scenario_ids": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17,
+  18,
+  19,
+  20,
+  21,
+  22,
+  23,
+  24,
+  25,
+  26,
+  27,
+  28,
+  29,
+  30,
+  31,
+  32,
+  33,
+  34,
+  35,
+  36,
+  37,
+  38,
+  39,
+  40,
+  41,
+  42,
+  43,
+  44,
+  45,
+  46,
+  47,
+  48,
+  49,
+  50,
+  51,
+  52,
+  53,
+  54,
+  55,
+  56,
+  57,
+  58,
+  59
+ ],
+ "metrics": [
+  {
+   "name": "ascent_success_rate",
+   "unit": "fraction",
+   "higher_is_better": true,
+   "values": {
+    "no_op": {
+     "value": 0.6097560975609756,
+     "ci_low": 0.45726856934123794,
+     "ci_high": 0.7434385493987647,
+     "n": 41
+    },
+    "snn": {
+     "value": 0.7560975609756098,
+     "ci_low": 0.6065666377742431,
+     "ci_high": 0.8617499726190967,
+     "n": 41
+    }
+   }
+  },
+  {
+   "name": "fall_rate",
+   "unit": "fraction",
+   "higher_is_better": false,
+   "values": {
+    "no_op": {
+     "value": 0.0,
+     "ci_low": 0.0,
+     "ci_high": 0.06017185214208983,
+     "n": 60
+    },
+    "snn": {
+     "value": 0.0,
+     "ci_low": 0.0,
+     "ci_high": 0.06017185214208983,
+     "n": 60
+    }
+   }
+  },
+  {
+   "name": "mean_progress_m",
+   "unit": "m",
+   "higher_is_better": true,
+   "values": {
+    "no_op": {
+     "value": 3.186128074867967,
+     "ci_low": null,
+     "ci_high": null,
+     "n": 41
+    },
+    "snn": {
+     "value": 4.474577826260069,
+     "ci_low": null,
+     "ci_high": null,
+     "n": 41
+    }
+   }
+  },
+  {
+   "name": "mean_slip_m",
+   "unit": "m",
+   "higher_is_better": false,
+   "values": {
+    "no_op": {
+     "value": 6.4081544862383675,
+     "ci_low": null,
+     "ci_high": null,
+     "n": 41
+    },
+    "snn": {
+     "value": 7.104736663810825,
+     "ci_low": null,
+     "ci_high": null,
+     "n": 41
+    }
+   }
+  },
+  {
+   "name": "flat_false_activations",
+   "unit": "count",
+   "higher_is_better": false,
+   "values": {
+    "no_op": {
+     "value": 0,
+     "ci_low": null,
+     "ci_high": null,
+     "n": 19
+    },
+    "snn": {
+     "value": 0,
+     "ci_low": null,
+     "ci_high": null,
+     "n": 19
+    }
+   }
+  }
+ ],
+ "paired": [
+  {
+   "name": "ascent_success_rate",
+   "a": "snn",
+   "b": "no_op",
+   "diff": 0.14634146341463414,
+   "ci_low": 0.04878048780487805,
+   "ci_high": 0.2682926829268293,
+   "n": 41
+  }
+ ],
+ "timing": {
+  "mode": "fast",
+  "learn_s": 105.944,
+  "evaluate_s": 96.69,
+  "learn_steps": [
+   "attempts",
+   "dream",
+   "teach",
+   "train"
+  ],
+  "steps": {
+   "attempts": 53.768,
+   "dream": 15.384,
+   "teach": 14.697,
+   "train": 22.095,
+   "run_test": 96.69
+  },
+  "attempts": 40,
+  "context_rows_note": null,
+  "machine_note": "one laptop, CPU only",
+  "cpu_count": 22,
+  "clock": "wall clock of each step's process (interpreter start-up, imports and worker pools included)"
+ }
+}

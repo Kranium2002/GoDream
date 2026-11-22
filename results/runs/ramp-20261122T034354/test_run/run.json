@@ -1,0 +1,5527 @@
+{
+ "skill": "ramp",
+ "split": "test",
+ "action_names": [
+  "vx+0.40_yaw+0.00",
+  "vx+0.60_yaw+0.00",
+  "vx+0.80_yaw+0.00",
+  "vx+1.00_yaw+0.00"
+ ],
+ "outcome_names": [
+  "progress_m",
+  "reached_top",
+  "fall",
+  "sideways_m",
+  "slip_m"
+ ],
+ "outcome_kinds": [
+  "regression",
+  "binary",
+  "binary",
+  "regression",
+  "regression"
+ ],
+ "outcome_bounds": [
+  [
+   -2.0,
+   10.0
+  ],
+  [
+   0.0,
+   1.0
+  ],
+  [
+   0.0,
+   1.0
+  ],
+  [
+   0.0,
+   8.0
+  ],
+  [
+   0.0,
+   15.0
+  ]
+ ],
+ "feature_names": [
+  "filtered_pitch_deg",
+  "raw_pitch_deg",
+  "pitch_rate_deg_s",
+  "nominal_speed_m_s"
+ ],
+ "feature_ranges": [
+  [
+   -5.0,
+   20.0
+  ],
+  [
+   -10.0,
+   25.0
+  ],
+  [
+   -30.0,
+   60.0
+  ],
+  [
+   0.3,
+   1.0
+  ]
+ ],
+ "frames": null,
+ "n_situations": 60,
+ "n_scenarios": 60,
+ "seeds": {
+  "runtime_seed": 20261121,
+  "split_code": 3,
+  "scenarios": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code]))",
+  "attempt_seed": "scenario_id"
+ },
+ "world_seed": 0,
+ "world_preset": "default",
+ "config_digest": "e0a10e69bdfff118bac366ed9ccdd19b1411a11a731cbe9ad647ab1589a80595",
+ "kind_counts": {
+  "flat": 19,
+  "slope": 41
+ },
+ "student": {
+  "dir": "D:/BerlinPrior/results/runs/ramp-20261122T034354/student",
+  "network_sha256": "fece98b1c3ce73020fad692191a2e2d5baddd2e3f1f1b9e4e0255c2da4d5a94f"
+ },
+ "methods": {
+  "nominal": "the nominal command throughout (detector observes, never acts)",
+  "student": "the student's argmax candidate (observed.student_readout, action head) at the entry"
+ },
+ "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+ "records": [
+  {
+   "scenario_id": 0,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 0,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 0,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 1,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.434252528002956,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 1,
+    "kind": "slope",
+    "features": [
+     0.5422973036766052,
+     0.5129322409629822,
+     0.45272812247276306,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 4.098753132851312,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.0746489335498772,
+     "slip_m": 4.890781920358437
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.0,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.927872954738242,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 8.2,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0241909441503112,
+    "final_speed_m_s": 0.4433815653310388,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 1,
+    "kind": "slope",
+    "features": [
+     0.5422973036766052,
+     0.5129322409629822,
+     0.45272812247276306,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.668034813476289,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.1778238789816844,
+     "slip_m": 4.998543703990883
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      6.28,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 30,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.927872954738242,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.68,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8328801076838022,
+    "final_speed_m_s": 0.573660834945374,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 2,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.41316761943417,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 2,
+    "kind": "slope",
+    "features": [
+     0.5490087866783142,
+     0.5678309202194214,
+     0.49116745591163635,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": null,
+    "measured": {
+     "progress_m": 2.2698745913102707,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.3374296325145663,
+     "slip_m": 7.372049433468724
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      11.3,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.918498123938651,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.5992568616166896,
+    "final_speed_m_s": 0.7462828723686723,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 2,
+    "kind": "slope",
+    "features": [
+     0.5490087866783142,
+     0.5678309202194214,
+     0.49116745591163635,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": 3,
+    "measured": {
+     "progress_m": 2.4929853483650817,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 5.542033381308657,
+     "slip_m": 9.281000935413559
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      9.44,
+      "NORMAL"
+     ],
+     [
+      10.02,
+      "SLOPE"
+     ],
+     [
+      11.0,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.918498123938651,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0666813967862216,
+    "final_speed_m_s": 0.3721333653516846,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 3,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.033869825503455,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 3,
+    "kind": "slope",
+    "features": [
+     0.5132496953010559,
+     0.49704864621162415,
+     0.43020355701446533,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.18,
+    "action": null,
+    "measured": {
+     "progress_m": 4.602520498541019,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.976471107110851,
+     "slip_m": 4.291049456565134
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.98,
+      "SLOPE"
+     ],
+     [
+      7.88,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.98,
+    "entry_latency_s": 0.1399999999999999,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9315453184903935,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.16,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9645043041480497,
+    "final_speed_m_s": 0.6052949691292713,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 3,
+    "kind": "slope",
+    "features": [
+     0.5132496953010559,
+     0.49704864621162415,
+     0.43020355701446533,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.18,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.639793434976957,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.2807498765885272,
+     "slip_m": 5.094930621889978
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.98,
+      "SLOPE"
+     ],
+     [
+      6.38,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.98,
+    "entry_latency_s": 0.1399999999999999,
+    "commands_changed_on_flat": 30,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9315453184903935,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.78,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.909826708741273,
+    "final_speed_m_s": 0.5928320405145047,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 4,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 17.89703280607216,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 4,
+    "kind": "slope",
+    "features": [
+     0.5493038296699524,
+     0.523859977722168,
+     0.4692390561103821,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 1.088505806599792,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.196800834345811,
+     "slip_m": 9.18150989174734
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      11.36,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.903220639547708,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.6113691993750976,
+    "final_speed_m_s": 0.5072887924773379,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 4,
+    "kind": "slope",
+    "features": [
+     0.5493038296699524,
+     0.523859977722168,
+     0.4692390561103821,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 1.2353169883222963,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 4.564093785902703,
+     "slip_m": 10.709737473624278
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      11.06,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.903220639547708,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.6445685798638427,
+    "final_speed_m_s": 0.7469827726452289,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 5,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.068099037427608,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 5,
+    "kind": "slope",
+    "features": [
+     0.5339464545249939,
+     0.5041912794113159,
+     0.4532051086425781,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.360268224245719,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.160565639212832,
+     "slip_m": 6.3774018341941945
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.86,
+      "NORMAL"
+     ],
+     [
+      10.14,
+      "SLOPE"
+     ],
+     [
+      10.74,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9218668152052376,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 9.72,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.1280160060383841,
+    "final_speed_m_s": 0.6217651930935527,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 5,
+    "kind": "slope",
+    "features": [
+     0.5339464545249939,
+     0.5041912794113159,
+     0.4532051086425781,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.623082625117963,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 1.503180409045354,
+     "slip_m": 6.560578814951212
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      7.42,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 31,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9218668152052376,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.8,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.4566010904562514,
+    "final_speed_m_s": 0.44174672609849874,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 6,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.037449943784969,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 6,
+    "kind": "slope",
+    "features": [
+     0.5133926272392273,
+     0.4983987510204315,
+     0.4302911162376404,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.18,
+    "action": null,
+    "measured": {
+     "progress_m": 4.344105118721339,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.9637805068782033,
+     "slip_m": 4.711244750478106
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.98,
+      "SLOPE"
+     ],
+     [
+      8.700000000000001,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.98,
+    "entry_latency_s": 0.1399999999999999,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.931512898828717,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.72,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9894795985963287,
+    "final_speed_m_s": 0.5704023277471232,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 6,
+    "kind": "slope",
+    "features": [
+     0.5133926272392273,
+     0.4983987510204315,
+     0.4302911162376404,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.18,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.793358583763287,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 1.778876059429049,
+     "slip_m": 5.766979244401813
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.98,
+      "SLOPE"
+     ],
+     [
+      7.0200000000000005,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.98,
+    "entry_latency_s": 0.1399999999999999,
+    "commands_changed_on_flat": 29,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.931512898828717,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.44,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.5495142223364797,
+    "final_speed_m_s": 0.5486784915723282,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 7,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 7,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 7,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 8,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.252501333824565,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 8,
+    "kind": "slope",
+    "features": [
+     0.523316502571106,
+     0.5251844525337219,
+     0.43829065561294556,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.2,
+    "action": null,
+    "measured": {
+     "progress_m": 4.355564917798892,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.0091024501595647,
+     "slip_m": 4.7642400252317225
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      2.0,
+      "SLOPE"
+     ],
+     [
+      8.72,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 2.0,
+    "entry_latency_s": 0.15999999999999992,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.929551679768676,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.5600000000000005,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9542511662232993,
+    "final_speed_m_s": 0.6086949169376668,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 8,
+    "kind": "slope",
+    "features": [
+     0.523316502571106,
+     0.5251844525337219,
+     0.43829065561294556,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.2,
+    "action": 3,
+    "measured": {
+     "progress_m": 6.234634989223602,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 1.8646143325054614,
+     "slip_m": 5.156879786393138
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      2.0,
+      "SLOPE"
+     ],
+     [
+      6.22,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 2.0,
+    "entry_latency_s": 0.15999999999999992,
+    "commands_changed_on_flat": 33,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.929551679768676,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.5600000000000005,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.563133314783332,
+    "final_speed_m_s": 0.5518454458579589,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 9,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 9,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 9,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 10,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.16668457051128,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 10,
+    "kind": "slope",
+    "features": [
+     0.523205578327179,
+     0.5238633155822754,
+     0.43923020362854004,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.2,
+    "action": null,
+    "measured": {
+     "progress_m": 4.246848634424765,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.0620998552068235,
+     "slip_m": 4.544720043703064
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      2.0,
+      "SLOPE"
+     ],
+     [
+      8.86,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 2.0,
+    "entry_latency_s": 0.15999999999999992,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.930337569758808,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.82,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9764518820451498,
+    "final_speed_m_s": 0.594851444982187,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 10,
+    "kind": "slope",
+    "features": [
+     0.523205578327179,
+     0.5238633155822754,
+     0.43923020362854004,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.2,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.54902491479449,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.2963473633915767,
+     "slip_m": 5.163540484455502
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      2.0,
+      "SLOPE"
+     ],
+     [
+      6.32,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 2.0,
+    "entry_latency_s": 0.15999999999999992,
+    "commands_changed_on_flat": 28,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.930337569758808,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.76,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8837591332891446,
+    "final_speed_m_s": 0.5043933569608927,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 11,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 17.635715257859438,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 11,
+    "kind": "slope",
+    "features": [
+     0.546909749507904,
+     0.5192317962646484,
+     0.4765620231628418,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 1.5314882362113538,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.181451130849414,
+     "slip_m": 8.75819305640707
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      11.6,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.906004001391928,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.511479259362802,
+    "final_speed_m_s": 0.6303233749271274,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 11,
+    "kind": "slope",
+    "features": [
+     0.546909749507904,
+     0.5192317962646484,
+     0.4765620231628418,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 1.4791979399337687,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 4.878822620023368,
+     "slip_m": 9.920351050844923
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      10.82,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.906004001391928,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.7377944685443323,
+    "final_speed_m_s": 0.7519596453399804,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 12,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 17.232060237075178,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 12,
+    "kind": "slope",
+    "features": [
+     0.5423129796981812,
+     0.5299386978149414,
+     0.47601649165153503,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 1.8120507190594972,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.293630523676344,
+     "slip_m": 7.91221643231992
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      10.82,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9102254943218924,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.5961022803453258,
+    "final_speed_m_s": 0.7141880150168185,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 12,
+    "kind": "slope",
+    "features": [
+     0.5423129796981812,
+     0.5299386978149414,
+     0.47601649165153503,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 4.871236021105765,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.3344328211018857,
+     "slip_m": 7.475663713451086
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      8.44,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 45,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9102254943218924,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.54,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.637994426618401,
+    "final_speed_m_s": 0.5567188044817863,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 13,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.760835140143634,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 13,
+    "kind": "slope",
+    "features": [
+     0.536500871181488,
+     0.5376609563827515,
+     0.43684476613998413,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.3022981540132577,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.976162492784154,
+     "slip_m": 6.463442913306225
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      11.28,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9248077748947026,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 10.24,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0135873140116933,
+    "final_speed_m_s": 0.5403871204119023,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 13,
+    "kind": "slope",
+    "features": [
+     0.536500871181488,
+     0.5376609563827515,
+     0.43684476613998413,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.552617719913172,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.922633465195671,
+     "slip_m": 5.662430484368042
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      6.78,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 29,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9248077748947026,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.2,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.772908068347641,
+    "final_speed_m_s": 0.4577692504772967,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 14,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.809720295593662,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 14,
+    "kind": "slope",
+    "features": [
+     0.5234938263893127,
+     0.4826551079750061,
+     0.4252772927284241,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.7500149153141304,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.1848250956011674,
+     "slip_m": 5.633086772585057
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.92,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9243435740441153,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 8.94,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.077301402502358,
+    "final_speed_m_s": 0.5905419739829838,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 14,
+    "kind": "slope",
+    "features": [
+     0.5234938263893127,
+     0.4826551079750061,
+     0.4252772927284241,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.559923978144039,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.341852266321024,
+     "slip_m": 6.181758098558199
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      7.3,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 34,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9243435740441153,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.62,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.6318280823928077,
+    "final_speed_m_s": 0.5984966014695887,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 15,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 15,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 15,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 16,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 17.17977379544896,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 16,
+    "kind": "slope",
+    "features": [
+     0.5405864119529724,
+     0.5424537658691406,
+     0.4687407314777374,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 1.7462304406858151,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.3787593264608318,
+     "slip_m": 7.918325817422007
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      10.64,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9107653832777975,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.6352603393080893,
+    "final_speed_m_s": 0.7703674738004964,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 16,
+    "kind": "slope",
+    "features": [
+     0.5405864119529724,
+     0.5424537658691406,
+     0.4687407314777374,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 1.6777840365008858,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 5.12505738332089,
+     "slip_m": 9.360894205330293
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      10.02,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9107653832777975,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.7512780218071957,
+    "final_speed_m_s": 0.6046777371412391,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 17,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.043949244485468,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 17,
+    "kind": "slope",
+    "features": [
+     0.5335040092468262,
+     0.5038385987281799,
+     0.452752023935318,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.7768147153312217,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.076753837798201,
+     "slip_m": 5.872896577303849
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      10.040000000000001,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9220999660913414,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 9.02,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.046377562981128,
+    "final_speed_m_s": 0.4554732552963722,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 17,
+    "kind": "slope",
+    "features": [
+     0.5335040092468262,
+     0.5038385987281799,
+     0.452752023935318,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 4.822944514449792,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.394273594048487,
+     "slip_m": 6.653352430087809
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      8.02,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 42,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9220999660913414,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.18,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9242900035095731,
+    "final_speed_m_s": 0.48700577637497866,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 18,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.633967891187565,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 18,
+    "kind": "slope",
+    "features": [
+     0.5462234616279602,
+     0.5114963054656982,
+     0.45432189106941223,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.9289836672123983,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.1212142104093656,
+     "slip_m": 5.3707610909345656
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.32,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9260059360282034,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 8.5,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0390334723922368,
+    "final_speed_m_s": 0.5819846351111947,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 18,
+    "kind": "slope",
+    "features": [
+     0.5462234616279602,
+     0.5114963054656982,
+     0.45432189106941223,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 6.16902189444829,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.3376540089760813,
+     "slip_m": 4.840444828678689
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      6.16,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 31,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9260059360282034,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.54,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.6896486520921576,
+    "final_speed_m_s": 0.4299961455467715,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 19,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.717616379339244,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 19,
+    "kind": "slope",
+    "features": [
+     0.5278186798095703,
+     0.4914172887802124,
+     0.4367262125015259,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.999419943790794,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.1134207714536606,
+     "slip_m": 5.404564165499087
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.200000000000001,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.925217002153903,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 8.32,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0382764787586858,
+    "final_speed_m_s": 0.5568923152496593,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 19,
+    "kind": "slope",
+    "features": [
+     0.5278186798095703,
+     0.4914172887802124,
+     0.4367262125015259,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.661208562741872,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.7768513274206614,
+     "slip_m": 5.385810693328766
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      6.58,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 28,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.925217002153903,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.0200000000000005,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.7734382020096082,
+    "final_speed_m_s": 0.5584672842653612,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 20,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.086549617682195,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 20,
+    "kind": "slope",
+    "features": [
+     0.5369405746459961,
+     0.5124347805976868,
+     0.4686354100704193,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 4.0350385704738585,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.8756510185971753,
+     "slip_m": 5.4445686479485795
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.46,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.921688456513369,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 8.36,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9589807996563668,
+    "final_speed_m_s": 0.5800203966061737,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 20,
+    "kind": "slope",
+    "features": [
+     0.5369405746459961,
+     0.5124347805976868,
+     0.4686354100704193,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.319199360029628,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.2318694578420155,
+     "slip_m": 6.467298980401949
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      7.68,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 38,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.921688456513369,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.92,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.616803275630474,
+    "final_speed_m_s": 0.5758882163138568,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 21,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 21,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 21,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 22,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.07845141984524,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 22,
+    "kind": "slope",
+    "features": [
+     0.5331407785415649,
+     0.5004152655601501,
+     0.4523790776729584,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.8712227074824193,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.960949367068088,
+     "slip_m": 5.745242160276833
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      10.040000000000001,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9217667649844516,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 8.98,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9484054354172935,
+    "final_speed_m_s": 0.4575416435202904,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 22,
+    "kind": "slope",
+    "features": [
+     0.5331407785415649,
+     0.5004152655601501,
+     0.4523790776729584,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.13656180905864,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.7434652419918883,
+     "slip_m": 5.75861919897146
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      7.48,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 48,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9217667649844516,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.5200000000000005,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9565353678261812,
+    "final_speed_m_s": 0.5370950046208273,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 23,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 23,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 23,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 24,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.373494396296156,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 24,
+    "kind": "slope",
+    "features": [
+     0.5520393252372742,
+     0.5650298595428467,
+     0.4901868402957916,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": null,
+    "measured": {
+     "progress_m": 2.905921882373402,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.0701154220460607,
+     "slip_m": 7.327243924269957
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.918888971763555,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.1049040868987867,
+    "final_speed_m_s": 0.5317877335544312,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 24,
+    "kind": "slope",
+    "features": [
+     0.5520393252372742,
+     0.5650298595428467,
+     0.4901868402957916,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": 3,
+    "measured": {
+     "progress_m": 2.379151536393305,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 5.461601824330199,
+     "slip_m": 9.71911191287899
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      8.620000000000001,
+      "NORMAL"
+     ],
+     [
+      8.9,
+      "SLOPE"
+     ],
+     [
+      11.3,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.918888971763555,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8525643202297735,
+    "final_speed_m_s": 0.8134996180097038,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 25,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.89139348053039,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 25,
+    "kind": "slope",
+    "features": [
+     0.5641748309135437,
+     0.5624526739120483,
+     0.4972383975982666,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": null,
+    "measured": {
+     "progress_m": 2.1946940574045906,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.3189846494600475,
+     "slip_m": 7.449284634420719
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      10.92,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9137144805006994,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.5554554008028987,
+    "final_speed_m_s": 0.6152363360913757,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 25,
+    "kind": "slope",
+    "features": [
+     0.5641748309135437,
+     0.5624526739120483,
+     0.4972383975982666,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": 2,
+    "measured": {
+     "progress_m": 2.0619344512807753,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 4.344964096388395,
+     "slip_m": 8.181449525415598
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      11.02,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9137144805006994,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.7217902588589022,
+    "final_speed_m_s": 0.7067801207864326,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 26,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 26,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 26,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 27,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.354220839744423,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 27,
+    "kind": "slope",
+    "features": [
+     0.5253362059593201,
+     0.4917280673980713,
+     0.44013968110084534,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 4.239405485669439,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.0838977472749587,
+     "slip_m": 4.837038934885089
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      8.88,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.928614550070515,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.86,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9924611401406924,
+    "final_speed_m_s": 0.5288273960778577,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 27,
+    "kind": "slope",
+    "features": [
+     0.5253362059593201,
+     0.4917280673980713,
+     0.44013968110084534,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 6.018091659952738,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 1.985749536119121,
+     "slip_m": 5.496706006670534
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      6.640000000000001,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 34,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.928614550070515,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.96,
+    "recovery_s": 0.40000000000000036,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.5361673061769596,
+    "final_speed_m_s": 0.6184325780554213,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 28,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 17.107521810885707,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 28,
+    "kind": "slope",
+    "features": [
+     0.5398318767547607,
+     0.5437069535255432,
+     0.4734542965888977,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 1.9111183233260793,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.2496709480224997,
+     "slip_m": 7.955124619182806
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      11.52,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9115088096813992,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.5204553162340648,
+    "final_speed_m_s": 0.6563682631278587,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 28,
+    "kind": "slope",
+    "features": [
+     0.5398318767547607,
+     0.5437069535255432,
+     0.4734542965888977,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 2.5152080670933232,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 5.627597062623634,
+     "slip_m": 9.189956079548104
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      11.34,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9115088096813992,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0699459705392393,
+    "final_speed_m_s": 0.9469775588598545,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 29,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 29,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 29,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 30,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 30,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 30,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 31,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 31,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 31,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 32,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.492705502002925,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 32,
+    "kind": "slope",
+    "features": [
+     0.5420058965682983,
+     0.5188208818435669,
+     0.45193585753440857,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 4.1753371007644295,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.076897198100983,
+     "slip_m": 4.9461034467330425
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.08,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9273289366406243,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.78,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0155139566900986,
+    "final_speed_m_s": 0.6119532260925371,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 32,
+    "kind": "slope",
+    "features": [
+     0.5420058965682983,
+     0.5188208818435669,
+     0.45193585753440857,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.860210632557429,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.5371812083432914,
+     "slip_m": 5.297061596175327
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      6.34,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 29,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9273289366406243,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.76,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.7068710473692881,
+    "final_speed_m_s": 0.6172320103617385,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 33,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.013794167565708,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 33,
+    "kind": "slope",
+    "features": [
+     0.5132986307144165,
+     0.4970585107803345,
+     0.43089884519577026,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.18,
+    "action": null,
+    "measured": {
+     "progress_m": 4.457799736472705,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.0812067157275824,
+     "slip_m": 4.530310166004689
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.98,
+      "SLOPE"
+     ],
+     [
+      8.32,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.98,
+    "entry_latency_s": 0.1399999999999999,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9317269733367985,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.44,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9694608054637261,
+    "final_speed_m_s": 0.45001913538761157,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 33,
+    "kind": "slope",
+    "features": [
+     0.5132986307144165,
+     0.4970585107803345,
+     0.43089884519577026,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.18,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.833134077097274,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.5733155569566684,
+     "slip_m": 5.1373934472286695
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.98,
+      "SLOPE"
+     ],
+     [
+      6.04,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.98,
+    "entry_latency_s": 0.1399999999999999,
+    "commands_changed_on_flat": 20,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9317269733367985,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.64,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.7611544368683534,
+    "final_speed_m_s": 0.4386940810445962,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 34,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.354487501401156,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 34,
+    "kind": "slope",
+    "features": [
+     0.5253416299819946,
+     0.49173691868782043,
+     0.44013920426368713,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 4.2823252394559885,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.0192530405247986,
+     "slip_m": 4.97725175443209
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      8.84,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.928612085358501,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.84,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9377285017228569,
+    "final_speed_m_s": 0.4548658978208301,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 34,
+    "kind": "slope",
+    "features": [
+     0.5253416299819946,
+     0.49173691868782043,
+     0.44013920426368713,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.984630830966189,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.1634046964967264,
+     "slip_m": 5.587592997527054
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      6.62,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 41,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.928612085358501,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.8,
+    "recovery_s": 0.0600000000000005,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.6444391096886664,
+    "final_speed_m_s": 0.520020481884922,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 35,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 17.160619783876477,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 35,
+    "kind": "slope",
+    "features": [
+     0.538432776927948,
+     0.5515501499176025,
+     0.47068578004837036,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": null,
+    "measured": {
+     "progress_m": 1.9926392052862005,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.2043498629280527,
+     "slip_m": 7.865128740464371
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      11.78,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9109627617587384,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.4584602748644655,
+    "final_speed_m_s": 0.5948835717549618,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 35,
+    "kind": "slope",
+    "features": [
+     0.538432776927948,
+     0.5515501499176025,
+     0.47068578004837036,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": 3,
+    "measured": {
+     "progress_m": 4.847473544964083,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.5149514213617308,
+     "slip_m": 7.7409715292900945
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      7.0600000000000005,
+      "NORMAL"
+     ],
+     [
+      7.28,
+      "SLOPE"
+     ],
+     [
+      8.8,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 48,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9109627617587384,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.84,
+    "recovery_s": 0.41999999999999993,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.6074264878764768,
+    "final_speed_m_s": 0.6035388318408014,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 36,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 36,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 36,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 37,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.653197660669669,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 37,
+    "kind": "slope",
+    "features": [
+     0.5466009974479675,
+     0.5166511535644531,
+     0.4542046785354614,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.7210010439363157,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.166728961139234,
+     "slip_m": 5.698743891556035
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.86,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9258249330566075,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 9.06,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0626690007081803,
+    "final_speed_m_s": 0.5606785863528819,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 37,
+    "kind": "slope",
+    "features": [
+     0.5466009974479675,
+     0.5166511535644531,
+     0.4542046785354614,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 6.005349110082634,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 1.8109937022662541,
+     "slip_m": 5.662620397177677
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      5.36,
+      "NORMAL"
+     ],
+     [
+      5.6000000000000005,
+      "SLOPE"
+     ],
+     [
+      6.5200000000000005,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 36,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9258249330566075,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.8,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.5534447930458568,
+    "final_speed_m_s": 0.5711958491595396,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 38,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.5183772379361,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 38,
+    "kind": "slope",
+    "features": [
+     0.557197093963623,
+     0.5600006580352783,
+     0.491671085357666,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": null,
+    "measured": {
+     "progress_m": 2.7168187994888435,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.197025031228145,
+     "slip_m": 7.36808945281723
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9174571790565467,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.1404314920371914,
+    "final_speed_m_s": 0.4567723670311598,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 38,
+    "kind": "slope",
+    "features": [
+     0.557197093963623,
+     0.5600006580352783,
+     0.491671085357666,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": 3,
+    "measured": {
+     "progress_m": 4.706099136014484,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.8191075214820613,
+     "slip_m": 6.797841144551514
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      8.4,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 49,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9174571790565467,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.42,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9720544294298654,
+    "final_speed_m_s": 0.5141903540858228,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 39,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 39,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 39,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 40,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 17.640927897300635,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 40,
+    "kind": "slope",
+    "features": [
+     0.5476787686347961,
+     0.5185784101486206,
+     0.47600239515304565,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 1.7789411781461895,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.8837305478264996,
+     "slip_m": 8.879006398913228
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.905948867555135,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.3166930922987286,
+    "final_speed_m_s": 0.5099784162957597,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 40,
+    "kind": "slope",
+    "features": [
+     0.5476787686347961,
+     0.5185784101486206,
+     0.47600239515304565,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 1.5465089240528638,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 1.786010136425567,
+     "slip_m": 12.359275093897626
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.905948867555135,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.7160689231826907,
+    "final_speed_m_s": 0.42038537320039665,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 41,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.382857166174844,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 41,
+    "kind": "slope",
+    "features": [
+     0.5521902441978455,
+     0.5650004744529724,
+     0.49023059010505676,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": null,
+    "measured": {
+     "progress_m": 3.6701599713568243,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.775110412185454,
+     "slip_m": 6.219413778812941
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      10.48,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9187968157027093,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 9.52,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.901096830384998,
+    "final_speed_m_s": 0.4363765357184247,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 41,
+    "kind": "slope",
+    "features": [
+     0.5521902441978455,
+     0.5650004744529724,
+     0.49023059010505676,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": 3,
+    "measured": {
+     "progress_m": 4.334844293025812,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 4.2265810775127015,
+     "slip_m": 6.803221444635885
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      8.74,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 46,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9187968157027093,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.82,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0842295955467192,
+    "final_speed_m_s": 0.4782010114606441,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 42,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 17.594694788090475,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 42,
+    "kind": "slope",
+    "features": [
+     0.5532853603363037,
+     0.5219812393188477,
+     0.4696962833404541,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 1.482059742566343,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.0603524506218025,
+     "slip_m": 9.088508935792273
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      11.82,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9064373223353543,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.4968762278254655,
+    "final_speed_m_s": 0.6188116851260436,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 42,
+    "kind": "slope",
+    "features": [
+     0.5532853603363037,
+     0.5219812393188477,
+     0.4696962833404541,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 2.7222377440651884,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.357496898623738,
+     "slip_m": 10.928286574673061
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9064373223353543,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8336049018344016,
+    "final_speed_m_s": 0.7087032421301669,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 43,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 43,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 43,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 44,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 17.914431509929106,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 44,
+    "kind": "slope",
+    "features": [
+     0.5493870377540588,
+     0.5238617658615112,
+     0.46926477551460266,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 1.104569780614381,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.1013456478825936,
+     "slip_m": 9.062431932315922
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      11.06,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9030339150396838,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.599227969009747,
+    "final_speed_m_s": 0.6540803777833062,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 44,
+    "kind": "slope",
+    "features": [
+     0.5493870377540588,
+     0.5238617658615112,
+     0.46926477551460266,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 1.0846123253673936,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 4.5895440845742765,
+     "slip_m": 10.382018809662608
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      10.34,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9030339150396838,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.7151106633562279,
+    "final_speed_m_s": 0.47539548238344276,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 45,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.940607473383714,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 45,
+    "kind": "slope",
+    "features": [
+     0.5535549521446228,
+     0.5325267314910889,
+     0.4700353145599365,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 3.577300251266695,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.1954482143697134,
+     "slip_m": 5.686855835035014
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      10.14,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9230938075575335,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 9.14,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.1751847010916276,
+    "final_speed_m_s": 0.49252312611886734,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 45,
+    "kind": "slope",
+    "features": [
+     0.5535549521446228,
+     0.5325267314910889,
+     0.4700353145599365,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.153330914370158,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.6605204620001066,
+     "slip_m": 5.516199375792687
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      7.16,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 43,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9230938075575335,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.3,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9780657728489115,
+    "final_speed_m_s": 0.5405994692074112,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 46,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.921974932170148,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 46,
+    "kind": "slope",
+    "features": [
+     0.5352515578269958,
+     0.540216326713562,
+     0.46882790327072144,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 2.027758554643024,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.352512135560886,
+     "slip_m": 7.501968232727797
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      10.700000000000001,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.913404038489622,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.6738803043243369,
+    "final_speed_m_s": 0.6584614294514332,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 46,
+    "kind": "slope",
+    "features": [
+     0.5352515578269958,
+     0.540216326713562,
+     0.46882790327072144,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 3.1995048614316444,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.544965507807437,
+     "slip_m": 10.450110918228537
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 39,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.913404038489622,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 11.22,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.6889851672760883,
+    "final_speed_m_s": 0.6832149544896282,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 47,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 47,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 47,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 48,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.283622611274122,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 48,
+    "kind": "slope",
+    "features": [
+     0.5493679642677307,
+     0.5670372247695923,
+     0.49111208319664,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": null,
+    "measured": {
+     "progress_m": 2.6447951950157504,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.2096334335582597,
+     "slip_m": 7.247347526646734
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.919770956710865,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.3062382022778345,
+    "final_speed_m_s": 0.5530141871310525,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 48,
+    "kind": "slope",
+    "features": [
+     0.5493679642677307,
+     0.5670372247695923,
+     0.49111208319664,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": 3,
+    "measured": {
+     "progress_m": 4.5006953042865545,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.939426868594942,
+     "slip_m": 7.045224642846796
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      8.72,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 42,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.919770956710865,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.88,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9622271731316618,
+    "final_speed_m_s": 0.5441200831278725,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 49,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.369144290433557,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 49,
+    "kind": "slope",
+    "features": [
+     0.5519753098487854,
+     0.565067708492279,
+     0.4901820421218872,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": null,
+    "measured": {
+     "progress_m": 3.363024667830171,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.000957906431443,
+     "slip_m": 6.716760830100322
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      11.24,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.918931771639489,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 10.18,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.009666512472728,
+    "final_speed_m_s": 0.5696608722016564,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 49,
+    "kind": "slope",
+    "features": [
+     0.5519753098487854,
+     0.565067708492279,
+     0.4901820421218872,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": 3,
+    "measured": {
+     "progress_m": 3.8265106961345303,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 4.728148343632008,
+     "slip_m": 7.925722493237742
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      10.16,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 41,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.918931771639489,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 9.34,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.0820376693983977,
+    "final_speed_m_s": 0.45660404934824855,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 50,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.522278143483963,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 50,
+    "kind": "slope",
+    "features": [
+     0.544098973274231,
+     0.513750433921814,
+     0.45443716645240784,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.9165855853667293,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.069626350232851,
+     "slip_m": 5.455094045393513
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.86,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9270529417665907,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 8.5,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.019975476469941,
+    "final_speed_m_s": 0.6008776799034152,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 50,
+    "kind": "slope",
+    "features": [
+     0.544098973274231,
+     0.513750433921814,
+     0.45443716645240784,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.611060713708727,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 2.5229633175552593,
+     "slip_m": 5.80025947212925
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      6.96,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 30,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9270529417665907,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.36,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.7235683036387246,
+    "final_speed_m_s": 0.549281372913884,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 51,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 51,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 51,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 52,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.566496932850228,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 52,
+    "kind": "slope",
+    "features": [
+     0.5550975203514099,
+     0.5607184767723083,
+     0.4904831647872925,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": null,
+    "measured": {
+     "progress_m": 2.440485971163006,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 3.23760012199329,
+     "slip_m": 7.261117209953676
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      11.42,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9169789274061935,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.4699103182137612,
+    "final_speed_m_s": 0.6168489988586584,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 52,
+    "kind": "slope",
+    "features": [
+     0.5550975203514099,
+     0.5607184767723083,
+     0.4904831647872925,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.12,
+    "action": 3,
+    "measured": {
+     "progress_m": 4.881238803971771,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.306701621118352,
+     "slip_m": 6.667524624737751
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.92,
+      "SLOPE"
+     ],
+     [
+      8.02,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.92,
+    "entry_latency_s": 0.07999999999999985,
+    "commands_changed_on_flat": 40,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9169789274061935,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.22,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8939210318452644,
+    "final_speed_m_s": 0.4852416308956136,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 53,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.01047027838173,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 53,
+    "kind": "slope",
+    "features": [
+     0.5482627749443054,
+     0.5275441408157349,
+     0.46865853667259216,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": null,
+    "measured": {
+     "progress_m": 3.718662231995912,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.01922497494434,
+     "slip_m": 5.836983730257107
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      10.26,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9224226193775094,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 9.02,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.010726615111564,
+    "final_speed_m_s": 0.5660564558240151,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 53,
+    "kind": "slope",
+    "features": [
+     0.5482627749443054,
+     0.5275441408157349,
+     0.46865853667259216,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.14,
+    "action": 3,
+    "measured": {
+     "progress_m": 5.013051731633438,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.7801708349120102,
+     "slip_m": 6.027530993460685
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.94,
+      "SLOPE"
+     ],
+     [
+      7.74,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.94,
+    "entry_latency_s": 0.09999999999999987,
+    "commands_changed_on_flat": 49,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9224226193775094,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 6.76,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.979290475812352,
+    "final_speed_m_s": 0.5047223978070643,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 54,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 54,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 54,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 55,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 55,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 55,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 56,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 56,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 56,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 57,
+   "kind": "flat",
+   "situation": {
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 57,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 57,
+    "kind": "flat",
+    "features": null,
+    "decision_time_s": null,
+    "action": null,
+    "measured": {
+     "progress_m": 5.66500731061608,
+     "reached_top": 0.0,
+     "fall": 0.0,
+     "sideways_m": 2.7478278597419252,
+     "slip_m": 3.0112261519246903
+    },
+    "slip_reported": true,
+    "modes": [],
+    "entered": false,
+    "entry_time_s": null,
+    "entry_latency_s": null,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": null,
+    "ramp_end_m": null,
+    "crossed_ramp_start_s": null,
+    "reached_ramp_end_s": null,
+    "recovery_s": null,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8307941820651377,
+    "final_speed_m_s": 0.40770917303803267,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 58,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 15.457302660606713,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 58,
+    "kind": "slope",
+    "features": [
+     0.5417885780334473,
+     0.5132970809936523,
+     0.4512459933757782,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 4.3170095879000705,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.020889859515452,
+     "slip_m": 4.745866363618896
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      8.86,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.927658668209509,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 7.640000000000001,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.9850147176077546,
+    "final_speed_m_s": 0.5857453204253515,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 58,
+    "kind": "slope",
+    "features": [
+     0.5417885780334473,
+     0.5132970809936523,
+     0.4512459933757782,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 6.295060954028719,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 1.6025197757080187,
+     "slip_m": 4.873512849303058
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      6.04,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 29,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.927658668209509,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 5.46,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.4625955342110837,
+    "final_speed_m_s": 0.46654055676600703,
+    "policy": "student"
+   }
+  },
+  {
+   "scenario_id": 59,
+   "kind": "slope",
+   "situation": {
+    "incline_deg": 16.067386359921446,
+    "dog_forward_speed_m_s": 0.6
+   },
+   "nominal": {
+    "scenario_id": 59,
+    "kind": "slope",
+    "features": [
+     0.5339336395263672,
+     0.5041836500167847,
+     0.45319050550460815,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": null,
+    "measured": {
+     "progress_m": 3.87283448347572,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.0609211525173508,
+     "slip_m": 5.42236456168969
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.78,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 0,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9218737005426223,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 8.46,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 1.040507984816939,
+    "final_speed_m_s": 0.41981453216683257,
+    "policy": "nominal"
+   },
+   "student": {
+    "scenario_id": 59,
+    "kind": "slope",
+    "features": [
+     0.5339336395263672,
+     0.5041836500167847,
+     0.45319050550460815,
+     0.4285714328289032
+    ],
+    "decision_time_s": 2.16,
+    "action": 3,
+    "measured": {
+     "progress_m": 4.591823029817983,
+     "reached_top": 1.0,
+     "fall": 0.0,
+     "sideways_m": 3.3838089913703677,
+     "slip_m": 7.265796538033048
+    },
+    "slip_reported": true,
+    "modes": [
+     [
+      1.96,
+      "SLOPE"
+     ],
+     [
+      9.120000000000001,
+      "NORMAL"
+     ]
+    ],
+    "entered": true,
+    "entry_time_s": 1.96,
+    "entry_latency_s": 0.11999999999999988,
+    "commands_changed_on_flat": 46,
+    "scoring_source": "per-period observations (Go2World.step's observation of every control period)",
+    "ramp_start_m": 1.0,
+    "ramp_end_m": 2.9218737005426223,
+    "crossed_ramp_start_s": 1.84,
+    "reached_ramp_end_s": 8.2,
+    "recovery_s": 0.0,
+    "elapsed_s": 12.0,
+    "final_yaw_change_rad": 0.8819404115738156,
+    "final_speed_m_s": 0.47097282330540574,
+    "policy": "student"
+   }
+  }
+ ],
+ "summary": {
+  "nominal": {
+   "flat_scenarios": 19,
+   "flat_false_activations": 0,
+   "slope_scenarios": 41,
+   "missed_slope_entries": 0,
+   "entered_without_decision": 0,
+   "entry_latency_s": {
+    "n": 41,
+    "mean": 0.1092682926829267,
+    "median": 0.11999999999999988,
+    "min": 0.07999999999999985,
+    "max": 0.15999999999999992
+   },
+   "ascent_success": {
+    "count": 25,
+    "of_slope": 41,
+    "rate": 0.6097560975609756
+   },
+   "falls": {
+    "count": 0,
+    "of": 60
+   },
+   "slip_m": {
+    "flat": {
+     "n": 19,
+     "mean": 3.01122615192469,
+     "median": 3.0112261519246903,
+     "min": 3.0112261519246903,
+     "max": 3.0112261519246903
+    },
+    "slope": {
+     "n": 41,
+     "mean": 6.4081544862383675,
+     "median": 5.872896577303849,
+     "min": 4.291049456565134,
+     "max": 9.18150989174734
+    }
+   },
+   "progress_m": {
+    "flat": {
+     "n": 19,
+     "mean": 5.665007310616079,
+     "median": 5.66500731061608,
+     "min": 5.66500731061608,
+     "max": 5.66500731061608
+    },
+    "slope": {
+     "n": 41,
+     "mean": 3.186128074867967,
+     "median": 3.6701599713568243,
+     "min": 1.088505806599792,
+     "max": 4.602520498541019
+    }
+   },
+   "sideways_m": {
+    "flat": {
+     "n": 19,
+     "mean": 2.7478278597419252,
+     "median": 2.7478278597419252,
+     "min": 2.7478278597419252,
+     "max": 2.7478278597419252
+    },
+    "slope": {
+     "n": 41,
+     "mean": 3.1072975492138837,
+     "median": 3.0812067157275824,
+     "min": 2.775110412185454,
+     "max": 3.3787593264608318
+    }
+   },
+   "time_to_top_s": {
+    "n": 25,
+    "mean": 8.519200000000001,
+    "median": 8.46,
+    "min": 7.16,
+    "max": 10.24
+   },
+   "elapsed_s": {
+    "n": 60,
+    "mean": 12.0,
+    "median": 12.0,
+    "min": 12.0,
+    "max": 12.0
+   },
+   "recovery_s": {
+    "n": 25,
+    "mean": 0.0,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.0,
+    "not_recovered": 0
+   },
+   "commands_changed_on_flat": {
+    "total": 0,
+    "episodes_with_any": 0
+   },
+   "action_counts": {
+    "vx+0.40_yaw+0.00": 0,
+    "vx+0.60_yaw+0.00": 0,
+    "vx+0.80_yaw+0.00": 0,
+    "vx+1.00_yaw+0.00": 0
+   }
+  },
+  "student": {
+   "flat_scenarios": 19,
+   "flat_false_activations": 0,
+   "slope_scenarios": 41,
+   "missed_slope_entries": 0,
+   "entered_without_decision": 0,
+   "entry_latency_s": {
+    "n": 41,
+    "mean": 0.1092682926829267,
+    "median": 0.11999999999999988,
+    "min": 0.07999999999999985,
+    "max": 0.15999999999999992
+   },
+   "ascent_success": {
+    "count": 31,
+    "of_slope": 41,
+    "rate": 0.7560975609756098
+   },
+   "falls": {
+    "count": 0,
+    "of": 60
+   },
+   "slip_m": {
+    "flat": {
+     "n": 19,
+     "mean": 3.01122615192469,
+     "median": 3.0112261519246903,
+     "min": 3.0112261519246903,
+     "max": 3.0112261519246903
+    },
+    "slope": {
+     "n": 41,
+     "mean": 7.104736663810825,
+     "median": 6.560578814951212,
+     "min": 4.840444828678689,
+     "max": 12.359275093897626
+    }
+   },
+   "progress_m": {
+    "flat": {
+     "n": 19,
+     "mean": 5.665007310616079,
+     "median": 5.66500731061608,
+     "min": 5.66500731061608,
+     "max": 5.66500731061608
+    },
+    "slope": {
+     "n": 41,
+     "mean": 4.474577826260069,
+     "median": 5.013051731633438,
+     "min": 1.0846123253673936,
+     "max": 6.295060954028719
+    }
+   },
+   "sideways_m": {
+    "flat": {
+     "n": 19,
+     "mean": 2.7478278597419252,
+     "median": 2.7478278597419252,
+     "min": 2.7478278597419252,
+     "max": 2.7478278597419252
+    },
+    "slope": {
+     "n": 41,
+     "mean": 3.2283501419414105,
+     "median": 3.1778238789816844,
+     "min": 1.503180409045354,
+     "max": 5.627597062623634
+    }
+   },
+   "time_to_top_s": {
+    "n": 31,
+    "mean": 6.752903225806452,
+    "median": 6.44,
+    "min": 5.46,
+    "max": 11.22
+   },
+   "elapsed_s": {
+    "n": 60,
+    "mean": 12.0,
+    "median": 12.0,
+    "min": 12.0,
+    "max": 12.0
+   },
+   "recovery_s": {
+    "n": 31,
+    "mean": 0.028387096774193574,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 0.41999999999999993,
+    "not_recovered": 0
+   },
+   "commands_changed_on_flat": {
+    "total": 1138,
+    "episodes_with_any": 31
+   },
+   "action_counts": {
+    "vx+0.40_yaw+0.00": 0,
+    "vx+0.60_yaw+0.00": 0,
+    "vx+0.80_yaw+0.00": 1,
+    "vx+1.00_yaw+0.00": 40
+   }
+  }
+ },
+ "wall_s": 94.75722559998394
+}
