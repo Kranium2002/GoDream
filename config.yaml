@@ -1022,6 +1022,9 @@ app:  # The local viewer server: uv run python -m app.server
       kinds: [incoming_center, incoming_left, incoming_right]  # Only kinds aimed at the dog; consecutive round seeds walk through them in split order.
       centre_kind: incoming_center  # The kind aimed at the middle of the dog: it stays in the head camera's view until it arrives.
       centre_rounds: 2  # Of every 3 consecutive rounds this many take centre_kind and the rest the other kinds (0 to 3). Asked by Person A: at least two thirds straight at the dog.
+      votes_needed: 2  # The duel's gate asks for this many agreeing outputs ...
+      of_last: 2  # ... of the last this many, instead of inference.gate's 3 of 4 (the calibrated setting, unchanged everywhere else). Replayed on the saved dev readouts of student v6p95 with its frozen thresholds: precision 0.951, recall 0.530, 82 commands (3 of 4: 0.967, 0.410, 61). In 15 real duel rounds at 0.8 m/s: 9 dodges of 14 hits against 7.
+      default_speed_m_s: 0.5  # Where the page's "Punch speed" control starts (it still slides over the whole trained band). Was the band's middle, 0.8: in 15 real duel rounds the trained dog dodged 7 of 14 hits at 0.8 and 10 of 15 at 0.5, with commands a median 0.37 s and 0.63 s before contact.
   runs:
     poll_s: 0.5  # Seconds between looks for new lines in the run event files (observed.runs_dir) relayed as SSE.
   infer:

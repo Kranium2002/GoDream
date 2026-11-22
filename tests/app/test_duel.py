@@ -86,3 +86,26 @@ def test_the_distance_control_keeps_the_punch_aimed_where_it_was(config, distanc
 ])
 def test_result_word_comes_from_the_measured_outcome(measured, issued, word):
     assert result_word(measured, issued) == word
+
+
+def test_the_punch_speed_control_starts_at_the_configured_speed(config):
+    from app.duel import _dodge_handles
+    handles = {h["name"]: h for h in _dodge_handles(config)}
+    speed, distance = handles["speed_m_s"], handles["distance_m"]
+    assert speed["default"] == config["app"]["duel"]["dodge"]["default_speed_m_s"] == 0.5
+    assert speed["min"] <= speed["default"] <= speed["max"]  # inside the band the student was trained on
+    assert distance["default"] == (distance["min"] + distance["max"]) / 2  # the distance control is unchanged
+    outside = copy.deepcopy(config)
+    outside["app"]["duel"]["dodge"]["default_speed_m_s"] = 9.0
+    with pytest.raises(ValueError, match="default_speed_m_s"):
+        _dodge_handles(outside)
+
+
+def test_the_duel_votes_faster_and_leaves_the_calibrated_gate_alone(config):
+    from app.duel import duel_gate_config
+    duel = config["app"]["duel"]["dodge"]
+    faster = duel_gate_config(config, duel)["inference"]["gate"]
+    assert (faster["votes_needed"], faster["of_last"]) == (duel["votes_needed"], duel["of_last"]) == (2, 2)
+    assert (config["inference"]["gate"]["votes_needed"], config["inference"]["gate"]["of_last"]) == (3, 4)
+    plain = {k: v for k, v in duel.items() if k not in ("votes_needed", "of_last")}
+    assert duel_gate_config(config, plain) is config  # no duel votes named: the calibrated gate as it is

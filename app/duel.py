@@ -131,9 +131,13 @@ def _dodge_handles(config):
                                       (declaration.get("punch") or {}).get("speed_m_s"))):
         value = source
         if isinstance(value, (list, tuple)) and len(value) == 2:
+            default = (value[0] + value[1]) / 2
+            if key == "speed_m_s":  # the page's starting speed, from config, inside the band the student was trained on
+                default = (((config.get("app") or {}).get("duel") or {}).get("dodge") or {}).get("default_speed_m_s", default)
+                if isinstance(default, bool) or not isinstance(default, (int, float)) or not value[0] <= default <= value[1]:
+                    raise ValueError(f"config.yaml app.duel.dodge.default_speed_m_s must lie in {list(value)}; got {default!r}")
             result.append({"name": key, "kind": "amount", "label": label, "unit": unit,
-                           "min": value[0], "max": value[1], "step": 0.05,
-                           "default": (value[0] + value[1]) / 2})
+                           "min": value[0], "max": value[1], "step": 0.05, "default": default})
     return result
 
 
@@ -443,6 +447,18 @@ def dodge_duel_scenario(cfg, duel, seed):
     return copy.deepcopy(other[(block * (3 - share) + slot - share) % len(other)])
 
 
+def duel_gate_config(cfg, duel):
+    """cfg with the gate's votes replaced by the duel's own (config app.duel.dodge votes_needed / of_last) when it
+    names them; the calibrated inference.gate stays as it is for everything else."""
+    named = [key for key in ("votes_needed", "of_last") if key in duel]
+    if not named:
+        return cfg
+    out = copy.deepcopy(cfg)
+    for key in named:
+        out["inference"]["gate"][key] = duel[key]
+    return out
+
+
 def result_word(measured, issued):
     """A dodge lane's result in a plain word from its measured outcome: a fall first, then a hit; a lane that was not
     hit "Dodged" only if it issued a dodge, else "Not hit" (the punch missed a dog that stood still)."""
@@ -525,7 +541,7 @@ def start_duel(h):
             student_data = _read(student_folder / "student.json") or {}
             try:
                 from learned_judgment.runtime import DodgeRuntime
-                runtime = DodgeRuntime.load(student_folder, cfg)
+                runtime = DodgeRuntime.load(student_folder, duel_gate_config(cfg, h.server.config["app"]["duel"]["dodge"]))
                 from learned_judgment.skills.dodge_vision import _actions
                 actions = _actions(cfg)
                 plan = {"folder": folder, "student_folder": student_folder, "config": cfg, "params": params, "student": student_data,
