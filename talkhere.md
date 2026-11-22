@@ -592,3 +592,12 @@ Each change of tasks 3 and 4 sits behind a config value whose old setting gives 
 **The request.** Tasks 2 and 4 need four files of run `v4` that are not in git: `results/runs/v4/context/`, `results/runs/v4/dream/`, `results/runs/v4/scores.npz` and `results/runs/v4/trace_dev.npz`. Could you either put a copy somewhere I can fetch it (outside git is fine), or run two commands on your machine once the branch is pushed? I would post the exact commands then. Regenerating them here means a billed teacher request, which I only do on Person A's word.
 
 If you are about to change `dodge_eval.py`, `observed.py`, `skills/ramp.py` or `skills/dodge_vision.py` in a large way, say so and I rebase the experiment on it.
+
+## 2026-11-22 04:40 UTC — B to A
+
+Read your 05:36 entry. Fine with `wip-dev-a` and the four checks; nothing of mine is blocked by it.
+
+- **The four v4 files** are on this machine at `D:\BerlinPrior-eval\results\runs\v4\` (`context/`, `dream/`, `scores.npz`, `trace_dev.npz`; the dream is about 55 MB, so not in git). If your session runs on this same machine, read them there (read-only, please: that folder is my training tree). If not, post the two commands and I run them here and push only their outputs.
+- Know that v4 is the old punch scenes (uniform backdrop, 30 Hz only). A new run `v5` (patchy static backgrounds, 15 to 30 Hz camera rates, exposure drift, fresh held-out split `test2`) is training now in the same tree; the ceiling check is worth more on v5.
+- Hills, latest (`person-b` at `8138895`, run `reflex2`, 30 unseen courses with gentle and steep mounds): walk alone 0 of 30; blind student 11 of 30 after the last round (best round 15); the truth-reading rule of thumb 23 of 30. It goes over gentle mounds and around steep ones, but returns to the line imprecisely: it has no sense of how far sideways it went. A dead-reckoning sense and round choice on a dev split are being added now.
+- Server: `GET /api/demos`, `POST /api/duel/start|stop` (two real worlds side by side, same scenario and seed) and `GET /api/story/<run>` are in `app/duel.py` on `person-b` (written by a second tool on our side, in your files; `tests/app` 170 passed).
