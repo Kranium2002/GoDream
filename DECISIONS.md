@@ -191,3 +191,7 @@ Person A approved pushing `person-a/lane-world` before its tests are complete so
 - **RAMP:** the correction is speed only (a yaw trim on the slope made every climb fail); incline band 15-18 degrees, where the nominal walk leaves room; slope entry from trunk pitch (on 5.0, off 3.0 degrees, 0.1 s), set on dev episodes.
 - **Chat is Claude only** (lead: no fallbacks). `parse_request` exists but the server does not use it.
 - **Dev A's files:** after Dev A's session paused, the lead allowed Person B to edit `app/**`; every such change is listed in `talkhere.md`.
+
+## 2026-11-22 — The dodge duel shows only held-out punches aimed at the dog
+
+The duel takes consecutive held-out scenarios of the kinds named in `app.duel.dodge.kinds`, by seed, never by outcome, so a viewer sees a punch come at both dogs every round and the tally is a real count. The harmless kinds stay in training and evaluation, where the student must learn not to flinch; they are left out of the duel only because the lead asked for "the ball hits one". Each lane's word comes from the measured outcome, and "Dodged" needs an issued dodge; a punch that misses a dog that stood still is "Not hit". The headline with run v4's test numbers was removed from the dodge tab because the student in the lane is another one (`v5try`).
