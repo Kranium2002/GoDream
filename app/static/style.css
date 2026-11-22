@@ -142,11 +142,16 @@ textarea:focus-visible { outline: none; animation: none; border-color: var(--act
 .run { display: grid; gap: var(--s-3); border-top: 1px solid var(--line); padding-top: var(--s-5); }
 .run__status { max-width: 62ch; }
 .confirm { display: grid; gap: var(--s-3); border: 1px solid var(--line-strong); border-radius: var(--r-md); padding: var(--s-5); }
-.modes { display: grid; gap: var(--s-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); margin: 0; }
+/* Run mode: one row per mode, the radio at its own size and the label taking the rest of the row. min-width 0 because
+   a fieldset is by default as wide as its longest word (the refusal sentence holds long dotted names). */
+.modes { display: grid; gap: var(--s-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); margin: 0; min-width: 0; }
 .modes legend { font-weight: 600; padding-inline: var(--s-1); }
-.modes__list { display: grid; gap: var(--s-2); }
-.modes__item { display: grid; grid-template-columns: auto 1fr; gap: 0 var(--s-2); align-items: baseline; min-height: 44px; cursor: pointer; }
-.modes__item .note { grid-column: 2; }
+.modes__list { display: grid; gap: var(--s-1); }
+.modes__item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 var(--s-3); align-items: start; min-height: 44px; padding-block: var(--s-2); cursor: pointer; }
+.modes__item input { margin-top: 5px; } /* on the first text line */
+.modes__item .note { grid-column: 2; display: block; color: var(--muted); font-size: var(--t-small); }
+.modes .hint { max-width: none; overflow-wrap: anywhere; }
+input[type="radio"], input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: var(--action); cursor: pointer; }
 .timing { display: grid; gap: var(--s-2); border-left: 4px solid var(--line-strong); padding: var(--s-2) var(--s-4); }
 .cap-note--dev { border-left-color: var(--bad); font-weight: 600; }
 .confirm h4:focus { outline: none; }
@@ -199,13 +204,14 @@ textarea:focus-visible { outline: none; animation: none; border-color: var(--act
 .pick { display: flex; flex-wrap: wrap; gap: var(--s-4); align-items: end; }
 .pick__field { display: grid; gap: var(--s-1); }
 .pick label { font-size: var(--t-label); font-weight: 600; }
-select, input {
+/* Text fields and selects. Radios and checkboxes keep their own small size (above). */
+select, input:not([type="radio"]):not([type="checkbox"]) {
   font: inherit; color: var(--ink); background: var(--surface); min-height: 52px; min-width: 260px;
   border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 0 var(--s-4);
   transition: border-color var(--m-in) var(--m-ease), box-shadow var(--m-in) var(--m-ease);
 }
-select:focus-visible, input:focus-visible { outline: none; animation: none; border-color: var(--action); box-shadow: 0 0 0 3px rgba(29, 91, 184, .25); }
-@media (max-width: 640px) { select, input { min-width: 0; width: 100%; } .pick__field { width: 100%; } }
+select:focus-visible, input:not([type="radio"]):not([type="checkbox"]):focus-visible { outline: none; animation: none; border-color: var(--action); box-shadow: 0 0 0 3px rgba(29, 91, 184, .25); }
+@media (max-width: 640px) { select, input:not([type="radio"]):not([type="checkbox"]) { min-width: 0; width: 100%; } .pick__field { width: 100%; } }
 .timeline { list-style: none; padding: 0; display: grid; gap: 0; }
 .timeline > li { display: grid; grid-template-columns: auto 1fr; gap: var(--s-3); padding-block: var(--s-3); border-bottom: 1px solid var(--line); }
 .timeline__label { font-weight: 600; }
