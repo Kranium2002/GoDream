@@ -1220,7 +1220,7 @@ def physics_guess(
                ball.radius_m - base_height_m, then on the floor keeping its horizontal velocity (a ball starting at
                or below that height keeps its height: a rolling start).
         punch: from its launch state, a straight line at constant velocity for the whole episode (no gravity, no
-               floor stop); radius ball.radius_m (the stand-in is the ball).
+               floor stop); radius punch.radius_m (ball.radius_m only while the punch runs as the stand-in ball).
       * dog: at rest; from decision time + assumed_latency_s its planar velocity approaches the action's
         (vel_x, vel_y) first-order (response_time_s) while the command is held for hold_s, then decays the same
         way to 0. Heading fixed.
@@ -1251,7 +1251,9 @@ def physics_guess(
     tau, step_s = _positive(config, f"{p}.response_time_s"), _positive(config, f"{p}.time_step_s")
     softness, half = _positive(config, f"{p}.collision_softness_m"), _positive(config, f"{p}.body_half_length_m")
     radius = _positive(config, "ball.radius_m")
-    reach = _positive(config, f"{p}.body_radius_m") + radius
+    # The punch body has its own radius; only while a punch still runs as the weight-cancelled ball is it the ball's.
+    punch_radius = radius if _punch_runs_as_stand_in() else _positive(config, "punch.radius_m")
+    body_radius = _positive(config, f"{p}.body_radius_m")
     floor_z = radius - _positive(config, f"{p}.base_height_m")
     duration = _positive(config, f"{_ROOT}.episode_duration_s")
 
@@ -1272,6 +1274,7 @@ def physics_guess(
         x0, y0, z0, vx, vy, vz = launch.T
         command = ep.actions.features[actions[rows]][:, planar]
         punch = np.array([objects[i] == "punch" for i in rows], dtype=bool)
+        reach = body_radius + np.where(punch, punch_radius, radius)
         height = z0 - floor_z  # ball centre above its floor rest height
         landing = np.where(height > 0.0, (vz + np.sqrt(vz * vz + 2.0 * gravity * np.maximum(height, 0.0))) / gravity, 0.0)
         landing[punch] = np.inf  # a punch: straight at constant velocity for the whole episode
