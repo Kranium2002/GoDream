@@ -1,0 +1,1040 @@
+project:
+  name: Learned Judgment
+  status: scaffold
+  primary_skill: dodge
+  no_substitute_robot_or_project: true
+
+runtime:
+  python: "3.13"
+  simulator: mujoco
+  headless: true
+  seed: 20261121
+  # The model's effective timestep: neither go2.xml nor scene.xml (unitree_mujoco@1eb6642) sets <option timestep>,
+  # mujoco 3.11.0 loads both with opt.timestep 0.002 (MuJoCo's default), and the E1 proof printed
+  # "timestep=0.002 substeps=10" (artifacts/env/20261121T144656-e1-proof/stdout.txt).
+  timestep_s: 0.002
+
+robot:
+  model: unitree_go2
+  # Unitree's own MJCF (BSD-3-Clause) from the integrator's git submodule third_party/unitree_mujoco, pinned at
+  # `revision`. Initialise it with: git submodule update --init --depth 1 third_party/unitree_mujoco
+  # sha256 is of go2.xml with CRLF normalised to LF (core.autocrlf may check it out with CRLF), i.e. the upstream blob.
+  model_asset:
+    path: third_party/unitree_mujoco/unitree_robots/go2/go2.xml
+    source: https://github.com/unitreerobotics/unitree_mujoco/tree/1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d/unitree_robots/go2
+    revision: 1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d
+    sha256: 2014a3d76e30f17ab9447d8a67bd015291f74fa4d71ae30d005f1a32bd693d4b
+  walking_policy:
+    # verified: the command fields and ranges in command_schema below were each proven by a recorded run (E4). It says
+    # nothing about speed-tracking accuracy: see experiments/EXPERIMENTS_LOG.md, "Gate 1 — locomotion acceptance".
+    status: verified
+    # Efferent examples/go2_walk at f51e1af, vendored byte-for-byte. The ONNX inside go2_walk.app is a conversion of
+    # rl_sar policy/go2/robot_lab/policy.pt (rl_sar 376d42c9, Apache-2.0). E1 proof: artifacts/env/20261121T144656-e1-proof.
+    source: https://github.com/Eximius-Labs/efferent/tree/f51e1af953afe1016dae9ceeff2b5328fa51781d/examples/go2_walk
+    repository_revision: f51e1af953afe1016dae9ceeff2b5328fa51781d
+    checkpoint: learned_judgment/env/assets/efferent@f51e1af/go2_walk.app
+    checkpoint_sha256: 89a5bb7e1ff1cc4cd60f4855bf1dd77bd1b313aeee7c19e984fe7c6e37d74147
+    # Spawn of Efferent's Go2 example (examples/go2_walk validate.py at f51e1af, research W1, used by the E1 proof):
+    # base at [0, 0, 0.35] m, joints at the default pose, base lowered onto the floor, held 1 s before the soft start.
+    spawn:
+      base_pos: [0.0, 0.0, 0.35]
+      settle_s: 1.0
+      auto_base_height: true
+    # The second entry is a member of the go2_walk.app zip. go2.robot.yaml names "backend: id: mock"; the E1 proof
+    # does not use it: it passes efferent's MujocoBackend to the Runner itself.
+    matching_config:
+      - learned_judgment/env/assets/efferent@f51e1af/go2.robot.yaml
+      - learned_judgment/env/assets/efferent@f51e1af/go2_walk.app/manifest.yaml
+    license: Apache-2.0
+    # Read from manifest.yaml inside go2_walk.app (efferent@f51e1af), key "observation", in this order. The manifest
+    # leaves dim null; each term's size gives 3+3+3+12+12+12 = 45, the obs_dim the E1 proof printed.
+    # The manifest also sets normalization.clip_obs 100.0.
+    observation_schema:
+      - {name: base_ang_vel, dim: 3, scale: 0.25}
+      - {name: projected_gravity, dim: 3, scale: 1.0}
+      - {name: command, dim: 3, scale: [1.0, 1.0, 1.0]}  # names: vel_x, vel_y, yaw_rate
+      - {name: joint_pos_rel, dim: 12, scale: 1.0}
+      - {name: joint_vel, dim: 12, scale: 0.05}
+      - {name: last_action, dim: 12, scale: 1.0}
+    # manifest.yaml "control": action_type joint_position_delta (target = default_pose + action * scale),
+    # clip_actions [-100.0, 100.0], gains kp/kd; "joints": names and defaults. torque_limit: go2.robot.yaml
+    # (efferent@f51e1af) "joints[].torque_limit". go2.xml's own motor ctrlrange is 23.7 (hip, thigh) and 45.43 (calf).
+    action_schema:
+      dim: 12
+      # Policy order FR, FL, RR, RL. go2.xml <actuator> (lines 223-234) has the same order: actuator i is policy joint i.
+      # The model's joints follow its body tree, FL, FR, RL, RR (go2.xml lines 82-206), so policy joint i is
+      # qpos[7 + [3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8][i]] (the first 7 qpos are the free joint).
+      joint_order: [FR_hip_joint, FR_thigh_joint, FR_calf_joint, FL_hip_joint, FL_thigh_joint, FL_calf_joint,
+                    RR_hip_joint, RR_thigh_joint, RR_calf_joint, RL_hip_joint, RL_thigh_joint, RL_calf_joint]
+      scale: [0.125, 0.25, 0.25, 0.125, 0.25, 0.25, 0.125, 0.25, 0.25, 0.125, 0.25, 0.25]
+      default_pose: [0.0, 0.8, -1.5, 0.0, 0.8, -1.5, 0.0, 0.8, -1.5, 0.0, 0.8, -1.5]
+      kp: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]
+      kd: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+      torque_limit: [23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5]
+    control_rate_hz: 50.0  # manifest.yaml control.rate_hz
+    command_schema:
+      update_period_s: 0.02  # 1 / control_rate_hz: the policy reads one command per 50 Hz control step
+      source: >-
+        Names and native order: manifest.yaml inside go2_walk.app (efferent@f51e1af), observation term "command",
+        names [vel_x, vel_y, yaw_rate], scale 1.0 (lines 95-104); rate_hz 50.0 (line 11). Candidate range -1 to 1 for
+        each field: robot_lab's current Go2 training range (experiments/EXPERIMENTS_LOG.md, "E1 (research half)"; the
+        robot_lab commit this checkpoint was trained at is unknown). Each range end proven by a recorded run:
+        experiments/EXPERIMENTS_LOG.md, "E4 — command inventory".
+      # Per field: proven_by is the proof run's output; measured_at_min / measured_at_max are its signed responses
+      # (m/s or rad/s, mean over the 10 s run after the first 5 s), rounded to 4 decimals.
+      fields:
+        vel_x:
+          unit: m/s
+          min: -1.0
+          max: 1.0
+          native_index: 0
+          proven_by: artifacts/env/commands/commands.json
+          measured_at_min: -0.8880
+          measured_at_max: 0.9243
+          description: >-
+            Forward velocity in the dog's own heading frame (x forward): positive walks forward, negative walks
+            backward. Tracking on a flat floor (Gate 1, experiments/EXPERIMENTS_LOG.md): commanded 0.3 / 0.6 / 0.9
+            m/s gave 0.2256 / 0.5430 / 0.8596 m/s, so 0.3 m/s runs 0.0744 m/s slow, outside the gate's 20%
+            tolerance (the one condition of Gate 1 that failed). In
+            robot_lab training (HEAD; this checkpoint's training commit is unknown) planar commands with norm up to
+            0.2 m/s were zeroed, so small commands may not move the dog as asked.
+        vel_y:
+          unit: m/s
+          min: -1.0
+          max: 1.0
+          native_index: 1
+          proven_by: artifacts/env/commands/commands.json
+          measured_at_min: -1.0349
+          measured_at_max: 0.8939
+          description: >-
+            Sideways velocity in the dog's own heading frame (y left): positive steps left, negative steps right.
+            Tracking is measured only by the two proof runs (measured_at_min, measured_at_max). The same training
+            note as vel_x applies to planar commands with norm up to 0.2 m/s.
+        yaw_rate:
+          unit: rad/s
+          min: -1.0
+          max: 1.0
+          native_index: 2
+          proven_by: artifacts/env/commands/commands.json
+          measured_at_min: -0.9555
+          measured_at_max: 0.9687
+          description: >-
+            Turning rate about the vertical axis: positive turns anticlockwise (to the left) seen from above. Gate 1
+            measured +0.4976 / -0.5066 rad/s for +0.5 / -0.5 commanded at 0.3 m/s forward. With zero commanded the
+            dog still turns anticlockwise at 0.05-0.14 rad/s (Gate 1). In robot_lab training yaw commands came from
+            heading control.
+  acceptance:
+    trot_duration_s: 30
+    commanded_speeds_m_s: [0.3, 0.6, 0.9]
+    # rad/s. robot_lab's current Go2 training range for yaw_rate; the robot_lab commit this checkpoint was trained
+    # at is unknown (experiments/EXPERIMENTS_LOG.md, E1 research half). The turn condition commands half of it.
+    yaw_rates_supported_by_policy: [-1.0, 1.0]
+    must_turn: true
+    must_stop: true
+    must_remain_standing: true
+    # Tolerances fixed in the plan (Task 2) before any run.
+    speed_tolerance_fraction: 0.2
+    yaw_tolerance_fraction: 0.3
+    stop_speed_m_s: 0.05
+    # Measurement definitions, fixed with the tolerances: means exclude the first 5 s of the commanded run, final
+    # speed is the mean planar speed over its last 2 s, and the dog has fallen if a trunk geom touches the floor
+    # or the trunk tilts more than robot.fall.max_tilt_deg at any physics step of the commanded run.
+    exclude_first_s: 5
+    final_window_s: 2
+  fall:
+    # A fall is a trunk geom touching the floor or a trunk tilt above this. 60 degrees is the value fixed in the plan
+    # (Task 2) for the locomotion gate before any run; Go2World uses the same definition.
+    max_tilt_deg: 60
+  recovery:
+    # Go2World's recovery_time_s: the dog is within these limits at a 50 Hz sample when its trunk tilt and tilt rate
+    # (the horizontal part of the trunk's world-frame angular velocity, so turning is not counted) are at most these.
+    # Limits: the largest value over every saved commanded walking run, plus a 25% margin. The 13 runs are Gate 1
+    # (artifacts/env/locomotion) and the command proof (artifacts/env/commands), whole runs: tilt 8.859 deg
+    # (yaw_rate_max), tilt rate 2.6552 rad/s (vel_y_max); experiments/EXPERIMENTS_LOG.md, "E6 (simulator half)".
+    max_tilt_deg: 11.07
+    max_tilt_rate_rad_s: 3.32
+    # Back within the limits counts once they hold this long: one gait period at the slowest trot (0.57 s at 0.3 m/s
+    # commanded, from the knee angle's main frequency in artifacts/env/locomotion/trot_0.3.npz), rounded up.
+    hold_s: 0.6
+
+world:
+  # Seconds the dog trots at the situation's dog_forward_speed_m_s after the soft start, before the decision instant
+  # (t_s 0). From the Gate 1 traces (artifacts/env/locomotion/trot_*.npz): the 0.5 s moving mean of forward speed
+  # along the heading first enters the band it keeps after t = 5 s at 0.50 s (0.3 m/s), 0.80 s (0.6) and 1.66 s
+  # (0.9, slowest); 2.0 s adds about 0.3 s of margin. 1.0 m/s was not measured.
+  settle_s: 2.0
+  # One compressed .npz per finished episode plus its .hidden.json; the directory's .gitignore keeps them out of git.
+  trace_dir: artifacts/env/traces
+  # false: no file is written and trace_path is None (for runs of thousands of episodes, such as the oracle).
+  save_traces: true
+  # Go2World.render_frame size in pixels: MuJoCo's default offscreen buffer (vis.global offwidth x offheight), which
+  # go2.xml does not change; a larger frame needs a larger buffer in the model.
+  render:
+    width: 640
+    height: 480
+    # Tracking camera distance from the trunk, m. Fixed so added geometry (the incline) does not zoom the view out:
+    # MuJoCo's default is 1.5 x model.stat.extent, 1.4394 for the flat scene (extent 0.9596) and about 10 with a ramp.
+    tracking_distance_m: 1.4394
+  # RAMP's traversable incline (Go2World situation key incline_deg; learned_judgment/env/incline.py). A non-zero
+  # incline_deg places, at the decision instant and along the dog's heading then, a slab rising at that angle from the
+  # floor and a level plateau after it: flat, slope, flat. Both are boxes on mocap bodies, so placing them per episode
+  # needs no recompile and collides exactly like boxes compiled there (proof: scratchpad poc-w3/reposition.py).
+  incline:
+    # Supported angles, published for sample_ramp_situations. From the W3 sweep (artifacts/env/
+    # 20261121T214147-w3-incline-sweep-2, vel_x 0.6 held, 3 attempts each): every run reached the plateau up to 12.5
+    # degrees (slower as the angle grows), none at 15 or above (no falls: the dog stalls). 5 is where the climb is
+    # clearly not flat; 15 is the first angle where the constant-command baseline fails, so the range holds room to learn.
+    range_deg: [5.0, 15.0]
+    max_deg: 20.0  # Largest incline_deg reset accepts (0 to this): the geometry below stays gap-free up to it.
+    start_x_m: 1.0  # Floor distance ahead of the trunk origin at the decision instant to the foot of the slope.
+    length_m: 2.0  # Slope length along its surface (rise length_m x sin(angle): 0.35 m at 10 degrees).
+    plateau_length_m: 4.0  # Level top after the slope; its far end is a drop, so episodes should end before it.
+    # Across the heading. With vel_x alone the dog yaws about 50 degrees and drifts about 2.4 m sideways in 8 s on flat
+    # ground (scratchpad poc-incline, one seed), so +-5 m keeps an 8 s run on the ramp without a yaw correction.
+    width_m: 10.0
+    # Of the slab and the plateau box. At least length_m x tan(max_deg) (0.73 m) and the plateau's height at max_deg
+    # (0.68 m), so neither shows a gap above the floor (tests/env/test_config.py checks it).
+    thickness_m: 1.0
+    rgba: [0.62, 0.52, 0.40, 1.0]  # Visible colour: a light brown against MuJoCo's default floor.
+    park_height_m: 100.0  # Height the boxes wait at until the decision instant, clear of the spawn's lowest-geom search.
+    sweep:  # learned_judgment/env/incline_sweep.py: the baseline's room to improve, measured (W3 evidence).
+      angles_deg: [0.0, 2.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0]  # Flat, then 2.5 degree steps up to max_deg.
+      attempt_seeds: [0, 1, 2]  # Three attempts per angle (the plan's minimum).
+      duration_s: 10.0  # Long enough to reach the plateau at 0.5 m/s (slope foot 1 m, end at most 2.9 m ahead).
+      vel_x: 0.6  # Constant forward command, m/s: the speed of Gate 1's middle condition and of the earlier proof.
+      # yaw_rate trims tried on flat ground; the one that turns least is used for the trimmed sweep. Small steps near 0:
+      # the first sweep (artifacts/env/20261121T212102-w3-incline-sweep) found -0.07 turned the dog about 180 degrees.
+      trim_candidates_rad_s: [0.0, -0.005, -0.01, -0.015, -0.02, -0.025, -0.03]
+  # A smooth mound (Go2World situation keys mound_x_m, mound_y_m, mound_radius_m, mound_height_m; learned_judgment/env/
+  # mound.py): a spherical cap placed at the decision instant relative to the dog (centre ahead / left of the trunk
+  # origin), flat on top and steepest at its rim. One massless sphere on a mocap body, resized and placed per episode.
+  mound:
+    radius_m: [0.3, 2.0]  # Footprint radius limits accepted by reset.
+    height_m: [0.02, 0.6]  # Top height limits accepted by reset (and below the radius: a cap under a half sphere).
+    # Steepest slope accepted, at the rim: asin(radius / sphere radius). PART A sweep (2026-11-22, vel_x 0.6 held, 14 s,
+    # seed 0): no fall and no MuJoCo bad state anywhere up to 45 deg (radius 0.6-1.5 m); with radius 1.0 the straight
+    # walk still gets past at 32 deg, so 30 left no mound it cannot simply walk over at that size. Raised to 40.
+    max_rim_slope_deg: 40.0
+    min_gap_m: 0.4  # Rim at least this far from the trunk origin at the decision instant: the mound never appears under the feet.
+    park_radius_m: 1.0  # Compiled sphere radius, used while parked (spawn and settle trot).
+    park_height_m: 100.0  # Height the parked sphere waits at, clear of the spawn's lowest-geom search (as world.incline).
+    rgba: [0.45, 0.55, 0.35, 1.0]  # Visible colour: a muted green against MuJoCo's default floor.
+  # The hidden world (Go2World._hidden_effects). A preset's values are applied only for the effects switched on in
+  # `enabled`; with all five off an episode is bit-identical to one without hidden effects. The ranges bound the
+  # experiments (MISSION.md); presets are not range-checked, so a test can build a world outside them.
+  # Fixed per world by (seed, preset): every value below except the latency jitter, which is drawn per attempt.
+  hidden_effects:
+    enabled: {payload: true, friction: true, slope: true, motor_strength: true, latency: true}
+    payload_mass_kg: [0.0, 3.0]
+    # [[x min, x max], [y min, y max]] of the payload's centre, trunk frame, from base_link's origin: the top face of
+    # the trunk's collision box (go2.xml line 74, half sizes 0.1881 x 0.04675 m, centred on the origin).
+    payload_off_center_range_m: [[-0.1881, 0.1881], [-0.04675, 0.04675]]
+    # The payload is a box this size resting on that face; it adds mass and touches nothing. 15 x 9 x 8 cm, about as
+    # wide as the trunk's collision box (9.35 cm); 3 kg in it is 2.8 kg/L, like a battery pack.
+    payload_box_half_size_m: [0.075, 0.045, 0.04]
+    declared_mass_error_fraction: [-0.2, 0.2]  # declared payload = true mass x (1 + uniform draw in this range)
+    # Sliding friction of every foot-floor contact, by floor type; the foot geoms' torsional and rolling friction stay
+    # go2.xml's (0.02, 0.01). default: go2.xml's own foot friction (class "foot", lines 31-34: priority 1, which
+    # overrides the floor plane's friction; proof in EXPERIMENTS_LOG E5). slippery: from the dev sweep
+    # artifacts/env/friction-sweep/sweep.json (0.4 down to 0.02, no fall anywhere): the lowest friction whose 0.6 m/s
+    # trot stays within Gate 1's 20% speed tolerance is 0.06 (0.4995 m/s; 0.05 gives 0.4726). 0.1 keeps every run's
+    # friction (0.09-0.11 with the variation below) at least 1.5 x that; it doubles the stop from 0.9 m/s.
+    surface_friction_by_type: {default: 0.4, slippery: 0.1}
+    # Fraction: each world's friction is its type's x (1 + uniform draw in +-this). Keeps the two types' ranges apart
+    # (0.36-0.44 and 0.09-0.11) and slippery above the sweep's lowest trotting friction (DECISIONS.md).
+    friction_per_run_variation: 0.1
+    slope_deg: [-5.0, 5.0]  # positive is uphill along +x, the dog's heading at the spawn
+    motor_strength_fraction: [0.8, 1.0]  # scales every joint torque and the torque limit
+    command_latency_s: [0.05, 0.3]  # nominal; whole 0.02 s control periods
+    # One control period: each attempt's latency is the nominal one plus -1, 0 or +1 period, uniformly.
+    command_latency_jitter_s: 0.02
+    # measure_effects (learned_judgment/env/effects.py): one episode per quantity through Go2World, duration_s after
+    # the decision instant, each effect at the demanding end of its range above.
+    measure:
+      duration_s: 6.0
+      steady_speed_m_s: 0.6  # trot at it from the reset on; mean speed along the heading over the last window
+      steady_window_s: 4.0
+      stop_from_m_s: 0.9  # trot at it until the decision instant, then zero; distance along that heading
+      start_to_m_s: 0.6  # from standing; time until the speed along the heading first reaches half of it
+  # Each preset holds the hidden world's true values. declared_payload_kg (observation and outcome) is payload_mass_kg
+  # x (1 + an error drawn per world) and declared_surface is floor_type. Every preset has the same latency, 0.08 s
+  # (4 control periods): the shortest whole number of periods whose jitter stays inside the 0.05-0.3 s range.
+  # The last four each move one effect of `default` to the demanding end of its range.
+  presets:
+    default:
+      payload_mass_kg: 0.0
+      payload_offset_m: [0.0, 0.0]
+      floor_type: default
+      slope_deg: 0.0
+      motor_strength_fraction: 1.0
+      command_latency_s: 0.08
+    heavy_payload:
+      payload_mass_kg: 3.0
+      # Rear-left corner of payload_off_center_range_m: the payload's demanding end in mass and in offset. Dev check
+      # artifacts/env/20261121T170552-payload-offset-check: 10 s trots at 0.6 and 0.9 m/s with 3 kg there, centred and
+      # at each end of x, no fall (0.5457 m/s at 0.6 here, 0.5612 centred).
+      payload_offset_m: [-0.1881, 0.04675]
+      floor_type: default
+      slope_deg: 0.0
+      motor_strength_fraction: 1.0
+      command_latency_s: 0.08
+    slippery_floor:
+      payload_mass_kg: 0.0
+      payload_offset_m: [0.0, 0.0]
+      floor_type: slippery
+      slope_deg: 0.0
+      motor_strength_fraction: 1.0
+      command_latency_s: 0.08
+    tired_motors:
+      payload_mass_kg: 0.0
+      payload_offset_m: [0.0, 0.0]
+      floor_type: default
+      slope_deg: 0.0
+      motor_strength_fraction: 0.8
+      command_latency_s: 0.08
+    downhill:
+      payload_mass_kg: 0.0
+      payload_offset_m: [0.0, 0.0]
+      floor_type: default
+      slope_deg: -5.0
+      motor_strength_fraction: 1.0
+      command_latency_s: 0.08
+
+ball:
+  enabled: true
+  # IHF size 3 handball (resin), IHF Rules of the Game 1 July 2025, Rule 3:2: 425-475 g, circumference 58-60 cm.
+  # Mid-range values; radius = 0.59 m / (2*pi). Evidence: experiments/EXPERIMENTS_LOG.md entry E6.
+  spec: ihf_size_3_handball
+  mass_kg: 0.450
+  radius_m: 0.0939
+  # Contact and inertia: no ball rule sets them (experiments/EXPERIMENTS_LOG.md, "E6 (simulator half)").
+  inertia: shell  # an inflated ball: mass on its surface (MuJoCo mjINERTIA_SHELL, I = 2/3 m r^2)
+  friction: [1.0, 0.005, 0.0001]  # MuJoCo's default geom friction (sliding, torsional, rolling)
+  condim: 3  # MuJoCo's default: sliding friction only
+  priority: 2  # above the Go2 feet (1), so these contact parameters apply to every contact of the ball
+  # MuJoCo solref [time constant s, damping ratio], from a drop test (E6 simulator half): 0.04 s is the smallest time
+  # constant of 0.02-0.05 at which the rebound falls steadily as the damping ratio rises (at MuJoCo's default 0.02 a ball
+  # dropped from 2 m can rebound to 1.9 m); 0.1 gives the rebound nearest 1.0 m, the middle of IHF Rule 3:2's 90-110 cm
+  # (1.052 m; restitution 0.725, and 0.74-0.80 for drops of 0.5-4 m).
+  solref: [0.04, 0.1]
+  # Same masks as go2.xml's collision geoms (group 3) and the floor: the ball collides with both (E6 simulator half).
+  collision_masks: {contype: 1, conaffinity: 1}
+  rgba: [0.5, 0.5, 0.5, 1.0]  # MuJoCo's default geom colour, as before this key existed; the floor is the same grey.
+  # m/s^2, downward. The model's own: go2.xml sets no gravity, so MuJoCo's default (0, 0, -9.81); the sampler needs it
+  # without a model, and tests/env/test_ball.py checks the two agree.
+  gravity_m_s2: 9.81
+  # Throw protocol (learned_judgment/env/throws.py). Each throw draws uniformly from each range below. The thrower aims
+  # at the trunk origin's height where the dog will be after the flight if it keeps dog_forward_speed_m_s, missed
+  # sideways (along the dog's y) by the aim error. Starting values; changed only from calibrate_throws output on dev
+  # seeds, each change logged in DECISIONS.md.
+  dog_forward_speed_range_m_s: [0.3, 0.9]  # the speeds the locomotion gate measured
+  throw_origin_range_m: [3.5, 5.0]  # horizontal distance of the release point from the trunk origin
+  throw_direction_range_deg: [-60.0, 60.0]  # bearing of the release point, anticlockwise from the dog's heading
+  throw_release_height_range_m: [0.6, 1.2]  # height of the release point above the trunk origin
+  throw_speed_range_m_s: [3.3, 4.8]  # horizontal speed of the ball; with the ranges above, flights of 0.61-1.59 s
+  throw_aim_error_range_m: [-0.7, 0.7]
+
+# The punch (Go2World situation key object_kind "punch"): a fist-sized sphere that ignores gravity (MuJoCo body
+# gravcomp 1), so from the six ball_* keys it flies straight at constant speed until it touches something, and collides
+# physically with finite mass. It takes the ball's place in the scene, the observation's `ball` entry, the trace arrays
+# and the DODGE outcome keys. Contact parameters are MuJoCo's defaults.
+punch:
+  radius_m: 0.05  # A fist: about 10 cm across.
+  mass_kg: 0.6  # About a fist and wrist; finite, so a hit pushes the dog. The objects research tried 0.3-1.0 kg.
+  # Bright yellow (luma about 0.85): the floor and the handball are both 0.5 grey, so a grey object changes a 12 x 12
+  # grayscale head-camera pixel by only 0.03-0.09 (Dev B's measurement, 2026-11-21).
+  rgba: [1.0, 0.9, 0.2, 1.0]
+  collision_masks: {contype: 1, conaffinity: 1}  # The ball's: it collides with the robot and the floor.
+
+skills:
+  dodge:
+    status: primary
+    attempts_per_skill_target: [10, 40]
+    supported_action_schema: null  # Filled only after command-interface verification.
+    # Candidate grid resolution per action dimension, in action order: side velocity, start delay, hold duration.
+    candidate_points_per_dim: [9, 4, 3]
+    # Action space. Names of the command fields follow Person A's answer (HANDOFF_PERSON_A.md); they are looked up
+    # in the verified command schema, and the SkillSpec refuses to build until that schema is verified.
+    action:
+      side_velocity_field: vel_y  # Sideways speed; its sign picks the dodge side. Range: the field's verified range.
+      forward_velocity_field: vel_x  # Held at the dog's forward speed during the whole episode.
+      yaw_rate_field: yaw_rate  # Held at 0 during the whole episode.
+      start_delay_s: [0.0, 0.6]  # Wait after the decision instant before the dodge command. Starting value; tune on dev.
+      hold_duration_s: [0.2, 1.0]  # How long the dodge command is held. Starting value; tune on dev.
+    # Total simulated time per attempt; set with Person A's ball flight times. Confirmed by the project owner on
+    # 2026-11-21 (3.0 s): the latest throw arrives by about 1.6 s, the latest dodge ends at 1.6 s (largest start delay
+    # plus largest hold), and recovery needs robot.recovery.hold_s (0.6 s) of calm after the dog settles again.
+    episode_duration_s: 3.0
+    # Observed situation ranges. Person A publishes the ball ranges with the throw model; all null until then.
+    # The seven DODGE keys: [min, max] of what learned_judgment.env.sample_dodge_situations produces with the `ball`
+    # block above. From a large sample, not analytically: calibrate.situation_ranges(config, seed=0, n=100000), each
+    # span widened by 2% per side and rounded outward to 0.01 (artifacts/env/20261121T171139-dodge-situation-ranges);
+    # tests/env/test_dodge_functions.py checks an independent 20,000-throw sample stays inside.
+    situation_ranges:
+      ball_rel_x_m: [1.69, 5.07]
+      ball_rel_y_m: [-4.49, 4.5]
+      ball_rel_z_m: [0.58, 1.22]
+      ball_vel_x_m_s: [-4.89, -0.68]
+      ball_vel_y_m_s: [-4.75, 4.73]
+      ball_vel_z_m_s: [0.68, 7.38]
+      dog_forward_speed_m_s: [0.28, 0.92]
+      declared_payload_kg: [0.0, 3.6]  # Payload 0-3 kg with a declared label up to 20% wrong (MISSION.md).
+    declared_surfaces: [default, slippery]  # Level names of the declared floor type: world.hidden_effects floor types.
+    # Constants of the physics guess (a straight-line dog and a ballistic ball). The residual model absorbs the rest.
+    physics:
+      gravity_m_s2: 9.81  # MuJoCo model default, config runtime.
+      assumed_latency_s: 0.05  # Delay before sideways speed starts to change. Starting value from Person A's standstill step traces (messages log, 2026-11-21); the true latency is hidden (0.05-0.3 s).
+      response_time_s: 0.3  # Time constant of the first-order rise of sideways speed after that delay; same source. A step response while trotting would replace both.
+      time_step_s: 0.02  # Step of the closest-approach search; equals the 50 Hz control period.
+      collision_softness_m: 0.05  # Width of the logistic that turns predicted clearance into a collision probability.
+      # Capsule: the points within body_radius_m of the segment from -body_half_length_m to +body_half_length_m on the
+      # trunk's x axis through its origin. Read by artifacts/env/research/e6_sim_facts.py from go2.xml's three trunk
+      # collision geoms (base_link: box 0.1881 x 0.04675 x 0.057, cylinder r 0.05 at x 0.285, sphere r 0.047 at x 0.293
+      # z -0.06): the radius is their largest distance from that axis (the sphere), the half length the shortest segment
+      # whose capsule then holds them all. The geoms span x -0.188 to 0.340 m, so the capsule (x -0.400 to 0.400 m)
+      # reaches 0.21 m further back than the trunk; the legs are outside it. EXPERIMENTS_LOG.md, E6 (simulator half).
+      body_half_length_m: 0.293  # Half length of the trunk along x, from the verified Go2 model.
+      body_radius_m: 0.107  # Radius of the capsule around the trunk, from the verified Go2 model.
+      # Mean trunk origin height after the first 5 s of the Gate 1 trots at 0.3, 0.6 and 0.9 m/s (0.3118, 0.3248,
+      # 0.3335 m; artifacts/env/locomotion/trot_*.npz), by the same script.
+      base_height_m: 0.3234  # Height of the base above the floor while trotting, from a verified run.
+    # Risk-aware objective, higher is better. Starting weights, fixed before any data; tune on dev data only.
+    objective_weights:
+      collision: 10.0  # Per unit of predicted collision probability.
+      fall: 10.0  # Per unit of predicted fall probability.
+      separation: 1.0  # Per metre of the low predictive quantile of closest separation, up to separation_cap_m.
+      separation_cap_m: 0.5
+      contact_margin_m: 0.02  # Clearance below this counts as contact when reading the separation distribution.
+      motion: 0.5  # Per metre of commanded sideways travel (speed x hold time).
+      recovery: 0.5  # Per second of predicted recovery time.
+    confidence_threshold: null  # Select on dev data.
+  brake:
+    status: planned
+  turn:
+    status: planned
+  ramp:  # RAMP from the trunk pitch (Person B, learned_judgment.skills.ramp). Starting values; change only from dev runs.
+    status: planned
+    teacher_features: [window, action, physics]  # observed.py block names; "window" carries the 4 pitch features.
+    detector:  # SlopeDetector on nose_up_deg(base_quat_wxyz), one sample per 0.02 s control period.
+      window_s: 0.2  # Moving mean of 10 samples, about one trot gait period: averages out the gait's pitch wobble.
+      # Dev check (step 3, 2026-11-21): nominal pass-through on dev scenarios 0-13, 16, 36, 37, 48, 50, 52, 55, 57 (10 flat,
+      # 12 slope at 15.1-18.0 deg; 12 s, world seed 0). Flat: filtered pitch +1.11..+2.83 deg, raw max 3.78 (all 10 flat
+      # traces are identical: constant command, so the per-attempt latency jitter never acts). Slope: filtered pitch
+      # reaches 4.3-5.1 deg while the trunk origin is still before ramp_start (front feet on the slope). Plateau after a
+      # reached top: filtered max 2.69-2.71 deg. Grid on {4.0, 4.5, 5.0} x off {2.5, 3.0, 3.5} x hold {0.1, 0.2, 0.3}:
+      # 0/10 flat false activations and 0/12 missed entries everywhere. 4.5/3.0/0.1 (was): entry latency mean 0.058 s,
+      # max 0.100 s, 1 re-entry on the plateau (15.30 deg, 8.42-8.70 s: the candidate re-applied on flat ground).
+      # 5.0/3.0/0.1 (now): latency mean 0.100 s, max 0.140 s, 0 re-entries, 2.17 deg above the flat filtered max.
+      on_deg: 5.0
+      off_deg: 3.0  # Above the flat/plateau filtered max 2.83 so the exit is prompt (0.52-0.96 s after the top); 2.5 delays it.
+      hold_s: 0.1  # 5 samples: one stumble does not switch; 0.2 / 0.3 add 0.1 / 0.2 s latency for no other change at on 5.0.
+    observe_s: 0.2  # Nominal kept this long after the entry before the one decision; the pitch-rate window.
+    # From the real ramp (world.incline: foot 1.0 m ahead, slope 2.0 m, top at 2.88-2.98 m, plateau far end ~6.9 m) and
+    # the step-2 sweep (Go2World seed 0, attempt seed 0, 2026-11-21): the slowest ascent, vel_x 0.6 at 16 deg, reaches
+    # the top at 9.4 s and the detector returns to NORMAL at 10.6 s, inside 12 s with the 0.6 s recovery hold; the
+    # farthest run (vel_x 1.0 at 15 deg) ends at 5.89 m, 1 m short of the plateau's far end. Was 10.0 (placeholder).
+    episode_duration_s: 12.0
+    dream_decision_time_range_s: [2.12, 2.18]  # Dream decision times (remaining time of the physics guess): the measured range of run ramp1's context rows (14 situations). Was [1.0, 5.0].
+    dream_sampling: recorded  # uniform: each feature drawn independently over its range (the behaviour before this key). recorded: drawn from the feature vectors measured in the context attempts, one scenario at a time.
+    dream_noise: 0.5  # recorded only: the noise added to a drawn vector has the covariance of the measured vectors times this squared (a smoothed bootstrap), so features that move together stay together and a constant feature stays constant. Starting value; change only from dev runs.
+    candidates:
+      climb_speeds_m_s: [0.4, 0.6, 0.8, 1.0]  # vel_x inside the verified [-1, 1]; 0.6 is the nominal (candidate index 1).
+      # Was [-0.2, 0.0, 0.2]. Measured (seed 0, 12 s): every non-zero yaw held on the slope turns the dog across it
+      # (yaw change -1.4 rad at -0.1, +2.2 rad at +0.1) and fails to reach the top at 15, 16 and 17 deg, where the same
+      # speed at yaw 0 reaches it (-0.2: 15/16/17/17.5/18 deg; -0.1: 16/17 deg; +0.1: 16 deg). Heading candidates removed.
+      climb_yaw_rates_rad_s: [0.0]
+    feature_ranges:  # [low, high] mapped to [0, 1], clipped.
+      filtered_pitch_deg: [-5.0, 20.0]  # flat +1..+3 deg, 8-15 deg slopes plus the trot bias.
+      raw_pitch_deg: [-10.0, 25.0]  # raw swings about 1 deg wider than filtered on flat.
+      pitch_rate_deg_s: [-30.0, 60.0]  # a 10 deg rise over the 0.2 s observe window is 50 deg/s.
+      nominal_speed_m_s: [0.3, 1.0]  # locomotion-gate speeds up to the verified 1.0 end.
+    scenarios:
+      flat_share: 0.25
+      # Was [8.0, 15.0]: the nominal vel_x 0.6 reached the top at 8, 10, 12, 14 and 15 deg (top at 6.1-7.4 s, seed 0),
+      # so that range had no room. Measured with 12 s episodes: nominal reaches the top at 15 and 16 deg (7.4 s, 9.4 s)
+      # and not at 17, 17.5, 18 deg; vel_x 0.8 / 1.0 reach it at 15, 16, 17 deg (faster) and not at 17.5 or 18 deg;
+      # nothing tried reaches it at 18-20 deg. Inside world.incline.max_deg 20.
+      incline_deg: [15.0, 18.0]
+      nominal_speed_m_s: [0.6, 0.6]
+    outcome_bounds:
+      progress_m: [-2.0, 10.0]  # 1.0 m/s x 10 s; negative for sliding back.
+      sideways_m: [0.0, 8.0]  # Was [0, 5]: measured up to 4.5 m at yaw 0 and 5.4 m with a yaw candidate (12 s).
+      slip_m: [0.0, 15.0]  # Was [0, 2]: foot_slip_m measured 2.45 m on flat (10 s) and up to 10.6 m on an 18 deg stall.
+    physics:
+      k_track: 0.905  # Gate 1: 0.6 m/s commanded gave 0.5430 m/s on flat.
+      k_slope_s: 0.214  # Person A: vel_x 0.6 stalls at 15 deg -> 0.905 x 0.6 = k x 9.81 x sin 15 deg.
+      gravity_m_s2: 9.81
+      # Centre of the reached_top logistic: floor distance from the trunk at the decision to the top of the slope.
+      # Measured: ramp_end_m 2.88-2.98 m (start 1.0 m + 2.0 m x cos angle), trunk ~1.1-1.2 m ahead at the decision
+      # (2.1-2.4 s). Was 1.5 (placeholder).
+      typical_ramp_length_m: 1.8
+      softness_m: 0.25
+      yaw_drift_rad_s: 0.109  # Person A: about 50 deg in 8 s with vel_x alone on flat.
+    objective_weights:
+      progress: 0.5
+      reached_top: 5.0
+      fall: 10.0
+      sideways: 0.5
+      slip: 1.0
+      spread: 0.25  # x predicted spread of progress_m
+  kick:
+    status: stretch
+  dodge_vision:  # DODGE from the head camera (Person B): one of four commands chosen from an image window.
+    status: primary
+    # The four candidate commands, in readout order. Every value is a field of the verified command schema at 0 or at
+    # a range end proven by a recorded run (E4, artifacts/env/commands/commands.json). An active command is held for
+    # hold_s, then the zero command is sent again. NO_OP is the zero command.
+    actions:
+      NO_OP: {vel_x: 0.0, vel_y: 0.0, yaw_rate: 0.0}
+      DODGE_LEFT: {vel_x: 0.0, vel_y: 1.0, yaw_rate: 0.0}
+      DODGE_RIGHT: {vel_x: 0.0, vel_y: -1.0, yaw_rate: 0.0}
+      RETREAT: {vel_x: -1.0, vel_y: 0.0, yaw_rate: 0.0}
+    # Seconds an active command is held. Starting value from Person A's step response while trotting (messages log,
+    # 2026-11-21 17:49 UTC: a full sideways command moves the trunk about 0.35 m in 0.6 s); tune on dev data only.
+    hold_s: 0.6
+    settle_s: 1.0  # Seconds the dog stands on the zero command before the object is launched (t_s 0). Starting value; the stand is checked by the collection run.
+    episode_duration_s: 4.0  # Simulated seconds per episode after the launch: slowest arrival (3.2 m at 1.0 m/s), then hold and recovery.
+    decision_time_range_s: [0.3, 3.0]  # One-shot rows decide at a camera frame time drawn uniformly from this range (the 8-frame window is full from 0.233 s).
+    windows_per_dream_episode: 6  # Decision instants taken from one rendered dream episode (the dog stays on the zero command, so one episode gives several windows).
+    teacher_features: [truth, action, physics]  # Columns given to the residual teacher (observed.py blocks). truth: 5 scene-truth numbers of the punch (dodge_vision.truth_features) instead of the 1152 window columns, teacher side only; [window, action, physics] is the v4 setting.
+    window_repeat_tolerance: 0.01  # Largest allowed grey difference (0-1 scale) between the windows the episodes of one situation saw before acting; the render repeats to within 0.002 (seen twice in about 700 situations).
+    dream_render: kinematic  # Dream windows before contact are rendered without stepping physics (recorded stand, object on its line); exact against the physics render (b-ramp-try 77bc403).
+    kinematic_contact_margin_s: 0.1
+    pre_contact_margin_s: 0.15  # (0.05 until v3b) Decision frames are drawn only up to this long before the object's straight-line arrival at the dog.
+    separation_clip_m: 2.0  # min_separation_m is reported at most this (measured and guessed); a scene without an object reads this value.
+    action_target: {mode: decision, tie_tolerance: 0.1, smoothing: 0.05}  # Action target of the student: the dream's decision, ties (scores within tie_tolerance, in objective units) broken in readout order. Chosen on dev (sweep v3, soft targets): for a punch at the centre the soft target was half left, half right, so no student could give the gate one clear action.
+    # Threat target (scorer side; observed.threat_target_settings), also the true-threat definition of dodge_eval. The
+    # decision-margin target (threat_target_scale, no threat_target key) called late frames, where no dodge helps any
+    # more, 'no threat' although the image shows the object at its largest (development run v2).
+    #   collision_course (until v5): the dream world's predicted collision under NO_OP (threat_outcome); true threat =
+    #   the NO_OP episode collides.
+    #   near_approach (v6, the lead's decision 2026-11-22: a flinch at an object that comes very close to the head is
+    #   correct): the dream world's predicted NO_OP min_separation_m below separation_m; true threat = the NO_OP
+    #   episode's measured min_separation_m below separation_m. Collisions are still reported (strict_collision).
+    # separation_m 0.08 by a rule fixed before any table or student result (experiments/proofs/B_v6_near_approach/
+    # threat_distance.py, results/runs/v6/threat_distance.json): midpoint of the gap between the largest measured NO_OP
+    # separation of incoming_center/left/right (0.022 m) and the smallest of off_path/static/receding/background_motion
+    # (0.142 m), rounded to 0.01 m; v5 context NO_OP rows and v5 dev trace pooled (ambiguous lies across it).
+    threat_target: {mode: near_approach, separation_m: 0.08, outcome: min_separation_m}
+    threat_outcome: collision  # The binary outcome of threat_target collision_course.
+    threat_target_scale: 0.05  # Threat target = logistic((best active score - NO_OP score) / this). Small against the motion cost of an active command (0.3), so a scene where NO_OP is best gives about 0.
+    # Scenario kinds (Person A's nine names, messages log 2026-11-21 20:29 UTC) and their sampling weights. The kind shapes the
+    # draw only; whether a scene is a threat is measured by the simulator (a NO_OP episode that ends in a collision).
+    kind_weights: {empty: 1.0, static: 1.0, receding: 1.0, off_path: 1.5, background_motion: 1.0, ambiguous: 1.5, incoming_left: 2.0, incoming_center: 2.0, incoming_right: 2.0}
+    object_kinds: [punch]  # ball: the handball under gravity (rolls or is thrown). punch: a slow straight flight at head height.
+    punch:  # The punch object. Until Go2World accepts object_kind (Person A's punch body), the stand-in is the existing handball with its weight cancelled by a constant upward force (straight flight, real contact); rows.json records which was used.
+      speed_m_s: [0.4, 1.2]  # Constant approach speed: the slow punch of the demo. v2 used 0.8-2.5 from 1.8-3.2 m; slower and closer keeps the 5 cm object several pixels wide for longer before contact.
+      launch_height_m: [-0.1, 0.2]  # Launch height relative to the trunk origin.
+      aim_height_m: [-0.03, 0.12]  # Height of the aim point relative to the trunk origin (the head camera is at 0.017).
+      aim_x_m: 0.3  # The aim point lies this far ahead of the trunk origin: the head.
+    visual:  # Per-scenario visual draws for Person B's stopgap render (Person A's visual key replaces them).
+      object_grey: [0.1, 1.0]  # Grey level of the thrown object.
+      backdrop_grey: [0.3, 0.5]  # Near the lit floor's grey (0.40) since v3: with 0.15-0.85 the horizon line, moved by the standing dog's sway, changed pixels as much as the 5 cm punch did (development run v2). Was [0.15, 0.85].
+      min_contrast: 0.15  # Redraw the object grey until it differs from the backdrop grey by at least this.
+    scenarios:  # Ranges of the draws, in the dog's frame at the launch (x ahead, y left). Starting values; change only from dev runs, logged in DECISIONS.md.
+      launch_modes: {roll: 1.0, throw: 0.0}  # roll: on the floor, no vertical speed. throw: ballistic, aimed at the head camera's height.
+      distance_m: [0.75, 1.4]  # v3: the lead's description of the demo punch: it starts about half a metre from the camera (0.34 m ahead of the trunk origin) and ends almost covering it. Camera distance 0.4-1.05 m. Original comment:  # Launch distance ahead of the trunk origin.
+      bearing_deg: [-8.0, 8.0]  # Bearing of the launch point; inside the 45 degree view.
+      roll_speed_m_s: [1.0, 2.5]  # Ground speed of a rolling ball.
+      throw_speed_m_s: [4.0, 7.0]  # Horizontal speed of a thrown ball.
+      throw_release_height_m: [0.0, 0.5]  # Release height above the trunk origin.
+      aim_center_m: [0.0, 0.04]  # v4: bands re-set for the 5 cm punch from measured NO_OP episodes of run v3 (131 approaches): |aim| under 0.08 m hit 26 of 26, 0.08-0.14 m 23 of 28, 0.14-0.18 m 10 of 18, 0.18-0.22 m 3 of 18, beyond 0.22 m 0 of 41. The earlier bands were set for the 9.4 cm handball. Was [0.0, 0.08].  # |sideways offset| of the aim point at the dog, incoming_center.
+      aim_side_m: [0.04, 0.08]  # was [0.08, 0.22]: a third of those 'incoming' punches brushed past, and a dodge of a 3 cm miss counted as a false activation.  # incoming_left (+y) and incoming_right (-y).
+      aim_ambiguous_m: [0.08, 0.3]  # was [0.25, 0.45]: the band now holds the real boundary between hit and miss.  # Near misses and grazes.
+      aim_off_path_m: [0.5, 1.5]  # Clear misses.
+      static_distance_m: [0.6, 1.4]  # A ball at rest on the floor, in view.
+      receding_distance_m: [0.5, 1.0]  # Start of a ball rolling away at roll_speed_m_s.
+      background_distance_m: [0.7, 1.4]  # A ball crossing sideways at roll_speed_m_s, never approaching.
+    physics:  # Constants of the physics guess (ballistic or rolling ball, first-order dog response). The residual teacher absorbs the rest.
+      gravity_m_s2: 9.81
+      assumed_latency_s: 0.05  # As skills.dodge.physics.
+      response_time_s: 0.3  # As skills.dodge.physics.
+      time_step_s: 0.02
+      collision_softness_m: 0.05
+      body_half_length_m: 0.293
+      body_radius_m: 0.107
+      # Trunk origin height of the standing dog: base_pos_m z at t_s 0 after settle_s 1.0 on the zero command, 0.327983 m
+      # (Go2World seed 0, default preset, no ball; attempt seeds 0 and 1 identical), rounded to 4 decimals. Same run:
+      # 0.322145 m at t_s 1.0, 0.3203-0.3347 m over 3 s. Stand check of the dodge_vision slice (Person B), 2026-11-21.
+      base_height_m: 0.328
+    objective_weights:  # As skills.dodge.objective_weights; fixed before any data of this skill.
+      collision: 10.0
+      fall: 10.0
+      separation: 1.0
+      separation_cap_m: 0.5
+      contact_margin_m: 0.02
+      motion: 0.5  # Per metre of commanded travel (speed x hold time): 0.3 for an active command.
+      recovery: 0.5
+  move:  # MOVE (Person B, learned_judgment.skills.move): move the standing dog to a target on one axis and stop. Starting values; change only from dev runs.
+    status: planned
+    teacher_features: [window, action, physics]  # observed.py block names; "window" carries the 5 request features.
+    settle_s: 1.0  # Seconds standing on the zero command before the decision (as skills.dodge_vision.settle_s, whose stand was checked).
+    settle_tail_s: 1.0  # Zero command after the hold, then the episode ends: covers the 0.08 s latency and the stop; later drift is not counted.
+    kind_weights: {forward: 1.0, sideways: 1.0, turn: 1.0}  # Equal share of the three axes.
+    targets:  # |target| ranges, sign drawn uniformly; the high end is each axis's scale for the error and the features.
+      forward_m: [0.3, 2.0]  # Below 0.3 m the shortest candidate (0.4 x 0.92 x 0.35 s = 0.13 m) leaves little choice.
+      sideways_m: [0.15, 0.6]  # A short sidestep up to about one body length.
+      turn_rad: [0.3, 2.5]  # 17 to 143 degrees, below the +-pi wrap of final_yaw_change_rad.
+    candidates:  # C = 4 x 8 = 32, level-major.
+      command_levels: [0.4, 0.6, 0.8, 1.0]  # Fraction of the verified range end (1.0) on the target's side; above the 0.2 zeroing of training.
+      hold_s: [0.4, 0.8, 1.2, 1.6, 2.0, 2.5, 3.0, 3.5]  # Whole 0.02 s periods; 1.0 x 0.92 x 3.45 s reaches beyond 2.0 m.
+    outcome_bounds:
+      error: [0.0, 6.0]  # Dimensionless (error / axis scale): a 0.15 m sidestep at level 1.0 for 3.5 s overshoots by ~3 m = 5 scales.
+      drift_m: [0.0, 2.0]  # Off-axis travel; a turn in place moves the trunk origin by decimetres.
+    physics:
+      latency_s: 0.05  # Delay before the command acts (as skills.dodge.physics.assumed_latency_s); the true latency is hidden.
+      track: {forward: 0.92, sideways: 0.89, turn: 0.97}  # Response per unit command per second: measured_at_max of vel_x, vel_y, yaw_rate (command_schema).
+    objective_weights:
+      error: 10.0  # Per axis scale of mean error (2.0 m, 0.6 m, 2.5 rad).
+      drift: 2.0  # Per metre of off-axis drift.
+      fall: 10.0  # Per unit of fall probability.
+      spread: 2.0  # Per axis scale of predicted error spread.
+  reflex:  # REFLEX (Person B, learned_judgment.skills.reflex): a blind closed-loop steering reflex from raw body sensors.
+    # Everything about a particular lesson (senses, timing, steering options, goal, practice world) is in `declaration`,
+    # designed by a language model as data from `menu` (learned_judgment/reflex_lesson.py) and checked against it. The
+    # repository config carries no declaration: a run's own config.yaml adds skills.reflex.declaration.
+    status: planned
+    teacher_features: [window, action, physics]  # observed.py block names; "window" carries the raw sensor window.
+    # Dream decision target (observed.dream_targets): the first candidate in readout order (straight first) whose dream
+    # score is within tie_tolerance of the best, smoothed. Objective units: 0.02 = 2 cm of progress at progress weight 1.
+    action_target: {mode: decision, tie_tolerance: 0.02, smoothing: 0.05}
+    standing_settle_s: 1.0  # A standing start stands this long on the zero command before t_s 0 (as skills.move.settle_s).
+    outcome_bounds:  # Short-horizon outcomes (progress_m, offset_m, tilt_deg, fall), clipped to these.
+      progress_m: [-3.0, 4.0]  # Gain along the start heading over at most 3 s at up to 1 m/s; negative when pushed back.
+      offset_m: [0.0, 12.0]  # |sideways offset| from the line to the spot; the straight walk drifts 3.6 m in 14 s.
+      tilt_deg: [0.0, 90.0]  # Trunk tilt from upright; a fall is at robot.fall.max_tilt_deg (60).
+    report:  # How the run's summary splits the courses (scorer truth only; nothing a policy reads).
+      # A mound whose rim slope is at least this is "steep", below it "gentle". 24: the measured slope from which a
+      # radius-1.5 m mound stops the straight walk at vel_x 0.6 for good (never past in 14 s).
+      steep_from_deg: 24.0
+    menu:  # What a lesson may choose from. A language model designs the lesson within it; check_lesson enforces it.
+      # Sense groups, in the window's channel order. Each channel is scaled to [0, 1] with its fixed [low, high] and
+      # clipped. Body-frame quantities and the dog's own dead reckoning (path_memory) only: never the true position,
+      # velocity over the ground or anything about the mound.
+      sense_groups:
+        tilt:
+          description: "How the trunk leans: nose-up pitch and left-side-up roll, degrees (from the trunk orientation an IMU gives)."
+          channels: [[pitch_deg, -30.0, 30.0], [roll_deg, -30.0, 30.0]]
+        turn_rates:
+          description: "How fast the trunk rotates in its own frame: roll, pitch and yaw rates, rad/s (gyroscope)."
+          channels: [[roll_rate_rad_s, -4.0, 4.0], [pitch_rate_rad_s, -4.0, 4.0], [yaw_rate_rad_s, -2.0, 2.0]]
+        heading:
+          description: "Which way the dog faces compared with when the lesson started, degrees, + to the left (integrated IMU heading)."
+          channels: [[heading_deg, -90.0, 90.0]]
+        joint_angles:
+          description: "The 12 leg joint angles minus the walking policy's default pose, rad (joint encoders)."
+          channels: [[FL_hip, -1.0, 1.0], [FL_thigh, -1.0, 1.0], [FL_calf, -1.0, 1.0], [FR_hip, -1.0, 1.0],
+                     [FR_thigh, -1.0, 1.0], [FR_calf, -1.0, 1.0], [RL_hip, -1.0, 1.0], [RL_thigh, -1.0, 1.0],
+                     [RL_calf, -1.0, 1.0], [RR_hip, -1.0, 1.0], [RR_thigh, -1.0, 1.0], [RR_calf, -1.0, 1.0]]
+        joint_speeds:
+          description: "The 12 leg joint speeds, rad/s (joint encoders)."
+          channels: [[FL_hip_speed, -20.0, 20.0], [FL_thigh_speed, -20.0, 20.0], [FL_calf_speed, -20.0, 20.0],
+                     [FR_hip_speed, -20.0, 20.0], [FR_thigh_speed, -20.0, 20.0], [FR_calf_speed, -20.0, 20.0],
+                     [RL_hip_speed, -20.0, 20.0], [RL_thigh_speed, -20.0, 20.0], [RL_calf_speed, -20.0, 20.0],
+                     [RR_hip_speed, -20.0, 20.0], [RR_thigh_speed, -20.0, 20.0], [RR_calf_speed, -20.0, 20.0]]
+        feet:
+          description: "Which of the four feet touch the ground (FL, FR, RL, RR), 0 or 1 (foot contact switches)."
+          channels: [[FL_contact, 0.0, 1.0], [FR_contact, 0.0, 1.0], [RL_contact, 0.0, 1.0], [RR_contact, 0.0, 1.0]]
+        last_command:
+          description: "The steering command the dog itself sent last: forward speed (m/s), sideways speed (m/s), turn rate (rad/s)."
+          channels: [[cmd_vel_x, -1.0, 1.0], [cmd_vel_y, -1.0, 1.0], [cmd_yaw_rate, -1.0, 1.0]]
+        path_memory:  # Dead reckoning (learned_judgment.skills.reflex run_episode): own commands along own IMU heading only.
+          description: "A rough path memory by dead reckoning, not a position sensor: from the start of the lesson, every 0.02 s control period the dog adds the forward speed it commanded itself times 0.02 s along its IMU heading (relative to the start), giving an estimated distance walked forward (m) and an estimated sideways offset from its start line (m, + left). It drifts: the walking policy does not follow commands exactly (it walks slower or faster than commanded and slips sideways, more on slopes), and the error grows with distance."
+          channels: [[path_forward_m, -1.0, 11.0], [path_sideways_m, -3.0, 3.0]]
+      sample_every_s: [0.02, 0.5]  # Spacing of the window's samples; whole 0.02 s control periods.
+      history_s: [0.02, 2.0]  # Span of the window (oldest to newest sample); a whole number of sample spacings.
+      max_history_samples: 21  # Samples per window, history_s / sample_every_s + 1, at most this.
+      max_window_width: 600  # Numbers per window (samples x channels), at most this.
+      decide_every_s: [0.1, 1.0]  # Time between two decisions; whole control periods.
+      horizon_s: [0.2, 3.0]  # How far ahead each decision's result is measured; whole control periods.
+      time_limit_s: [8.0, 30.0]  # Longest episode.
+      starts: [standing, trotting]  # standing: from a stand (skills.reflex.standing_settle_s); trotting: after world.settle_s at the nominal speed.
+      nominal_speed_m_s: [0.3, 1.0]  # Forward speed of the plain walk; inside the verified vel_x range.
+      steer:  # Steering choices; each command is checked against the verified command schema (vel_y is always 0).
+        yaw_rate_rad_s: [-1.0, 1.0]
+        vel_x_m_s: [0.2, 1.0]
+        max_choices: 7  # Choices per field.
+      max_candidates: 12  # yaw_rate choices x vel_x choices, at most this.
+      goal:
+        forward_m: [2.0, 10.0]  # Distance to the spot straight ahead, along the heading at t_s 0.
+        tolerance_m: [0.2, 2.0]  # Largest |sideways offset| at the goal line that still counts as reaching the spot.
+        weight_max: 100.0  # Each objective weight in [0, this].
+      world:  # The practice world a lesson may draw its scenarios from (inside world.mound's limits).
+        flat_share: [0.0, 0.6]
+        radius_m: [0.6, 1.6]
+        height_m: [0.1, 0.6]  # A drawn height above the rim-slope limit (world.mound.max_rim_slope_deg) is lowered to it.
+        centre_ahead_m: [1.4, 4.0]
+        centre_side_m: [-1.0, 1.0]
+
+engine:
+  candidate_batch_size: null  # Determine with verified API limits and dev runs.
+  quantile_levels: [0.1, 0.25, 0.5, 0.75, 0.9]  # Predictive quantiles requested from every residual model.
+  spread_levels: [0.1, 0.9]  # Predictive spread = half the width between these two levels.
+  multi_outcome_mode: stacked  # stacked: one request for all outcomes; per_outcome: one request per outcome. Compare on dev.
+  spec_validation:
+    probe_situations: 16
+    probe_points_per_dim: 3
+  attempt_exploration_fraction: 0.5  # Share of context attempts using a random candidate instead of the physics action; choose on dev.
+  attempts_dir: results/attempts  # Append-only attempt rows, one JSON Lines file per run.
+  dreams_dir: results/dreams
+  dreams_per_skill_initial: 2000
+  confidence_thresholds_by_skill: null
+  adaptation_context_policy: null  # Compare all/recent/world-ID on dev sets.
+  adaptation_recent_window: null  # Attempts kept by the recent-only policy; choose on dev.
+
+pipeline:  # learned_judgment.pipeline: one run of one skill in one world, with saved state.
+  manifests_dir: results/pipeline/manifests  # One JSON manifest per run, <run_id>.json: identity, seeds, every step's state.
+  students_dir: results/pipeline/students  # Dream-trained spiking student of each run, <run_id>.npz + <run_id>.json.
+  evaluation_rows_dir: results/pipeline/evaluation_rows  # Attempt files and harness manifests of each evaluation, <run_id>/<evaluation_id>/.
+  run_results_dir: results/pipeline/run_results  # Run-result files (eval.report), <run_id>/<evaluation_id>/<method>.json.
+  default_attempts: 40  # Context attempts the command line collects without --attempts; the top of MISSION.md's 10-40.
+  evaluation_repeats: 1  # Noise repeats per situation the command line evaluates without --eval-repeats.
+  on_physics_mismatch: error  # A stored attempt whose physics guess differs from the current spec: error or recompute (engine.rows).
+
+evaluation:
+  dev_situations_per_skill: 100
+  test_situations_per_skill: 100
+  shift_situations_per_preset: 100  # Independent shift set per world preset (03_METRICS.md).
+  test_access_log: results/test_access_log.jsonl  # Every read of a sealed test split is appended here.
+  oracle_situations_per_skill: 100
+  minimum_seeds: 3
+  preferred_seeds: 5
+  context_attempt_counts: [0, 5, 10, 20, 40]
+  adaptation_new_attempt_counts: [0, 5, 10, 15, 20]
+  recovery_tolerance_fraction: 0.2  # Recovered = within 20% of pre-shift error (03_METRICS.md).
+  dream_counts: [100, 1000, 2000, 10000]
+  coverage_intervals: [[0.25, 0.75], [0.1, 0.9]]  # 50% and 80% central intervals; members of engine.quantile_levels.
+  bootstrap_resamples: 9999
+  bootstrap_confidence_level: 0.95
+  bootstrap_method: BCa  # Falls back to percentile, and records it, when BCa is degenerate.
+  latency_decisions: 1000
+  reliability_bins: 10  # Probability bins of the reliability table for binary outcomes.
+  methods:  # Every method of 03_METRICS.md; the final table shows NOT RUN for each one without a saved result.
+    - oracle
+    - physics_only
+    - constant_bias
+    - gaussian_process
+    - gradient_boosting
+    - mlp_on_attempts
+    - direct_tabpfn
+    - teacher
+    - snn_per_skill
+    - snn_shared
+
+tabpfn:
+  client_version: "0.10.1"
+  check_usage_before_uncached_request: true
+  estimate_cost_before_uncached_request: true
+  cache_requests_and_responses: true
+  cache_key_fields:
+    - training_features
+    - training_targets
+    - query_features
+    - output_type
+    - model_settings
+  verified_request_limit_per_minute: null
+  verified_request_limit_per_hour: null
+  current_usage: null  # Read live before a billable run; never hardcode.
+  # Model settings below are pinned so the server cannot change them silently; all enter the cache key.
+  model_path: v3.5_default  # Server default family on 2026-11-21 (E7 proof p2_auth_usage.txt).
+  n_estimators: 8  # Server default and cap for v3.5 (E7 proof p3_cost_estimates.txt).
+  random_state: 0
+  cache_dir: .cache/tabpfn  # Git-ignored. One entry per request hash: request, response, quote, usage.
+  call_log: results/tabpfn_calls.jsonl  # One line per call or cache hit; never contains credentials.
+  max_tokens_per_request: 60000  # Refuse an uncached request quoted above this. Raised from 10000 on 2026-11-21 for image-window tables: 32000 query rows at 1161 columns quote 41056 (experiments/proofs/B2_research/teacher_limits.out.txt), 0.12% of the budget.
+  max_query_rows_per_request: 32000  # Larger query sets are split into requests of at most this many rows. 32000 rows at 40 training rows still quoted the minimum charge (E7 proof p3b_cost_scaling.txt).
+  lock_timeout_s: 120  # How long a process waits for another process using the same cache before giving up.
+  lock_poll_s: 0.05  # Pause between attempts to take the cache lock.
+  project_token_budget: 35000000  # Total tokens this project may spend. Set by the lead on 2026-11-21: the allowance Prior Labs gave for the track.
+
+dev_checks:  # Development checks on the real simulator (Person B). Their numbers are DEV RUN outputs, never evaluation results.
+  snn_inputs_in_dream:  # experiments/proofs/B_dodge_real/snn_inputs_in_dream.py: what the SNN is given as input, compared inside a saved dream.
+    heldout_fraction: 0.15  # Share of the dream's situations kept out of every training; the same rows as snn_settings_in_dream.
+    validation_fraction: 0.1  # Share of the remaining rows used for early stopping.
+    max_steps: 6000  # Step limit for every variant (the configured 1500 was reached without convergence on DODGE).
+    inputs: [situation, situation_and_physics_action, situation_and_physics_scores]  # What the network sees.
+    hidden_sizes: [[64], [128, 64]]  # Network shapes tried with every input.
+  snn_settings_in_dream:  # experiments/proofs/B_dodge_real/snn_settings_in_dream.py: SNN sizes and step limits compared inside a saved dream (E11).
+    heldout_fraction: 0.15  # Share of the dream's situations kept out of every training and used only to compare the variants.
+    variants:  # Each overrides students.snn for one training; everything else stays as configured.
+      - {name: start, hidden_sizes: [64], max_steps: 1500}  # The configured starting values.
+      - {name: longer, hidden_sizes: [64], max_steps: 6000}
+      - {name: wider, hidden_sizes: [128], max_steps: 6000}
+      - {name: two_layers, hidden_sizes: [128, 64], max_steps: 6000}
+  sidestep_reach:  # Dev skill "reach a sideways displacement", no ball (experiments/proofs/B_sidestep_dev/sidestep_reach_spec.py).
+    episode_duration_s: 1.8  # Simulated seconds per attempt after the decision instant (hold, then trot tail); whole 0.02 s control periods.
+    min_tail_s: 1.0  # Shortest trot tail after the longest hold: over 3 response times (skills.dodge.physics.response_time_s 0.3 s).
+    situation_ranges:
+      dog_forward_speed_m_s: [0.3, 0.9]  # Forward trot speed, sent as vel_x; the speeds of Gate 1 and of the lead's first sidestep run.
+      target_sideways_m: [-0.4, 0.4]  # Sideways travel to reach at the end of the episode, + left; reasoning in the spec's docstring.
+      declared_payload_kg: [0.0, 3.6]  # Same declared-payload range as skills.dodge (payload 0-3 kg, label up to 20% wrong).
+    declared_surfaces: [default]  # Level names of declared_surface; only the default preset exists today.
+    hold_duration_s: [0.2, 0.8]  # How long the sideways command is held from the decision instant; grid points are whole control periods.
+    candidate_points_per_dim: [9, 7]  # Candidate grid per action dimension: side velocity (0.25 m/s steps over the verified range), hold (0.1 s steps).
+    objective_weights:  # Risk-aware objective, higher is better. Fixed before any run; not tuned on these dev checks.
+      fall: 10.0  # Per unit of predicted fall probability.
+      abs_error: 1.0  # Per metre of expected absolute sideways error.
+      spread: 0.5  # Per metre of predictive spread of the sideways error (half width between engine.spread_levels).
+      motion: 0.05  # Per metre of commanded sideways travel, |side velocity| x hold.
+    success_tolerance_m: 0.05  # An attempt succeeds when |sideways error| is at most this and the dog did not fall.
+    save_traces: false  # world.save_traces for these runs: the outcome is read from observations, so no trace files are written.
+    world_preset: default  # The only preset Go2World supports today.
+    formula_match_tolerance_m: 1.0e-12  # c0: largest allowed difference between this spec's sideways travel and DodgeSpec's.
+    view_tail_s: 3.0  # prototype_chain.py --watch: extra seconds of trot shown in the live window after the episode's commands; not part of a measured episode.
+    determinism_other_attempt_seeds: 3  # c2: episodes run with other attempt seeds, to see the noise between attempts.
+    context_attempts: 40  # c3: context situations; one physics-action attempt and one exploration attempt on each.
+    dev_situations: 60  # c3: dev situations run by every method.
+    residual_baselines: [constant_bias, gaussian_process, gradient_boosting]  # c3: residual baselines (learned_judgment/eval/baselines.py) fitted on the context attempts.
+
+persistence:  # Retry of the atomic file move on Windows, where an open reader blocks os.replace (proof p10_persist).
+  replace_attempts: 10
+  replace_pause_s: 0.05
+
+baselines:  # Starting settings from the B-contract proofs; change only from dev results.
+  gaussian_process:
+    n_restarts_optimizer: 5
+    constant_value_bounds: [0.001, 1000.0]
+    length_scale_bounds: [0.01, 1000.0]
+    noise_level_bounds: [0.000001, 10.0]
+    min_attempts: 2  # Raises at 0 rows and is overconfident at 1 row (proof p04_gp).
+  gradient_boosting:
+    max_iter: 200
+    learning_rate: 0.05
+    max_leaf_nodes: 4
+    min_samples_leaf: 2  # The library default of 20 gives a constant model below 40 rows (proof p05_gb).
+    min_attempts: 5
+    interval_folds: 5  # Predictive quantiles come from out-of-fold errors (review finding: in-sample intervals were far too narrow).
+  mlp_on_attempts:
+    hidden_layer_sizes: [64, 64]
+    alpha: 0.0001
+    max_iter: 2000
+    min_attempts: 5
+    interval_folds: 5  # Predictive quantiles come from out-of-fold errors (review finding: in-sample intervals collapsed to a point).
+
+students:
+  kind: snn  # The only student is a spiking neural network (decision 2026-11-21).
+  per_skill_snn: true
+  shared_snn: true
+  dream_rehearsal: true
+  snn:  # Starting values from the E15 fixture proofs (mechanics only, not results). Tune on dev data only.
+    hidden_sizes: [64]  # Compare 16/32/64 and one/two layers on dev (E11).
+    time_steps: 10  # Literature uses about 4-8 for direct encoding; proofs ran 5/10/25.
+    beta: 0.9  # Membrane leak of the hidden layers.
+    threshold: 1.0
+    readout_beta: 0.9
+    learn_beta: false
+    learn_threshold: false
+    surrogate: atan  # snnTorch default surrogate gradient.
+    surrogate_alpha: 2.0
+    target_temperature: 0.5  # Dream scores are divided by (temperature x their typical spread) before the softmax target.
+    spike_rate_penalty: 0.0  # Weight of the mean firing rate in the loss; raises sparsity when above 0.
+    learning_rate: 0.002
+    batch_size: 64
+    max_steps: 1500
+    validation_fraction: 0.1
+    evaluate_every_steps: 100
+    patience_evaluations: 5  # Stop after this many evaluations without a better validation loss.
+    torch_threads: 1  # Training was bitwise reproducible at 1 and 4 threads, not at 16 (proof p04_determinism).
+    adam_beta1: 0.9  # Adam settings, stated here instead of left to the library's defaults.
+    adam_beta2: 0.999
+    adam_eps: 1.0e-8
+    weight_decay: 0.0
+    target_spread: global_median  # global_median: one score scale for all dreams; per_row: each dream's own scale. Compare on dev.
+    parity_logit_tolerance: 1.0e-9  # Largest allowed difference between the trained model's and the deployed network's outputs.
+    out_of_range: error  # A situation outside the declared ranges: error refuses to decide; clip clips it and counts it.
+    shared_skill_slots: 8  # Skill slots reserved in the shared network's input; a skill takes the next free slot when it is added.
+    shared_retention_fraction: 0.1  # Share of each skill's dreams kept only for measuring retention; never trained on and never used for early stopping.
+    shared_feature_width: null  # Encoded situation width reserved per skill in the shared network; set when the specs exist.
+    rehearsal_fraction: 0.5  # Share of each shared-network batch drawn from earlier skills' stored dreams.
+    energy:  # Estimate only. Horowitz, ISSCC 2014, Fig. 1.1.9, 45 nm 0.9 V, doi:10.1109/ISSCC.2014.6757323.
+      precision: fp32
+      e_mac_pj: 4.6  # 32-bit float multiply 3.7 pJ + add 0.9 pJ.
+      e_ac_pj: 0.9  # 32-bit float add.
+      source: "Horowitz, ISSCC 2014, Fig. 1.1.9 (45 nm, 0.9 V), doi:10.1109/ISSCC.2014.6757323"
+
+declared:  # learned_judgment.declared (Person B): what a chat request may declare. Data only; nothing in a declaration is executed.
+  max_source_text_chars: 500  # Longest source_text accepted with a declaration.
+  skills:
+    RAMP:
+      spec: ramp  # SkillSpec module under learned_judgment/skills that runs this skill.
+      description: "Cross an incline safely: the nominal walking command passes through unchanged on flat ground; speed and heading are corrected only while on the slope."
+      keywords: [slope, incline, ramp, hill, uphill, climb]  # parse_request maps a request holding one of these words to this skill.
+      requires: [incline]  # Simulator capabilities the skill needs; a missing one makes it unavailable and is named.
+      actions: [climb_speed_m_s, climb_yaw_rate_rad_s]
+      outcomes: [progress_m, reached_top, fall, sideways_m, slip_m]
+      params:
+        incline_deg: {type: number, min: 5.0, max: 15.0, default: 12.0, unit: deg, description: "Angle of the incline. Person A's proof runs (messages log, 2026-11-21 20:29 UTC): at 0.6 m/s the dog climbs 5 and 10 degrees and stalls at 15."}
+        nominal_speed_m_s: {type: number, min: 0.4, max: 0.8, default: 0.6, unit: m/s, description: "Forward speed commanded on flat ground (vel_x); inside the speeds the locomotion gate measured."}
+    DODGE:
+      spec: dodge_vision
+      description: "Dodge an object coming at the dog, seen by the head camera, and stay on the zero command when the scene is safe or unclear."
+      keywords: [dodge, punch, ball, avoid, evade, incoming, duck]
+      requires: [ball]
+      actions: [NO_OP, DODGE_LEFT, DODGE_RIGHT, RETREAT]
+      outcomes: [min_separation_m, collision, fall, recovery_time_s, command_travel_m]
+      params:
+        threats: {type: choices, choices: [ball, punch], default: [ball, punch], requires: {punch: punch_proxy}, description: "Kinds of incoming object to train against."}
+    MOVE:
+      spec: move
+      description: "Move the standing dog to a target and stop: a forward/backward distance, a sideways distance or a turn angle, one axis per request."
+      # "turn" is left out (declared.planned.TURN has it) and "walk" (the RAMP request "walk up a 12 degree hill" would turn ambiguous).
+      keywords: [move, go, step, sidestep, back, backward, forward, rotate]
+      requires: []
+      actions: [command_level, hold_s]
+      outcomes: [error, drift_m, fall]
+      params:
+        forward_m: {type: number, min: -2.0, max: 2.0, default: 0.0, unit: m, description: "Distance along the heading, + forward, - backward (skills.move.targets.forward_m). Give one axis only."}
+        sideways_m: {type: number, min: -0.6, max: 0.6, default: 0.0, unit: m, description: "Distance to the side, + left, - right (skills.move.targets.sideways_m). Give one axis only."}
+        turn_deg: {type: number, min: -143.0, max: 143.0, default: 0.0, unit: deg, description: "Turn angle, + anticlockwise (left), - clockwise (skills.move.targets.turn_rad, 2.5 rad). Give one axis only."}
+  # Skills named in MISSION.md that have no SkillSpec yet: a request holding one of these words is refused, naming the skill.
+  planned:
+    BRAKE: [brake, braking]
+    TURN: [turn, gate]
+    KICK: [kick]
+
+vision:  # learned_judgment.vision (Person B): the image-window contract, identical in MuJoCo and in the browser.
+  frame_size: 12  # A frame is frame_size x frame_size grey pixels.
+  frame_rate_hz: 30.0  # Camera cadence: the laptop camera's native rate.
+  frames: 8  # Frames per window, oldest first: 8 x 12 x 12 = 1152 numbers, 233 ms from first to last. Frozen after the dev comparison of frame_variants.
+  frame_variants: [4, 6, 8]  # Window lengths compared on simulation dev data.
+  luma_weights: [0.299, 0.587, 0.114]  # Grey = these weights x (R, G, B): ITU-R BT.601.
+  pixel_scale: 255.0  # Grey levels are divided by this: float32 in [0, 1].
+  # Student input from a window of F frames (learned_judgment.observed.encode_window_features, used by training and the
+  # runtime): abs_diff = |frame k - frame k-1| for the F-1 adjacent pairs, divided by max(largest of those values,
+  # diff_floor). A still background gives 0; a darker and a brighter object give the same input. raw = the F frames as they are.
+  encoding: signed_diff  # signed_diff: (frame k - frame k-1) over the same divisor, mapped to 0.5 + 0.5 x: keeps whether a pixel got brighter or darker. Chosen on v1 dream data (development): a plain MLP reached 0.70 validation accuracy with signed_diff, 0.71 raw, 0.58 abs_diff.
+  event_threshold: 0.04  # Encoding "events" (event-camera style): a pixel fires ON (OFF) when it got brighter (darker) than this between two frames (0-1 grey scale); below it, no event. Above the still-scene noise of adjacent frames (augmentation noise up to 0.01 per frame), below a low-contrast object's edge.
+  diff_floor: 0.1  # Raised from 0.03 on development data: in still scenes the standing dog's own sway changes pixels by up to 0.06 (empty) and 0.13 (object at rest), which 0.03 stretched to full scale.
+  # Smallest divisor of the change encoding (0-1 grey scale): keeps sensor noise in a still scene small instead of stretching it to 1.
+  # Simulation frames are taken at the 0.02 s control period nearest each k / frame_rate_hz (at most 6.7 ms off) until
+  # Go2World offers a physics-step hook (asked of Person A, messages log 2026-11-21); then physics_step (at most 1 ms off).
+  sim_timing: nearest_control_period
+  head_camera:  # Head view rendered on Person B's side until world.render_frame(camera="head") exists. Pose: Person A's proof camera (messages log, 2026-11-21 20:29 UTC).
+    pos_m: [0.34, 0.0, 0.017]  # Camera position in the trunk (base_link) frame, m; it looks along trunk +x.
+    pitch_up_deg: 0.0  # Upward tilt of the optical axis from trunk +x.
+    fovy_deg: 45.0  # Vertical field of view; the image is square. A 16:9 laptop camera of about 75-78 degrees diagonal has about 43 degrees vertically, which the centre crop keeps both ways.
+    render_size: 96  # Square render in pixels: 8 x 8 source pixels per output cell.
+  augmentation:  # Image-space variation of simulation frames only (never live frames), one seeded draw per window: uniform in each range.
+    exposure_gain: [0.7, 1.3]  # Multiplies the grey levels.
+    exposure_bias: [-0.1, 0.1]  # Added to the grey levels (0-1 scale).
+    noise_std: [0.0, 0.01]  # Standard deviation of independent Gaussian noise per pixel and frame (0-1 scale).
+    blur_mix: [0.0, 0.5]  # Share of a 3 x 3 box blur mixed into each frame.
+  test_vectors: artifacts/vision/preprocess_vectors.json  # Input images and expected 12 x 12 outputs, for the browser's parity test.
+
+inference:  # learned_judgment.runtime (Person B): the frozen student behind the gate, on this computer only.
+  gate:
+    votes_needed: 3  # An active command needs the same action voted in at least this many ...
+    of_last: 4  # ... of the last this many outputs (talkhere.md, "Threat gate").
+    cooldown_s: 1.0  # Minimum time between two issued active commands.
+    uncertain_floor: 0.5  # A threat score at or above this without a passed gate is shown as UNCERTAIN; below it as NO_OP. Both send the zero command.
+    # Groups of actions the gate counts as one decision (scores summed, votes pooled; the side issued is the member with the larger
+    # score summed over the group's votes). A punch straight at the camera splits the student's score between left and right.
+    interchangeable: [[DODGE_LEFT, DODGE_RIGHT]]
+    precision_target: 0.99  # Preregistered: share of issued active commands on simulation dev trajectories that answer a true threat.
+    # Thresholds tried on simulation dev trajectories; the frozen choice is saved with the exported student, not here.
+    calibration_grid:
+      threat: [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99]
+      action: [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+      margin: [0.1, 0.2, 0.3, 0.5, 0.7]
+
+observed:  # learned_judgment.observed (Person B): the learning run of a skill whose inputs are observed inside the episode (dodge_vision, ramp).
+  runs_dir: results/runs  # One directory per run: events.jsonl (progress, one JSON line per event), result.json, arrays and the exported student.
+  world_seed: 0  # Constructor seed of every Go2World of a run (the hidden world).
+  world_preset: default
+  workers: 2  # Processes running independent episodes side by side (episodes are deterministic; tests/env/test_determinism.py).
+  ramp:
+    context_scenarios: 20  # up to 80 episodes (4 candidates where the detector decided). MISSION says 10-40 attempts per skill: lead's call.
+    dev_scenarios: 60
+    test_scenarios: 60
+    dream_situations: 4000  # no simulator: sampled over feature_ranges
+    snn_hidden_sizes: [32]  # 4 inputs, 4 outputs
+    snn_max_steps: 3000
+    fast_attempts: 40  # Fast run (run_skill --mode fast): context scenarios, ONE episode each; 40 = the top of MISSION.md's 10-40 attempts.
+    fast_dream_situations: 1000  # Fast run: dream situations (no simulator) scored by the teacher; 1000 x 4 candidates.
+    fast_snn_max_steps: 1200  # Fast run: max optimizer steps of the spiking student (the full run's snn_max_steps is 3000).
+  dodge_vision:
+    context_scenarios: 80  # Scenarios whose four actions are all run for the teacher's context: 320 measured rows.
+    dream_episodes: 4000  # Rendered zero-command episodes; x windows_per_dream_episode dream situations.
+    dev_scenarios: 240  # Dev split: thresholds, frame count and settings are chosen here.
+    test_scenarios: 240  # Held-out split: run once, after the freeze.
+    snn_hidden_sizes: [128]  # Starting value; compare on dev.
+    snn_max_steps: 6000  # The configured 1500 was reached without convergence on DODGE (dev check E11).
+    conv_diagnostic:  # A plain conv net on the same dream and dev trace as the spiking student: a measurement, never a student.
+      frames: 4  # Newest frames of the window, as the v4 student reads.
+      steps: 2000  # Optimizer steps, as the v4 sweep.
+      channels: [16, 32]  # Output channels of the two 3 x 3 conv layers.
+      batch: 256  # Rows per optimizer step.
+      learning_rate: 0.001  # Adam.
+      network_limit_recall: 0.60  # Rule fixed before any result: dev recall at the chosen thresholds at or above this means the spiking network or its encoding is the limit.
+      input_limit_recall: 0.45  # At or below this, the 12 x 12 input or the dream labels are the limit; between the two the result is inconclusive.
+  move:
+    context_scenarios: 15  # x 32 candidates = 480 teacher context rows (every candidate is run per scenario).
+    dev_scenarios: 45  # 1440 rows; physics rule and teacher are compared here.
+    test_scenarios: 45  # Held-out split of move run.
+    dream_situations: 4000  # No simulator: sampled requests x 32 candidates of physics guess.
+    snn_hidden_sizes: [32]  # 5 inputs, 32 outputs.
+    snn_max_steps: 3000  # As observed.ramp.
+    fast_attempts: 40  # Fast run (run_skill --mode fast): context scenarios, ONE episode each; 40 = the top of MISSION.md's 10-40 attempts.
+    fast_dream_situations: 1000  # Fast run: dream situations (no simulator); 1000 x 32 candidates = 32000 query rows, one request chunk per outcome.
+    fast_snn_max_steps: 600  # Fast run: max optimizer steps of the spiking student. Was 1200: move-fast1 spent 35.2 s of its 51.1 s train step on 1200 steps (dream validation loss 0.0100 at 600, 0.0058 at 1200); wall time only. move-fast2 (600 steps, loop 23.7 s) shared the CPU with another 6-worker run, so its gain is not cleanly measured.
+  reflex:
+    attempt_episodes: 12  # Exploration episodes on context scenarios; every decision of each is a teacher row. Also per improvement round of `loop`.
+    # On-policy attempts (attempts --policy student; loop rounds 1+): share of decisions taken by a random candidate
+    # instead of the student, so the teacher still sees other commands in the states the student's own choices reach.
+    student_explore_fraction: 0.3
+    dream_episodes: 20  # Further unbilled rule-of-thumb episodes on dream scenarios whose sensor windows join the dream.
+    dev_scenarios: 30  # Each loop round's student is judged here (snn only); the run keeps the best round (reflex.py ROUND CHOICE).
+    test_scenarios: 30  # Split "test": looked at after every round of run reflex2, so no longer held out.
+    test2_scenarios: 30  # Split "test2" (own seed code 5): the held-out split of the loop's final run from run reflex3 on, looked at once per run.
+    fast_attempts: 8  # Fast run: exploration episodes.
+    fast_dream_episodes: 10  # Fast run: extra dream episodes.
+    fast_snn_max_steps: 1500  # Fast run: max optimizer steps of the spiking student.
+    snn_hidden_sizes: [64]
+    snn_max_steps: 3000
+    tracks_per_method: 6  # run: the per-period pose track (qpos) of the first this many scenarios of the split, per method.
+
+app:  # The local viewer server: uv run python -m app.server
+  host: 127.0.0.1  # The only address the server accepts: it serves this machine alone.
+  port: 8765  # --port overrides it; --port 0 picks a free port and prints it.
+  stream_fps: 10  # PNG frames per second on /api/stream; must divide the 50 Hz control rate into whole control periods.
+  observation_hz: 10  # Observation events per second on /api/events; the same rule as stream_fps.
+  pose_hz: 25  # Body pose events per second on /api/events for the 3D view; the same rule as stream_fps.
+  fall_restart_pause_s: 2.0  # After a fall, seconds the fallen dog stays on screen before a fresh episode starts.
+  png_compression_level: 1  # zlib level 0-9; measured on 640x480 frames: level 1 13 ms and 64 kB, level 6 51 ms and 61 kB.
+  # GET /api/stream frames (app/simulation.py FrameRenderer): drawn on a thread of their own from the newest stage state,
+  # so a frame is skipped, never queued, while the renderer is busy, and rendering never holds up the simulation or its
+  # pose events. Measured on this laptop under load (60 frames each, PNG level 1, 2026-11-22): 640x480 with MuJoCo's
+  # default shadows 227 ms a frame, 640x480 without 97 ms, 480x360 without 81 ms; the Go2's visual meshes (196748
+  # faces) cost about 55 ms of it whatever the size.
+  stream:
+    width: 480  # pixels; at most the model's offscreen buffer, 640 x 480 (world.render)
+    height: 360
+    shadows: false
+  # POST /api/episodes/start (app/player.py): a run's own episodes replayed on the stage, paced to the wall clock.
+  episodes:
+    pause_s: 1.5  # The end of a played episode stays on the stage this long before the next one starts.
+    resync_after_s: 0.25  # A played episode further than this behind the wall clock restarts its clock instead of rushing.
+    stop_timeout_s: 15.0  # How long a stop waits for the player thread (a reset settles with no point to stop at).
+  # POST /api/chat: Claude turns a request into a declaration (data only, validated, never executed). The key is
+  # ANTHROPIC_API_KEY from the server's environment, else from env_file; it never reaches a response, log or file.
+  chat:
+    env_file: .env  # Relative to the repository root (git-ignored); the environment variable wins over it.
+    model: claude-opus-5-5  # The claude-api skill's default model (2026-11-21).
+    effort: low  # output_config.effort; low suits a short extraction-style turn. Raise only if declarations go wrong.
+    max_tokens: 16000  # Output cap including adaptive thinking; the skill's default for a non-streaming request.
+    timeout_s: 60.0  # Per request, in seconds; the SDK retries a timeout max_retries times on top.
+    max_retries: 2  # The SDK default: connection errors, 408, 409, 429 and 5xx.
+    max_messages: 20  # Messages per chat request (the browser sends the whole conversation).
+    max_message_chars: 4000  # Characters per message.
+  runs:
+    poll_s: 0.5  # Seconds between looks for new lines in the run event files (observed.runs_dir) relayed as SSE.
+  infer:
+    # The frozen student directory (student.json, network.npz, network.json with frozen thresholds), relative to the
+    # repository root; Dev B's observed run exports it to <observed.runs_dir>/<run>/student/. null until one exists.
+    student_dir: results/runs/v5try/student  # v5 scenes student for a live-camera try; gate target NOT met (see its student.json).
+    # Development only: {threat, action, margin} passed to the runtime when the student has no frozen thresholds; every
+    # answer, the infer capability and the log then say so. Never committed set; null uses frozen thresholds only.
+    dev_thresholds: null
+    # A frame age (receive time minus the browser's captured_ms, both wall clocks) outside 0 to this is clock skew:
+    # it is taken as 0 and flagged in the answer, never an error.
+    max_frame_age_ms: 2000
