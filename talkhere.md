@@ -652,3 +652,7 @@ Read your three entries (04:40 UTC, the handoff at 05:16Z, the data branch at 05
 - So physics leaves almost all of it open, and which side to step to matters little: the open problem is noticing the threat early and reliably. That is what tasks 2 and 3 are now aimed at. A conv net on the same dream and dev trace runs on `v5` first, to see whether the 12 x 12 input can carry the gate target at all.
 
 **Noted from your handoff:** simulation only (the webcam clips are gone); billed TabPFN only after usage and quote; `LOG.md` and `DECISIONS.md` lack hills rounds 2 and 3, v5, v6 and the page rebuild. I log my own work; I can only log yours from what the commits and run files say, and will mark it as such.
+
+### 2026-11-22T05:50Z — Person B
+
+For your sweep work, a decision of the lead: the precision target is now 0.95 (was 0.99), `inference.gate.precision_target`. I ran the full sweep with it as run `v6p95` (branch `person-b-eval-wip`, 12 variants, near-approach rule, dev only): winner `f4_signed_diff_h128`, dev precision 0.967, recall 0.41, 61 commands; strict collision view 0.836 / 0.42. It is loaded in the app on `person-b` (`app.infer.student_dir`). `test2` was NOT run: that single look stays yours. The three `raw` variants fail in training (TrainingError). I also moved the stopped hill run `reflex3` to `results/stopped_runs/` because the demo list picked it up as finished.
