@@ -24,6 +24,11 @@ robot:
     source: https://github.com/unitreerobotics/unitree_mujoco/tree/1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d/unitree_robots/go2
     revision: 1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d
     sha256: 2014a3d76e30f17ab9447d8a67bd015291f74fa4d71ae30d005f1a32bd693d4b
+  # Look only: overrides go2.xml's material colours after loading (the file and its hash stay upstream's).
+  material_rgba:
+    black: [1.0, 0.31, 0.64, 1.0]  # pink: trunk, calves, feet
+    gray: [0.0, 0.9, 1.0, 1.0]     # cyan: trunk trim, hips, thighs
+    metal: [1.0, 0.75, 0.88, 1.0]  # light pink: joint covers
   walking_policy:
     # verified: the command fields and ranges in command_schema below were each proven by a recorded run (E4). It says
     # nothing about speed-tracking accuracy: see experiments/EXPERIMENTS_LOG.md, "Gate 1 — locomotion acceptance".
