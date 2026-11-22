@@ -48,12 +48,17 @@ Files of the command line, one directory per call (the observed.py array contrac
                 with its detection record)
     dream.npz   scenario_index (m,) int64, decision_time_s (m,) float64, features (m, D) float32,
                 physics (m, C, K) float64
-    dream.json  the keys of rows.json plus sampling
+    dream.json  the keys of rows.json plus sampling (mode: skills.ramp.dream_sampling; recorded adds the rows
+                directory, the number of scenarios drawn from and the noise)
     run.json    records (per scenario: the nominal pass-through and the student) and summary per method
 
     python -m learned_judgment.skills.ramp rows --split {context|dev|test} --out DIR [--n N]
     python -m learned_judgment.skills.ramp attempts --out DIR [--n N]
-    python -m learned_judgment.skills.ramp dream --out DIR [--n N]
+    python -m learned_judgment.skills.ramp dream --out DIR [--n N] [--from-rows DIR]
+
+dream (no simulator), by skills.ramp.dream_sampling: uniform draws each feature independently over its range;
+recorded draws the measured feature vectors of the context rows in --from-rows (one per scenario, with its decision
+time) plus noise with the measured vectors' covariance times skills.ramp.dream_noise squared (recorded_situations).
 
 attempts (the fast run's context, MISSION.md's 10-40 attempts) runs ONE episode per context scenario, N default
 observed.ramp.fast_attempts: with probability engine.attempt_exploration_fraction a uniform candidate, else the physics
@@ -120,6 +125,7 @@ __all__ = [
     "objective",
     "physics_choice",
     "physics_guess",
+    "recorded_situations",
     "run_episode",
     "run_student",
     "sample_ramp_scenarios",
@@ -1094,12 +1100,52 @@ def collect_attempts(config: Mapping[str, Any], out_dir: str | Path, n: int | No
     return meta
 
 
-def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None = None) -> dict[str, Any]:
+def recorded_situations(
+    features: np.ndarray, decision_time_s: np.ndarray, scenario_index: np.ndarray, n: int, noise: float,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray]:
+    """n dream situations drawn from measured ones: (n, D) float32 features in [0, 1] and (n,) float64 decision times.
+
+    One feature vector and decision time per scenario (its first row; a full rows run repeats them once per
+    candidate), scenarios picked uniformly with replacement (rng.integers), then a smoothed bootstrap: noise drawn from
+    a normal with mean 0 and covariance noise^2 x cov(V) of the per-scenario vectors V (rng.multivariate_normal,
+    method eigh, which tolerates a singular covariance), so features that move together stay together and a feature
+    constant across the scenarios gets none; no noise with fewer than two scenarios or noise 0. Clipped to [0, 1].
+    Each situation keeps its scenario's decision time.
+    """
+    features = np.asarray(features, dtype=np.float32)
+    times = np.asarray(decision_time_s, dtype=np.float64)
+    index = np.asarray(scenario_index)
+    r = features.shape[0] if features.ndim == 2 else -1
+    if r < 1 or times.shape != (r,) or index.shape != (r,):
+        raise ValueError(f"features (r >= 1, D), decision_time_s (r,) and scenario_index (r,) must agree; got "
+                         f"{features.shape}, {times.shape}, {index.shape}")
+    n = _count("n", n)
+    if not (math.isfinite(noise) and noise >= 0.0):
+        raise ValueError(f"noise must be finite and >= 0; got {noise!r}")
+    _, first = np.unique(index, return_index=True)
+    rows = first[rng.integers(first.size, size=n)]
+    drawn = features[rows].astype(np.float64)
+    if first.size >= 2 and noise > 0.0:
+        vectors = features[first]
+        offsets = rng.multivariate_normal(np.zeros(vectors.shape[1]), noise**2 * np.cov(vectors, rowvar=False),
+                                          size=n, method="eigh")
+        offsets[:, np.ptp(vectors, axis=0) == 0.0] = 0.0  # exactly none, not eigh's rounding residue
+        drawn += offsets
+    return np.clip(drawn, 0.0, 1.0).astype(np.float32), times[rows]
+
+
+def collect_dream(
+    config: Mapping[str, Any], out_dir: str | Path, n: int | None = None, from_rows: str | Path | None = None
+) -> dict[str, Any]:
     """Write <out_dir>/dream.npz and dream.json without a simulator; returns the meta.
 
-    n situations (default observed.ramp.dream_situations) from the dream seed: features uniform in [0, 1) per feature
-    (uniform over the declared feature ranges), then decision times uniform in skills.ramp.dream_decision_time_range_s;
-    the physics guess of every candidate with remaining time episode_duration_s - decision time.
+    n situations (default observed.ramp.dream_situations) from the dream seed, by skills.ramp.dream_sampling:
+      uniform   features uniform in [0, 1) per feature (uniform over the declared feature ranges), then decision times
+                uniform in skills.ramp.dream_decision_time_range_s (the behaviour before the key).
+      recorded  recorded_situations over <from_rows>/rows.npz (ramp rows --split context or ramp attempts) with noise
+                skills.ramp.dream_noise; ValueError without from_rows.
+    Then the physics guess of every candidate with remaining time episode_duration_s - decision time.
     """
     n = _count("n", require(config, f"{_OBSERVED}.dream_situations") if n is None else n)
     spec = build_observed_spec(config)
@@ -1109,17 +1155,48 @@ def collect_dream(config: Mapping[str, Any], out_dir: str | Path, n: int | None 
     low, high = _pair(config, times_key, minimum=0.0)
     if high > duration:
         raise ConfigError(f"config.yaml key {times_key!r} must end by episode_duration_s {duration}; got {[low, high]}")
+    mode = require(config, f"{_ROOT}.dream_sampling")
+    if mode not in ("uniform", "recorded"):
+        raise ConfigError(f"config.yaml key '{_ROOT}.dream_sampling' must be uniform or recorded; got {mode!r}")
     rng = np.random.default_rng(np.random.SeedSequence([require(config, "runtime.seed"), SPLIT_CODES["dream"]]))
-    features = rng.random((n, len(FEATURE_NAMES))).astype(np.float32)
-    decision_time_s = rng.uniform(low, high, size=n)
+    if mode == "uniform":
+        features = rng.random((n, len(FEATURE_NAMES))).astype(np.float32)
+        decision_time_s = rng.uniform(low, high, size=n)
+        sampling = {
+            "mode": "uniform",
+            "features": "sampled uniformly over the declared feature ranges, not rendered",
+            "decision_time_s": f"uniform in {times_key} {[low, high]}",
+            "draw_order": "rng.random((n, D)) then rng.uniform(low, high, n)",
+        }
+    else:
+        if from_rows is None:
+            raise ValueError(f"{_ROOT}.dream_sampling is recorded: pass the context rows directory (--from-rows DIR)")
+        folder = Path(from_rows)
+        rows_meta = json.loads((folder / "rows.json").read_text(encoding="utf-8"))
+        if rows_meta.get("feature_names") != list(FEATURE_NAMES) or not np.allclose(
+                rows_meta.get("feature_ranges"), _feature_ranges(config)):
+            raise ValueError(f"{folder / 'rows.json'} was measured with other features or feature ranges than config.yaml")
+        noise = _non_negative(config, f"{_ROOT}.dream_noise")
+        with np.load(folder / "rows.npz") as rows:
+            index = rows["scenario_index"]
+            features, decision_time_s = recorded_situations(rows["features"], rows["decision_time_s"], index, n, noise, rng)
+        sampling = {
+            "mode": "recorded",
+            "rows": folder.as_posix(),
+            "n_scenarios_drawn_from": int(np.unique(index).size),
+            "dream_noise": noise,
+            "noise": f"noise covariance = dream_noise squared x covariance of the measured vectors (dream_noise {noise})",
+            "features": "the measured feature vector of a context scenario (its first row), scenarios drawn uniformly "
+                        "with replacement, plus that normal noise (none for a feature constant across the scenarios, "
+                        "none with fewer than two scenarios), clipped to [0, 1]",
+            "decision_time_s": "the drawn scenario's measured decision time",
+            "draw_order": "rng.integers(scenarios, n) then rng.multivariate_normal(0, dream_noise^2 cov(V), n, "
+                          "method='eigh')",
+        }
     physics = physics_guess(config, np.repeat(features, c, axis=0), np.tile(np.arange(c), n),
                             np.repeat(duration - decision_time_s, c)).reshape(n, c, k)
     meta = _meta(config, "dream", [], n)
-    meta["sampling"] = {
-        "features": "sampled uniformly over the declared feature ranges, not rendered",
-        "decision_time_s": f"uniform in {times_key} {[low, high]}",
-        "draw_order": "rng.random((n, D)) then rng.uniform(low, high, n)",
-    }
+    meta["sampling"] = sampling
     _write(Path(out_dir), "dream", meta, scenario_index=np.arange(n, dtype=np.int64), decision_time_s=decision_time_s,
            features=features, physics=physics)
     best = np.argmax(objective(config, OutcomeDistribution.point(
@@ -1341,9 +1418,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     attempts = commands.add_parser("attempts", help="context split, ONE episode per scenario (explore or physics rule)")
     attempts.add_argument("--out", required=True, help="output directory")
     attempts.add_argument("--n", type=int, help="attempts (default observed.ramp.fast_attempts)")
-    dream = commands.add_parser("dream", help="dream situations sampled over the feature ranges (no simulator)")
+    dream = commands.add_parser("dream", help="dream situations by skills.ramp.dream_sampling (no simulator)")
     dream.add_argument("--out", required=True, help="output directory")
     dream.add_argument("--n", type=int, help="situations (default observed.ramp.dream_situations)")
+    dream.add_argument("--from-rows", help="context rows directory (required when dream_sampling is recorded)")
     run = commands.add_parser("run", help="closed-loop episodes: the student next to the nominal pass-through")
     run.add_argument("--student", required=True, help="exported student directory (observed train)")
     run.add_argument("--split", required=True, choices=("context", "dev", "test"))
@@ -1357,7 +1435,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     elif args.command == "attempts":
         collect_attempts(config, args.out, args.n)
     elif args.command == "dream":
-        collect_dream(config, args.out, args.n)
+        collect_dream(config, args.out, args.n, args.from_rows)
     else:
         run_id = args.run if args.run else _student_run_id(args.student)
         run_student(config, args.student, args.split, args.out, args.n, run_id=run_id,
