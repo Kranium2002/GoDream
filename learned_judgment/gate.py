@@ -8,13 +8,22 @@ skills.dodge_vision.actions (NO_OP, DODGE_LEFT, DODGE_RIGHT, RETREAT). Internal 
 reach this module; only the readout does. :class:`ThreatGate` turns the stream of readouts into
 the action emitted for each frame and stays quiet unless the threat is clear:
 
-    vote      a frame votes for its best active action (the highest-scored action other than
-              the zero command, the first in readout order on a tie) only when
-              threat confidence >= threat threshold, that action's score >= action threshold,
-              and its score minus the highest other score (the zero command included)
-              >= margin threshold; otherwise, or when the readout is unusable, it casts no vote
-    issue     an active command is issued when the same action is voted in at least
-              votes_needed of the last of_last frames and no cooldown is running
+    groups    the active actions (all but the zero command) form decision groups: each group of
+              config.yaml inference.gate.interchangeable (actions that count as one decision, such
+              as stepping left or right) and a group of its own for every other active action,
+              ordered by the readout position of each group's first member (members in readout
+              order); a group's score is the sum of its members' scores
+    vote      a frame votes for its best group (the highest-scored group, the first in group
+              order on a tie) only when threat confidence >= threat threshold, that group's
+              score >= action threshold, and its score minus the highest of the zero command's
+              score and every other group's score >= margin threshold; otherwise, or when the
+              readout is unusable, it casts no vote
+    side      the best action is the member of the best group with the highest score summed
+              over this frame and the earlier frames of the vote window that voted for the same
+              group (just this frame's scores when it casts no vote), the first in readout order
+              on a tie; it is the action reported and, when the gate passes, issued
+    issue     an active command (the best action) is issued when the same group is voted in at
+              least votes_needed of the last of_last frames and no cooldown is running
     hold      an issued command is emitted for hold_s seconds
     cooldown  no new active command is issued for cooldown_s seconds after the last one
               (cooldown_s >= hold_s); a frame that passes the gate then is a cooldown conflict
@@ -22,11 +31,12 @@ the action emitted for each frame and stays quiet unless the threat is clear:
               is unusable or the threat confidence is at or above uncertain_floor; both send the
               zero command (config.yaml inference.gate.uncertain_floor)
 
-Thresholds are the frozen calibration saved with the exported student; votes_needed, of_last,
-cooldown_s and uncertain_floor come from config.yaml inference.gate, hold_s from
-skills.dodge_vision.hold_s. Scores are used as given (not renormalised). Time is only the
-caller's t_s in seconds, never decreasing within a stream (no wall clock, no randomness); a new
-stream starts with :meth:`ThreatGate.reset`.
+With no interchangeable groups every active action is its own group, so the group is the action
+and its score the action's score. Thresholds are the frozen calibration saved with the exported
+student; votes_needed, of_last, cooldown_s, uncertain_floor and interchangeable come from
+config.yaml inference.gate, hold_s from skills.dodge_vision.hold_s. Scores are used as given (not
+renormalised). Time is only the caller's t_s in seconds, never decreasing within a stream (no
+wall clock, no randomness); a new stream starts with :meth:`ThreatGate.reset`.
 """
 
 from __future__ import annotations
@@ -67,20 +77,25 @@ class GateSettings:
     action_names      readout order of the action scores (keys of skills.dodge_vision.actions)
     no_op             name of the zero command in action_names
     threat_threshold  minimum threat confidence for a vote, in [0, 1]
-    action_threshold  minimum score of the best active action for a vote, in [0, 1]
-    margin_threshold  minimum of that score minus the highest other score for a vote, in [0, 1]
-    votes_needed      votes for the same action needed in the window, 1 <= votes_needed <= of_last
+    action_threshold  minimum score of the best group for a vote, in [0, 1]
+    margin_threshold  minimum of that score minus the highest other score (the zero command's
+                      or another group's) for a vote, in [0, 1]
+    votes_needed      votes for the same group needed in the window, 1 <= votes_needed <= of_last
     of_last           outputs in the vote window
     cooldown_s        seconds after an issued command in which no other is issued, >= hold_s
     hold_s            seconds an issued command is emitted, finite and > 0
     uncertain_floor   threat confidence at or above which an output without a passed gate is
                       UNCERTAIN rather than no_op, in [0, 1]
+    interchangeable   groups of active action names that count as one decision; every name an
+                      active action (never no_op), no name twice, each group at least 2 names;
+                      () (the default): every active action is its own group
 
     Numbers are stored as float (thresholds, floor, seconds) and int (vote counts).
 
     Raises:
-        TypeError for a value of the wrong type (action_names not a tuple of str, a vote count
-        not an int, another field not a real number); ValueError for a value out of range.
+        TypeError for a value of the wrong type (action_names not a tuple of str, interchangeable
+        not a tuple of tuples of str, a vote count not an int, another field not a real number);
+        ValueError for a value out of range.
     """
 
     action_names: tuple[str, ...]
@@ -93,6 +108,7 @@ class GateSettings:
     cooldown_s: float
     hold_s: float
     uncertain_floor: float
+    interchangeable: tuple[tuple[str, ...], ...] = ()
 
     def __post_init__(self) -> None:
         names = self.action_names
@@ -125,6 +141,23 @@ class GateSettings:
             raise ValueError(f"hold_s must be > 0; got {hold_s}")
         if not cooldown_s >= hold_s:
             raise ValueError(f"cooldown_s must be >= hold_s; got cooldown_s {cooldown_s}, hold_s {hold_s}")
+        groups = self.interchangeable
+        if not isinstance(groups, tuple) or not all(
+            isinstance(group, tuple) and all(isinstance(name, str) for name in group) for group in groups
+        ):
+            raise TypeError(f"interchangeable must be a tuple of tuples of str; got {groups!r}")
+        seen: set[str] = set()
+        for group in groups:
+            if len(group) < 2:
+                raise ValueError(f"each interchangeable group needs at least two actions; got {group!r}")
+            for name in group:
+                if name == self.no_op:
+                    raise ValueError(f"the zero command {name!r} cannot be in an interchangeable group; got {group!r}")
+                if name not in names:
+                    raise ValueError(f"interchangeable name {name!r} is not in action_names {names!r}")
+                if name in seen:
+                    raise ValueError(f"interchangeable names must appear once; {name!r} repeats in {groups!r}")
+                seen.add(name)
 
     def _real(self, field: str) -> float:
         value = getattr(self, field)
@@ -146,12 +179,14 @@ class GateSettings:
                         simulation dev trajectories and saved with the exported student.
 
         action_names are the keys of skills.dodge_vision.actions in config order; no_op is the
-        one action whose command fields are all 0.0; votes_needed, of_last, cooldown_s and
-        uncertain_floor come from inference.gate, hold_s from skills.dodge_vision.hold_s.
+        one action whose command fields are all 0.0; votes_needed, of_last, cooldown_s,
+        uncertain_floor and interchangeable (a list of lists of action names, possibly empty)
+        come from inference.gate, hold_s from skills.dodge_vision.hold_s.
 
         Raises:
-            ConfigError for a missing or null key, or skills.dodge_vision.actions that is not a
-            non-empty mapping of non-empty command mappings of numbers. TypeError when
+            ConfigError for a missing or null key, skills.dodge_vision.actions that is not a
+            non-empty mapping of non-empty command mappings of numbers, or
+            inference.gate.interchangeable that is not a list of lists of str. TypeError when
             thresholds is not a mapping. ValueError when thresholds does not have exactly the
             three keys, or unless exactly one action has every command field 0.0. Whatever
             GateSettings validation raises.
@@ -180,6 +215,13 @@ class GateSettings:
             raise ValueError(
                 f"exactly one action of skills.dodge_vision.actions must have every command field 0.0; got {zero!r}"
             )
+        groups = require(config, "inference.gate.interchangeable")
+        if not isinstance(groups, list) or not all(
+            isinstance(group, list) and all(isinstance(name, str) for name in group) for group in groups
+        ):
+            raise ConfigError(
+                f"config.yaml key 'inference.gate.interchangeable' must be a list of lists of action names; got {groups!r}"
+            )
         return cls(
             action_names=tuple(actions),
             no_op=zero[0],
@@ -191,6 +233,7 @@ class GateSettings:
             cooldown_s=require(config, "inference.gate.cooldown_s"),
             hold_s=require(config, "skills.dodge_vision.hold_s"),
             uncertain_floor=require(config, "inference.gate.uncertain_floor"),
+            interchangeable=tuple(tuple(group) for group in groups),
         )
 
 
@@ -203,11 +246,15 @@ class GateOutput:
     holding              True while an issued command is held (including the output that issued it)
     valid                False when the readout was not a usable set of finite numbers
     threat_confidence    the readout's threat confidence (0.0 when not valid)
-    best_action          highest-scored active action (no_op when not valid)
-    action_confidence    its score (0.0 when not valid)
-    margin               its score minus the highest other score (0.0 when not valid)
+    best_action          the best group's member chosen as its side (the module docstring), the
+                         action issued when the gate passes (no_op when not valid); with no
+                         interchangeable groups, the highest-scored active action
+    action_confidence    the best group's score (0.0 when not valid)
+    margin               that score minus the highest of the zero command's score and every other
+                         group's score (0.0 when not valid)
     threat_ok, action_ok, margin_ok   the three threshold tests (all False when not valid)
-    votes                entries of the vote window equal to this output's vote (0 when it casts none)
+    votes                entries of the vote window voting for the same group as this output (0
+                         when it casts none)
     passed               it votes and votes >= votes_needed
     cooldown_remaining_s seconds until another active command may be issued, >= 0
     hold_remaining_s     seconds the issued command is still held, >= 0
@@ -239,12 +286,21 @@ class ThreatGate:
         if not isinstance(settings, GateSettings):
             raise TypeError(f"settings must be a GateSettings; got {type(settings).__name__}")
         self.settings = settings
-        self._active = tuple(i for i, name in enumerate(settings.action_names) if name != settings.no_op)
+        index = {name: i for i, name in enumerate(settings.action_names)}
+        grouped = [tuple(sorted(index[name] for name in group)) for group in settings.interchangeable]
+        in_group = {i for group in grouped for i in group}
+        units = grouped + [(i,) for i in range(len(settings.action_names)) if i not in in_group]
+        # Units: the decision groups and the zero command on its own, members in readout order, units
+        # ordered by the readout position of their first member (all singletons: exactly readout order).
+        self._units = tuple(sorted(units, key=lambda unit: unit[0]))
+        self._no_op_unit = self._units.index((index[settings.no_op],))
+        self._groups = tuple(k for k in range(len(self._units)) if k != self._no_op_unit)
         self.reset()
 
     def reset(self) -> None:
         """Forget the vote window, the held command, the cooldown and the last time."""
-        self._history: deque[str | None] = deque(maxlen=self.settings.of_last)
+        # One entry per output: None (no vote) or (voted unit, its members' scores).
+        self._history: deque[tuple[int, tuple[float, ...]] | None] = deque(maxlen=self.settings.of_last)
         self._held: str | None = None
         self._hold_until: float | None = None
         self._cooldown_until: float | None = None
@@ -295,33 +351,48 @@ class ThreatGate:
         threat = _finite(threat_confidence)
         scores = self._scores(action_scores)
         valid = threat is not None and 0.0 <= threat <= 1.0 and scores is not None
+        vote: int | None = None
         if valid:
-            best = max(self._active, key=lambda i: scores[i])  # first in readout order on a tie
-            best_action = s.action_names[best]
-            confidence = scores[best]
-            margin = confidence - max(score for i, score in enumerate(scores) if i != best)
+            unit_scores = []
+            for unit in self._units:  # a singleton's score is its member's score exactly
+                total = scores[unit[0]]
+                for i in unit[1:]:
+                    total += scores[i]
+                unit_scores.append(total)
+            best = max(self._groups, key=lambda k: unit_scores[k])  # first in group order on a tie
+            confidence = unit_scores[best]
+            margin = confidence - max(score for k, score in enumerate(unit_scores) if k != best)
             threat_ok = threat >= s.threat_threshold
             action_ok = confidence >= s.action_threshold
             margin_ok = margin >= s.margin_threshold
-            vote = best_action if threat_ok and action_ok and margin_ok else None
+            members = self._units[best]
+            own = tuple(scores[i] for i in members)
+            vote = best if threat_ok and action_ok and margin_ok else None
+            self._history.append(None if vote is None else (vote, own))
+            if len(members) == 1:
+                side = members[0]
+            else:  # summed over this output and the window's earlier votes for the same group
+                rows = [own] if vote is None else [entry[1] for entry in self._history if entry is not None and entry[0] == vote]
+                totals = [sum(row[j] for row in rows) for j in range(len(members))]
+                side = members[max(range(len(members)), key=lambda j: totals[j])]  # first in readout order on a tie
+            best_action = s.action_names[side]
         else:
             threat = confidence = margin = 0.0
             best_action = s.no_op
             threat_ok = action_ok = margin_ok = False
-            vote = None
+            self._history.append(None)
 
-        self._history.append(vote)
-        votes = sum(1 for entry in self._history if entry == vote) if vote is not None else 0
+        votes = sum(1 for entry in self._history if entry is not None and entry[0] == vote) if vote is not None else 0
         passed = vote is not None and votes >= s.votes_needed
 
         holding_now = self._hold_until is not None and t < self._hold_until
         in_cooldown = self._cooldown_until is not None and t < self._cooldown_until
         issued = cooldown_conflict = False
         if passed and not in_cooldown:
-            self._held = vote
+            self._held = best_action
             self._hold_until = t + s.hold_s
             self._cooldown_until = t + s.cooldown_s
-            action, issued, holding = vote, True, True
+            action, issued, holding = best_action, True, True
         elif passed:
             cooldown_conflict = True
             holding = holding_now

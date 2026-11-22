@@ -1,0 +1,87 @@
+{
+ "format": "learned-judgment/observed-student/v1",
+ "skill": "ramp",
+ "action_names": [
+  "vx+0.40_yaw+0.00",
+  "vx+0.60_yaw+0.00",
+  "vx+0.80_yaw+0.00",
+  "vx+1.00_yaw+0.00"
+ ],
+ "heads": {
+  "action": [
+   0,
+   4
+  ]
+ },
+ "no_op_index": null,
+ "input": {
+  "features": 4,
+  "encoding": "(x - 0.5) * sqrt(12)"
+ },
+ "vision": null,
+ "thresholds": null,
+ "provenance": {
+  "dream": "D:/BerlinPrior/results/runs/ramp-fast1/dream",
+  "scores": "D:/BerlinPrior/results/runs/ramp-fast1/scores.npz",
+  "frames": null,
+  "window_encoding": null,
+  "diff_floor": null,
+  "hidden_sizes": [
+   32
+  ],
+  "max_steps": 1200,
+  "run_id": "ramp-fast1",
+  "dream_config_digest": "4cc5d7cfd8ad29061e62654f1d5b786ca347b8ddf3f2171b55ce2fa9f50de729",
+  "scores_sha256": "df5bdc3032ca9795797199b66506862e36bcccf44c5dce37aa27b5c82de4d005",
+  "teacher_request_keys": [
+   "3c41121702c1603ff3b732991292ff8927aaeb385af826de311f4277528ba716"
+  ],
+  "config_digest": "4cc5d7cfd8ad29061e62654f1d5b786ca347b8ddf3f2171b55ce2fa9f50de729",
+  "seeds": {
+   "seed": 20261121,
+   "streams": {
+    "validation_split": "ramp/observed/validation_split",
+    "init": "ramp/observed/init",
+    "train": "ramp/observed/train"
+   },
+   "init": 872435232,
+   "train": 1453346127
+  },
+  "training_settings": {
+   "hidden_sizes": [
+    32
+   ],
+   "time_steps": 10,
+   "beta": 0.9,
+   "threshold": 1.0,
+   "readout_beta": 0.9,
+   "learn_beta": false,
+   "learn_threshold": false,
+   "surrogate": "atan",
+   "surrogate_alpha": 2.0,
+   "target_temperature": 0.5,
+   "target_spread": "global_median",
+   "spike_rate_penalty": 0.0,
+   "learning_rate": 0.002,
+   "adam_beta1": 0.9,
+   "adam_beta2": 0.999,
+   "adam_eps": 1e-08,
+   "weight_decay": 0.0,
+   "batch_size": 64,
+   "max_steps": 1200,
+   "validation_fraction": 0.1,
+   "evaluate_every_steps": 100,
+   "patience_evaluations": 5,
+   "torch_threads": 1,
+   "parity_logit_tolerance": 1e-09,
+   "out_of_range": "error"
+  }
+ },
+ "network": {
+  "files": [
+   "network.npz",
+   "network.json"
+  ],
+  "sha256": "fece98b1c3ce73020fad692191a2e2d5baddd2e3f1f1b9e4e0255c2da4d5a94f"
+ }
+}

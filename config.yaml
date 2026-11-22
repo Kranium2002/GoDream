@@ -823,6 +823,9 @@ inference:  # learned_judgment.runtime (Person B): the frozen student behind the
     of_last: 4  # ... of the last this many outputs (talkhere.md, "Threat gate").
     cooldown_s: 1.0  # Minimum time between two issued active commands.
     uncertain_floor: 0.5  # A threat score at or above this without a passed gate is shown as UNCERTAIN; below it as NO_OP. Both send the zero command.
+    # Groups of actions the gate counts as one decision (scores summed, votes pooled; the side issued is the member with the larger
+    # score summed over the group's votes). A punch straight at the camera splits the student's score between left and right.
+    interchangeable: [[DODGE_LEFT, DODGE_RIGHT]]
     precision_target: 0.99  # Preregistered: share of issued active commands on simulation dev trajectories that answer a true threat.
     # Thresholds tried on simulation dev trajectories; the frozen choice is saved with the exported student, not here.
     calibration_grid:

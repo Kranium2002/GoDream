@@ -9,7 +9,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from learned_judgment.config import load_config
+from learned_judgment.config import ConfigError, load_config
 from learned_judgment.gate import UNCERTAIN, GateSettings, ThreatGate
 
 NAMES = ("NO_OP", "DODGE_LEFT", "DODGE_RIGHT", "RETREAT")
@@ -20,6 +20,12 @@ UNSURE = (0.7, [0.02, 0.9, 0.04, 0.04])  # clear scores, threat between floor 0.
 LEFT = (0.95, [0.05, 0.85, 0.05, 0.05])
 RIGHT = (0.95, [0.05, 0.05, 0.85, 0.05])
 ALIKE = (0.95, [0.0, 0.7, 0.65, 0.0])  # high threat, action score passes, margin 0.05 does not
+
+SIDESTEP = (("DODGE_LEFT", "DODGE_RIGHT"),)  # config.yaml inference.gate.interchangeable
+SPLIT = (0.97, [0.05, 0.45, 0.45, 0.05])  # a punch at the centre: left and right equally good
+LEFT_HEAVY = (0.97, [0.05, 0.7, 0.2, 0.05])
+RIGHT_HEAVY = (0.97, [0.05, 0.2, 0.7, 0.05])
+BACK = (0.97, [0.05, 0.05, 0.05, 0.85])  # a clear RETREAT
 
 
 def make_settings(**changes) -> GateSettings:
@@ -266,7 +272,8 @@ def test_from_config() -> None:
     assert settings.votes_needed == 3 and settings.of_last == 4
     assert settings.cooldown_s == 1.0 and settings.hold_s == 0.6
     assert (settings.threat_threshold, settings.action_threshold, settings.margin_threshold) == (0.9, 0.6, 0.3)
-    assert settings == make_settings()
+    assert settings.interchangeable == SIDESTEP
+    assert settings == make_settings(interchangeable=SIDESTEP)
 
 
 @pytest.mark.parametrize(
@@ -286,3 +293,134 @@ def test_from_config_needs_exactly_one_zero_command() -> None:
     config["skills"]["dodge_vision"]["actions"]["RETREAT"] = {"vel_x": 0.0, "vel_y": 0.0, "yaw_rate": 0.0}
     with pytest.raises(ValueError):
         GateSettings.from_config(config, {"threat": 0.9, "action": 0.6, "margin": 0.3})
+
+
+# --- interchangeable actions: stepping left or right is one decision, the side a detail ---
+
+
+def sidestep_gate() -> ThreatGate:
+    return ThreatGate(make_settings(interchangeable=SIDESTEP))
+
+
+def test_split_scores_issue_a_sidestep() -> None:
+    outs = feed(sidestep_gate(), [SPLIT] * 3)
+    for out, votes in zip(outs, (1, 2, 3)):
+        assert out.valid and out.threat_ok and out.action_ok and out.margin_ok and out.votes == votes
+        assert out.action_confidence == pytest.approx(0.90) and out.margin == pytest.approx(0.85)
+        assert out.best_action == "DODGE_LEFT"  # a tie: the first in readout order
+    assert [o.action for o in outs] == [UNCERTAIN, UNCERTAIN, "DODGE_LEFT"]
+    assert [o.issued for o in outs] == [False, False, True]
+    assert outs[2].passed and outs[2].holding and not outs[2].cooldown_conflict
+
+
+def test_alternating_sides_issue_the_side_with_the_larger_summed_score() -> None:
+    for readouts, side in (
+        ([LEFT_HEAVY, RIGHT_HEAVY, LEFT_HEAVY], "DODGE_LEFT"),  # summed left 1.6, right 1.1
+        ([RIGHT_HEAVY, LEFT_HEAVY, RIGHT_HEAVY], "DODGE_RIGHT"),  # summed left 1.1, right 1.6
+        ([LEFT_HEAVY, LEFT_HEAVY, RIGHT_HEAVY], "DODGE_LEFT"),  # summed left 1.6, though the last output prefers right
+    ):
+        outs = feed(sidestep_gate(), readouts)
+        assert [o.votes for o in outs] == [1, 2, 3] and [o.issued for o in outs] == [False, False, True]
+        assert outs[1].best_action == "DODGE_LEFT"  # summed 0.9 / 0.9 (a tie) or 1.4 / 0.4
+        assert outs[2].action == side and outs[2].best_action == side
+        assert outs[2].action_confidence == pytest.approx(0.9) and outs[2].margin == pytest.approx(0.85)
+
+    loud_right = (0.5, [0.0, 0.05, 0.95, 0.0])  # threat below the threshold: no vote
+    outs = feed(sidestep_gate(), [loud_right, LEFT_HEAVY, RIGHT_HEAVY, LEFT_HEAVY])
+    assert outs[0].votes == 0 and outs[0].best_action == "DODGE_RIGHT"  # its own scores when it casts no vote
+    assert outs[3].issued and outs[3].votes == 3
+    assert outs[3].action == "DODGE_LEFT"  # the non-voting output does not count (with it: right 2.05, left 1.65)
+
+
+def test_without_the_group_split_or_alternating_scores_never_issue() -> None:
+    outs = feed(ThreatGate(make_settings()), [SPLIT] * 30)
+    for out in outs:
+        assert out.threat_ok and not out.action_ok and not out.margin_ok and out.votes == 0
+        assert out.best_action == "DODGE_LEFT" and out.action_confidence == 0.45 and out.margin == 0.0
+        assert not out.issued and out.action == UNCERTAIN
+    outs = feed(ThreatGate(make_settings()), [LEFT_HEAVY, RIGHT_HEAVY] * 15)
+    assert [o.best_action for o in outs] == ["DODGE_LEFT", "DODGE_RIGHT"] * 15
+    assert max(o.votes for o in outs) == 2
+    assert not any(o.passed or o.issued for o in outs) and all(o.action == UNCERTAIN for o in outs)
+
+
+@pytest.mark.parametrize(
+    "scores, best, confidence, action_ok",
+    [
+        ([0.05, 0.25, 0.2, 0.5], "RETREAT", 0.5, False),  # RETREAT 0.5 against the sidestep 0.45
+        ([0.05, 0.25, 0.25, 0.45], "DODGE_LEFT", 0.5, False),  # the sidestep 0.5 against RETREAT 0.45
+        ([0.03, 0.31, 0.31, 0.35], "DODGE_LEFT", 0.62, True),  # the sidestep passes the action threshold, not the margin
+    ],
+)
+def test_the_margin_is_taken_against_the_other_groups(scores, best, confidence, action_ok) -> None:
+    for out in feed(sidestep_gate(), [(0.97, scores)] * 12):
+        assert out.threat_ok and out.action_ok == action_ok and not out.margin_ok
+        assert out.best_action == best and out.action_confidence == pytest.approx(confidence)
+        assert out.margin == pytest.approx(confidence - max(scores[0], sum(scores) - scores[0] - confidence))
+        assert out.votes == 0 and not out.passed and not out.issued and out.action == UNCERTAIN
+
+
+def test_no_op_above_the_sidestep_never_issues() -> None:
+    for out in feed(sidestep_gate(), [(0.97, [0.5, 0.25, 0.2, 0.05])] * 12):
+        assert out.best_action == "DODGE_LEFT" and out.action_confidence == pytest.approx(0.45)
+        assert out.margin == pytest.approx(-0.05) and not out.margin_ok and not out.action_ok
+        assert out.votes == 0 and not out.issued and out.action == UNCERTAIN
+
+
+def test_votes_for_the_sidestep_and_for_retreat_do_not_pool() -> None:
+    outs = feed(sidestep_gate(), [SPLIT, BACK] * 6)
+    assert [o.best_action for o in outs] == ["DODGE_LEFT", "RETREAT"] * 6
+    assert all(o.threat_ok and o.action_ok and o.margin_ok for o in outs)
+    assert [o.votes for o in outs] == [1, 1] + [2] * 10
+    assert not any(o.passed or o.issued for o in outs)
+
+    outs = feed(sidestep_gate(), [SPLIT, BACK, SPLIT, SPLIT])
+    assert [o.votes for o in outs] == [1, 1, 2, 3]
+    assert [o.issued for o in outs] == [False, False, False, True] and outs[3].action == "DODGE_LEFT"
+
+
+@pytest.mark.parametrize(
+    "groups",
+    [
+        (("DODGE_LEFT", "JUMP"),),  # not an action
+        (("NO_OP", "DODGE_LEFT"),),  # the zero command
+        (("DODGE_LEFT", "DODGE_LEFT"),),  # a name twice in one group
+        (("DODGE_LEFT", "DODGE_RIGHT"), ("DODGE_RIGHT", "RETREAT")),  # a name in two groups
+        (("DODGE_LEFT",),),  # a group of one
+        ((),),  # an empty group
+    ],
+)
+def test_interchangeable_value_errors(groups) -> None:
+    with pytest.raises(ValueError):
+        make_settings(interchangeable=groups)
+
+
+@pytest.mark.parametrize(
+    "groups",
+    [
+        [["DODGE_LEFT", "DODGE_RIGHT"]],
+        ("DODGE_LEFT", "DODGE_RIGHT"),
+        ((("DODGE_LEFT",), "DODGE_RIGHT"),),
+    ],
+)
+def test_interchangeable_type_errors(groups) -> None:
+    with pytest.raises(TypeError):
+        make_settings(interchangeable=groups)
+
+
+def test_from_config_interchangeable_key() -> None:
+    thresholds = {"threat": 0.9, "action": 0.6, "margin": 0.3}
+    config = copy.deepcopy(load_config())
+    assert GateSettings.from_config(config, thresholds).interchangeable == (("DODGE_LEFT", "DODGE_RIGHT"),)
+    config["inference"]["gate"]["interchangeable"] = []
+    assert GateSettings.from_config(config, thresholds) == make_settings()  # empty: every action its own group
+    for bad in ("DODGE_LEFT", ["DODGE_LEFT", "DODGE_RIGHT"], [[1, 2]], None):
+        config["inference"]["gate"]["interchangeable"] = bad
+        with pytest.raises(ConfigError):
+            GateSettings.from_config(config, thresholds)
+    del config["inference"]["gate"]["interchangeable"]
+    with pytest.raises(ConfigError):
+        GateSettings.from_config(config, thresholds)
+    config["inference"]["gate"]["interchangeable"] = [["DODGE_LEFT", "NO_OP"]]
+    with pytest.raises(ValueError):
+        GateSettings.from_config(config, thresholds)
