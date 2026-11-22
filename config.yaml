@@ -435,6 +435,8 @@ skills:
     # farthest run (vel_x 1.0 at 15 deg) ends at 5.89 m, 1 m short of the plateau's far end. Was 10.0 (placeholder).
     episode_duration_s: 12.0
     dream_decision_time_range_s: [2.12, 2.18]  # Dream decision times (remaining time of the physics guess): the measured range of run ramp1's context rows (14 situations). Was [1.0, 5.0].
+    dream_sampling: recorded  # uniform: each feature drawn independently over its range (the behaviour before this key). recorded: drawn from the feature vectors measured in the context attempts, one scenario at a time.
+    dream_noise: 0.02  # recorded only: standard deviation of the noise added per feature, in the features' 0-1 scale. Starting value; change only from dev runs.
     candidates:
       climb_speeds_m_s: [0.4, 0.6, 0.8, 1.0]  # vel_x inside the verified [-1, 1]; 0.6 is the nominal (candidate index 1).
       # Was [-0.2, 0.0, 0.2]. Measured (seed 0, 12 s): every non-zero yaw held on the slope turns the dog across it

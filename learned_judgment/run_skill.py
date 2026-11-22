@@ -201,12 +201,14 @@ def _steps(
     common = ("--run", run_id, "--skill", spec)
     student = run_dir / "student"
     billing = ["--confirm-billing"] if confirm_billing else []
+    recorded = spec == "ramp" and require(config, "skills.ramp.dream_sampling") == "recorded"
+    from_rows = ["--from-rows", run_dir / "context"] if recorded else []
     if mode == "fast":
         root = f"observed.{spec}"
         return [
             step("attempts", module, "attempts", "--out", run_dir / "context"),
             step("dream", module, "dream", "--out", run_dir / "dream", "--n",
-                 _count(config, f"{root}.fast_dream_situations")),
+                 _count(config, f"{root}.fast_dream_situations"), *from_rows),
             step("teach", _OBSERVED, "teach", *common, "--context", run_dir / "context", "--dream", run_dir / "dream",
                  *billing),
             step("train", _OBSERVED, "train", *common, "--dream", run_dir / "dream", "--scores", run_dir / "scores.npz",
@@ -218,7 +220,7 @@ def _steps(
     steps = [
         step("rows_context", module, "rows", "--split", "context", "--out", run_dir / "context"),
         step("rows_dev", module, "rows", "--split", "dev", "--out", run_dir / "dev"),
-        step("dream", module, "dream", "--out", run_dir / "dream"),
+        step("dream", module, "dream", "--out", run_dir / "dream", *from_rows),
         step("teach", _OBSERVED, "teach", *teach, *billing),
         step("train", _OBSERVED, "train", *common, "--dream", run_dir / "dream", "--scores", run_dir / "scores.npz"),
     ]
