@@ -380,7 +380,8 @@ def quote_run(declaration: Any, config: Mapping[str, Any], *, mode: str = "full"
     sizes = _sizes(spec_name, spec, config, mode)
     blocks = list(require(config, f"skills.{spec_name}.teacher_features"))
     k = len(spec.outcome_names)
-    width = (sizes["window_width"] if "window" in blocks else 0) + len(spec.action_feature_names) + k
+    width = ((sizes["window_width"] if "window" in blocks else 0) + (len(spec.truth_names) if "truth" in blocks else 0)
+             + len(spec.action_feature_names) + k)
     requests = (_requests("dev", sizes["context_rows"], sizes["dev_rows"], width, k, settings)  # none at 0 dev rows
                 + _requests("dream", sizes["context_rows"], sizes["dream_situations"] * sizes["n_actions"], width, k,
                             settings))
