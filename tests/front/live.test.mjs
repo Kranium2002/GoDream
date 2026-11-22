@@ -88,6 +88,51 @@ test("the sampler restarts its schedule after a long pause", () => {
   assert.equal(s.take(1034), true);
 });
 
+test("the sampler never takes the same camera frame twice", () => {
+  const s = createSampler(30);
+  assert.equal(s.take(0, 1), true);
+  assert.equal(s.take(40, 1), false); // a callback for a frame already taken
+  assert.equal(s.take(41, 2), true);
+  assert.equal(s.take(80, 3), true);
+});
+
+test("recent statistics give the median and the 95th percentile of the last span", async () => {
+  const { createRecent } = await import("../../app/static/js/live.js");
+  const r = createRecent(1000);
+  assert.equal(r.summary(0), null);
+  [10, 20, 30, 40, 100].forEach((v, k) => r.add(k * 100, v));
+  r.add(450, NaN); // not a number: ignored
+  assert.deepEqual(r.summary(500), { n: 5, p50: 30, p95: 100 });
+  assert.deepEqual(r.summary(1250), { n: 2, p50: 40, p95: 100 }); // older than the span: gone
+});
+
+test("a capture time on the monotonic clock becomes epoch ms anchored at now", async () => {
+  const { toEpochMs } = await import("../../app/static/js/live.js");
+  assert.equal(toEpochMs(1000, 1030, 1_700_000_000_030), 1_700_000_000_000);
+});
+
+test("the camera is slow only after it stayed below the model's rate for more than a second", async () => {
+  const { createPace } = await import("../../app/static/js/live.js");
+  const p = createPace(30);
+  assert.deepEqual(p.update(0, 20), { slow: true, warn: false });
+  assert.deepEqual(p.update(900, 20), { slow: true, warn: false });
+  assert.deepEqual(p.update(1100, 20), { slow: true, warn: true });
+  assert.deepEqual(p.update(1200, 29), { slow: false, warn: true }); // stays until it kept up for a second
+  assert.deepEqual(p.update(2300, 30), { slow: false, warn: false });
+  assert.deepEqual(p.update(2400, null), { slow: true, warn: false });
+});
+
+test("the event picture follows the server's event rule; other encodings show the signed change", async () => {
+  const { changePicture } = await import("../../app/static/js/live.js");
+  const older = Float32Array.of(0.5, 0.5, 0.5, 0.2);
+  const newer = Float32Array.of(0.6, 0.4, 0.52, 0.2);
+  assert.deepEqual(Array.from(changePicture(older, newer, "events", 0.04)), [1, 0, 0.5, 0.5]);
+  assert.throws(() => changePicture(older, newer, "events", undefined), /threshold/);
+  const signed = Array.from(changePicture(older, newer, "signed_diff", 0.04)).map((v) => Math.round(v * 100) / 100);
+  assert.deepEqual(signed, [1, 0, 0.6, 0.5]);
+  assert.throws(() => changePicture(older, Float32Array.of(1), "events", 0.04), /differ in size/);
+});
+
 test("the rate meter counts frames in the last second", () => {
   const m = createRateMeter();
   assert.equal(m.rate(0), null);

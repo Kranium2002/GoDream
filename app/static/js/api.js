@@ -38,12 +38,17 @@ export function createApi(fetchFn) {
 
   return {
     state: () => call("/api/state"),
-    skills: () => call("/api/skills"),
     robot: () => call("/api/robot"),
     drive: (command) => call("/api/drive", command),
     stop: () => call("/api/stop", {}),
     reset: (preset) => call("/api/reset", preset === undefined ? {} : { preset }),
-    chat: (messages) => call("/api/chat", { messages }),
+    // The demos the server offers, each with its handles, outcome fields and recorded lesson (server contract v1).
+    demos: () => call("/api/demos"),
+    // Both lanes of one demo at once: the walking brain alone and with the learned reflex, same situation and seed.
+    duelStart: (demo, params, seed = null) => call("/api/duel/start", { demo, params, seed }),
+    duelStop: () => call("/api/duel/stop", {}),
+    // A lesson's own files as the four beats of "How it learned".
+    story: (runId) => call(`/api/story/${encodeURIComponent(runId)}`),
     runs: () => call("/api/runs"),
     runCards: () => call("/api/runs?summary=1"),
     runEvents: (runId) => call(`/api/runs/${encodeURIComponent(runId)}/events`),

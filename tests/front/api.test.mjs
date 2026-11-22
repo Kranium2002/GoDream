@@ -21,22 +21,21 @@ test("state() GETs /api/state and returns the parsed body", async () => {
   assert.deepEqual(r, { ok: true, status: 200, data: { status: "roaming" } });
 });
 
-test("skills() GETs /api/skills", async () => {
-  const { calls, fetchFn } = recorder(() => json(200, { skills: [] }));
-  const r = await createApi(fetchFn).skills();
-  assert.equal(calls[0].url, "/api/skills");
-  assert.equal(r.ok, true);
-});
-
-test("chat() POSTs the running message list as JSON", async () => {
-  const { calls, fetchFn } = recorder(() => json(200, { reply: "ok", declared_spec: null, problems: [], missing: [] }));
-  const messages = [{ role: "user", content: "teach it to cross this slope" }];
-  const r = await createApi(fetchFn).chat(messages);
-  assert.equal(calls[0].url, "/api/chat");
-  assert.equal(calls[0].init.method, "POST");
-  assert.equal(calls[0].init.headers["Content-Type"], "application/json");
-  assert.deepEqual(JSON.parse(calls[0].init.body), { messages });
-  assert.equal(r.data.reply, "ok");
+test("demos(), duelStart(), duelStop() and story() follow the v1 contract", async () => {
+  const { calls, fetchFn } = recorder(() => json(200, {}));
+  const api = createApi(fetchFn);
+  await api.demos();
+  await api.duelStart("hills", { slope_deg: 12 }, 7);
+  await api.duelStart("dodge", {});
+  await api.duelStop();
+  await api.story("ramp 1/x");
+  assert.deepEqual(calls.map((c) => [c.url, c.init.method, c.init.body ? JSON.parse(c.init.body) : null]), [
+    ["/api/demos", "GET", null],
+    ["/api/duel/start", "POST", { demo: "hills", params: { slope_deg: 12 }, seed: 7 }],
+    ["/api/duel/start", "POST", { demo: "dodge", params: {}, seed: null }],
+    ["/api/duel/stop", "POST", {}],
+    ["/api/story/ramp%201%2Fx", "GET", null],
+  ]);
 });
 
 test("startRun() POSTs the declared spec and the cost confirmation flag", async () => {
@@ -92,16 +91,16 @@ test("an error answer carries the server's code, message and body", async () => 
 
 test("a 404 is unavailable and keeps the server's message", async () => {
   const { fetchFn } = recorder(() => json(404, { code: "not_found", message: "There is nothing at that address." }));
-  const r = await createApi(fetchFn).chat([]);
+  const r = await createApi(fetchFn).demos();
   assert.equal(r.unavailable, true);
   assert.equal(r.message, "There is nothing at that address.");
 });
 
 test("a 503 whose code ends in _unavailable is unavailable; another 503 is not", async () => {
-  const a = await createApi(async () => json(503, { code: "chat_unavailable", message: "No API key." })).chat([]);
+  const a = await createApi(async () => json(503, { code: "runs_unavailable", message: "No runner." })).runs();
   assert.equal(a.unavailable, true);
-  assert.equal(a.message, "No API key.");
-  const b = await createApi(async () => json(503, { code: "simulation_stopped", message: "Restart." })).chat([]);
+  assert.equal(a.message, "No runner.");
+  const b = await createApi(async () => json(503, { code: "simulation_stopped", message: "Restart." })).runs();
   assert.equal(b.unavailable, false);
 });
 

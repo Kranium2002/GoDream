@@ -93,9 +93,39 @@ function program(gl, vs, fs) {
 
 const hex = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16) / 255);
 
-// createViewer(canvas, {background, floor}) -> {setRobot, pushPose, setShift, resetView, destroy}. Throws Error when
-// WebGL2 is missing or a shader fails, so the page can fall back to the image stream.
-export function createViewer(canvas, { background = "#101215", floor = "#1a1d22", distance = 1.7 } = {}) {
+// The scene event's objects as footprints on the floor, [x, y, r]: what the framing keeps in view. A sphere whose centre
+// lies below the floor (a hill: a spherical cap) counts with the circle where it meets the floor.
+function footprints(scene, floorZ) {
+  const out = [];
+  for (const o of Array.isArray(scene?.objects) ? scene.objects : []) {
+    const p = o?.pos, s = o?.size;
+    if (!Array.isArray(p) || !Array.isArray(s) || !p.slice(0, 3).every(Number.isFinite) || !Number.isFinite(s[0])) continue;
+    let r = Math.abs(s[0]);
+    if (o.shape === "sphere" && p[2] < floorZ) { const d = floorZ - p[2]; if (d >= r) continue; r = Math.sqrt(r * r - d * d); }
+    else if (o.shape === "box" && Number.isFinite(s[1])) r = Math.hypot(s[0], s[1]);
+    out.push([p[0], p[1], r]);
+  }
+  return out;
+}
+
+// Whether a world point lies inside one of the scene's spheres or boxes (boxes taken axis-aligned in their own frame
+// without rotation, which is enough to keep the camera out of an obstacle).
+function inside(scene, q) {
+  for (const o of Array.isArray(scene?.objects) ? scene.objects : []) {
+    const p = o?.pos, s = o?.size;
+    if (!Array.isArray(p) || !Array.isArray(s)) continue;
+    if (o.shape === "sphere" && Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]) < s[0] + 0.05) return true;
+    if (o.shape === "box" && [0, 1, 2].every((k) => Math.abs(q[k] - p[k]) < (s[k] ?? 0) + 0.05)) return true;
+  }
+  return false;
+}
+
+// createViewer(canvas, {background, floor, distance, yaw, pitch, lockHeading, frameScene}) -> {setRobot, pushPose,
+// setShift, resetView, destroy}. lockHeading: the camera keeps the heading the dog had at its first pose instead of
+// turning with it, so two views of two dogs keep the same angle. frameScene: the view widens and moves to keep the
+// scene's objects (a hill, an incoming object) in frame with the dog. Throws Error when WebGL2 is missing or a shader
+// fails, so the page can fall back to the image stream.
+export function createViewer(canvas, { background = "#101215", floor = "#1a1d22", distance = 1.7, yaw = 0.75, pitch = 0.3, lockHeading = false, frameScene = false } = {}) {
   const gl = canvas.getContext("webgl2", { antialias: true, alpha: false });
   if (!gl) throw new Error("This browser offers no WebGL2.");
   const robotP = program(gl, ROBOT_VS, ROBOT_FS);
@@ -103,7 +133,8 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
   const sky = hex(background), floorRgb = hex(floor);
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
-  const START = { distance, yaw: 0.75, pitch: 0.3 };
+  const START = { distance, yaw, pitch };
+  let zoomK = 1; // the person's zoom while the framing sets the distance
   const orbit = createOrbit({ target: [0, 0, 0.25], ...START, minDistance: 0.6, maxDistance: 8 });
   const poses = createPoseBuffer();
   const quality = createQuality(); // the internal resolution scale; its rule is in quality.js
@@ -173,14 +204,29 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     const p = pose && scene.rootBody !== null ? pose.pos[scene.rootBody] : null;
     if (p) {
       // The camera looks a little below the trunk, and rises with it (a ramp lifts the dog off the floor plane).
-      const goal = { x: p[0], y: p[1], z: Math.max(scene.floorZ + 0.22, p[2] - 0.1), heading: headingOf(pose.quat[scene.rootBody]) };
+      const goal = { x: p[0], y: p[1], z: Math.max(scene.floorZ + 0.22, p[2] - 0.1), heading: headingOf(pose.quat[scene.rootBody]), d: START.distance };
+      if (frameScene) {
+        // The dog and every object within 15 m of it: the camera aims at the middle of them and backs off to fit them.
+        const near = footprints(pose.scene, scene.floorZ).filter(([x, y, r]) => Math.hypot(x - p[0], y - p[1]) - r < 15);
+        if (near.length) {
+          const xs = [p[0] - 0.4, p[0] + 0.4, ...near.flatMap(([x, , r]) => [x - r, x + r])], ys = [p[1] - 0.4, p[1] + 0.4, ...near.flatMap(([, y, r]) => [y - r, y + r])];
+          const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+          goal.x = (x0 + x1) / 2; goal.y = (y0 + y1) / 2;
+          goal.d = Math.max(START.distance, 1.45 * Math.hypot(x1 - x0, y1 - y0));
+        }
+      }
       // A jump (a new episode placed the dog elsewhere) moves the camera at once instead of sweeping through the scene.
-      if (!follow || reduceMotion.matches || Math.hypot(goal.x - follow.x, goal.y - follow.y, goal.z - follow.z) > 1) follow = { ...goal };
+      const jump = !follow || reduceMotion.matches || Math.hypot(p[0] - follow.dog[0], p[1] - follow.dog[1]) > 1;
+      if (jump) follow = { ...goal, dog: [p[0], p[1]] };
       else {
-        follow = { x: smooth(follow.x, goal.x, dt, FOLLOW_TAU_MS), y: smooth(follow.y, goal.y, dt, FOLLOW_TAU_MS), z: smooth(follow.z, goal.z, dt, FOLLOW_TAU_MS), heading: smoothAngle(follow.heading, goal.heading, dt, FOLLOW_TAU_MS) };
-        if (Math.hypot(goal.x - follow.x, goal.y - follow.y, goal.z - follow.z) > 1e-4 || Math.abs(Math.sin(goal.heading - follow.heading)) > 1e-4) dirty = true; // still catching up
+        const heading = lockHeading ? follow.heading : smoothAngle(follow.heading, goal.heading, dt, FOLLOW_TAU_MS);
+        follow = { x: smooth(follow.x, goal.x, dt, FOLLOW_TAU_MS), y: smooth(follow.y, goal.y, dt, FOLLOW_TAU_MS), z: smooth(follow.z, goal.z, dt, FOLLOW_TAU_MS), heading, d: smooth(follow.d, goal.d, dt, FOLLOW_TAU_MS), dog: [p[0], p[1]] };
+        if (Math.hypot(goal.x - follow.x, goal.y - follow.y, goal.z - follow.z, goal.d - follow.d) > 1e-4 || (!lockHeading && Math.abs(Math.sin(goal.heading - follow.heading)) > 1e-4)) dirty = true; // still catching up
       }
       orbit.setTarget([follow.x, follow.y, follow.z]);
+      if (frameScene) orbit.distance = follow.d * zoomK;
+      // Never from inside an obstacle: while the eye would sit in one, look from higher up.
+      for (let k = 0; k < 12 && inside(pose.scene, orbit.eye(follow.heading)); k++) orbit.rotate(0, 0.08);
     }
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(...sky, 1);
@@ -270,7 +316,7 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     } else if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-      if (pinch) orbit.zoom(pinch / d);
+      if (pinch) zoom(pinch / d);
       pinch = d;
     }
     dirty = true;
@@ -282,19 +328,20 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
   canvas.addEventListener("wheel", (e) => {
     if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
-    orbit.zoom(Math.exp(e.deltaY * 0.004));
+    zoom(Math.exp(e.deltaY * 0.004));
     dirty = true;
   }, { passive: false });
   canvas.addEventListener("keydown", (e) => {
     const keys = { ArrowLeft: () => orbit.rotate(0.12, 0), ArrowRight: () => orbit.rotate(-0.12, 0), ArrowUp: () => orbit.rotate(0, 0.08),
-      ArrowDown: () => orbit.rotate(0, -0.08), "+": () => orbit.zoom(0.9), "=": () => orbit.zoom(0.9), "-": () => orbit.zoom(1.1), 0: resetView };
+      ArrowDown: () => orbit.rotate(0, -0.08), "+": () => zoom(0.9), "=": () => zoom(0.9), "-": () => zoom(1.1), 0: resetView };
     if (!keys[e.key]) return;
     e.preventDefault();
     keys[e.key]();
     dirty = true;
   });
 
-  function resetView() { Object.assign(orbit, { distance: START.distance, yaw: START.yaw, pitch: START.pitch }); dirty = true; }
+  function zoom(f) { if (frameScene) zoomK = Math.min(3, Math.max(0.35, zoomK * f)); else orbit.zoom(f); }
+  function resetView() { Object.assign(orbit, { distance: START.distance, yaw: START.yaw, pitch: START.pitch }); zoomK = 1; dirty = true; }
 
   // ---- lifecycle: no drawing while the tab is hidden or the view is inactive (off screen) -----------------------
   const run = () => {
@@ -320,7 +367,9 @@ export function createViewer(canvas, { background = "#101215", floor = "#1a1d22"
     hasPose: () => Boolean(scene && poses.peek()),
     bodyCount: () => scene?.bodyCount ?? 0,
     setShift(x, y = 0, k = 1) { shiftGoal = [x, y, k]; },
-    zoomBy(f) { orbit.zoom(f); dirty = true; },
+    zoomBy(f) { zoom(f); dirty = true; },
+    // Forget the poses drawn so far (a new run starts): the view shows the floor until the next pose.
+    clear() { poses.clear(); follow = null; dirty = true; },
     resetView,
     destroy() { cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", run); sizer.disconnect(); },
   };
