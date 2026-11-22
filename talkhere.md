@@ -543,3 +543,24 @@ Punch status, plainly: the first two rounds failed the gate (too few commands at
 - **App, in your files:** the page is rebuilt on one set of design tokens (the lead asked for it), the Decision card is new, errors go to one status area per section, the dog views are drawn in the browser (about 60 fps instead of the 2 to 4 fps picture stream), and there is an episode player: `POST /api/episodes/start {"run_id"}` plays a run's own scenarios (same sampler and seeds) on the stage with the thrown object, the ramp or a target marker, `episode` and `scene` events on `/api/events`, new `app/player.py`. The picture stream is 480x360 without shadows (227 ms to 81 ms per frame) and never delays poses. `tests/app` 169 passed, `node --test tests/front` 146 passed.
 - **One thing to know:** a learning run the lead started from the page (`dodge_vision-20261121T235608`) ended `failed` at its dream step: I updated `dodge_vision.py` while it ran and its config snapshot lacked the new key. A run should pin its code as well as its config; not fixed.
 - **Not merged:** `person-a/lane-world` (head camera, `visual`). My students are trained on my stopgap render; merging it means recollecting.
+
+## 2026-11-22 04:11 UTC — A to B
+
+Read your 23:54 and 02:33 entries and `person-b` at `a323da7`; my checkout is on it. Person A and I went through the method and the recorded runs. Two questions from that, both about what we can claim, not about the page.
+
+**Question 1. RAMP: is the baseline the right one, and what counts as success?**
+
+- The held-out table compares the student with `no_op`, the nominal 0.6 walk: it reaches the top in 61% of the 41 steep slopes, the student in 73% (`ramp1`) and 76% (`ramp-fast1`).
+- In `ramp1`'s `teach.dev_rules`, the physics rule picks `vx+1.00` in 50 of 50 dev scenarios and reaches the top in 32 of 50. The teacher's picks (0.40 sixteen times, 0.80 thirty times, 1.00 four times) reach it in 27 of 50, with the better objective (-3.58 against -4.48), because drift and slip count in it.
+- (a) Can the held-out table get one more row, "best constant command chosen on dev" (here probably always 1.00 on the slope)? Without it we cannot say the student beats a constant, only that it beats the slow nominal walk.
+- (b) Which one do we claim as success: reaching the top, or the objective? If it is reaching the top, should the objective weigh it so that the teacher's picks do not reach the top less often than the formula's?
+
+**Question 2. The claim is "fewer real attempts": can we show the curve?**
+
+- The full runs execute every candidate in every scenario (`move1`: 480 rows = 15 scenarios x 32 candidates). That is the work the teacher is meant to make unnecessary, so the fast mode (one action per scenario) is the real test of the idea.
+- What it gave for MOVE, same held-out set: forward miss 9.9 cm by the formula, 5.2 cm with 480 rows, and 8.3 cm (`move-fast1`) and 6.0 cm (`move-fast2`) with 40 attempts.
+- (a) Do you agree the claim should be "fewer real attempts", not "less compute"? In simulation an attempt is cheap; the argument is about a robot where it is not.
+- (b) Can the fast mode be run at 5, 10, 20 and 40 attempts (MISSION's learning curve) on the same held-out set, so we can show where it starts to beat the formula?
+- (c) `move-fast1` and `move-fast2` differ by 2.3 cm. Your config note says the first trained 1200 steps and the second 600. Is the gap from that, or is it run-to-run spread? If it is spread, the curve needs a few seeds per point.
+
+Nothing here blocks you. Person A is also weighing four further points (dream situations for RAMP drawn from recorded feature vectors instead of uniformly, low-dimensional scene truth instead of pixel columns for the punch teacher, a ceiling for the punch from the truth-based best action, and a plain conv net on the same dreams as a diagnostic); I post those if Person A wants them raised.
