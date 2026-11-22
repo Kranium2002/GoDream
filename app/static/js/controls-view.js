@@ -1,26 +1,27 @@
-// The top bar's demo tabs and the control bar: one tab per demo the server lists, the demo's handles drawn from their
-// declared kind, the two-way switch of a demo that can use the camera, the main button and one line under it. Every
-// range, step, default and label is the demo's own; nothing here knows a demo by name.
+// The top bar's segmented demo switch and the control bar: one segment per demo the server lists (its short name), the
+// demo's handles drawn from their declared kind, the two-way switch of a demo that can use the camera, the main button
+// and one line beside it. Every range, step, default and label is the demo's own; nothing here knows a demo by name.
 import { angleDeg, capProfile, fraction, handleText, snap } from "./demos.js";
 import { $, el, setText, svgEl } from "./dom.js";
 
-const W = 196, H = 54; // a handle's drawing, in CSS pixels
+const W = 180; // a handle's drawing width, in CSS pixels
+const heightOf = (kind) => (kind === "amount" ? 26 : 44); // an amount is a plain track; the others draw what they change
 
-export function initControls({ onTab, onParam, onMode, onGo, onCamera }) {
+export function initControls({ onParam, onMode, onGo, onCamera }) {
   let handlesKey = "";
 
-  // ---- tabs ---------------------------------------------------------------------------------------------------------
+  // ---- the demo switch: links to #<demo id>, the page routes on the hash ---------------------------------------------
   function setTabs(demos, currentId) {
     const nav = $("tabs");
     nav.hidden = !demos.length;
-    const key = demos.map((d) => d.id).join("|");
+    const key = demos.map((d) => `${d.id}:${d.name ?? d.title}`).join("|");
     if (nav.dataset.key !== key) {
       nav.dataset.key = key;
-      nav.setAttribute("role", "tablist");
-      nav.replaceChildren(...demos.map((d) => el("button", { class: "tab", type: "button", role: "tab", "data-demo": d.id, "aria-selected": "false", title: d.title,
-        on: { click: () => onTab(d.id) } }, d.title)));
+      nav.replaceChildren(...demos.map((d) => el("a", { class: "seg__opt", href: `#${encodeURIComponent(d.id)}`, "data-demo": d.id }, d.name ?? d.title)));
     }
-    for (const b of nav.querySelectorAll(".tab")) b.setAttribute("aria-selected", String(b.dataset.demo === currentId));
+    for (const a of nav.querySelectorAll(".seg__opt")) {
+      if (a.dataset.demo === currentId) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    }
   }
 
   // ---- handles --------------------------------------------------------------------------------------------------------
@@ -49,14 +50,14 @@ export function initControls({ onTab, onParam, onMode, onGo, onCamera }) {
     input.addEventListener("input", () => onParam(h.name, snap(h, Number(input.value))));
     return el("div", { class: "handle", "data-name": h.name, "data-kind": h.kind },
       el("div", { class: "handle__head" }, el("label", { class: "handle__label", for: id }, h.label), el("span", { class: "handle__value" })),
-      el("div", { class: "handle__draw" }, svgEl("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" }), input),
-      el("div", { class: "handle__ends", "aria-hidden": "true" }, el("span", {}, handleText(h, h.min)), el("span", {}, handleText(h, h.max))));
+      el("div", { class: "handle__draw" }, svgEl("svg", { viewBox: `0 0 ${W} ${heightOf(h.kind)}`, "aria-hidden": "true" }), input));
   }
 
   // Each kind draws what it changes: a slope the hill's cross-section, an offset where the obstacle sits beside the
-  // path (seen from above), a direction the way something comes in, an amount a filled bar.
+  // path (seen from above), a direction the way something comes in, an amount a filled track.
   function drawHandle(svg, h, v) {
     const f = fraction(h, v);
+    const H = heightOf(h.kind);
     const parts = [];
     if (h.kind === "slope") {
       const ground = H - 6, cx = W / 2, a = 64;
@@ -88,10 +89,10 @@ export function initControls({ onTab, onParam, onMode, onGo, onCamera }) {
       parts.push(svgEl("path", { class: "hd-arrow", d: `M${p[0].toFixed(1)} ${p[1].toFixed(1)} L${q[0].toFixed(1)} ${q[1].toFixed(1)}` }));
       parts.push(svgEl("circle", { class: "hd-knob", cx: p[0].toFixed(1), cy: p[1].toFixed(1), r: 5 }));
     } else {
-      const y = H / 2 - 4;
-      parts.push(svgEl("rect", { class: "hd-track", x: 0, y, width: W, height: 8, rx: 4 }));
-      parts.push(svgEl("rect", { class: "hd-fill", x: 0, y, width: Math.max(8, f * W), height: 8, rx: 4 }));
-      parts.push(svgEl("circle", { class: "hd-knob", cx: Math.max(6, f * W), cy: y + 4, r: 7 }));
+      const y = H / 2 - 2, x = 9 + f * (W - 18);
+      parts.push(svgEl("rect", { class: "hd-track", x: 0, y, width: W, height: 4, rx: 2 }));
+      parts.push(svgEl("rect", { class: "hd-fill", x: 0, y, width: Math.max(4, x), height: 4, rx: 2 }));
+      parts.push(svgEl("circle", { class: "hd-knob", cx: x, cy: y + 2, r: 9 }));
     }
     svg.replaceChildren(...parts);
   }

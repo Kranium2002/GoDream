@@ -1,6 +1,7 @@
 // GET /api/demos -> the demos the page shows, and the plain words built from their typed fields. Pure. Nothing here
 // knows a demo by name: tabs, handles, outcome lines and the result sentence come from what each demo declares, and a
 // part a demo does not declare is left out, never filled in.
+import { readLanes, readShowcase } from "./showcase.js";
 
 export const HANDLE_KINDS = ["slope", "offset", "direction", "amount"];
 export const OUTCOME_KINDS = ["flag", "count", "seconds", "metres"];
@@ -57,6 +58,9 @@ export function readDemos(raw) {
     if (outcomeFields.some((f) => f === null)) problems.push(`Demo ${id}: an outcome field without a name, a known kind or a label was left out.`);
     demos.push({
       id, title,
+      name: str(d.name),
+      lanes: readLanes(d.lanes),
+      showcase: readShowcase(d.showcase),
       tagline: str(d.tagline),
       skill: str(d.skill),
       runId: str(d.run_id),

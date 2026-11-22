@@ -1,62 +1,45 @@
-// The page: one screen that opens on the live comparison of the demo on show (the walking brain alone | with the learned
-// reflex), what each dog senses under its lane, the glass control bar, "How it learned" and the engineers' drawer.
-// Wires the pure modules to the DOM and the server; every server string goes in as text, and what the server cannot
-// give yet is left out or said plainly.
+// The page. Two views on one page, chosen by the address: the landing page at "/" (no hash), and the demo screen at
+// #<demo id>: the live comparison of the demo on show (before | after, the same situation), what each dog senses, the
+// learned lane's live brain readout, the controls and the story band of how it learned, all in view at once. Wires the
+// pure modules to the DOM and the server; every server string goes in as text, and what the server does not send is
+// left out.
 import { createApi } from "./api.js";
 import { normaliseCapabilities } from "./capabilities.js";
-import { cardsFrom } from "./flow.js";
-import { mountNotes } from "./notes.js";
-import { defaultParams, headlineSentence, readDemos } from "./demos.js";
+import { defaultParams, readDemos } from "./demos.js";
 import { applyDuel, countRound, duelShows, emptyDuel, tallyText } from "./duel.js";
+import { applyBrain, brainView, emptyBrain, laneResult } from "./showcase.js";
 import { readWindowSettings } from "./vision.js";
-import { $, el, setText } from "./dom.js";
+import { $, setText } from "./dom.js";
 import { initStageView } from "./stage-view.js";
 import { initControls } from "./controls-view.js";
 import { createSenses } from "./sense-view.js";
 import { initLiveView } from "./live-view.js";
-import { initSheetView } from "./sheet-view.js";
-import { initDrawerView } from "./drawer-view.js";
+import { initHomeView } from "./home-view.js";
+import { initBandView } from "./band-view.js";
+import { initBrainView } from "./brain-view.js";
 
 const api = createApi((url, init) => fetch(url, init));
-const notes = mountNotes($("drawer-notes"), el, { visible: 8 });
 const DEMOS_RETRY_MS = 20000; // while the server has no demo list, ask again this often
 
-// ---- shared state ----------------------------------------------------------------------------------------------------
-let state = null, capabilities = [], cards = [], eyeSettings = null;
-let demosInfo = { ok: false, raw: null, demos: [], problems: [], message: null, unavailable: false };
-let current = null, mode = "sim", duel = emptyDuel(), starting = false;
-let tally = {}; // this page session's rounds per demo and lane (duel.js countRound); a reload starts it again
-const params = new Map(); // demo id -> {handle name: value}
-const bodies = new Map(), cached = new Map(), runLines = new Map();
-
-const ctx = {
-  api, notes,
-  state: () => state,
-  capabilities: () => capabilities,
-  cards: () => cards,
-  demo: () => demoOnShow(),
-  duel: () => duel,
-  demosInfo: () => demosInfo,
-  senseCounts: () => senses.counts(),
-  runBody(id) {
-    if (!bodies.has(id)) {
-      bodies.set(id, api.run(id).then((r) => {
-        if (r.ok) { cached.set(id, r.data); return r.data; }
-        notes.set(`run:${id}`, "danger", `GET /api/runs/${id}: ${r.message} (${r.code})`, "Runs");
-        bodies.delete(id);
-        return null;
-      }));
-    }
-    return bodies.get(id);
-  },
-  cachedRunBody: (id) => cached.get(id) ?? null,
-  runLog: () => runLines.get(sheet?.stats().lesson) ?? [],
-  placeStage: () => stage.place(),
-  changed: () => drawer?.changed(),
-  enterClass() { live.leave(); apply(); },
-  leaveClass() { loadDemos(); loadCards(); apply(); },
+// Problems the audience does not need to read: to the browser console only, once per change of a standing condition.
+// The page itself shows only the connection toast; a part that cannot show is left out.
+const standing = new Map();
+const say = (severity, text) => (severity === "info" ? console.info(text) : console.warn(text));
+const notes = {
+  set(key, severity, text) { if (standing.get(key) !== text) { standing.set(key, text); say(severity, text); } },
+  clear(key) { standing.delete(key); },
+  report: say,
 };
-let drawer = null, sheet = null;
+
+// ---- shared state ----------------------------------------------------------------------------------------------------
+let capabilities = [], eyeSettings = null;
+let demosInfo = { ok: false, demos: [], unavailable: false };
+let view = "home", current = null, mode = "sim", duel = emptyDuel(), starting = false;
+let tally = {}; // this page session's rounds per demo and lane (duel.js countRound); a reload starts it again
+let brain = emptyBrain(); // the learned lane's decisions of the round on show ("brain" events)
+let warming = false; // a round has started and neither lane has drawn its dog yet
+const params = new Map(); // demo id -> {handle name: value}
+const wordOf = (outcome) => laneResult(outcome)?.word ?? null; // what the session tally counts for a lane
 
 const demoOnShow = () => (demosInfo.ok ? demosInfo.demos.find((d) => d.id === current) ?? null : null);
 const paramsOf = (demo) => { if (!params.has(demo.id)) params.set(demo.id, defaultParams(demo)); return params.get(demo.id); };
@@ -64,67 +47,116 @@ const paramsOf = (demo) => { if (!params.has(demo.id)) params.set(demo.id, defau
 // ---- the views -----------------------------------------------------------------------------------------------------
 const stage = initStageView({ api, notes });
 const senses = createSenses({ before: $("sense-before"), after: $("sense-after") }, { eyeSettings: () => eyeSettings });
-const live = initLiveView({ api, notes, setLine: (t) => controls.setLine(t), changed: () => drawer?.changed() });
-ctx.live = live;
+const live = initLiveView({ api, notes, setLine: (t) => controls.setLine(t) });
 const controls = initControls({
-  onTab(id) { if (id !== current) { location.hash = id; } },
   onParam(name, value) { const d = demoOnShow(); if (!d) return; paramsOf(d)[name] = value; apply(); },
   onMode(m) { if (m !== mode) { mode = m; if (m !== "camera") live.leave(); apply(); } },
   onGo: runBoth,
   onCamera: () => live.toggle(),
 });
-sheet = initSheetView(ctx);
-ctx.sheet = sheet;
-drawer = initDrawerView(ctx);
+const home = initHomeView();
+const band = initBandView();
+const brainUi = initBrainView();
+
+// ---- where the page is: the landing page, or a demo by its id in the hash -------------------------------------------
+const hashId = () => { try { return decodeURIComponent(location.hash.replace(/^#/, "")); } catch { return ""; } };
+
+function pickDemo() {
+  const want = hashId();
+  const list = demosInfo.ok ? demosInfo.demos : [];
+  current = list.find((d) => d.id === want)?.id ?? list.find((d) => d.id === current)?.id ?? list[0]?.id ?? null;
+}
+
+function route() {
+  const before = current, was = view;
+  view = hashId() ? "demo" : "home";
+  pickDemo();
+  if (current !== before) { mode = "sim"; senses.clear(); brain = emptyBrain(); }
+  apply();
+  if (view !== was) { scrollTo(0, 0); stage.place(); }
+}
+addEventListener("hashchange", route);
+addEventListener("popstate", route);
+
+function goHome(e) {
+  e?.preventDefault();
+  if (location.hash) history.pushState(null, "", location.pathname + location.search);
+  route();
+  $("home-main").focus({ preventScroll: true });
+}
+for (const a of document.querySelectorAll("[data-home]")) a.addEventListener("click", goHome);
+$("skip").addEventListener("click", (e) => { e.preventDefault(); (view === "home" ? $("home-main") : $("stage")).focus(); });
 
 // ---- what the screen shows ------------------------------------------------------------------------------------------
 function apply() {
+  document.body.dataset.view = view;
+  home.render(demosInfo.ok ? demosInfo.demos : []);
+  if (view === "home") {
+    stage.setLayout("home");
+    live.leave();
+    band.render(null);
+    brainUi.show(null, false);
+    return;
+  }
+
   const demo = demoOnShow();
   const inferOk = capabilities.find((c) => c.name === "infer")?.available === true;
   let layout;
-  if (sheet.inClass()) layout = "class";
-  else if (demo) layout = mode === "camera" && demo.liveCamera ? "camera" : "duel";
+  if (demo) layout = mode === "camera" && demo.liveCamera ? "camera" : "duel";
   else layout = mode === "camera" && inferOk ? "camera" : "single";
   stage.setLayout(layout);
   document.body.dataset.mode = layout === "camera" ? "camera" : "sim";
   controls.setTabs(demosInfo.ok ? demosInfo.demos : [], current);
   senses.setKind(layout === "duel" ? demo?.sense ?? null : null);
 
-  const camSwitch = layout !== "class" && (demo ? demo.liveCamera : inferOk);
+  const camSwitch = demo ? demo.liveCamera : inferOk;
   controls.setSwitch(camSwitch, layout === "camera" ? "camera" : "sim", demo ? "Simulated punch" : "The simulator");
   if (layout === "camera") live.enter(); else live.leave();
 
+  let running = false;
   if (layout === "duel") {
-    const mine = duelShows(duel, demo.id), running = mine && duel.state === "start";
+    const mine = duelShows(duel, demo.id);
+    running = mine && duel.state === "start";
     const otherRunning = duel.state === "start" && !mine;
     stage.setSideView(demo.sense === "eye");
+    stage.setLaneNames(demo.lanes);
     controls.setHandles(demo, paramsOf(demo), running || starting);
     controls.setGo({ show: true, label: starting ? "Get ready" : running ? "Stop" : "Run both", disabled: !demo.available || starting || otherRunning, running });
     for (const side of ["before", "after"]) {
       stage.setOutcome(side, demo.outcomeFields, mine ? duel.sides[side] : null);
       stage.setTally(side, tallyText(tally[demo.id]?.[side]));
     }
+    // Before a round: the demo's title and sentence. After Run both, until the first pose of either dog arrives (the
+    // server builds both worlds first), a short line instead of two empty floors.
     const invite = $("invite");
-    invite.hidden = mine || starting || !demo.tagline;
-    setText(invite, demo.tagline ?? "");
-    if (!demo.available) controls.setLine(`This demo is not ready on this server yet${demo.missing.length ? `: ${demo.missing.join("; ")}` : "."}`);
-    else if (otherRunning) controls.setLine("Another demo is running both lanes now; this one can run when it ends.");
-    else controls.setLine(headlineSentence(demo.headline) ?? "");
+    warming = running && !stage.hasPose("before") && !stage.hasPose("after");
+    invite.hidden = warming ? false : mine || starting || !(demo.tagline || demo.title);
+    invite.dataset.state = warming ? "warming" : "idle";
+    setText($("invite-title"), warming ? "" : demo.title ?? "");
+    setText($("invite-text"), warming ? "Getting both dogs ready" : demo.tagline ?? "");
+    $("invite-title").hidden = warming || !demo.title;
+    $("invite-text").hidden = !warming && !demo.tagline;
+    if (!demo.available) {
+      notes.set(`demo:${demo.id}`, "warn", `${demo.title}: ${demo.missing.join("; ") || "not available"}`);
+      controls.setLine("This demo is not ready on this server yet.");
+    } else if (otherRunning) controls.setLine("The other demo is running now. This one can run when it ends.");
+    else controls.setLine("");
+    brainUi.show(mine ? brainView(brain) : null, running);
   } else {
     controls.setHandles(null, {}, true);
     controls.setGo({ show: false, label: "Run both", disabled: true });
     $("invite").hidden = true;
+    warming = false;
+    brainUi.show(null, false);
     if (layout === "single") {
       controls.setLine(demosInfo.unavailable
         ? "The side-by-side comparison is being connected. Until then, this is the simulator as it runs now."
-        : demosInfo.message ?? "");
+        : demosInfo.ok ? "" : "The demos did not load. This is the simulator as it runs now.");
     }
-    if (layout === "class") controls.setLine("The lesson's real tries, as they happen in the simulator.");
   }
-  setText($("name-single"), layout === "class" ? "The lesson's tries" : layout === "camera" ? "The dog, reacting to your camera" : "The simulator, live");
+  setText($("name-single"), layout === "camera" ? "The dog, reacting to your camera" : "The simulator, live");
+  band.render(demo, { running, counts: demo ? tally[demo.id] : null });
   stage.place();
-  sheet.render();
-  drawer?.changed();
 }
 
 async function runBoth() {
@@ -138,13 +170,14 @@ async function runBoth() {
   starting = true;
   senses.clear();
   stage.clearLanes();
+  brain = emptyBrain();
   apply();
   await stage.countIn();
   const r = await api.duelStart(demo.id, { ...paramsOf(demo) }, null);
   starting = false;
   if (!r.ok) {
     const why = r.status === 409 ? r.message : r.unavailable ? "Running both lanes is not connected on this server yet." : `Both lanes did not start: ${r.message}`;
-    notes.set("duel", r.unavailable ? "warn" : "danger", `POST /api/duel/start: ${r.message} (${r.code})`, "Comparison");
+    notes.set("duel", r.unavailable ? "warn" : "danger", `POST /api/duel/start: ${r.message} (${r.code})`);
     apply();
     controls.setLine(why);
     return;
@@ -157,9 +190,9 @@ async function runBoth() {
 // ---- server state and data ------------------------------------------------------------------------------------------
 async function loadState() {
   const r = await api.state();
-  if (!r.ok) { notes.set("state", "danger", `GET /api/state: ${r.message} (${r.code})`, "Server"); return; }
+  if (!r.ok) { notes.set("state", "danger", `GET /api/state: ${r.message} (${r.code})`); return; }
   notes.clear("state");
-  state = r.data;
+  const state = r.data;
   capabilities = normaliseCapabilities(state.capabilities);
   const w = readWindowSettings(state.image_window);
   eyeSettings = w.ok ? w.settings : null;
@@ -173,38 +206,16 @@ async function loadDemos() {
   const r = await api.demos();
   if (r.ok) {
     const d = readDemos(r.data);
-    demosInfo = { ok: d.ok, raw: r.data, demos: d.demos, problems: d.problems, message: d.ok ? null : d.problems.join(" "), unavailable: false };
-    for (const p of d.problems) notes.set(`demos:${p}`, "warn", p, "Demos");
+    demosInfo = { ok: d.ok, demos: d.demos, unavailable: false };
+    for (const p of d.problems) notes.set(`demos:${p}`, "warn", p);
     notes.clear("demos");
   } else {
-    demosInfo = { ok: false, raw: null, demos: [], problems: [], message: r.unavailable ? null : `The demo list did not load: ${r.message}`, unavailable: r.unavailable };
-    notes.set("demos", r.unavailable ? "info" : "danger", `GET /api/demos: ${r.message} (${r.code})`, "Demos");
+    demosInfo = { ok: false, demos: [], unavailable: r.unavailable };
+    notes.set("demos", r.unavailable ? "info" : "danger", `GET /api/demos: ${r.message} (${r.code})`);
     demosTimer = setTimeout(loadDemos, DEMOS_RETRY_MS);
   }
   pickDemo();
   apply();
-  sheet.refresh();
-}
-
-function pickDemo() {
-  const want = decodeURIComponent(location.hash.replace(/^#/, ""));
-  const list = demosInfo.ok ? demosInfo.demos : [];
-  current = list.find((d) => d.id === want)?.id ?? list.find((d) => d.id === current)?.id ?? list[0]?.id ?? null;
-}
-addEventListener("hashchange", () => { const before = current; pickDemo(); if (current !== before) { mode = "sim"; senses.clear(); } apply(); sheet.refresh(); });
-
-let cardsLoading = null;
-function loadCards() {
-  cardsLoading ??= (async () => {
-    const r = await api.runCards();
-    cardsLoading = null;
-    if (!r.ok) { notes.set("cards", "danger", `GET /api/runs?summary=1: ${r.message} (${r.code})`, "Runs"); return; }
-    notes.clear("cards");
-    cards = cardsFrom(r.data);
-    sheet.refresh();
-    apply();
-  })();
-  return cardsLoading;
 }
 
 // ---- events from the server ------------------------------------------------------------------------------------------
@@ -222,40 +233,36 @@ function connectEvents() {
     $("conn").hidden = false;
     setText($("conn"), source.readyState === EventSource.CLOSED ? "Lost the connection to the simulator. Reload the page." : "Lost the connection to the simulator. Trying again.");
   };
-  const on = (name, handle, keep = true) => source.addEventListener(name, (e) => {
+  const on = (name, handle) => source.addEventListener(name, (e) => {
     let data;
     try { data = JSON.parse(e.data); } catch { return; } // an unreadable event shows nothing
     handle(data);
-    if (keep) drawer.raw(name, data);
   });
-  on("pose", (d) => stage.onPose(d), false);
+  on("pose", (d) => { stage.onPose(d); if (warming && (stage.hasPose("before") || stage.hasPose("after"))) apply(); });
   on("scene", (d) => stage.onScene(d));
   on("robot", () => stage.onRobotChanged());
-  on("feel", (d) => senses.onFeel(d), false);
-  on("eye", (d) => senses.onEye(d), false);
+  on("feel", (d) => senses.onFeel(d));
+  on("eye", (d) => senses.onEye(d));
   on("duel", (d) => {
     const was = duel;
     duel = applyDuel(duel, d);
-    tally = countRound(tally, was, duel);
-    if (d?.state === "start" && was.state !== "start" && !starting) { senses.clear(); stage.clearLanes(); }
+    tally = countRound(tally, was, duel, wordOf);
+    if (d?.state === "start" && was.state !== "start" && !starting) { senses.clear(); stage.clearLanes(); brain = emptyBrain(); }
     apply();
   });
-  on("run", (d) => {
-    if (typeof d?.run_id === "string") { const l = runLines.get(d.run_id) ?? []; l.push(d); runLines.set(d.run_id, l); }
-    sheet.onRunEvent(d);
-    drawer.changed();
+  // The learned lane's decisions: only the readout redraws, at most once a frame.
+  on("brain", (d) => {
+    brain = applyBrain(brain, d);
+    if (view === "demo" && stage.layout() === "duel" && duelShows(duel, current)) brainUi.show(brainView(brain), duel.state === "start");
   });
-  on("episode", (d) => {
-    sheet.onEpisode(d);
-    if (d?.state === "idle" || (d?.state === "start" && d?.index === 0)) stateSoon();
-  });
-  on("infer", () => {});
-  on("notice", (d) => { if (typeof d?.message === "string") notes.set("notice", "info", d.message, "Simulator"); });
+  // The episode player (started and ended elsewhere) may change what the simulator offers.
+  on("episode", (d) => { if (d?.state === "idle" || (d?.state === "start" && d?.index === 0)) stateSoon(); });
+  on("notice", (d) => { if (typeof d?.message === "string") notes.set("notice", "info", d.message); });
 }
 
 // ---- frosted glass only while the stage stays smooth ---------------------------------------------------------------
 // The blur behind the glass is recomposited on every 3D frame. If the page cannot hold 40 frames per second for two
-// seconds, the glass turns solid navy (and stays so); the drawer says why.
+// seconds, the glass turns solid (and stays so).
 function watchFrameRate() {
   if (!CSS.supports("backdrop-filter", "blur(2px)") && !CSS.supports("-webkit-backdrop-filter", "blur(2px)")) { document.body.classList.add("glass-solid"); return; }
   let frames = 0, since = performance.now(), slow = 0;
@@ -267,7 +274,7 @@ function watchFrameRate() {
       frames = 0; since = t;
       if (slow >= 2) {
         document.body.classList.add("glass-solid");
-        notes.set("glass", "info", `Frosted glass turned solid: the page drew ${fps.toFixed(0)} frames per second with it.`, "Display");
+        notes.set("glass", "info", `Frosted glass turned solid: the page drew ${fps.toFixed(0)} frames per second with it.`);
         return;
       }
     }
@@ -279,6 +286,5 @@ function watchFrameRate() {
 // ---- start ---------------------------------------------------------------------------------------------------------
 connectEvents();
 loadDemos();
-loadCards();
-apply();
+route();
 watchFrameRate();

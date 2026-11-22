@@ -125,7 +125,7 @@ function inside(scene, q) {
 // turning with it, so two views of two dogs keep the same angle. frameScene: the view widens and moves to keep the
 // scene's objects (a hill, an incoming object) in frame with the dog. Throws Error when WebGL2 is missing or a shader
 // fails, so the page can fall back to the image stream.
-export function createViewer(canvas, { background = "#101215", floor = "#1a1d22", distance = 1.7, yaw = 0.75, pitch = 0.3, lockHeading = false, frameScene = false } = {}) {
+export function createViewer(canvas, { background = "#0e0e0e", floor = "#1d1d1d", distance = 1.7, yaw = 0.75, pitch = 0.3, lockHeading = false, frameScene = false } = {}) {
   const gl = canvas.getContext("webgl2", { antialias: true, alpha: false });
   if (!gl) throw new Error("This browser offers no WebGL2.");
   const robotP = program(gl, ROBOT_VS, ROBOT_FS);

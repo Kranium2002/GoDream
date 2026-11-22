@@ -1,0 +1,275 @@
+{
+ "run_id": "v5",
+ "skill": "dodge_vision",
+ "trace_dev": {
+  "state": "done",
+  "argv": [
+   "trace",
+   "--run",
+   "v5",
+   "--split",
+   "dev"
+  ],
+  "skill": "dodge_vision",
+  "run_id": "v5",
+  "split": "dev",
+  "n_scenarios": 240,
+  "n_threats": 111,
+  "frames_shape": [
+   240,
+   120,
+   12,
+   12
+  ],
+  "window_frames": 8,
+  "first_decision_index": 7,
+  "decision_frames": 19120,
+  "camera_rates_hz": {
+   "15": 80,
+   "20": 80,
+   "30": 80
+  },
+  "vision": {
+   "frame_size": 12,
+   "frame_rate_hz": 30.0,
+   "frames": 8,
+   "luma_weights": [
+    0.299,
+    0.587,
+    0.114
+   ],
+   "pixel_scale": 255.0
+  },
+  "seeds": {
+   "runtime_seed": 20261121,
+   "split": "dev",
+   "split_code": 2,
+   "scenarios": "dodge_vision._split_plan: np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code])), first n of sample_threat_scenarios",
+   "augmentation": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2)[1]), fresh for every episode of the scenario (paired)",
+   "attempt_seed": "scenario_id",
+   "camera_rate": "dodge_vision.scenario_rate: np.random.default_rng(spawn(2)[0]).integers over vision.sim_camera_rates_hz [15.0, 20.0, 30.0], one rate per scenario",
+   "world_seed": 0,
+   "world_preset": "default"
+  },
+  "t_hit": "Go2World.finish_episode first_collision_time_s of the NO_OP episode (NaN in the npz: none)",
+  "window_rebuild_check": {
+   "windows_checked": 19120,
+   "method": "every policy window equal (np.array_equal) to the stored frames it overlaps plus its newest frame; the last window of each episode rebuilt from the stored stack and compared exactly; each scenario's frames at its own camera rate, so a window is F consecutive stored frames",
+   "passed": true
+  },
+  "npz": "D:/BerlinPrior-eval/results/runs/v5/trace_dev.npz",
+  "wall_s": 134.85181799999555,
+  "created_utc": "2026-11-22T04:32:41.348860+00:00",
+  "config_digest": "2b1bb41eb0d7fffa44d34a97156c4fd1d9dd9a9b8867cdd3b4eb74ecc2cd0231"
+ },
+ "updated_utc": "2026-11-22T04:44:37.088487+00:00",
+ "teach": {
+  "state": "done",
+  "started_utc": "2026-11-22T04:37:31.360042+00:00",
+  "argv": [
+   "teach",
+   "--run",
+   "v5",
+   "--skill",
+   "dodge_vision",
+   "--context",
+   "results/runs/v5/context",
+   "--dream",
+   "results/runs/v5/dream",
+   "--confirm-billing"
+  ],
+  "config_digest": "2b1bb41eb0d7fffa44d34a97156c4fd1d9dd9a9b8867cdd3b4eb74ecc2cd0231",
+  "context": "results/runs/v5/context",
+  "dream": "results/runs/v5/dream",
+  "dev": null,
+  "feature_set": [
+   "window",
+   "action",
+   "physics"
+  ],
+  "teacher": {
+   "n_context_rows": 320,
+   "n_features": 1160,
+   "call_log": "D:/BerlinPrior-eval/results/tabpfn_calls.jsonl"
+  },
+  "quote": {
+   "dream": {
+    "mode": "stacked",
+    "n_query_rows": 60000,
+    "n_train_rows": 320,
+    "n_features": 1160,
+    "active_outcomes": [
+     "min_separation_m",
+     "collision",
+     "recovery_time_s"
+    ],
+    "constant_outcomes": [
+     "fall",
+     "command_travel_m"
+    ],
+    "max_query_rows_per_request": 32000,
+    "requests": [
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 0,
+      "n_chunks": 6,
+      "n_train": 960,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40336,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 1,
+      "n_chunks": 6,
+      "n_train": 960,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40336,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 2,
+      "n_chunks": 6,
+      "n_train": 960,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40336,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 3,
+      "n_chunks": 6,
+      "n_train": 960,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40336,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 4,
+      "n_chunks": 6,
+      "n_train": 960,
+      "n_query": 32000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 40336,
+      "pricing_version": "quota_v3"
+     },
+     {
+      "outcomes": [
+       "min_separation_m",
+       "collision",
+       "recovery_time_s"
+      ],
+      "chunk": 5,
+      "n_chunks": 6,
+      "n_train": 960,
+      "n_query": 20000,
+      "n_features": 1161,
+      "padded_rows": 0,
+      "quote_tokens": 27135,
+      "pricing_version": "quota_v3"
+     }
+    ],
+    "total_quoted_tokens": 228815,
+    "usage": {
+     "current_usage": 1481435,
+     "usage_limit": 35000000,
+     "reset_time": "2026-12-01 00:00:00 UTC",
+     "daily_tokens_used": 684713,
+     "daily_token_limit": 35000000,
+     "daily_usage": 684713,
+     "daily_limit": 35000000,
+     "daily_reset_time": "2026-11-23 00:00:00 UTC",
+     "monthly_tokens_used": 1481435,
+     "monthly_token_limit": 35000000,
+     "monthly_usage": 1481435,
+     "monthly_limit": 35000000,
+     "monthly_reset_time": "2026-12-01 00:00:00 UTC",
+     "thinking_fit_count": 0,
+     "thinking_fit_limit": 0
+    },
+    "remaining_account_tokens": 33518565,
+    "tokens_quoted_for_billed_calls": 1284687,
+    "project_token_budget": 35000000,
+    "max_tokens_per_request": 60000,
+    "gate_preview": {
+     "would_refuse": false,
+     "reasons": []
+    },
+    "calls": [
+     "TabPFNProvider.connect (prior_labs.connect -> tabpfn_client.init; once per provider)",
+     "TabPFNProvider.usage (ServiceClient.get_api_usage)",
+     "TabPFNProvider.quote (tabpfn_client.estimate_cost on zero arrays; once per distinct request shape)",
+     "CallLog.tokens_quoted_for_billed_calls (local read of tabpfn.call_log)"
+    ],
+    "note": "free quotes only; the cache was not consulted (a cached request is not billed again)"
+   }
+  },
+  "scores": {
+   "path": "D:/BerlinPrior-eval/results/runs/v5/scores.npz",
+   "sha256": "c597ff5cd742e23a97c38fe42c01dcd2592882738ee9d214cd7037e860636786",
+   "shape": [
+    15000,
+    4
+   ],
+   "request_keys": [
+    "cf53582fe5b41dce982f74bbd93423a6e409b2c358fd61bd92da62ee7dfa61e1",
+    "8c45caca19bafc7f22f046e724427ee1f26426460282d6987bd9e09eadef4445",
+    "c37e691d037be78f9588156bd14643f5d914d078bc35a3dc989f43dfed7063c9",
+    "3d7cad52298720c42ce4ec092c08777d5f87b1e6d5905708ed290d7071c3da01",
+    "9c87afc094df5b10d4fb657ea024ab4aa764a204a9ce92629d6fd207bb5111b7",
+    "b2787ad49d158b1fef0e11bd43895b72de2c2ae0039fedd93a1e0e62f5563cd9"
+   ]
+  }
+ },
+ "sweep": {
+  "state": "no_winner",
+  "argv": [
+   "--run",
+   "v5",
+   "--dream",
+   "results/runs/v5/dream",
+   "--scores",
+   "results/runs/v5/scores.npz",
+   "--trace",
+   "results/runs/v5/trace_dev.npz",
+   "--variants-json",
+   "{\"frames\":[4,6,8],\"encodings\":[\"signed_diff\",\"events\"],\"hidden_sizes\":[[128]],\"steps\":2000}",
+   "--freeze-best"
+  ],
+  "sweep_json": "D:/BerlinPrior-eval/results/runs/v5/sweep.json",
+  "rule": "qualifies: offline dev calibration's chosen triple has precision >= inference.gate.precision_target and emitted >= observed.dodge_vision.sweep.min_emitted; among qualifying: highest dev recall, ties -> fewer frames, then smaller hidden size (total units, then layers, then sizes in order), then encoding order as listed; none qualifying: no winner, nothing relaxed",
+  "winner": null,
+  "result": "NO WINNER: no variant reached precision_target 0.99 with >= 20 issued commands on dev; the gate target was not met and nothing was relaxed"
+ }
+}

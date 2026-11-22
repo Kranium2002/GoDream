@@ -1017,9 +1017,30 @@ app:  # The local viewer server: uv run python -m app.server
     max_messages: 20  # Messages per chat request (the browser sends the whole conversation).
     max_message_chars: 4000  # Characters per message.
   duel:  # POST /api/duel/start (app/duel.py): both lanes of a demo run the same situation, untrained | trained.
+    hills:  # The hills demo's lanes.
+      baseline_yaw_trim_rad_s: -0.10  # Added to the walking-alone lane's yaw command only: cancels the walking policy's residual left yaw drift at zero command.
     dodge:  # The dodge demo's punch, the same in both lanes.
       split: test  # The punches come from this split of observed.dodge_vision (the held-out one), never picked by outcome.
       kinds: [incoming_center, incoming_left, incoming_right]  # Only kinds aimed at the dog; round seed s takes the (s mod their count)-th of them.
+  # GET /api/demos (app/duel.py, app/showcase.py): each demo's words on the page and which held-out test numbers it
+  # shows. Every key is required (the server refuses to start without one). results: fields of the demo run's
+  # result.json closed_loop_test.summary, before = method no_op, after = method snn, over all scenarios; shown only
+  # when the lane's student is that run's own and the test ran on its network. kind: count (of n) | metres;
+  # better: lower | higher, for a measured amount. An empty list shows no results.
+  demos:
+    hills:
+      name: Hills
+      title: Feel the slope
+      tagline: It cannot see. It feels the ground through its legs, walks over gentle hills and around steep ones.
+      lanes: {before: Walking alone, after: With the learned reflex}
+      results:
+        - {field: crossed_goal_line, label: Reached the finish line, kind: count}
+    dodge:
+      name: Dodge
+      title: See the punch
+      tagline: The same punch comes at both dogs. Only one learned to see it coming.
+      lanes: {before: Untrained, after: Trained}
+      results: []  # No held-out test of the dodge student (v6p95) has run; its dev (tuning) numbers are not shown.
   runs:
     poll_s: 0.5  # Seconds between looks for new lines in the run event files (observed.runs_dir) relayed as SSE.
   infer:

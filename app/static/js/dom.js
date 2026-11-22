@@ -15,9 +15,6 @@ export function el(tag, props = {}, ...children) {
 
 export const setText = (node, text) => { if (node && node.textContent !== text) node.textContent = text; };
 
-// A list of [term, description] as a <dl>.
-export const kv = (rows, cls = "kv") => el("dl", { class: cls }, ...rows.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)]));
-
 export function svgEl(tag, attrs = {}) {
   const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
   for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);

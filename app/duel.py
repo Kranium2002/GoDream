@@ -14,13 +14,13 @@ from urllib.parse import unquote, urlsplit
 import mujoco
 import numpy as np
 
-from app import backend, robot
+from app import backend, robot, showcase
 from app.routes import Refusal, route
 from learned_judgment.env import Go2World
 
 log = logging.getLogger(__name__)
 _DEMO_SKILLS = {"hills": "reflex", "dodge": "dodge_vision"}
-_HILL_BASELINE_YAW_TRIM_RAD_S = -0.10
+DEMOS = tuple(_DEMO_SKILLS)  # GET /api/demos order; each has config.yaml app.demos.<demo>
 
 
 def _read(path):
@@ -160,14 +160,11 @@ def _demo(config, demo):
             headline = {"metric_label": metric.get("name"), "unit": metric.get("unit"),
                         "before": before.get("value"), "after": after.get("value"),
                         "n": min(before.get("n", 0), after.get("n", 0))}
-    if skill == "reflex":
-        outcomes = [{"name": "reached", "kind": "flag", "label": "Reached"},
+    if skill == "reflex":  # the keys of reflex.run_episode's outcome, sent in duel events as sides.<lane>.outcome
+        outcomes = [{"name": "crossed_goal_line", "kind": "flag", "label": "Reached the finish line"},
                     {"name": "fall", "kind": "flag", "label": "Fell"},
                     {"name": "end_s", "kind": "seconds", "label": "Time"}]
         handles = _reflex_handles(skill_declaration)
-        title = skill_declaration.get("title") or "Hill course"
-        tagline = skill_declaration.get("summary") or skill_declaration.get("goal", {}).get("forward_m")
-        tagline = tagline if isinstance(tagline, str) else "A blind walking lesson from the saved run declaration."
     else:
         outcomes = [{"name": "collision", "kind": "flag", "label": "Collision"},
                     {"name": "fall", "kind": "flag", "label": "Fell"},
@@ -175,9 +172,9 @@ def _demo(config, demo):
                     {"name": "recovery_time_s", "kind": "seconds", "label": "Recovery time"}]
         run_config = _read_yaml(folder / "config.yaml") if folder else config
         handles = _dodge_handles(run_config or config)
-        title, tagline = "Visual dodge", "The same punch comes at both dogs. Only the right one learned to dodge by eye."
         if student_folder is not None and student_folder.parent != folder:
             headline = None  # those test numbers belong to another run's student than the one in the lane
+    words = showcase.demo_settings(config, demo)
     reasons = []
     if root is None:
         reasons.extend(missing)
@@ -185,10 +182,12 @@ def _demo(config, demo):
         reasons.append(f"No finished {skill} run with a declaration exists under observed.runs_dir.")
     elif not student_ok:
         reasons.append(f"No exported {skill} student/student.json exists under observed.runs_dir.")
-    return {"id": demo, "title": title, "tagline": tagline, "skill": skill, "run_id": run_id,
+    return {"id": demo, "name": words["name"], "title": words["title"], "tagline": words["tagline"],
+            "lanes": words["lanes"], "skill": skill, "run_id": run_id,
             "headline": headline, "handles": handles, "outcome_fields": outcomes,
             "sense": "feel" if demo == "hills" else "eye", "live_camera": demo == "dodge",
-            "available": bool(folder and student_ok), "missing": reasons}
+            "available": bool(folder and student_ok), "missing": reasons,
+            "showcase": showcase.build(skill, words, folder, student_folder, root)}
 
 
 def _read_yaml(path):
@@ -201,7 +200,7 @@ def _read_yaml(path):
 
 @route("GET", "/api/demos")
 def demos(h):
-    h.send_json(200, [_demo(h.server.config, name) for name in ("hills", "dodge")])
+    h.send_json(200, [_demo(h.server.config, name) for name in DEMOS])
 
 
 class _DuelWorld:
@@ -287,6 +286,12 @@ class Duel:
         if self.stop_event.is_set():
             raise RuntimeError("duel stopped")
 
+    def brain(self, t_s, decision_ms, choice, **extra):
+        """SSE brain (newest only): one decision of the learned lane's student, timed on this CPU around the policy
+        call alone (time.perf_counter), with the name of the action it chose."""
+        self.server.sim.announce("brain", {"side": "after", "t_s": float(t_s), "decision_ms": float(decision_ms),
+                                           "choice": choice} | extra, latest_only=True)
+
     def state_event(self, state, demo, params, seed):
         self.server.sim.announce("duel", {"state": state, "demo": demo, "params": params, "seed": seed,
             "sides": {name: {"status": self.status[name], "outcome": self.outcomes[name]} for name in self.status}})
@@ -336,11 +341,23 @@ class Duel:
             cfg, np.random.default_rng(np.random.SeedSequence([cfg["runtime"]["seed"], 3, int(seed)])), 1)[0]
         scenario["scenario_id"] = seed
         self._apply_reflex_params(scenario, plan["params"])
-        student = reflex._StudentPolicy(plan.get("student_folder", plan["folder"] / "student"), cfg)
+        student_folder = Path(plan.get("student_folder", plan["folder"] / "student"))
+        student = reflex._StudentPolicy(student_folder, cfg)  # checks student.json action_names against the lesson
+        names = (_read(student_folder / "student.json") or {}).get("action_names") or []
+
+        def learned(window, state):  # the student's own choice, unchanged; only timed and announced
+            started = time.perf_counter()
+            action = student(window, state)
+            elapsed_ms = (time.perf_counter() - started) * 1000.0
+            choice = names[action] if isinstance(action, int) and 0 <= action < len(names) else None
+            self.brain(after._t(), elapsed_ms, choice)
+            return action
+        # The walking-alone lane's yaw trim (config.yaml app.duel.hills); the learned lane's commands are its own.
+        baseline_trim = float(plan["duel"]["baseline_yaw_trim_rad_s"])
         self.clock_origin = time.perf_counter()
         def go(side, world, policy):
             try:
-                trim = _HILL_BASELINE_YAW_TRIM_RAD_S if side == "before" else 0.0
+                trim = baseline_trim if side == "before" else 0.0
                 wrapped = _DuelWorld(world, self, side, yaw_trim_rad_s=trim)
                 answer = reflex.run_episode(wrapped, scenario, seed, policy)
                 self.outcomes[side] = answer["outcome"]
@@ -350,7 +367,7 @@ class Duel:
                 self.status[side] = "done"
         no_op = lambda _window, _state: 0
         a = threading.Thread(target=go, args=("before", before, no_op), daemon=True)
-        b = threading.Thread(target=go, args=("after", after, student), daemon=True)
+        b = threading.Thread(target=go, args=("after", after, learned), daemon=True)
         self.status = {"before": "running", "after": "running"}
         a.start(); b.start(); a.join(); b.join()
 
@@ -381,8 +398,11 @@ class Duel:
                 wrapped = _DuelWorld(world, self, side, relay, scenario.get("visual"))
                 if learned:
                     def policy(window, t_s):
+                        started = time.perf_counter()
                         out = student.infer(window, t_s)
+                        elapsed_ms = (time.perf_counter() - started) * 1000.0
                         name = out.get("action", "NO_OP")
+                        self.brain(t_s, elapsed_ms, name, issued=bool(out.get("issued")))
                         return {"command": out["command"], "action": name, "issued": bool(out.get("issued"))}
                 else:
                     def policy(_window, _t_s):
@@ -509,7 +529,8 @@ def start_duel(h):
             student_file = student_folder / "student.json" if student_folder else folder / "student" / "student.json"
             if not student_file.is_file():
                 raise Refusal(409, "student_unavailable", f"Run {folder.name} has no exported student/student.json.")
-            plan = {"folder": folder, "student_folder": student_file.parent, "config": cfg, "params": params}
+            plan = {"folder": folder, "student_folder": student_file.parent, "config": cfg, "params": params,
+                    "duel": h.server.config["app"]["duel"]["hills"]}
         else:
             student_folder = student_folder or folder / "student"
             student_data = _read(student_folder / "student.json") or {}

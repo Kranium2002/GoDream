@@ -294,6 +294,12 @@ def test_static_files_come_only_from_the_static_directory(server):
         assert conn.getresponse().status == 200
     page = 200 if (STATIC / "index.html").is_file() else 404
     # app/server.py, config.yaml and win.ini exist: a path that escaped the static directory would find them
+    for path in ["/style.css", "/"] if page == 200 else ["/style.css"]:  # never a stale copy of the page
+        with closing(connect(server)) as conn:
+            conn.request("GET", path)
+            response = conn.getresponse()
+            response.read()
+            assert response.status == 200 and response.getheader("Cache-Control") == "no-store", path
     for path, expected in [("/", page), ("/no_such_page.html", 404), ("/../server.py", 404),
                            ("/%2e%2e/server.py", 404), ("/..%5cserver.py", 404), ("/../../config.yaml", 404),
                            ("/%2e%2e%2f%2e%2e%2fconfig.yaml", 404), ("/C:/Windows/win.ini", 404)]:
@@ -303,7 +309,7 @@ def test_static_files_come_only_from_the_static_directory(server):
 
 
 @pytest.mark.parametrize("key, value", [("stream_fps", 15), ("observation_hz", 7), ("pose_hz", 30),
-                                        ("host", "0.0.0.0")])
+                                        ("host", "0.0.0.0"), ("demos", {})])
 def test_server_refuses_to_start_with_an_unusable_app_setting(config, key, value):
     bad = copy.deepcopy(config)
     bad["app"][key] = value
@@ -642,5 +648,14 @@ def test_demos_and_stories_are_run_backed(server):
     status, cards = request(server, "GET", "/api/demos")
     assert status == 200 and [card["id"] for card in cards] == ["hills", "dodge"]
     assert all({"headline", "handles", "outcome_fields", "available", "missing"} <= set(card) for card in cards)
+    for card in cards:  # the words come from config.yaml app.demos, nothing hardcoded
+        words = server.config["app"]["demos"][card["id"]]
+        assert {k: card[k] for k in ("name", "title", "tagline", "lanes")} == {
+            k: words[k] for k in ("name", "title", "tagline", "lanes")}
+        assert set(card["showcase"]) == {"results", "learning"}
+        assert set(card["showcase"]["learning"]) == {"real_tries", "imagined", "neurons", "train_s", "learn_s",
+                                                     "decision_ms", "spikes_per_decision"}
+        if not words["results"]:
+            assert card["showcase"]["results"] is None
     status, story = request(server, "GET", "/api/story/move1")
     assert status == 200 and {"attempts", "what_if", "imagination", "brain", "test"} <= set(story)

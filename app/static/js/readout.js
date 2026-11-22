@@ -125,8 +125,7 @@ export function plainWhy(view) {
   return "It is watching.";
 }
 
-// The honesty lines shown to visitors, from student_status, gate_passed and thresholds only. The exact server sentence
-// belongs in the engineers' drawer.
+// The honesty lines shown to visitors, from student_status, gate_passed and thresholds only.
 export function plainHonesty(view) {
   if (view.state !== "decision") return [];
   const s = view.studentStatus ?? "", out = [];

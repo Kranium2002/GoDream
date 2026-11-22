@@ -3,7 +3,7 @@
 // while one request is in flight only the newest window waits. The big event view is drawn from frames already in
 // memory; the answer's command moves the simulated dog on the right (the server applies it). Frames live only in
 // memory and are released on Stop or when the person leaves this mode; nothing is stored.
-import { cameraProblem, changePicture, createFrameWindow, createPace, createRateMeter, createRecent, createSampler, createSender, toEpochMs } from "./live.js";
+import { cameraProblem, changePicture, createFrameWindow, createPace, createRateMeter, createSampler, createSender, toEpochMs } from "./live.js";
 import { preprocess, readWindowSettings } from "./vision.js";
 import { plainHonesty, plainState, plainWhy, readout } from "./readout.js";
 import { cropRect } from "./drive.js";
@@ -13,14 +13,13 @@ import { $, setText } from "./dom.js";
 const RETRY_MS = 3000; // after an unavailable or failed answer, wait this long before offering the next window
 const SLOW_TOLERANCE = 0.75; // the camera counts as slow below this share of the rate the model expects
 
-export function initLiveView({ api, notes, setLine, changed }) {
+export function initLiveView({ api, notes, setLine }) {
   const video = $("cam-video");
   const capture = document.createElement("canvas"); // never in the page, never exported
   const captureCtx = capture.getContext("2d", { willReadFrequently: true });
   let settings = null, inferCap = null, active = false, problem = null;
-  let stream = null, session = 0, timer = null, run = null, lastView = null, lastAnswer = null, starting = false;
-  const cam = createRateMeter(), sent = createRateMeter();
-  const ageAtSend = createRecent(5000), rtt = createRecent(5000), serverAge = createRecent(5000);
+  let stream = null, session = 0, timer = null, run = null, starting = false;
+  const cam = createRateMeter(); // the camera's own frame rate, for the slow-camera hint
   let pace = null;
 
   // ---- server state -------------------------------------------------------------------------------------------
@@ -78,18 +77,13 @@ export function initLiveView({ api, notes, setLine, changed }) {
     video.srcObject = stream;
     try { await video.play(); } catch { /* a muted inline video plays; a refusal shows as no frames */ }
     const n = settings.height * settings.width;
-    run = { settings, frameWindow: createFrameWindow(settings.frames, n), sampler: createSampler(settings.hz), retryAt: 0, sessionStart: true, looked: 0, moved: 0, sender: null };
+    run = { settings, frameWindow: createFrameWindow(settings.frames, n), sampler: createSampler(settings.hz), retryAt: 0, sessionStart: true, sender: null };
     const r = run;
     r.sender = createSender(async (snap) => {
-      const sentAt = performance.now();
-      ageAtSend.add(sentAt, sentAt - snap.capturedAt);
-      sent.add(sentAt);
       const first = r.sessionStart; // until the server has answered one window of this session
       const result = await api.infer(snap.window, r.settings.frames, toEpochMs(snap.capturedAt, performance.now(), Date.now()), first);
       if (first && result.ok) r.sessionStart = false;
-      const now = performance.now();
-      rtt.add(now, now - sentAt);
-      return { result, rttMs: now - sentAt };
+      return { result };
     }, (snap, answer) => showDecision(r, answer));
     pace = createPace(settings.hz, { tolerance: SLOW_TOLERANCE });
     document.body.dataset.cam = "on";
@@ -102,7 +96,6 @@ export function initLiveView({ api, notes, setLine, changed }) {
     setLine("Push your fist toward the camera, quickly. Keep the rest of the picture still.");
     render();
     schedule(session);
-    changed();
   }
 
   function stop() {
@@ -115,15 +108,13 @@ export function initLiveView({ api, notes, setLine, changed }) {
     run = null;
     capture.width = capture.height = 0; // drops the last frame's pixels
     const big = $("eye-events"); big.width = big.height = 1;
-    for (const m of [cam, sent]) m.clear();
-    for (const m of [ageAtSend, rtt, serverAge]) m.clear();
+    cam.clear();
     pace?.reset();
     delete document.body.dataset.cam;
     $("react").hidden = true;
     $("slow-hint").hidden = true;
     $("cam-crop").hidden = true;
     render();
-    changed();
   }
 
   function showProblem(text) {
@@ -202,12 +193,9 @@ export function initLiveView({ api, notes, setLine, changed }) {
     $("danger").setAttribute("aria-valuenow", typeof value === "number" ? value.toFixed(2) : "0");
   }
 
-  function showDecision(r, { result, rttMs }) {
+  function showDecision(r, { result }) {
     if (r !== run) return;
     const view = readout(result);
-    lastView = view;
-    lastAnswer = { at: performance.now(), rttMs, data: result.ok ? result.data : null };
-    if (result.ok && typeof result.data.frame_age_ms === "number") serverAge.add(performance.now(), result.data.frame_age_ms);
     const st = plainState(view);
     setText($("state-line"), st.text);
     $("state-line").dataset.tone = st.tone;
@@ -216,17 +204,13 @@ export function initLiveView({ api, notes, setLine, changed }) {
       r.retryAt = performance.now() + RETRY_MS; // unavailable or failed: pause instead of repeating the request at camera rate
       if (view.state === "unavailable") notes.set("infer-answer", "warn", `infer: ${view.message}`, "Camera");
       else notes.report("danger", `infer failed: ${view.message} (${view.code})`, "Camera");
-      changed();
       return;
     }
     notes.clear("infer-answer");
-    r.looked++;
-    if (view.issued === true) r.moved++;
     setDanger(view.values.threat, view.thresholds?.threat ?? null);
     const honest = plainHonesty(view);
     setText($("honesty"), honest.join(" "));
     $("honesty").hidden = !honest.length;
-    changed();
   }
 
   addEventListener("pagehide", () => { if (stream) stop(); });
@@ -237,12 +221,5 @@ export function initLiveView({ api, notes, setLine, changed }) {
     enter() { active = true; problem = null; render(); },
     leave() { active = false; if (stream) stop(); $("cam-toggle").hidden = true; $("slow-hint").hidden = true; },
     on: () => Boolean(stream),
-    // For the engineers' drawer: the pipeline as measured here, and the last answer exactly as sent.
-    stats() {
-      const now = performance.now();
-      return { on: Boolean(stream), settings, inferCap, cameraFps: cam.rate(now), sendRate: sent.rate(now), ageAtSend: ageAtSend.summary(now),
-        rtt: rtt.summary(now), serverAge: serverAge.summary(now), dropped: run?.sender.dropped() ?? 0, looked: run?.looked ?? 0, moved: run?.moved ?? 0,
-        view: lastView, answer: lastAnswer, video: stream ? { width: video.videoWidth, height: video.videoHeight } : null };
-    },
   };
 }

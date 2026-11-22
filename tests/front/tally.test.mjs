@@ -47,6 +47,19 @@ test("an outcome without a result word (the hills demo) is not counted", () => {
 test("the tally reads in plain words in a fixed order, nothing before the first round", () => {
   assert.equal(tallyText(undefined), "");
   assert.equal(tallyText({}), "");
-  assert.equal(tallyText({ Dodged: 1, Hit: 3 }), "Hit 3 · Dodged 1");
-  assert.equal(tallyText({ Fell: 1, "Not hit": 2, Dodged: 0, Hit: 1 }), "Hit 1 · Not hit 2 · Fell 1");
+  assert.equal(tallyText({ Dodged: 1, Hit: 3 }), "3 hit, 1 dodged");
+  assert.equal(tallyText({ Fell: 1, "Not hit": 2, Dodged: 0, Hit: 1 }), "1 hit, 2 not hit, 1 fell");
+  // a finish-line lane: one yes-or-no count
+  assert.equal(tallyText({ Reached: 1 }), "reached 1 of 1");
+  assert.equal(tallyText({ "Not reached": 1, Reached: 2 }), "reached 2 of 3");
+  assert.equal(tallyText({ "Not reached": 2 }), "reached 0 of 2");
+});
+
+test("a page's own word function counts lanes whose outcome has no server word (the hills demo)", () => {
+  const hills = { ...start, demo: "hills" };
+  const running = applyDuel(emptyDuel(), hills);
+  const ended = applyDuel(running, { ...hills, state: "end", sides: {
+    before: { status: "done", outcome: { crossed_goal_line: 0, fall: 0 } }, after: { status: "done", outcome: { crossed_goal_line: 1, fall: 0 } } } });
+  const word = (o) => (o.crossed_goal_line && !o.fall ? "Reached" : "Not reached");
+  assert.deepEqual(countRound({}, running, ended, word), { hills: { before: { "Not reached": 1 }, after: { Reached: 1 } } });
 });

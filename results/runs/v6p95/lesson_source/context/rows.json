@@ -1,0 +1,1629 @@
+{
+ "skill": "dodge_vision",
+ "split": "context",
+ "action_names": [
+  "NO_OP",
+  "DODGE_LEFT",
+  "DODGE_RIGHT",
+  "RETREAT"
+ ],
+ "outcome_names": [
+  "min_separation_m",
+  "collision",
+  "fall",
+  "recovery_time_s",
+  "command_travel_m"
+ ],
+ "outcome_kinds": [
+  "regression",
+  "binary",
+  "binary",
+  "regression",
+  "regression"
+ ],
+ "outcome_bounds": [
+  [
+   0.0,
+   2.0
+  ],
+  [
+   0.0,
+   1.0
+  ],
+  [
+   0.0,
+   1.0
+  ],
+  [
+   0.0,
+   4.0
+  ],
+  [
+   0.0,
+   0.6
+  ]
+ ],
+ "frames": 8,
+ "n_situations": 80,
+ "seeds": {
+  "runtime_seed": 20261121,
+  "split_code": 1,
+  "scenarios": "np.random.default_rng(np.random.SeedSequence([runtime_seed, split_code]))",
+  "per_scenario": "np.random.SeedSequence([runtime_seed, split_code], spawn_key=(scenario_id,)).spawn(2): camera rate(s) then decision frame(s) (vision.sim_camera_rates_hz), augmentation",
+  "attempt_seed": "scenario_id"
+ },
+ "world_seed": 0,
+ "world_preset": "default",
+ "config_digest": "2b1bb41eb0d7fffa44d34a97156c4fd1d9dd9a9b8867cdd3b4eb74ecc2cd0231",
+ "kind_counts": {
+  "empty": 8,
+  "static": 10,
+  "receding": 3,
+  "off_path": 3,
+  "background_motion": 7,
+  "ambiguous": 9,
+  "incoming_left": 11,
+  "incoming_center": 15,
+  "incoming_right": 14
+ },
+ "punch_stand_in": false,
+ "scenarios": [
+  {
+   "scenario_id": 0,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.1213519244864578,
+    "ball_rel_y_m": -0.15363111038889343,
+    "ball_rel_z_m": -0.011475895795117694,
+    "ball_vel_x_m_s": -1.1191938172829208,
+    "ball_vel_y_m_s": 0.3019985301367519,
+    "ball_vel_z_m_s": 0.06200884136727421,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.1279317070699594,
+    "background_seed": 1167789565,
+    "background_mean": 0.421373095062637
+   }
+  },
+  {
+   "scenario_id": 1,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.3565490140056622,
+    "ball_rel_y_m": 0.08892956335448056,
+    "ball_rel_z_m": -0.01653931255705103,
+    "ball_vel_x_m_s": -0.9813829065420148,
+    "ball_vel_y_m_s": -0.1390025530709842,
+    "ball_vel_z_m_s": 0.0664375847258595,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.33879916018658496,
+    "background_seed": 4009484596,
+    "background_mean": 0.6191836279582955
+   }
+  },
+  {
+   "scenario_id": 2,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.0575091040546192,
+    "ball_rel_y_m": 0.13410933464684233,
+    "ball_rel_z_m": 0.019671349848276037,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.4646342461126194,
+    "background_seed": 1164496723,
+    "background_mean": 0.6379658338449757
+   }
+  },
+  {
+   "scenario_id": 3,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.0126367878936036,
+    "ball_rel_y_m": -0.06699368756795833,
+    "ball_rel_z_m": 0.023240165790641573,
+    "ball_vel_x_m_s": -1.0563401101113272,
+    "ball_vel_y_m_s": 0.13313708950485922,
+    "ball_vel_z_m_s": -0.024724879048706454,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.2179230137442642,
+    "background_seed": 752054541,
+    "background_mean": 0.43936051974122287
+   }
+  },
+  {
+   "scenario_id": 4,
+   "kind": "ambiguous",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9986854487467705,
+    "ball_rel_y_m": -0.1110155376243054,
+    "ball_rel_z_m": -0.024787983377185074,
+    "ball_vel_x_m_s": -0.6397950618665171,
+    "ball_vel_y_m_s": 0.31893665406545396,
+    "ball_vel_z_m_s": 0.013146872934311302,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.37343183898822074,
+    "background_seed": 3544398293,
+    "background_mean": 0.6107951942470077
+   }
+  },
+  {
+   "scenario_id": 5,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8277246043420229,
+    "ball_rel_y_m": -0.01466403496319522,
+    "ball_rel_z_m": 0.10021760596584081,
+    "ball_vel_x_m_s": -0.6426656941720756,
+    "ball_vel_y_m_s": 0.09216539506919141,
+    "ball_vel_z_m_s": -0.12555478186064334,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.20053277251573592,
+    "background_seed": 1168727216,
+    "background_mean": 0.5074866111971758
+   }
+  },
+  {
+   "scenario_id": 6,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9380380245237802,
+    "ball_rel_y_m": -0.0016920604573044827,
+    "ball_rel_z_m": -0.09217695850239549,
+    "ball_vel_x_m_s": -0.8853379266855829,
+    "ball_vel_y_m_s": -0.030935041967310166,
+    "ball_vel_z_m_s": 0.1827881457513292,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.556193631097947,
+    "background_seed": 3715434939,
+    "background_mean": 0.38915653316089616
+   }
+  },
+  {
+   "scenario_id": 7,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.6223002118483215,
+    "ball_rel_y_m": 0.08323963334500425,
+    "ball_rel_z_m": -0.09942710951334421,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.20358317443744003,
+    "background_seed": 364992539,
+    "background_mean": 0.4997375032141929
+   }
+  },
+  {
+   "scenario_id": 8,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.1115913181822394,
+    "ball_rel_y_m": 0.03886506415201665,
+    "ball_rel_z_m": 0.18681416970015566,
+    "ball_vel_x_m_s": -0.7601221021205989,
+    "ball_vel_y_m_s": -0.03967244728534625,
+    "ball_vel_z_m_s": -0.200288268532069,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.3707303251665176,
+    "background_seed": 4010626793,
+    "background_mean": 0.6088025003683791
+   }
+  },
+  {
+   "scenario_id": 9,
+   "kind": "background_motion",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8198737665764378,
+    "ball_rel_y_m": -0.19877022234302139,
+    "ball_rel_z_m": 0.0405373018479164,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.7533246213278082,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7840879195350239,
+    "background_seed": 2659988489,
+    "background_mean": 0.44451196971529633
+   }
+  },
+  {
+   "scenario_id": 10,
+   "kind": "off_path",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.3577179235032342,
+    "ball_rel_y_m": 0.17938159096911577,
+    "ball_rel_z_m": -0.0930290842003393,
+    "ball_vel_x_m_s": -0.9339545410057774,
+    "ball_vel_y_m_s": 0.5965149280945348,
+    "ball_vel_z_m_s": 0.08035475963550572,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.3070170874212121,
+    "background_seed": 1961820902,
+    "background_mean": 0.585940698095938
+   }
+  },
+  {
+   "scenario_id": 11,
+   "kind": "empty",
+   "object_kind": "punch",
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7148564374256582,
+    "background_seed": 457452995,
+    "background_mean": 0.5417783936867194
+   }
+  },
+  {
+   "scenario_id": 12,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.2173991468254484,
+    "ball_rel_y_m": -0.13703455627231373,
+    "ball_rel_z_m": 0.09110853882052078,
+    "ball_vel_x_m_s": -1.1408725468655556,
+    "ball_vel_y_m_s": 0.21881574145094315,
+    "ball_vel_z_m_s": -0.12593694688796092,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7564126415482021,
+    "background_seed": 641284469,
+    "background_mean": 0.48454236824436553
+   }
+  },
+  {
+   "scenario_id": 13,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.1382539916296552,
+    "ball_rel_y_m": -0.07929937144077084,
+    "ball_rel_z_m": -0.07410034621120345,
+    "ball_vel_x_m_s": -0.4840173157549773,
+    "ball_vel_y_m_s": 0.04025770551037435,
+    "ball_vel_z_m_s": 0.07477151557659054,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.13696336848768842,
+    "background_seed": 490529656,
+    "background_mean": 0.6254632088490372
+   }
+  },
+  {
+   "scenario_id": 14,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.1180814320188694,
+    "ball_rel_y_m": 0.018712412708899243,
+    "ball_rel_z_m": -0.02903867823281564,
+    "ball_vel_x_m_s": -0.797373683072109,
+    "ball_vel_y_m_s": -0.0728599488980943,
+    "ball_vel_z_m_s": 0.10640438238391212,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.22921764776973477,
+    "background_seed": 3049781872,
+    "background_mean": 0.4450792820147897
+   }
+  },
+  {
+   "scenario_id": 15,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8511306928956662,
+    "ball_rel_y_m": -0.11648696328083794,
+    "ball_rel_z_m": -0.0014716493614658627,
+    "ball_vel_x_m_s": -1.095960283375845,
+    "ball_vel_y_m_s": 0.16172652886789318,
+    "ball_vel_z_m_s": 0.2409386820116976,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.6681838198801415,
+    "background_seed": 708224716,
+    "background_mean": 0.4522886612889945
+   }
+  },
+  {
+   "scenario_id": 16,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8861180589884238,
+    "ball_rel_y_m": 0.038278528366692155,
+    "ball_rel_z_m": 0.008746922642781207,
+    "ball_vel_x_m_s": -0.456023048608,
+    "ball_vel_y_m_s": -0.06938961082599528,
+    "ball_vel_z_m_s": -0.019650579317164237,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.8755612321728823,
+    "background_seed": 807464936,
+    "background_mean": 0.3811877290551876
+   }
+  },
+  {
+   "scenario_id": 17,
+   "kind": "ambiguous",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8618558330633294,
+    "ball_rel_y_m": 0.0017888029206034831,
+    "ball_rel_z_m": 0.0311857699940222,
+    "ball_vel_x_m_s": -0.5418414425132637,
+    "ball_vel_y_m_s": -0.17669873679132125,
+    "ball_vel_z_m_s": 0.010801782262586433,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.29434656328326836,
+    "background_seed": 3719431853,
+    "background_mean": 0.5011659977654295
+   }
+  },
+  {
+   "scenario_id": 18,
+   "kind": "ambiguous",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.2060364147590141,
+    "ball_rel_y_m": -0.1635641320282563,
+    "ball_rel_z_m": 0.00423211304032553,
+    "ball_vel_x_m_s": -0.9551221102861587,
+    "ball_vel_y_m_s": -0.027674983145714985,
+    "ball_vel_z_m_s": 0.11262933488834435,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.2012193268393701,
+    "background_seed": 1309462612,
+    "background_mean": 0.43651514332313923
+   }
+  },
+  {
+   "scenario_id": 19,
+   "kind": "empty",
+   "object_kind": "punch",
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.8683723798933948,
+    "background_seed": 2933432955,
+    "background_mean": 0.38095680686309014
+   }
+  },
+  {
+   "scenario_id": 20,
+   "kind": "ambiguous",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8850757099054395,
+    "ball_rel_y_m": 0.09345655441889972,
+    "ball_rel_z_m": 0.06765730561895966,
+    "ball_vel_x_m_s": -0.7327198873810458,
+    "ball_vel_y_m_s": -0.3556441968048767,
+    "ball_vel_z_m_s": 0.06324980865429367,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.20166524313645473,
+    "background_seed": 728096512,
+    "background_mean": 0.5840473990783219
+   }
+  },
+  {
+   "scenario_id": 21,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9978844328638781,
+    "ball_rel_y_m": -0.06705130115320439,
+    "ball_rel_z_m": 0.13799878074519914,
+    "ball_vel_x_m_s": -0.5901069365519063,
+    "ball_vel_y_m_s": 0.08358349879430316,
+    "ball_vel_z_m_s": -0.09144561913070291,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.9302069603218069,
+    "background_seed": 4240710471,
+    "background_mean": 0.48974461141829806
+   }
+  },
+  {
+   "scenario_id": 22,
+   "kind": "ambiguous",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.1596310001032517,
+    "ball_rel_y_m": -0.1071121491401449,
+    "ball_rel_z_m": 0.04811683446739368,
+    "ball_vel_x_m_s": -1.0914585731894628,
+    "ball_vel_y_m_s": -0.11038382540236476,
+    "ball_vel_z_m_s": -0.06783991683655186,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.8384648814518589,
+    "background_seed": 2123232614,
+    "background_mean": 0.39663917099014684
+   }
+  },
+  {
+   "scenario_id": 23,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9664845816144872,
+    "ball_rel_y_m": 0.09209344527027168,
+    "ball_rel_z_m": 0.09308160997597326,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.28194003632834364,
+    "background_seed": 1280695517,
+    "background_mean": 0.49319771772491744
+   }
+  },
+  {
+   "scenario_id": 24,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8911583319339336,
+    "ball_rel_y_m": -0.10636914188452158,
+    "ball_rel_z_m": 0.044741524324003995,
+    "ball_vel_x_m_s": -0.9051726406449039,
+    "ball_vel_y_m_s": 0.16875792576959225,
+    "ball_vel_z_m_s": -0.08370549736766243,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.11129185293203724,
+    "background_seed": 2343099462,
+    "background_mean": 0.5789786161900028
+   }
+  },
+  {
+   "scenario_id": 25,
+   "kind": "empty",
+   "object_kind": "punch",
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.6471474394269993,
+    "background_seed": 966769570,
+    "background_mean": 0.4881408669212386
+   }
+  },
+  {
+   "scenario_id": 26,
+   "kind": "receding",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.6592366848814286,
+    "ball_rel_y_m": 0.01868848537268538,
+    "ball_rel_z_m": 0.1012429805568352,
+    "ball_vel_x_m_s": 0.8891454916456308,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.6516070528598107,
+    "background_seed": 2416299858,
+    "background_mean": 0.3756226455873437
+   }
+  },
+  {
+   "scenario_id": 27,
+   "kind": "background_motion",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.7408655726236736,
+    "ball_rel_y_m": -0.16604395686918247,
+    "ball_rel_z_m": 0.1102497940204582,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 1.1440089530433921,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.20299384777562088,
+    "background_seed": 448877906,
+    "background_mean": 0.5439065059455835
+   }
+  },
+  {
+   "scenario_id": 28,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.7713942432329818,
+    "ball_rel_y_m": -0.04079842283737767,
+    "ball_rel_z_m": 0.04457210840514442,
+    "ball_vel_x_m_s": -1.0334876575873309,
+    "ball_vel_y_m_s": 0.2149917739503027,
+    "ball_vel_z_m_s": -0.06329756939428687,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.9831856748914284,
+    "background_seed": 2815604775,
+    "background_mean": 0.394236873581796
+   }
+  },
+  {
+   "scenario_id": 29,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.008552714054454,
+    "ball_rel_y_m": 0.09130624190708256,
+    "ball_rel_z_m": 0.027583950012093517,
+    "ball_vel_x_m_s": -1.1617446597458352,
+    "ball_vel_y_m_s": -0.22805401367166736,
+    "ball_vel_z_m_s": -0.06516569634498963,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.3610079739378248,
+    "background_seed": 3723358321,
+    "background_mean": 0.5680757528139629
+   }
+  },
+  {
+   "scenario_id": 30,
+   "kind": "ambiguous",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.2595624824899065,
+    "ball_rel_y_m": -0.05729272140345416,
+    "ball_rel_z_m": 0.17086961273065807,
+    "ball_vel_x_m_s": -0.8692902813116138,
+    "ball_vel_y_m_s": 0.21598173685484925,
+    "ball_vel_z_m_s": -0.12118312014120942,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.9509446136888017,
+    "background_seed": 3056832821,
+    "background_mean": 0.5279621537952072
+   }
+  },
+  {
+   "scenario_id": 31,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.090392631829866,
+    "ball_rel_y_m": 0.030604603462883823,
+    "ball_rel_z_m": 0.1255384050309682,
+    "ball_vel_x_m_s": -0.9854738299914881,
+    "ball_vel_y_m_s": 0.01738718223963097,
+    "ball_vel_z_m_s": -0.04530029905158055,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.6289146292224839,
+    "background_seed": 1204507255,
+    "background_mean": 0.43154761802637376
+   }
+  },
+  {
+   "scenario_id": 32,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.0303187073599185,
+    "ball_rel_y_m": 0.050708975074527894,
+    "ball_rel_z_m": 0.020399944129614087,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7401630476991166,
+    "background_seed": 502757551,
+    "background_mean": 0.4182686502624935
+   }
+  },
+  {
+   "scenario_id": 33,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8539651150262896,
+    "ball_rel_y_m": -0.09626104848571268,
+    "ball_rel_z_m": -0.03625521444095588,
+    "ball_vel_x_m_s": -0.8645265769838197,
+    "ball_vel_y_m_s": 0.046710007709588997,
+    "ball_vel_z_m_s": 0.21500783287395278,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7253000697500416,
+    "background_seed": 3796664748,
+    "background_mean": 0.4214364222508693
+   }
+  },
+  {
+   "scenario_id": 34,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.2626131963901306,
+    "ball_rel_y_m": -0.15944126933722386,
+    "ball_rel_z_m": 0.023913755121275318,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7333548469730083,
+    "background_seed": 3208069202,
+    "background_mean": 0.48997433598756757
+   }
+  },
+  {
+   "scenario_id": 35,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.2353141815141748,
+    "ball_rel_y_m": -0.10633566855722638,
+    "ball_rel_z_m": -0.055078285293662994,
+    "ball_vel_x_m_s": -0.5768335041998379,
+    "ball_vel_y_m_s": 0.05590561142948363,
+    "ball_vel_z_m_s": 0.04276551649426429,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.12471546299131193,
+    "background_seed": 392884236,
+    "background_mean": 0.35509000483695785
+   }
+  },
+  {
+   "scenario_id": 36,
+   "kind": "background_motion",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8778759422977227,
+    "ball_rel_y_m": -0.222795510173925,
+    "ball_rel_z_m": 0.059082478184095594,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.8838899645882367,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.3184318148872754,
+    "background_seed": 3097733976,
+    "background_mean": 0.5705911090506018
+   }
+  },
+  {
+   "scenario_id": 37,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.3029435923897936,
+    "ball_rel_y_m": 0.14692258422446172,
+    "ball_rel_z_m": 0.1494183701868292,
+    "ball_vel_x_m_s": -1.0682309129118563,
+    "ball_vel_y_m_s": -0.09006684631731456,
+    "ball_vel_z_m_s": -0.0331535508302796,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.758331990682163,
+    "background_seed": 2699168001,
+    "background_mean": 0.41642517943415286
+   }
+  },
+  {
+   "scenario_id": 38,
+   "kind": "ambiguous",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9170128887510255,
+    "ball_rel_y_m": 0.09865824528451062,
+    "ball_rel_z_m": -0.02006827738422945,
+    "ball_vel_x_m_s": -1.00614791494112,
+    "ball_vel_y_m_s": -0.3783514772185724,
+    "ball_vel_z_m_s": 0.0973048788474848,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.9249540595372797,
+    "background_seed": 727438303,
+    "background_mean": 0.5707046878844333
+   }
+  },
+  {
+   "scenario_id": 39,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.0869477126951002,
+    "ball_rel_y_m": -0.1080074318196176,
+    "ball_rel_z_m": -0.050723124285141793,
+    "ball_vel_x_m_s": -0.9062650630420009,
+    "ball_vel_y_m_s": 0.06182322027883075,
+    "ball_vel_z_m_s": 0.08323307194688284,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7556915687311301,
+    "background_seed": 3224432328,
+    "background_mean": 0.3374810458403085
+   }
+  },
+  {
+   "scenario_id": 40,
+   "kind": "empty",
+   "object_kind": "punch",
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.9151174938121753,
+    "background_seed": 801915184,
+    "background_mean": 0.3916672239594939
+   }
+  },
+  {
+   "scenario_id": 41,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.3059028242587642,
+    "ball_rel_y_m": 0.07724362668525941,
+    "ball_rel_z_m": 0.15426285975166312,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.8058836081114873,
+    "background_seed": 4165700095,
+    "background_mean": 0.48394940430186156
+   }
+  },
+  {
+   "scenario_id": 42,
+   "kind": "receding",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8175719861014749,
+    "ball_rel_y_m": 0.03637557608993357,
+    "ball_rel_z_m": 0.06947451751865694,
+    "ball_vel_x_m_s": 0.7810776333343086,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.880222447826812,
+    "background_seed": 3221880450,
+    "background_mean": 0.4778355003081345
+   }
+  },
+  {
+   "scenario_id": 43,
+   "kind": "background_motion",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9972325026530305,
+    "ball_rel_y_m": -0.2722346162312964,
+    "ball_rel_z_m": 0.027330045586052315,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.9249997687843875,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.9761514555452088,
+    "background_seed": 1583052610,
+    "background_mean": 0.3949180445266472
+   }
+  },
+  {
+   "scenario_id": 44,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.34023544416532,
+    "ball_rel_y_m": 0.07409231088714527,
+    "ball_rel_z_m": 0.1881523248230291,
+    "ball_vel_x_m_s": -1.1617554728197514,
+    "ball_vel_y_m_s": -0.06777209623198038,
+    "ball_vel_z_m_s": -0.16149468368125336,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.15737012998359723,
+    "background_seed": 2597999027,
+    "background_mean": 0.4542590015472532
+   }
+  },
+  {
+   "scenario_id": 45,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.386285246634403,
+    "ball_rel_y_m": 0.04252893370343625,
+    "ball_rel_z_m": -0.0008090967564968604,
+    "ball_vel_x_m_s": -0.5515322349929217,
+    "ball_vel_y_m_s": 0.0015694360705483371,
+    "ball_vel_z_m_s": 0.05464239987812852,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.2172353467861984,
+    "background_seed": 2838567831,
+    "background_mean": 0.5562396108327852
+   }
+  },
+  {
+   "scenario_id": 46,
+   "kind": "ambiguous",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.7772628757802795,
+    "ball_rel_y_m": 0.024248076591367514,
+    "ball_rel_z_m": -0.047738766016706076,
+    "ball_vel_x_m_s": -0.5234292475339347,
+    "ball_vel_y_m_s": 0.2410095695851473,
+    "ball_vel_z_m_s": 0.12632938343758018,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.33150984708424613,
+    "background_seed": 557090590,
+    "background_mean": 0.5667732497963964
+   }
+  },
+  {
+   "scenario_id": 47,
+   "kind": "empty",
+   "object_kind": "punch",
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.6309825165785908,
+    "background_seed": 3770019017,
+    "background_mean": 0.3685170385198129
+   }
+  },
+  {
+   "scenario_id": 48,
+   "kind": "empty",
+   "object_kind": "punch",
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.1516033959254263,
+    "background_seed": 223461246,
+    "background_mean": 0.4386688562508126
+   }
+  },
+  {
+   "scenario_id": 49,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.2351532972171333,
+    "ball_rel_y_m": -0.1078944928215705,
+    "ball_rel_z_m": -0.09304019391711917,
+    "ball_vel_x_m_s": -0.841761407949066,
+    "ball_vel_y_m_s": 0.05695985030684494,
+    "ball_vel_z_m_s": 0.1474198728195914,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.39176565832894195,
+    "background_seed": 1950344714,
+    "background_mean": 0.5656075717161736
+   }
+  },
+  {
+   "scenario_id": 50,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.0593236931332533,
+    "ball_rel_y_m": 0.032131578939737,
+    "ball_rel_z_m": 0.1441781030995988,
+    "ball_vel_x_m_s": -0.9553293194224496,
+    "ball_vel_y_m_s": -0.12700415009695196,
+    "ball_vel_z_m_s": -0.1953812510027055,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.6217436065675761,
+    "background_seed": 1868678947,
+    "background_mean": 0.42069255317291826
+   }
+  },
+  {
+   "scenario_id": 51,
+   "kind": "empty",
+   "object_kind": "punch",
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.9608960546476583,
+    "background_seed": 1364163617,
+    "background_mean": 0.4705998042736991
+   }
+  },
+  {
+   "scenario_id": 52,
+   "kind": "empty",
+   "object_kind": "punch",
+   "situation": {
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.2939254582389859,
+    "background_seed": 3439220192,
+    "background_mean": 0.49606344080239395
+   }
+  },
+  {
+   "scenario_id": 53,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9323902243012439,
+    "ball_rel_y_m": -0.015983968969820288,
+    "ball_rel_z_m": 0.06353716885104535,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.921028262769815,
+    "background_seed": 1942032018,
+    "background_mean": 0.6522305361851544
+   }
+  },
+  {
+   "scenario_id": 54,
+   "kind": "background_motion",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8656051297849774,
+    "ball_rel_y_m": 0.21771277320980842,
+    "ball_rel_z_m": 0.15851233627798147,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": -0.4693346820038733,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.676166506157004,
+    "background_seed": 2966703194,
+    "background_mean": 0.4961260588487606
+   }
+  },
+  {
+   "scenario_id": 55,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8402460858548338,
+    "ball_rel_y_m": 0.003337421261710323,
+    "ball_rel_z_m": 0.007684510428961094,
+    "ball_vel_x_m_s": -0.8691735355862015,
+    "ball_vel_y_m_s": -0.09223806828281295,
+    "ball_vel_z_m_s": 0.028312424490404914,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7797491658877728,
+    "background_seed": 865483324,
+    "background_mean": 0.5416275052181199
+   }
+  },
+  {
+   "scenario_id": 56,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.7916910968538706,
+    "ball_rel_y_m": 0.07905645222259294,
+    "ball_rel_z_m": 0.08900437240168896,
+    "ball_vel_x_m_s": -0.4867103459583668,
+    "ball_vel_y_m_s": -0.04380636500141917,
+    "ball_vel_z_m_s": -0.10032691041489827,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7211538958490484,
+    "background_seed": 3560135442,
+    "background_mean": 0.41019447801764525
+   }
+  },
+  {
+   "scenario_id": 57,
+   "kind": "receding",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.7187960472129432,
+    "ball_rel_y_m": -0.0004125809728184759,
+    "ball_rel_z_m": -0.007997199384043262,
+    "ball_vel_x_m_s": 0.682919141229399,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7361377632036233,
+    "background_seed": 1571669601,
+    "background_mean": 0.5595830387489129
+   }
+  },
+  {
+   "scenario_id": 58,
+   "kind": "off_path",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.1503108500396657,
+    "ball_rel_y_m": 0.12262061778323859,
+    "ball_rel_z_m": 0.19904697362230436,
+    "ball_vel_x_m_s": -0.40161887674122004,
+    "ball_vel_y_m_s": -0.6808669229938232,
+    "ball_vel_z_m_s": -0.08303887350245895,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7827171789374154,
+    "background_seed": 224095977,
+    "background_mean": 0.5784695364593249
+   }
+  },
+  {
+   "scenario_id": 59,
+   "kind": "off_path",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.1681697633217385,
+    "ball_rel_y_m": 0.09952455137338331,
+    "ball_rel_z_m": 0.07443673463287767,
+    "ball_vel_x_m_s": -0.4439824371803147,
+    "ball_vel_y_m_s": 0.6263455276397591,
+    "ball_vel_z_m_s": -0.027121997855193754,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.8423118125349501,
+    "background_seed": 321897240,
+    "background_mean": 0.5567133524412007
+   }
+  },
+  {
+   "scenario_id": 60,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8093075867677872,
+    "ball_rel_y_m": -0.10722833524635954,
+    "ball_rel_z_m": -0.00921829005079823,
+    "ball_vel_x_m_s": -0.7342061267769278,
+    "ball_vel_y_m_s": 0.24583486016371892,
+    "ball_vel_z_m_s": 0.12796688068445616,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.20138506947280044,
+    "background_seed": 3549718702,
+    "background_mean": 0.5489444534785546
+   }
+  },
+  {
+   "scenario_id": 61,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9812473978709063,
+    "ball_rel_y_m": -0.09012855668802301,
+    "ball_rel_z_m": -0.06105634045027184,
+    "ball_vel_x_m_s": -0.42710797378155585,
+    "ball_vel_y_m_s": 0.10440900404559272,
+    "ball_vel_z_m_s": 0.04841448460947284,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.9278803922901867,
+    "background_seed": 3220221261,
+    "background_mean": 0.482336378017308
+   }
+  },
+  {
+   "scenario_id": 62,
+   "kind": "ambiguous",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.1545777435080158,
+    "ball_rel_y_m": 0.08468876643096537,
+    "ball_rel_z_m": 0.0010264222262667683,
+    "ball_vel_x_m_s": -0.6431395512984935,
+    "ball_vel_y_m_s": -0.17991149435810475,
+    "ball_vel_z_m_s": -0.014164908080896288,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.24204608974713554,
+    "background_seed": 1138442575,
+    "background_mean": 0.48196837403676146
+   }
+  },
+  {
+   "scenario_id": 63,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.3720309023485167,
+    "ball_rel_y_m": 0.01454147783723354,
+    "ball_rel_z_m": 0.07629070067082858,
+    "ball_vel_x_m_s": -1.1908996402347614,
+    "ball_vel_y_m_s": -0.060870082319209505,
+    "ball_vel_z_m_s": -0.0749821260943945,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.24334004263043418,
+    "background_seed": 2901289109,
+    "background_mean": 0.5299840459414094
+   }
+  },
+  {
+   "scenario_id": 64,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.3844273323502596,
+    "ball_rel_y_m": -0.10936018946223697,
+    "ball_rel_z_m": -0.0629767181910647,
+    "ball_vel_x_m_s": -0.8651087549025064,
+    "ball_vel_y_m_s": 0.13387747063479322,
+    "ball_vel_z_m_s": 0.12482845931431107,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.3253656186449231,
+    "background_seed": 2750360738,
+    "background_mean": 0.5388850210004614
+   }
+  },
+  {
+   "scenario_id": 65,
+   "kind": "background_motion",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9254871107879676,
+    "ball_rel_y_m": 0.242516701883015,
+    "ball_rel_z_m": -0.07919276146256768,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": -0.9648387685178575,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.2726216564821816,
+    "background_seed": 2938596008,
+    "background_mean": 0.5064270718009718
+   }
+  },
+  {
+   "scenario_id": 66,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.80379063057666,
+    "ball_rel_y_m": 0.0677657893047657,
+    "ball_rel_z_m": 0.09907324133062065,
+    "ball_vel_x_m_s": -0.4449834875348606,
+    "ball_vel_y_m_s": -0.005520540704120168,
+    "ball_vel_z_m_s": -0.10082383500187779,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.5535588294312834,
+    "background_seed": 3791987508,
+    "background_mean": 0.33412169443543344
+   }
+  },
+  {
+   "scenario_id": 67,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.331361914175955,
+    "ball_rel_y_m": 0.09273454470708771,
+    "ball_rel_z_m": -0.06493714892131386,
+    "ball_vel_x_m_s": -0.5511679867230033,
+    "ball_vel_y_m_s": -0.08902996333193484,
+    "ball_vel_z_m_s": 0.027080127143939182,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.17648736156770067,
+    "background_seed": 1766743993,
+    "background_mean": 0.606196742912797
+   }
+  },
+  {
+   "scenario_id": 68,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.0408905230582335,
+    "ball_rel_y_m": -0.08601366005121104,
+    "ball_rel_z_m": 0.18968021767172752,
+    "ball_vel_x_m_s": -0.655950716325318,
+    "ball_vel_y_m_s": 0.03731494006329432,
+    "ball_vel_z_m_s": -0.14145901873455177,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.24180932811315822,
+    "background_seed": 2627885437,
+    "background_mean": 0.5114758244163962
+   }
+  },
+  {
+   "scenario_id": 69,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.360158657500259,
+    "ball_rel_y_m": 0.024066456540718133,
+    "ball_rel_z_m": -0.07092272628919377,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.2758193254967443,
+    "background_seed": 1828030469,
+    "background_mean": 0.4746902833192036
+   }
+  },
+  {
+   "scenario_id": 70,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.2701105419889682,
+    "ball_rel_y_m": -0.05209079826112185,
+    "ball_rel_z_m": 0.03432962110139268,
+    "ball_vel_x_m_s": -0.4263094752645101,
+    "ball_vel_y_m_s": 0.01229277921745033,
+    "ball_vel_z_m_s": -0.016368219401055293,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.9561983373559744,
+    "background_seed": 2296391956,
+    "background_mean": 0.5969412378293174
+   }
+  },
+  {
+   "scenario_id": 71,
+   "kind": "background_motion",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8508398694524488,
+    "ball_rel_y_m": -0.2115968021281056,
+    "ball_rel_z_m": 0.027258624887754546,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.7718691177316233,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.23113560825212864,
+    "background_seed": 823848183,
+    "background_mean": 0.531785030696441
+   }
+  },
+  {
+   "scenario_id": 72,
+   "kind": "incoming_left",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.8408892491312441,
+    "ball_rel_y_m": 0.043620534848059826,
+    "ball_rel_z_m": 0.17183814660001048,
+    "ball_vel_x_m_s": -0.9001670979882348,
+    "ball_vel_y_m_s": -0.0027902924971573914,
+    "ball_vel_z_m_s": -0.29063983117627823,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.8569202194336414,
+    "background_seed": 377269722,
+    "background_mean": 0.6772670856526646
+   }
+  },
+  {
+   "scenario_id": 73,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.0547386701895587,
+    "ball_rel_y_m": 0.07044941621569081,
+    "ball_rel_z_m": 0.06346153164129087,
+    "ball_vel_x_m_s": -0.710497707499522,
+    "ball_vel_y_m_s": -0.07100668092610193,
+    "ball_vel_z_m_s": 0.0374228218978489,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.8468491539508962,
+    "background_seed": 94124913,
+    "background_mean": 0.5467883593311166
+   }
+  },
+  {
+   "scenario_id": 74,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.9611859399551314,
+    "ball_rel_y_m": -0.02780260642007525,
+    "ball_rel_z_m": 0.04943157916466748,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.11829332701258655,
+    "background_seed": 2242939729,
+    "background_mean": 0.5720890832722414
+   }
+  },
+  {
+   "scenario_id": 75,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.3751686702242716,
+    "ball_rel_y_m": -0.07350532983959712,
+    "ball_rel_z_m": -0.0008158865833445966,
+    "ball_vel_x_m_s": -0.8466605574976848,
+    "ball_vel_y_m_s": -0.002814048177474674,
+    "ball_vel_z_m_s": 0.0007744833308684933,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.836892239344351,
+    "background_seed": 3853330192,
+    "background_mean": 0.5005618995227807
+   }
+  },
+  {
+   "scenario_id": 76,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.0057785898653226,
+    "ball_rel_y_m": -0.11831567408554172,
+    "ball_rel_z_m": -0.06452948568729512,
+    "ball_vel_x_m_s": -1.0135590216199257,
+    "ball_vel_y_m_s": 0.18041463623922563,
+    "ball_vel_z_m_s": 0.16800256443164377,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.648237757907021,
+    "background_seed": 3594112247,
+    "background_mean": 0.3483509624064061
+   }
+  },
+  {
+   "scenario_id": 77,
+   "kind": "incoming_right",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.119804400522089,
+    "ball_rel_y_m": -0.12078982637409859,
+    "ball_rel_z_m": -0.07768143529342438,
+    "ball_vel_x_m_s": -0.9855618230107119,
+    "ball_vel_y_m_s": 0.07407775776114497,
+    "ball_vel_z_m_s": 0.23520952124565261,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.5206130238882111,
+    "background_seed": 4172747300,
+    "background_mean": 0.33138195932941805
+   }
+  },
+  {
+   "scenario_id": 78,
+   "kind": "static",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 0.778067625774006,
+    "ball_rel_y_m": -0.053513568186296885,
+    "ball_rel_z_m": 0.17695348431521654,
+    "ball_vel_x_m_s": 0.0,
+    "ball_vel_y_m_s": 0.0,
+    "ball_vel_z_m_s": 0.0,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.7502381116160106,
+    "background_seed": 2020709058,
+    "background_mean": 0.4333428879846202
+   }
+  },
+  {
+   "scenario_id": 79,
+   "kind": "incoming_center",
+   "object_kind": "punch",
+   "situation": {
+    "ball_rel_x_m": 1.3525558634509875,
+    "ball_rel_y_m": -0.14931304336575038,
+    "ball_rel_z_m": -0.06078285948178058,
+    "ball_vel_x_m_s": -0.7393633940963282,
+    "ball_vel_y_m_s": 0.12921530291566927,
+    "ball_vel_z_m_s": 0.09712900156208966,
+    "dog_forward_speed_m_s": 0.0,
+    "settle_s": 1.0
+   },
+   "visual": {
+    "object_grey": 0.5802894687564659,
+    "background_seed": 2322754614,
+    "background_mean": 0.35858989195538526
+   }
+  }
+ ],
+ "camera_rate_counts": {
+  "15": 22,
+  "20": 29,
+  "30": 29
+ }
+}

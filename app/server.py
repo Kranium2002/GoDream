@@ -44,6 +44,7 @@ import app.infer  # noqa: F401  registers POST /api/infer and the infer capabili
 import app.player  # noqa: F401  registers POST /api/episodes/start and /api/episodes/stop
 import app.robot  # noqa: F401  registers GET /api/robot
 import app.runs  # noqa: F401  registers the run routes and the runs and results capabilities
+import app.showcase
 from app import backend
 from app.routes import CAPABILITIES, Refusal, capability, find, route, to_json
 from app.simulation import Simulation
@@ -155,6 +156,7 @@ def static(h: Handler) -> None:
     h.send_response(200)
     h.send_header("Content-Type", mimetypes.guess_type(file.name)[0] or "application/octet-stream")
     h.send_header("Content-Length", str(len(data)))
+    h.send_header("Cache-Control", "no-store")  # the page is edited on disk without a build step: never a stale copy
     h.end_headers()
     h.wfile.write(data)
 
@@ -258,6 +260,8 @@ def start(config: dict, port: int) -> Server:
     if config["app"]["host"] != "127.0.0.1":
         raise ValueError(f"config.yaml app.host must be 127.0.0.1, the viewer serves this machine alone; "
                          f"got {config['app']['host']!r}")
+    for demo in app.duel.DEMOS:
+        app.showcase.demo_settings(config, demo)  # ValueError naming config.yaml app.demos.<demo>.<key>
     server = Server(config, port)
     try:
         server.sim.start()
