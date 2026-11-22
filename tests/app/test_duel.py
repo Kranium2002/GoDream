@@ -40,13 +40,29 @@ def test_every_seed_draws_a_held_out_scenario_aimed_at_the_dog(config):
         s = dodge_duel_scenario(config, duel, seed)
         assert s["kind"] in AIMED_AT_DOG
         assert s["situation"]["ball_vel_x_m_s"] < 0  # flies toward the dog (x is ahead of it)
-        assert s == pool[seed % len(pool)]  # by the seed alone, nothing else
+        assert s in pool  # a held-out scenario, picked by the seed alone
         seen.add(s["scenario_id"])
     assert len(seen) == len(pool)  # consecutive seeds walk through all of them
     assert dodge_duel_scenario(config, duel, 7) == dodge_duel_scenario(config, duel, 7)
     s = dodge_duel_scenario(config, duel, 7)
     s["situation"]["ball_rel_x_m"] = 99.0  # a round's changes never leak into the next round
     assert dodge_duel_scenario(config, duel, 7)["situation"]["ball_rel_x_m"] != 99.0
+
+
+def test_two_of_every_three_rounds_come_straight_at_the_dog(config):
+    duel = config["app"]["duel"]["dodge"]
+    assert duel["centre_kind"] == "incoming_center" and duel["centre_rounds"] == 2
+    kinds = [dodge_duel_scenario(config, duel, seed)["kind"] for seed in range(20261121, 20261121 + 300)]
+    for start in range(0, 300, 3):  # every block of three consecutive rounds, wherever the count starts
+        assert kinds[start:start + 3].count("incoming_center") == 2
+    assert set(kinds) == AIMED_AT_DOG  # the side punches are still shown
+    centre = [dodge_duel_scenario(config, duel, seed)["scenario_id"] for seed in range(30) if seed % 3 < 2]
+    assert len(set(centre)) == len(centre)  # consecutive centre rounds are different punches
+    for share, expected in ((0, 0), (3, 3)):
+        only = {**duel, "centre_rounds": share}
+        assert [dodge_duel_scenario(config, only, s)["kind"] for s in range(3)].count("incoming_center") == expected
+    with pytest.raises(ValueError, match="centre_rounds"):
+        dodge_duel_scenario(config, {**duel, "centre_rounds": 4}, 0)
 
 
 def _crossing(situation, aim_x):
@@ -188,3 +204,26 @@ def test_dodge_brain_events_time_the_runtimes_own_answer(config, monkeypatch):
         assert event["side"] == "after" and event["t_s"] == t_s and event["decision_ms"] > 0
         assert event["choice"] == out["action"] and event["issued"] is out["issued"]
     assert manager.outcomes["after"]["result"] == "Not hit"
+
+
+def test_the_punch_speed_control_starts_at_the_configured_speed(config):
+    from app.duel import _dodge_handles
+    handles = {h["name"]: h for h in _dodge_handles(config)}
+    speed, distance = handles["speed_m_s"], handles["distance_m"]
+    assert speed["default"] == config["app"]["duel"]["dodge"]["default_speed_m_s"] == 0.5
+    assert speed["min"] <= speed["default"] <= speed["max"]  # inside the band the student was trained on
+    assert distance["default"] == (distance["min"] + distance["max"]) / 2  # the distance control is unchanged
+    outside = copy.deepcopy(config)
+    outside["app"]["duel"]["dodge"]["default_speed_m_s"] = 9.0
+    with pytest.raises(ValueError, match="default_speed_m_s"):
+        _dodge_handles(outside)
+
+
+def test_the_duel_votes_faster_and_leaves_the_calibrated_gate_alone(config):
+    from app.duel import duel_gate_config
+    duel = config["app"]["duel"]["dodge"]
+    faster = duel_gate_config(config, duel)["inference"]["gate"]
+    assert (faster["votes_needed"], faster["of_last"]) == (duel["votes_needed"], duel["of_last"]) == (2, 2)
+    assert (config["inference"]["gate"]["votes_needed"], config["inference"]["gate"]["of_last"]) == (3, 4)
+    plain = {k: v for k, v in duel.items() if k not in ("votes_needed", "of_last")}
+    assert duel_gate_config(config, plain) is config  # no duel votes named: the calibrated gate as it is

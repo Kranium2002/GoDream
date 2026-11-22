@@ -196,3 +196,12 @@ Person B's session ran out of usage and handed the Dodge demo over (`talkhere.md
 - **Seen in a browser** by the agent that built it (1440 x 900, 20 consecutive seeds 20261123 to 20261142, none skipped): untrained lane Hit 19, Not hit 1; trained lane (`results/runs/v5try/student`, gate target not met) Hit 8, Dodged 11, Not hit 1; no falls. A page run on a loaded laptop, not an evaluation.
 - Tests on the merged tree: `tests/app` 181 passed, 4 skipped; `node --test tests/front` 174 passed.
 - **Open.** The Hills tab reports "not ready" on this tree: the page takes the newest finished hills run, `reflex3`, which was stopped part-way and has no student (fix in progress: prefer a run that has a student). At 390 px the trained lane sits partly under the control bar. NOT RUN: the hills duel from the page.
+
+## 2026-11-22 — Person A: Dodge duel tuning from measurements (punch mix, faster votes, slower default punch)
+
+- Two of every three duel rounds are centre punches (`app.duel.dodge.centre_rounds`), still held-out scenarios by round seed.
+- Standing dog's own turn in a dodge episode (world seed 0, 4 s, 3 attempts each): `yaw_rate` 0 gives +30.0 degrees; -0.10 gives +115.2; +0.05 gives 0.0; +0.10 gives +0.7. A correction of +0.05 was then tried in the duel and NOT applied: on the same 15 rounds the trained dog dodged 3 of 13 hits with it and 7 of 14 without. The student was trained with the camera turning.
+- Gate replay on the saved dev readouts of the app's student `v6p95` (`experiments/proofs/B_v6_near_approach/gate_speed.*` on `person-a/punch-sweep`): 3 of 4 votes give 61 commands, precision 0.967, recall 0.410, a median 0.31 s before contact; 2 of 2 votes are the only faster setting at or above the 0.95 target (82 commands, precision 0.951, recall 0.530). Centre punches without a command (13 of 33) lack threat confidence, not a side: the gate already counts left and right as one decision.
+- Applied to the duel only: 2 of 2 votes (`app.duel.dodge.votes_needed`, `of_last`; `inference.gate` stays 3 of 4) and the page's punch speed control starting at 0.5 m/s instead of 0.8 (`default_speed_m_s`).
+- Real duel rounds, the same 15 consecutive seeds, punch as the page sends it (1.075 m): 3 of 4 at 0.8 m/s dodged 7 of 14 hits (commands a median 0.37 s before contact); 2 of 2 at 0.8: 9 of 14 (0.42 s); 3 of 4 at 0.5: 10 of 15 (0.63 s); 2 of 2 at 0.5: 10 of 15 (0.67 s). No falls. Fifteen rounds each: a direction, not an evaluation.
+- Tests: `tests/b` and `tests/app` 396 passed, 9 skipped, 1 xfailed; `node --test tests/front` 174 passed.
